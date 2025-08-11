@@ -1,6 +1,6 @@
 # Cybersecurity Psychology Framework (CPF)
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16795774.svg)](https://doi.org/10.5281/zenodo.16795774)
 ![Blockchain Verified](https://img.shields.io/badge/Blockchain_Timestamp-2025--08--09-brightgreen)
 ![License](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg)
 
@@ -53,7 +53,7 @@ flowchart TD
   title        = {Cybersecurity Psychology Framework},
   author       = {Canale, Giuseppe},
   year         = {2025}, 
-  doi          = {10.5281/zenodo.XXXXXXX},
+  doi          = {10.5281/zenodo.16795774},
   url          = {https://github.com/xbaey/CPF},
   note         = {Preprint version 1.0}
 }
