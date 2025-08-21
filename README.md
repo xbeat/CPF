@@ -1,162 +1,67 @@
-# CPF Auditor Field Kit
+# Cybersecurity Psychology Framework (CPF)
 
-**Practical assessment tools for cybersecurity psychology vulnerabilities**
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16795774.svg)](https://doi.org/10.5281/zenodo.16795774)
+![Blockchain Verified](https://img.shields.io/badge/Blockchain_Timestamp-2025--08--09-brightgreen)
+![License](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg)
 
-This repository contains the operational assessment tools for the Cybersecurity Psychology Framework (CPF). Each vulnerability domain includes three complementary components designed for different assessment needs and expertise levels.
+## Overview
+**First psychoanalytic-cognitive model for pre-cognitive security vulnerabilities**
 
-## Repository Structure
+> "Technical defenses fail where psychology prevails" - 85% breaches involve human factors
 
+## Key Features
+- **100 indicators** across 10 vulnerability categories
+- **Ternary scoring**: Green/Yellow/Red risk assessment
+- **Attack vector mapping** to known exploit patterns
+- **Privacy-preserving** aggregate analysis
+
+## Verification
+```bash
+# Verify document integrity:
+openssl sha256 CPF_Preprint.pdf
+# Compare with: dfb55fc21e1b204c342aa76145f1329fa6f095ceddc3aad8486dca91a580fa96
 ```
-auditor-field-kit/
-├── 1.x-authority/
-│   ├── cpf_indicator_1_1_foundation.md
-│   ├── cpf_indicator_1_1_operational.md
-│   └── cpf_field_kit_1_1.md
-├── 2.x-temporal/
-├── 3.x-social/
-├── 4.x-affective/
-├── 5.x-cognitive/
-├── 6.x-group/
-├── 7.x-stress/
-├── 8.x-unconscious/
-├── 9.x-ai/
-└── 10.x-convergent/
+
+## Framework Matrix
+| Category               | Key Concept               | Example Vulnerability       |
+|------------------------|---------------------------|-----------------------------|
+| Authority-Based (1.x)  | Milgram obedience         | CEO fraud susceptibility    |
+| Temporal (2.x)         | System 1 heuristic        | Urgency exploitation        |
+| AI-Specific (9.x)      | Anthropomorphism          | Over-trust in AI systems    |
+
+
+## Core Components
+- **Psychoanalytic Foundations**: Bion's Basic Assumptions, Kleinian Splitting
+- **Cognitive Vulnerabilities**: System 1/System 2 risks, Cialdini's principles
+- **AI-Specific**: Anthropomorphism, automation bias
+
+
+## Framework Structure
+```mermaid
+flowchart TD
+    A[Pre-Cognitive Vulnerabilities] --> B[Psychoanalytic]
+    A --> C[Cognitive]
+    B --> D[Bion's Basic Assumptions]
+    B --> E[Kleinian Splitting]
+    C --> F[System 1 Heuristics]
+    C --> G[System 2 Limitations]
 ```
 
-## Assessment Components
+## Academic Citation
+```bibtex
+@misc{canale2025cpf,
+  title        = {Cybersecurity Psychology Framework},
+  author       = {Canale, Giuseppe},
+  year         = {2025}, 
+  doi          = {10.5281/zenodo.16795774},
+  url          = {https://github.com/xbaey/CPF},
+  note         = {Preprint version 1.0}
+}
+```
 
-### 📚 Foundation Documents (`*_foundation.md`)
-**Target Audience**: Research teams, training developers, solution architects
-
-Deep theoretical analysis providing the psychological and scientific basis for each vulnerability. These documents contain:
-- Research citations and empirical evidence
-- Detailed psychological mechanisms
-- Historical attack analysis
-- Neuroscience and behavioral insights
-- Cultural and organizational context
-
-**Use Cases**:
-- Training program development
-- Solution design justification
-- Academic research and validation
-- Stakeholder education materials
-
-### 🔧 Operational Documents (`*_operational.md`)
-**Target Audience**: Security professionals, consultants, risk managers
-
-Comprehensive assessment protocols with detailed scoring methodology. These documents include:
-- Structured interview questions with follow-up probes
-- Technical verification procedures
-- Evidence collection requirements
-- Solution catalogs with ROI estimates
-- Success metrics and monitoring approaches
-
-**Use Cases**:
-- Formal risk assessments
-- Compliance evaluations
-- Vendor security reviews
-- Board-level reporting
-
-### ⚡ Field Kit Documents (`*_field_kit.md`)
-**Target Audience**: Auditors, penetration testers, rapid assessment teams
-
-Streamlined 30-minute assessment tools for immediate vulnerability identification. These documents provide:
-- 5-minute quick assessment checklists
-- Evidence collection templates
-- Rapid scoring decision trees
-- Priority solution recommendations
-- Client conversation scripts
-
-**Use Cases**:
-- Rapid security assessments
-- Pre-engagement reconnaissance
-- Incident response psychological profiling
-- On-site audit support
-
-## Assessment Workflow
-
-### Standard Assessment Process
-1. **Start with Field Kit** → Rapid vulnerability identification (30 min)
-2. **Deep-dive with Operational** → Comprehensive analysis (2-4 hours)
-3. **Reference Foundation** → Solution justification and training
-
-### Rapid Assessment Process
-1. **Field Kit Only** → Immediate risk scoring and priority actions (30 min)
-2. **Operational Follow-up** → Detailed assessment of high-risk findings
-
-## Scoring System
-
-All assessments use the standardized CPF ternary scoring:
-
-- **🟢 Green (0)**: Minimal vulnerability - monitoring recommended
-- **🟡 Yellow (1)**: Moderate vulnerability - intervention planning required  
-- **🔴 Red (2)**: Critical vulnerability - immediate action required
-
-### Aggregate Scoring
-- **Domain Score**: Sum of 10 indicators (0-20 range)
-- **CPF Total**: Weighted sum across all domains
-- **Risk Priority**: Highest individual indicator scores take precedence
-
-## Privacy and Ethics
-
-All assessment tools are designed with privacy-first principles:
-- **No individual profiling** - aggregate behavioral pattern analysis only
-- **Minimum viable data collection** - only security-relevant observations
-- **Anonymized reporting** - role-based rather than person-specific findings
-- **Consent-based** - clear communication about assessment scope and purpose
-
-## Getting Started
-
-### For Security Auditors
-1. Review the Field Kit for your target domain (e.g., `1.x-authority/`)
-2. Use the 30-minute rapid assessment protocol
-3. Escalate to Operational assessment for Red/Yellow findings
-
-### For Risk Managers  
-1. Start with Operational assessment for comprehensive coverage
-2. Reference Foundation documents for stakeholder communication
-3. Use success metrics for ongoing monitoring
-
-### For Researchers
-1. Begin with Foundation documents for theoretical grounding
-2. Reference Operational protocols for empirical validation
-3. Contribute improvements through standard academic channels
-
-## Domain Quick Reference
-
-| Domain | Focus Area | Key Indicators |
-|--------|------------|----------------|
-| **1.x Authority** | Compliance with perceived authority | CEO fraud, IT impersonation, hierarchical bypass |
-| **2.x Temporal** | Time pressure vulnerabilities | Urgency attacks, deadline pressure, time-based bias |
-| **3.x Social** | Social influence exploitation | Reciprocity, social proof, commitment traps |
-| **4.x Affective** | Emotional state vulnerabilities | Fear responses, trust transfer, attachment patterns |
-| **5.x Cognitive** | Mental overload conditions | Alert fatigue, decision fatigue, information overload |
-| **6.x Group** | Collective behavior patterns | Groupthink, diffusion of responsibility, social loafing |
-| **7.x Stress** | Stress response exploitation | Fight/flight responses, burnout, cortisol impairment |
-| **8.x Unconscious** | Below-awareness processes | Shadow projection, defense mechanisms, transference |
-| **9.x AI** | Human-AI interaction bias | Anthropomorphization, automation bias, algorithm aversion |
-| **10.x Convergent** | Multiple vulnerability overlap | Perfect storms, cascade failures, tipping points |
-
-## Support and Contributions
-
-### Reporting Issues
-- Use domain-specific issue templates
-- Include assessment context and organizational type
-- Anonymize all sensitive information
-
-### Contributing Improvements
-- Follow evidence-based modification principles
-- Provide research citations for theoretical changes
-- Test operational modifications in controlled environments
-
-### Training and Certification
-Contact framework maintainers for:
-- Assessor certification programs
-- Train-the-trainer workshops
-- Custom organizational adaptations
-
----
-
-**⚠️ Important**: These tools assess organizational psychological patterns, not individual psychology. Misuse for employee evaluation or discrimination is strictly prohibited and undermines the framework's scientific validity.
-
-**🔬 Research Status**: CPF is actively being validated through pilot implementations. Assessment results should be considered alongside traditional security controls, not as replacements.
+## Contact Information
+- **Author**: Giuseppe Canale, CISSP  
+- **Email**: [g.canale@escom.it](mailto:g.canale@escom.it)  
+- **Academic Profile**: [ORCID 0009-0007-3263-6897](https://orcid.org/0009-0007-3263-6897)  
+- **Professional Profile**: [LinkedIn](https://www.linkedin.com/in/giuseppe-canale)  
+- **Repository Maintainer**: [@xbeat](https://github.com/xbeat)
