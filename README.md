@@ -23,12 +23,18 @@ openssl sha256 CPF_Preprint.pdf
 ```
 
 ## Framework Matrix
-| Category               | Key Concept               | Example Vulnerability       |
-|------------------------|---------------------------|-----------------------------|
-| Authority-Based (1.x)  | Milgram obedience         | CEO fraud susceptibility    |
-| Temporal (2.x)         | System 1 heuristic        | Urgency exploitation        |
-| AI-Specific (9.x)      | Anthropomorphism          | Over-trust in AI systems    |
-
+| Category                          | Key Concept                | Example Vulnerability            |
+|-----------------------------------|----------------------------|----------------------------------|
+| Authority-Based (1.x)             | Milgram obedience          | CEO fraud susceptibility         |
+| Temporal (2.x)                    | System 1 heuristic         | Urgency-induced security bypass  |
+| Social Influence (3.x)            | Cialdini's principles      | Reciprocity exploitation         |
+| Affective (4.x)                   | Klein-Bowlby affect theory | Fear-based decision paralysis    |
+| Cognitive Overload (5.x)          | Miller's cognitive limits  | Alert fatigue desensitization    |
+| Group Dynamic (6.x)               | Bion's basic assumptions   | Groupthink security blind spots  |
+| Stress Response (7.x)             | Selye's stress theory      | Acute stress impairment          |
+| Unconscious Process (8.x)         | Jungian shadow             | Shadow projection onto attackers |
+| AI-Specific (9.x)                 | Anthropomorphism           | Over-trust in AI systems         |
+| Critical Convergent States (10.x) | System theory              | Perfect storm conditions         |
 
 ## Core Components
 - **Psychoanalytic Foundations**: Bion's Basic Assumptions, Kleinian Splitting
