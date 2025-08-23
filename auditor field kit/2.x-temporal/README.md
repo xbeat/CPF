@@ -1,6 +1,3 @@
-# Category 2.x: Temporal Vulnerabilities
-
-```markdown
 # CPF Category 2: Temporal Vulnerabilities
 
 This category examines how time-related pressures and cognitive biases affect security decision-making, drawing from Kahneman and Tversky's Prospect Theory (1979) and behavioral economics research. These vulnerabilities emerge when time constraints, deadlines, and temporal perceptions override rational security considerations.
@@ -36,4 +33,3 @@ The security coverage gaps and communication handoff vulnerabilities that occur 
 
 ### 2.10 Temporal Consistency Pressure
 The psychological need to maintain consistent behavior patterns over time, even when security circumstances change. This leads to outdated security practices, failure to adapt to new threats, and continued use of compromised systems or credentials.
-```
