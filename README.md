@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.svg" alt="CPF Logo" width="240"/>
+  <img src="logo.svg" alt="CPF Logo" width="120"/>
 </p>
 
 # Cybersecurity Psychology Framework (CPF)
