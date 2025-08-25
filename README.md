@@ -1,7 +1,17 @@
 <p align="center">
-  <img src="logo.svg" alt="CPF Logo" width="480" height="480"/>
+  <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+       viewBox="174.4 98.1 150 150" width="480" height="480">
+    <style type="text/css">
+      .st0{fill:#FBBF24;}
+      .st1{fill:#FFFFFF;}
+      .st2{fill:none;stroke:#FFFFFF;stroke-width:6;}
+    </style>
+    <circle class="st0" cx="249.4" cy="173.1" r="75"/>
+    <circle class="st1" cx="249.4" cy="173.1" r="70"/>
+    <circle class="st0" cx="249.4" cy="173.1" r="65"/>
+    <polygon class="st2" points="249.4,139.7 277.2,206.5 221.5,206.5 "/>
+  </svg>
 </p>
-
 # Cybersecurity Psychology Framework (CPF)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16795774.svg)](https://doi.org/10.5281/zenodo.16795774)
