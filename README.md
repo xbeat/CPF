@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.svg" alt="CPF Logo" width="480" height="480"/>
+</p>
+
 # Cybersecurity Psychology Framework (CPF)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16795774.svg)](https://doi.org/10.5281/zenodo.16795774)
