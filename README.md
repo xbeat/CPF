@@ -1,4 +1,3 @@
-<meta name="google-site-verification" content="yb9olSe7OBRJVSz51EKsWQTIVKo6RoQbkS2wxJ9nGCQ" />
 <p align="center">
   <img src="logo.svg" alt="CPF Logo" width="120"/>
 </p>
