@@ -26,6 +26,9 @@ openssl sha256 CPF_Preprint.pdf
 # Compare with: dfb55fc21e1b204c342aa76145f1329fa6f095ceddc3aad8486dca91a580fa96
 ```
 
+## Blockchain Verified
+- **Bitcoin block 909232** attests existence as of 2025-08-09 CET
+  
 ## Framework Matrix
 | Category                          | Key Concept                | Example Vulnerability            |
 |-----------------------------------|----------------------------|----------------------------------|
