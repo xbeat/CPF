@@ -28,6 +28,39 @@ openssl sha256 CPF_Preprint.pdf
 
 ## Blockchain Verified
 - **Bitcoin block 909232** attests existence as of 2025-08-09 CET
+
+- ## Repository Structure
+
+```bash
+CPF (Public)/
+│
+├── auditor-field-kit/
+│   └── [Auditor assessment tools and checklist]
+│
+├── languages/
+│   └── [Multilingual resources and translations]
+│
+│── presentations/               # Main presentations folder
+│   ├── authority-vulnerabilities/      # Category 1.x
+│       └─── 1.2-diffusion-responsibility/  # Specific indicator
+│            └─── slides.pdf
+│
+├── research/
+│   └── [Foundational research materials]
+│
+├── vulnerabilities/
+│   └── [Vulnerability taxonomy and documentation]
+│
+├── The_Cybersecurity_Psychology_Framework/
+│   ├── (Taxonomy Complete).tex
+│   ├── [Additional framework documents]
+│   └── [Supporting materials]
+│
+├── cpf-maturity-model.md
+├── cpf-white-paper.md
+├── logo.svg
+└── README.md
+```
   
 ## Framework Matrix
 | Category                          | Key Concept                | Example Vulnerability            |
