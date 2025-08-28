@@ -1,0 +1,12 @@
+| index=email sourcetype=exchange 
+| eval response_time=_time-original_time
+| where sender_domain="executive.company.com" 
+  AND response_time<60 
+  AND (attachment_opened=1 OR link_clicked=1)
+| eval cpf_1_1_score=case(
+    response_time<30, 2,
+    response_time<60, 1,
+    1=1, 0)
+| stats avg(cpf_1_1_score) as authority_risk by recipient
+| where authority_risk > 0.7
+| alert name="CPF Authority Vulnerability Detected"
