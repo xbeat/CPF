@@ -30,4 +30,4 @@ Step-by-step guide for implementing CPF in your Security Operations Center.
 3. Train SOC analysts
 
 ## Support
-Contact: consulting@[pending].com
+Contact: info@cpf3.org
