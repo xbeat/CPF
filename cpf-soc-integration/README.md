@@ -8,7 +8,7 @@ This repository contains the operational implementation of the Cybersecurity Psy
 - [CPF SOC Implementation Technical Paper](papers/CPF_SOC_Implementation_Technical_Paper_2025.pdf)
 - [CPF Original Framework Theory](/The_Cybersecurity_Psychology_Framework__Taxonomy_Complete_.pdf)
 
-### 🛠 Components
+### Components
 - **Correlation Rules**: SIEM correlation rules for CPF indicators
 - **ML Models**: Machine learning models for behavioral pattern detection
 - **Dashboards**: Real-time visualization templates
