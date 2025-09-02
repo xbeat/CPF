@@ -8,7 +8,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16944972.svg)](https://doi.org/10.5281/zenodo.16944972)
 ![Blockchain Verified](https://img.shields.io/badge/Blockchain_Timestamp-2025--08--09-brightgreen)
 ![License](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg)
-![SSRN Publication](https://img.shields.io/badge/SSRN-Publication-blue)](https://papers.ssrn.com/abstract=5387222)
+[![SSRN Publication](https://img.shields.io/badge/SSRN-Publication-blue)](https://papers.ssrn.com/abstract=5387222)
 
 ## Overview
 **First psychoanalytic-cognitive model for pre-cognitive security vulnerabilities**
