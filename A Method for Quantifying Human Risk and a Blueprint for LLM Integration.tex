@@ -14,6 +14,7 @@
 \usepackage{fancyhdr}
 \usepackage{lastpage}
 \usepackage{placeins}
+\usepackage[T1]{fontenc}
 
 % Definizione del comando \logit mancante
 \DeclareMathOperator{\logit}{logit}
@@ -127,14 +128,301 @@ For the CPF to transition from theoretical taxonomy to practical tool, its subca
 \section{Operationalizing the CPF: From Theory to Algorithms}
 \label{sec:operationalization}
 
-% Inserisci qui tutto il contenuto della sezione Operationalizing the CPF dal tuo documento originale
-% [Il contenuto originale della sezione Operationalizing the CPF va qui]
+\subsection{Subcategory: Compliance Fatigue}
+\label{subsec:compliance_fatigue}
+
+\paragraph{Definition} Compliance Fatigue is the psychological state characterized by a diminished motivation to adhere to security protocols due to repeated exposure to alerts, especially those perceived as non-actionable or false positives, leading to habituation and neglect. This state results in increased operational risk as critical alerts may be ignored or delayed.
+
+\paragraph{Hypothesized Manifestation in Data} This state manifests quantitatively in Security Information and Event Management (SIEM) and ticketing systems through two primary channels:
+\begin{enumerate}
+    \item \textbf{Increased Response Time}: A measurable increase in the time between an alert's generation and its first acknowledgement or closure by an analyst.
+    \item \textbf{Increased Ignore Rate}: A higher proportion of alerts being manually closed without remediation action or without being assigned to another analyst, indicating dismissal.
+\end{enumerate}
+
+\paragraph{Proposed Metrics}
+To quantify Compliance Fatigue, we propose two core metrics:
+\begin{itemize}
+    \item \textbf{Mean Time to Acknowledge (MTTA)}: The average time, in minutes, for alerts of a given severity to transition from a \textit{new} to an \textit{in progress} or \textit{closed} state. An increasing MTTA trend suggests growing fatigue.
+    \item \textbf{Ignore Rate (IR)}: The ratio of alerts closed without any documented remedial action to the total number of alerts closed by an analyst or team within a time window. \( IR = N_{\text{ignored}} / N_{\text{total}} \)
+\end{itemize}
+
+\paragraph{Algorithm}
+The following algorithm calculates the MTTA and Ignore Rate for a specified team or analyst over a defined period. The algorithm assumes a dataset of alerts enriched with their status history.
+
+\begin{algorithm}[H]
+\caption{Calculate Compliance Fatigue Metrics}
+\begin{algorithmic}[1]
+\Require $alerts$ (list of alert objects), $start\_date$, $end\_date$, $analyst\_id$ (optional)
+\Ensure $MTTA$, $IgnoreRate$
+\State $filtered\_alerts \gets \emptyset$
+\State $total\_ack\_time \gets 0$
+\State $ack\_count \gets 0$
+\State $ignored\_count \gets 0$
+\State $total\_closed \gets 0$
+
+\For{$alert$ in $alerts$}
+    \If{$alert.created\_at$ between $start\_date$ and $end\_date$}
+        \If{$analyst\_id$ is \textbf{not} provided \ \textbf{or}\ $alert.assigned\_to = analyst\_id$}
+            \State $filtered\_alerts \gets filtered\_alerts \cup alert$
+        \EndIf
+    \EndIf
+\EndFor
+
+\For{$alert$ in $filtered\_alerts$}
+    \If{$alert.status = \text{"closed"}$}
+        \State $total\_closed \gets total\_closed + 1$
+        \State $ack\_time \gets alert.closed\_at - alert.created\_at$
+        \State $total\_ack\_time \gets total\_ack\_time + ack\_time$
+        \State $ack\_count \gets ack\_count + 1$
+        \If{$alert.resolution\_notes = \text{"false positive"}$ \ \textbf{or}\ $alert.resolution\_notes = \emptyset$}
+            \State $ignored\_count \gets ignored\_count + 1$
+        \EndIf
+    \EndIf
+\EndFor
+
+\If{$ack\_count > 0$}
+    \State $MTTA \gets total\_ack\_time / ack\_count$
+\Else
+    \State $MTTA \gets 0$
+\EndIf
+\If{$total\_closed > 0$}
+    \State $IgnoreRate \gets ignored\_count / total\_closed$
+\Else
+    \State $IgnoreRate \gets 0$
+\EndIf
+
+\State \Return $MTTA$, $IgnoreRate$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Data Sources} The primary data sources for this algorithm are:
+\begin{itemize}
+    \item \textbf{SIEM Systems}: Splunk Enterprise Security (via its REST API) or Elastic SIEM (via Elasticsearch queries) provide the raw alert data, including timestamps, status, and assignment history.
+    \item \textbf{Ticketing Systems}: Platforms like Jira Service Desk or ServiceNow often contain the \textit{resolution notes} field crucial for determining the Ignore Rate. Integration is typically achieved via their respective REST APIs.
+\end{itemize}
+The algorithm requires querying these systems to build a unified dataset of alerts for analysis.
+
+\subsection{Subcategory: Alert Overload Bias}
+\label{subsec:alert_overload_bias}
+
+\paragraph{Definition} Alert Overload Bias is a cognitive bias where security analysts, overwhelmed by a high volume of alerts, disproportionately miss or delay the response to critical security events. This occurs when the cognitive load exceeds human processing capacity, leading to a degradation in decision-making quality and a failure to prioritize effectively.
+
+\paragraph{Hypothesized Manifestation in Data} This bias manifests through correlated patterns in event volume and missed alerts:
+\begin{enumerate}
+    \item \textbf{Positive Correlation between Volume and Missed Alerts}: A statistically significant increase in the rate of missed or severely delayed alerts during periods of peak alert volume.
+    \item \textbf{Priority Inversion}: High-severity alerts (e.g., \textit{critical}) may be missed while lower-severity alerts are processed during high-volume periods, indicating a breakdown in triage protocols.
+\end{enumerate}
+
+\paragraph{Proposed Metrics}
+To quantify Alert Overload Bias, we propose two primary metrics:
+\begin{itemize}
+    \item \textbf{Peak Miss Rate (PMR)}: The ratio of missed critical alerts to the total number of critical alerts during time intervals where the total alert volume exceeds a dynamically calculated threshold (e.g., the 90th percentile for the environment). \( PMR = N_{\text{missed\_critical}} / N_{\text{total\_critical}} \)
+    \item \textbf{Volume-to-Miss Correlation Coefficient (VMCC)}: A statistical measure (e.g., Pearson's r) calculating the correlation between the overall alert volume per time interval and the count of missed alerts in that same interval. A positive VMCC indicates the presence of the bias.
+\end{itemize}
+
+\paragraph{Algorithm}
+The following algorithm calculates the Peak Miss Rate and the Volume-to-Miss Correlation Coefficient for a specified time range and SOC environment.
+
+\begin{algorithm}[H]
+\caption{Calculate Alert Overload Bias Metrics}
+\begin{algorithmic}[1]
+\Require $alerts$ (list of alert objects with $timestamp$, $severity$, $status$), $start\_date$, $end\_date$, $time\_window$ (e.g., 1 hour)
+\Ensure $PMR$, $VMCC$
+\State // 1. Preprocess data: filter by date and bin by time window
+\State $time\_series \gets \emptyset$
+\State $alert\_bins \gets \text{GroupAlertsByTimeWindow}(alerts, time\_window)$
+
+\State // 2. Calculate volume and miss count for each bin
+\For{$bin$ in $alert\_bins$}
+    \State $total\_volume \gets \text{Length}(bin)$
+    \State $critical\_alerts \gets \text{FilterBySeverity}(bin, \text{"critical"})$
+    \State $missed\_critical \gets \text{FilterByStatus}(critical\_alerts, \text{"missed"})$
+    \State $time\_series[bin] \gets (total\_volume, \text{Length}(missed\_critical), \text{Length}(critical\_alerts))$
+\EndFor
+
+\State // 3. Calculate Peak Miss Rate (PMR)
+\State $volume\_list \gets \text{GetValues}(time\_series, total\_volume)$
+\State $volume\_threshold \gets \text{Percentile}(volume\_list, 90)$ \Comment{Define peak volume threshold}
+\State $total\_critical\_in\_peak, missed\_in\_peak \gets 0$
+
+\For{$data$ in $time\_series$}
+    \If{$data.total\_volume > volume\_threshold$}
+        \State $total\_critical\_in\_peak \gets total\_critical\_in\_peak + data.total\_critical$
+        \State $missed\_in\_peak \gets missed\_in\_peak + data.missed\_critical$
+    \EndIf
+\EndFor
+
+\If{$total\_critical\_in\_peak > 0$}
+    \State $PMR \gets missed\_in\_peak / total\_critical\_in\_peak$
+\Else
+    \State $PMR \gets 0$
+\EndIf
+
+\State // 4. Calculate Volume-to-Miss Correlation Coefficient (VMCC)
+\State $volumes \gets \emptyset$
+\State $misses \gets \emptyset$
+\For{$data$ in $time\_series$}
+    \State $volumes \gets volumes \cup data.total\_volume$
+    \State $misses \gets misses \cup data.missed\_count$ \Comment{Use all missed alerts, not just critical}
+\EndFor
+\State $VMCC \gets \text{PearsonCorrelation}(volumes, misses)$
+
+\State \Return $PMR$, $VMCC$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Data Sources} The implementation of this algorithm requires integrated data from:
+\begin{itemize}
+    \item \textbf{SIEM Logs}: The primary source for raw alert volume and initial alert status. Splunk or Elasticsearch queries are used to aggregate events into time-series bins.
+    \item \textbf{Ticketing System / SOAR Platform}: The authoritative source for the final status of an alert (e.g., \textit{missed}, \textit{resolved}, \textit{false positive}). Data is fetched via REST API (e.g., Jira API, ServiceNow API, Splunk ES KV Store) to enrich the SIEM data.
+\end{itemize}
+The algorithm hinges on the ability to correlate the high-volume signal from the SIEM with the outcome signal from the ticketing system.
+
+\subsection{Subcategory: Risk Perception Gap}
+\label{subsec:risk_perception_gap}
+
+\paragraph{Definition} The Risk Perception Gap is a cognitive bias wherein individuals or teams systematically underestimate the threat level associated with assets deemed "non-critical" (e.g., development or testing environments) compared to production systems. This leads to a lax attitude towards security hygiene in these environments, creating vulnerable attack surfaces that can be exploited to pivot into critical infrastructure.
+
+\paragraph{Hypothesized Manifestation in Data} This bias manifests as a measurable disparity in security postures between different environment classifications:
+\begin{enumerate}
+    \item \textbf{Patch Latency Disparity}: A significant increase in the mean time to patch known vulnerabilities for systems in development/staging environments versus production environments.
+    \item \textbf{Vulnerability Density Disparity}: A higher density of known vulnerabilities (per asset) in non-production environments, indicating less frequent scanning or remediation efforts.
+\end{enumerate}
+
+\paragraph{Proposed Metrics}
+To quantify the Risk Perception Gap, we propose two primary metrics:
+\begin{itemize}
+    \item \textbf{Patch Latency Gap (PLG)}: The difference in Mean Time to Patch (MTTP) between non-production (e.g., \textit{dev}, \textit{staging}) and production (\textit{prod}) environments for vulnerabilities of the same severity. \( PLG = MTTP_{\text{non-prod}} - MTTP_{\text{prod}} \). A positive PLG indicates the bias.
+    \item \textbf{Vulnerability Density Ratio (VDR)}: The ratio of the average number of open, known vulnerabilities per asset in non-production environments to that in production environments. \( VDR = VulnDensity_{\text{non-prod}} / VulnDensity_{\text{prod}} \). A VDR > 1 indicates the bias.
+\end{itemize}
+
+\paragraph{Algorithm}
+The following algorithm calculates the Patch Latency Gap and Vulnerability Density Ratio by querying a vulnerability management database.
+
+\begin{algorithm}[H]
+\caption{Calculate Risk Perception Gap Metrics}
+\begin{algorithmic}[1]
+\Require $vulns$ (list of vulnerability objects), $start\_date$, $end\_date$
+\Ensure $PLG$, $VDR$
+\State $prod\_vulns \gets \text{FilterByEnvironment}(vulns, \text{"prod"})$
+\State $non\_prod\_vulns \gets \text{FilterByEnvironment}(vulns, \text{"dev"}, \text{"staging"})$
+
+\State // 1. Calculate Mean Time to Patch (MTTP) for each environment
+\State $mttp\_prod \gets \text{CalculateMTTP}(prod\_vulns)$
+\State $mttp\_non\_prod \gets \text{CalculateMTTP}(non\_prod\_vulns)$
+\State $PLG \gets mttp\_non\_prod - mttp\_prod$
+
+\State // 2. Calculate Vulnerability Density (Vulns / Asset) for each environment
+\State $prod\_assets \gets \text{GetUniqueAssets}(prod\_vulns)$
+\State $non\_prod\_assets \gets \text{GetUniqueAssets}(non\_prod\_vulns)$
+
+\State $vuln\_density\_prod \gets \text{Length}(prod\_vulns) / \text{Length}(prod\_assets)$
+\State $vuln\_density\_non\_prod \gets \text{Length}(non\_prod\_vulns) / \text{Length}(non\_prod\_assets)$
+
+\If{$vuln\_density\_prod > 0$}
+    \State $VDR \gets vuln\_density\_non\_prod / vuln\_density\_prod$
+\Else
+    \State $VDR \gets \infty$ \Comment{Handle division by zero}
+\EndIf
+
+\State \Return $PLG$, $VDR$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Data Sources} The implementation of this algorithm requires integrated data from:
+\begin{itemize}
+    \item \textbf{Vulnerability Management Database}: The primary source is a tool like Qualys VMDR, Tenable.io, or Rapid7 InsightVM. Data is fetched via their REST API to obtain a list of vulnerabilities, their detection and remediation dates, and the environment tag of the affected asset.
+    \item \textbf{Configuration Management Database (CMDB)}: Systems like ServiceNow CMDB or AWS/Azure Tags are crucial for accurately determining the environment classification (prod vs. non-prod) of each asset, as this data is not always reliably present in vulnerability reports.
+\end{itemize}
+The algorithm's accuracy is dependent on the quality and consistency of asset tagging within the organization.
+
+\subsection{Subcategory: Against-Gravity Communication}
+\label{subsec:against_gravity_comm}
+
+\paragraph{Definition} Against-Gravity Communication refers to the tendency of personnel to discuss critical security issues, incidents, or risks through informal, private, or ephemeral channels (e.g., direct messages, private chats) instead of the official, designated ticketing systems or channels mandated by security protocols. This practice undermines auditability, knowledge sharing, and effective incident management, as crucial information becomes siloed and is lost once the ephemeral medium is closed.
+
+\paragraph{Hypothesized Manifestation in Data} This behavior manifests as a detectable signal across communication and ticketing platforms:
+\begin{enumerate}
+    \item \textbf{Discussion-Thread Dissonance}: The presence of security-critical keywords and topics in private chat platforms that are not mirrored by a corresponding ticket or thread in the official incident management system.
+    \item \textbf{Response Time Lag}: A significant time delay between the discussion of a potential issue in an informal channel and the creation of a formal ticket for it.
+\end{enumerate}
+
+\paragraph{Proposed Metrics}
+To quantify Against-Gravity Communication, we propose two primary metrics:
+\begin{itemize}
+    \item \textbf{Untracked Critical Topics Ratio (UCTR)}: The ratio of unique security-critical discussion topics detected in private channels to the total unique topics found across both private and official channels over a period. \( UCTR = N_{\text{private\_topics}} / (N_{\text{private\_topics}} + N_{\text{official\_topics}}) \). A UCTR > 0 indicates a problem; > 0.5 indicates a severe breakdown.
+    \item \textbf{Mean Time to Ticket (MTTT)}: For discussions in private channels that are eventually formalized, this measures the average time between the first message mentioning a security-critical topic and the creation of a corresponding ticket.
+\end{itemize}
+
+\paragraph{Algorithm}
+The following algorithm calculates the Untracked Critical Topics Ratio. It requires a list of security-critical keywords (e.g., "incident", "breach", "CVE-2023", "zero-day", "patch urgently").
+
+\begin{algorithm}[H]
+\caption{Calculate Untracked Critical Topics Ratio}
+\begin{algorithmic}[1]
+\Require $keywords$, $start\_date$, $end\_date$
+\Ensure $UCTR$
+\State // 1. Extract topics from OFFICIAL channels (Ticketing System)
+\State $official\_tickets \gets \text{QueryJira}(keywords, start\_date, end\_date)$
+\State $official\_topics \gets \text{ExtractTopics}(official\_tickets)$ \Comment{e.g., via NLP keyword extraction}
+
+\State // 2. Extract topics from PRIVATE channels (Chat Platform)
+\State $private\_messages \gets \text{QuerySlackDM}(keywords, start\_date, end\_date)$
+\State $private\_topics \gets \text{ExtractTopics}(private\_messages)$
+
+\State // 3. Calculate the ratio of unique private topics
+\State $unique\_official\_topics \gets \text{Set}(official\_topics)$
+\State $unique\_private\_topics \gets \text{Set}(private\_topics)$
+\State $all\_unique\_topics \gets unique\_official\_topics \cup unique\_private\_topics$
+
+\State $UCTR \gets |unique\_private\_topics| / |all\_unique\_topics|$
+
+\State \Return $UCTR$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Data Sources and Ethical Considerations} The implementation of this algorithm requires access to:
+\begin{itemize}
+    \item \textbf{Ticketing System API}: Jira, ServiceNow, or similar, to search for issues containing security keywords.
+    \item \textbf{Communication Platform API}: Slack, Microsoft Teams, or similar, to search for keywords in private messages and channels. \textbf{This requires strict ethical and legal oversight}. Access must be compliant with organizational policy and local regulations (e.g., GDPR). It is strongly recommended to use anonymized or aggregated data for analysis to preserve privacy while still detecting the overall trend.
+\end{itemize}
+This metric is designed for measuring organizational health, not for monitoring individuals.
 
 \section{A Lightweight LLM Architecture for CPF Analysis}
 \label{sec:llm_architecture}
 
-% Inserisci qui tutto il contenuto della sezione LLM Architecture dal tuo documento originale
-% [Il contenuto originale della sezione LLM Architecture va qui]
+This section outlines the PRAGmatic LLM approach.
+
+\subsection{The Rationale Against a Giant Model}
+We argue that a massive, general-purpose LLM is overkill, expensive, and potentially less accurate for this specific domain. We propose a smaller, focused model that is specifically trained and fine-tuned for cybersecurity psychology analysis.
+
+\subsection{Core Architecture}
+The core of our architecture follows the Retrieval-Augmented Generation (RAG) pattern, which combines the benefits of parametric knowledge (stored in the model weights) with non-parametric knowledge (retrieved from external sources).
+
+\subsection{Component 1: The Data Indexing Layer}
+This layer takes the outputs from the CPF algorithms (the metrics, the raw log snippets, the communication chunks) and indexes them in a vector database (e.g., ChromaDB, FAISS). This serves as the "long-term memory" of the system, allowing efficient retrieval of relevant context for analysis.
+
+\subsection{Component 2: The Query \& Retrieval Layer}
+For a user query (e.g., "Is the EMEA team experiencing compliance fatigue?"), this layer converts it to a vector representation, finds the most relevant context from the vector database (e.g., recent MTTA metrics, snippets from team chats mentioning "alert fatigue"), and prepares this context for the LLM.
+
+\subsection{Component 3: The Lightweight LLM Core}
+We use a small, fine-tuned model (e.g., a 7B parameter model like Llama2-7B or Mistral-7B). Its primary function is not to know everything, but to be an expert reasoner on the provided context. The model is specifically trained to analyze psychological patterns in security contexts.
+
+\subsection{The Process}
+The complete process follows these steps:
+1. Query formulation by the user
+2. Context retrieval from the vector database
+3. Context augmentation of the query
+4. Generation of analysis by the lightweight LLM
+5. Presentation of results to the user
+
+\subsection{Advantages}
+This architecture offers several key advantages:
+- Cheaper to run and maintain
+- More interpretable (users can see the retrieved context)
+- More accurate for the specific domain
+- Privacy-preserving (data doesn't leave organizational control)
+- Easier to fine-tune and update
 
 \section{Validation Methodology}
 \label{sec:validation}
