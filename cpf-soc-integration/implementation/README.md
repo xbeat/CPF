@@ -161,11 +161,11 @@ This project is licensed under the MIT License - see the [LICENSE.md](https://li
 If you use this framework in your research or work, please cite the accompanying paper:
 
 ```
-@article{canale2023cpf,
+@article{canale2025cpf,
   title={The Cybersecurity Psychology Framework (CPF): A Method for Quantifying Human Risk and a Blueprint for LLM Integration},
   author={Canale, Giuseppe},
   journal={Preprint},
-  year={2023},
+  year={2025},
   url={https://github.com/xbeat/CPF}
 }
 ```
