@@ -6,7 +6,7 @@ This repository contains comprehensive implementation guides, research papers, a
 
 The CPF framework identifies and classifies human psychological vulnerabilities across 10 categories using privacy-preserving on-premise SLM deployments. This repository provides everything needed to understand, implement, and deploy CPF solutions.
 
-## 📁 Repository Contents
+## Repository Contents
 
 ### Research Papers
 - **`CPF_slm_paper.pdf`** - Main research paper: "Operationalizing the Cybersecurity Psychology Framework"
