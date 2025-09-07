@@ -199,10 +199,10 @@ This research is released under open-source licensing to promote cybersecurity a
 
 ## Quick Links
 
-- [Live Demo](https://huggingface.co/spaces/yourusername/cpf-demo)
-- [Model Repository](https://huggingface.co/yourusername/distilbert-cpf)
-- [Synthetic Dataset](https://huggingface.co/datasets/yourusername/cpf-synthetic)
-- [Synthetic Dataset Generator](https://colab.research.google.com/drive/1fUpjTILbM_1wX7aEGeb0X-uomKlqj0OL?usp=sharing)
+- [Live Demo](https://huggingface.co/spaces/CPF3-org/cpf-poc-demo)
+- [Model Repository](https://huggingface.co/CPF3-org/cpf-poc-model)
+- [Synthetic Dataset](https://colab.research.google.com/drive/1fUpjTILbM_1wX7aEGeb0X-uomKlqj0OL#scrollTo=aJkI6KebNEPx)
+- [Fine Tuning](https://colab.research.google.com/drive/1fUpjTILbM_1wX7aEGeb0X-uomKlqj0OL?usp=sharing)
 - [Issue Tracker](https://github.com/xbeat/CPF/issues)
 
 ---
