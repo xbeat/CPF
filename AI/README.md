@@ -205,6 +205,3 @@ This research is released under open-source licensing to promote cybersecurity a
 - [Fine Tuning](https://colab.research.google.com/drive/1fUpjTILbM_1wX7aEGeb0X-uomKlqj0OL?usp=sharing)
 - [Issue Tracker](https://github.com/xbeat/CPF/issues)
 
----
-
-**Ready to transform cybersecurity from reactive to proactive? Start with the Enhanced Quickstart Guide and deploy your first CPF system today.**
