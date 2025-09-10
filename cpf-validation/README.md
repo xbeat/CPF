@@ -1,15 +1,8 @@
-
-# ============================================================================
-# File: README.md
-# Purpose: Repository documentation
-# ============================================================================
-
-"""
 # CPF Validation Framework
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Paper: arXiv](https://img.shields.io/badge/Paper-arXiv-red.svg)](https://arxiv.org/)
+[![Paper: SSRN](https://img.shields.io/badge/Paper-SSRN-blue.svg)]([https://arxiv.org/](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5387222))
 
 ## Overview
 
