@@ -1,4 +1,4 @@
-# Cybersecurity Psychology Framework (CPF) Implementation Repository
+# Cybersecurity Psychology Framework (CPF) Implementation
 
 This repository contains comprehensive implementation guides, research papers, and deployment tutorials for the **Cybersecurity Psychology Framework (CPF)** using Small Language Models (SLMs). The CPF addresses the critical gap in cybersecurity by detecting pre-cognitive psychological vulnerabilities that contribute to 85% of security breaches.
 
