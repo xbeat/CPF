@@ -90,18 +90,18 @@ graph TD
 
 The framework identifies 10 distinct psychological vulnerability states:
 
-| Category | Description | Risk Level |
-|----------|-------------|------------|
-| **Authority Compliance** | Unquestioning obedience to apparent authority | High |
-| **Temporal Vulnerabilities** | Decreased vigilance during off-hours | Medium |
-| **Social Proof** | Following others without verification | High |
-| **Affective States** | Fear-based or emotional decision making | High |
-| **Cognitive Load** | Alert fatigue and attention depletion | Medium |
-| **Group Dynamics** | Groupthink creating security blind spots | Medium |
-| **Stress Factors** | Chronic stress leading to poor decisions | High |
-| **Unconscious Projections** | Shadow psychology affecting threat perception | Low |
-| **AI Bias** | Anthropomorphizing AI systems | Medium |
-| **Convergent Conditions** | Multiple vulnerabilities aligning | Critical |
+| Category | Description |
+|----------|-------------|
+| **Authority Compliance** | Unquestioning obedience to apparent authority |
+| **Temporal Vulnerabilities** | Decreased vigilance during off-hours |
+| **Social Proof** | Following others without verification |
+| **Affective States** | Fear-based or emotional decision making |
+| **Cognitive Load** | Alert fatigue and attention depletion |
+| **Group Dynamics** | Groupthink creating security blind spots |
+| **Stress Factors** | Chronic stress leading to poor decisions |
+| **Unconscious Projections** | Shadow psychology affecting threat perception |
+| **AI Bias** | Anthropomorphizing AI systems |
+| **Convergent Conditions** | Multiple vulnerabilities aligning |
 
 ## Getting Started
 
