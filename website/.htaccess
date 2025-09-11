@@ -1,0 +1,79 @@
+# HEADER DI SICUREZZA E CACHE OTTIMIZZATA
+
+# HSTS
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" env=HTTPS
+
+# CSP ORIGINALE (senza CDN)
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none';"
+
+# Permissions Policy
+Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=()"
+
+# Altri header di sicurezza
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "DENY"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# CACHE OTTIMIZZATA PER I FILE STATICI
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Immagini
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    
+    # CSS e JavaScript
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    
+    # Font
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+    
+    # HTML (cache breve)
+    ExpiresByType text/html "access plus 1 hour"
+</IfModule>
+
+# HEADER CACHE-CONTROL PER CSS
+<FilesMatch "\.(css)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+    Header set Vary: Accept-Encoding
+</FilesMatch>
+
+# CACHE CONTROL HEADERS
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico|css|js|woff2|woff|ttf)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+
+<FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "public, max-age=3600"
+</FilesMatch>
+
+# Compressione GZIP
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE image/svg+xml
+    AddOutputFilterByType DEFLATE font/woff2
+</IfModule>
+
+# SERVE CSS CON HEADER OTTIMIZZATI
+<FilesMatch "\.(css)$">
+    Header set X-Content-Type-Options "nosniff"
+    Header set Content-Type "text/css; charset=UTF-8"
+</FilesMatch>
+
+# Redirect HTTPS
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
