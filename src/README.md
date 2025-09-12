@@ -7,6 +7,7 @@ This directory contains the implementation code for the Cybersecurity Psychology
 ## Files
 
 - **CPF_Assessment.js**: JavaScript implementation of the CPF assessment tool that maps psychological vulnerabilities to specific attack vectors. This file contains the core functionality for evaluating security vulnerabilities based on psychological factors.
+- ** From Theory to Code Implementing Bayesian Cybersecurity Analysis in Python ( md+pdf w/ code inside )
 
 ## Framework Structure
 
