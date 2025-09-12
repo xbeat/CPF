@@ -9,6 +9,8 @@
 ![Blockchain Verified](https://img.shields.io/badge/Blockchain_Timestamp-2025--08--09-brightgreen)
 ![License](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg)
 [![SSRN Publication](https://img.shields.io/badge/SSRN-Publication-blue)](https://papers.ssrn.com/abstract=5387222)
+[![TechRxiv Publication](https://img.shields.io/badge/TechRxiv-Publication-orange)](https://www.authorea.com/doi/full/10.22541/au.175704850.07776123/v1)
+
 
 ## Overview
 **First psychoanalytic-cognitive model for pre-cognitive security vulnerabilities**
