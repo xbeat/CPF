@@ -23,6 +23,9 @@
 - **Attack vector mapping** to known exploit patterns
 - **Privacy-preserving** aggregate analysis
 
+## Community
+Join our Discord server for discussions, collaboration, and pilot studies: CPF3 Community [https://discord.gg/xNRkTPeQ](https://discord.gg/xNRkTPeQ)
+
 ## Verification
 ```bash
 # Verify document integrity:
