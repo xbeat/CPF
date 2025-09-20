@@ -63,6 +63,18 @@ class CPFSyntheticGenerator:
         baselines['alert_fatigue'] = min(0.8, 0.1 + 0.002 * self.org.size)  # Scales with org size
         baselines['decision_fatigue'] = 0.15 + 0.25 * self.org.stress_baseline
         
+        # Category 6: Group Dynamics
+        baselines['group_dynamics'] = 0.2 + 0.3 * self.org.authority_gradient
+        
+        # Category 7: Stress Response
+        baselines['stress_response'] = 0.15 + 0.4 * self.org.stress_baseline
+        
+        # Category 8: Unconscious Processes
+        baselines['unconscious_processes'] = 0.1 + 0.2 * self.org.change_resistance
+        
+        # Category 9: AI-Specific Bias
+        baselines['ai_bias'] = 0.05 + 0.1 * (1.0 if self.org.industry == 'Tech' else 0.3)
+        
         return baselines
     
     def _build_correlation_matrix(self) -> np.ndarray:
@@ -131,12 +143,39 @@ class CPFSyntheticGenerator:
             cognitive_base * week_factor + random_factors[4], 0, 1
         )
         
+        # Category 6: Group Dynamic (indicators 6.1-6.10)
+        group_base = self.baselines.get('group_dynamics', 0.2)
+        states['group_dynamics'] = np.clip(
+            group_base * week_factor + external_stress * 0.6 + random_factors[5], 0, 1
+        )
+        
+        # Category 7: Stress Response (indicators 7.1-7.10)
+        stress_base = self.baselines.get('stress_response', 0.15)
+        states['stress_response'] = np.clip(
+            stress_base * (1 + 2 * external_stress) + random_factors[6], 0, 1
+        )
+        
+        # Category 8: Unconscious Processes (indicators 8.1-8.10) 
+        unconscious_base = self.baselines.get('unconscious_processes', 0.1)
+        states['unconscious_processes'] = np.clip(
+            unconscious_base + 0.3 * np.mean([states['authority_compliance'], 
+                                            states['affective_vuln']]) + random_factors[7], 0, 1
+        )
+        
+        # Category 9: AI-Specific Bias (indicators 9.1-9.10)
+        ai_bias_base = self.baselines.get('ai_bias', 0.05)
+        states['ai_bias'] = np.clip(
+            ai_bias_base + 0.2 * states['cognitive_load'] + random_factors[8], 0, 1
+        )
+        
         # Calculate convergent state (Category 10)
         convergent_factors = [
             states['authority_compliance'],
             states['urgency_bypass'], 
             states['affective_vuln'],
-            states['cognitive_load']
+            states['cognitive_load'],
+            states['group_dynamics'],
+            states['stress_response']
         ]
         states['convergent_risk'] = np.mean(convergent_factors) + random_factors[9] * 0.1
         states['convergent_risk'] = np.clip(states['convergent_risk'], 0, 1)
@@ -163,22 +202,41 @@ class CPFSyntheticGenerator:
         return min(stress, 1.0)
     
     def generate_security_incidents(self, daily_states: List[Dict]) -> List[bool]:
-        """Generate security incidents based on psychological vulnerability states"""
+        """Generate security incidents based on comprehensive psychological vulnerability states"""
         incidents = []
         
         for states in daily_states:
-            # Calculate incident probability based on convergent risk
+            # Calculate incident probability based on multiple vulnerability categories
             base_prob = self.incident_base_rate
-            risk_multiplier = 1 + 3 * states['convergent_risk']  # Up to 4x base rate
             
-            # Add specific vulnerability contributions
-            authority_risk = states['authority_compliance'] * 0.5
-            temporal_risk = states['urgency_bypass'] * 0.7
-            cognitive_risk = states['cognitive_load'] * 0.4
+            # Category-specific risk contributions
+            authority_risk = states['authority_compliance'] * 0.5  # High authority compliance increases breach risk
+            temporal_risk = states['urgency_bypass'] * 0.7        # Time pressure creates vulnerabilities
+            social_risk = states['social_influence'] * 0.4        # Social manipulation vectors
+            affective_risk = states['affective_vuln'] * 0.6       # Emotional states impair judgment
+            cognitive_risk = states['cognitive_load'] * 0.4       # Overload reduces security effectiveness
+            group_risk = states['group_dynamics'] * 0.8           # Group dysfunction amplifies all risks
+            stress_risk = states['stress_response'] * 0.9         # Stress responses create critical vulnerabilities
+            unconscious_risk = states['unconscious_processes'] * 0.3  # Shadow processes create blind spots
+            ai_risk = states['ai_bias'] * 0.2                     # AI interaction vulnerabilities
             
-            incident_prob = base_prob * risk_multiplier * (1 + authority_risk + temporal_risk + cognitive_risk)
-            incident_prob = min(incident_prob, 0.3)  # Cap at 30% daily probability
+            # Convergent risk (non-linear amplification when multiple factors align)
+            convergent_multiplier = 1 + (states['convergent_risk'] ** 2) * 3  # Quadratic scaling for convergent states
             
+            # Combined risk calculation
+            total_risk_factors = (authority_risk + temporal_risk + social_risk + affective_risk + 
+                                cognitive_risk + group_risk + stress_risk + unconscious_risk + ai_risk)
+            
+            incident_prob = base_prob * convergent_multiplier * (1 + total_risk_factors)
+            incident_prob = min(incident_prob, 0.4)  # Cap at 40% daily probability
+            
+            # Special cases for extreme psychological states
+            if states['stress_response'] > 0.8 and states['group_dynamics'] > 0.7:
+                incident_prob *= 1.5  # Perfect storm multiplier
+                
+            if states['unconscious_processes'] > 0.6 and states['authority_compliance'] > 0.8:
+                incident_prob *= 1.3  # Authority exploitation multiplier
+                
             incident_occurred = random.random() < incident_prob
             incidents.append(incident_occurred)
             
@@ -209,19 +267,23 @@ class CPFSyntheticGenerator:
         df['security_incident'] = incidents
         
         # Add lagged features (psychological states often precede incidents by 1-3 days)
-        for col in ['authority_compliance', 'urgency_bypass', 'cognitive_load', 'convergent_risk']:
+        for col in ['authority_compliance', 'urgency_bypass', 'social_influence', 'affective_vuln', 
+                   'cognitive_load', 'group_dynamics', 'stress_response', 'unconscious_processes', 
+                   'ai_bias', 'convergent_risk']:
             df[f'{col}_lag1'] = df[col].shift(1)
             df[f'{col}_lag3'] = df[col].shift(3)
         
         return df
     
     def analyze_correlations(self, df: pd.DataFrame) -> Dict[str, float]:
-        """Analyze correlations between psychological states and security incidents"""
+        """Analyze correlations between all psychological states and security incidents"""
         
         correlations = {}
         
-        psych_cols = ['authority_compliance', 'urgency_bypass', 'affective_vuln', 
-                     'cognitive_load', 'convergent_risk']
+        # All psychological categories
+        psych_cols = ['authority_compliance', 'urgency_bypass', 'social_influence', 
+                     'affective_vuln', 'cognitive_load', 'group_dynamics', 
+                     'stress_response', 'unconscious_processes', 'ai_bias', 'convergent_risk']
         
         for col in psych_cols:
             # Current day correlation
@@ -233,6 +295,11 @@ class CPFSyntheticGenerator:
                 corr_lag1 = df[f'{col}_lag1'].corr(df['security_incident'].astype(int))
                 correlations[f'{col}_lag1'] = corr_lag1
                 
+        # Category interdependencies
+        correlations['authority_stress_interaction'] = df['authority_compliance'].corr(df['stress_response'])
+        correlations['cognitive_group_interaction'] = df['cognitive_load'].corr(df['group_dynamics'])
+        correlations['unconscious_affective_interaction'] = df['unconscious_processes'].corr(df['affective_vuln'])
+        
         return correlations
 
 def run_synthetic_pilot():
@@ -266,33 +333,83 @@ def run_synthetic_pilot():
         
         print(f"  Incident rate: {incident_rate:.3f}")
         print(f"  Convergent risk correlation: {correlations.get('convergent_risk_same_day', 0):.3f}")
+        print(f"  Stress response correlation: {correlations.get('stress_response_same_day', 0):.3f}")
+        print(f"  Group dynamics correlation: {correlations.get('group_dynamics_same_day', 0):.3f}")
         
-        # Visualization
-        plt.figure(figsize=(12, 8))
+        # Enhanced visualization with all categories
+        plt.figure(figsize=(16, 12))
         
-        plt.subplot(2, 2, 1)
-        plt.plot(df['convergent_risk'], alpha=0.7)
-        plt.title('Convergent Risk Over Time')
-        plt.ylabel('Risk Level')
+        plt.subplot(3, 3, 1)
+        plt.plot(df['convergent_risk'], alpha=0.7, label='Convergent Risk')
+        plt.plot(df['stress_response'], alpha=0.7, label='Stress Response')
+        plt.title('High-Risk Categories Over Time')
+        plt.legend()
         
-        plt.subplot(2, 2, 2)
+        plt.subplot(3, 3, 2)
         incident_cumsum = df['security_incident'].cumsum()
         plt.plot(incident_cumsum)
         plt.title('Cumulative Security Incidents')
         plt.ylabel('Total Incidents')
         
-        plt.subplot(2, 2, 3)
-        plt.scatter(df['convergent_risk'], df['security_incident'], alpha=0.6)
-        plt.xlabel('Convergent Risk')
+        plt.subplot(3, 3, 3)
+        plt.scatter(df['convergent_risk'], df['security_incident'], alpha=0.6, label='Convergent')
+        plt.scatter(df['stress_response'], df['security_incident'], alpha=0.6, label='Stress')
+        plt.xlabel('Risk Level')
         plt.ylabel('Security Incident')
         plt.title('Risk vs Incidents')
+        plt.legend()
         
-        plt.subplot(2, 2, 4)
-        # Show correlation heatmap
-        corr_matrix = df[['authority_compliance', 'urgency_bypass', 'cognitive_load', 
-                         'convergent_risk', 'security_incident']].corr()
-        sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0)
-        plt.title('Correlation Matrix')
+        plt.subplot(3, 3, 4)
+        # Authority and Social categories
+        plt.plot(df['authority_compliance'], alpha=0.7, label='Authority')
+        plt.plot(df['social_influence'], alpha=0.7, label='Social')
+        plt.title('Social Psychology Categories')
+        plt.legend()
+        
+        plt.subplot(3, 3, 5)
+        # Cognitive and Affective categories  
+        plt.plot(df['cognitive_load'], alpha=0.7, label='Cognitive Load')
+        plt.plot(df['affective_vuln'], alpha=0.7, label='Affective')
+        plt.title('Individual Psychology Categories')
+        plt.legend()
+        
+        plt.subplot(3, 3, 6)
+        # Group dynamics and unconscious
+        plt.plot(df['group_dynamics'], alpha=0.7, label='Group Dynamics')
+        plt.plot(df['unconscious_processes'], alpha=0.7, label='Unconscious')
+        plt.title('Deep Psychology Categories')
+        plt.legend()
+        
+        plt.subplot(3, 3, 7)
+        # AI bias and temporal
+        plt.plot(df['ai_bias'], alpha=0.7, label='AI Bias')
+        plt.plot(df['urgency_bypass'], alpha=0.7, label='Temporal')
+        plt.title('Modern Vulnerability Categories')
+        plt.legend()
+        
+        plt.subplot(3, 3, 8)
+        # Correlation heatmap for main categories
+        corr_cols = ['authority_compliance', 'urgency_bypass', 'social_influence', 
+                    'affective_vuln', 'cognitive_load', 'group_dynamics', 
+                    'stress_response', 'convergent_risk', 'security_incident']
+        corr_matrix = df[corr_cols].corr()
+        sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0, fmt='.2f')
+        plt.title('Category Correlation Matrix')
+        
+        plt.subplot(3, 3, 9)
+        # Perfect storm detection - high convergent risk periods
+        perfect_storms = df[df['convergent_risk'] > 0.7]
+        if len(perfect_storms) > 0:
+            plt.scatter(perfect_storms.index, perfect_storms['convergent_risk'], 
+                       c='red', s=100, alpha=0.7, label='Perfect Storms')
+            plt.scatter(df.index, df['convergent_risk'], alpha=0.3, c='blue')
+            plt.title('Perfect Storm Detection')
+            plt.ylabel('Convergent Risk')
+            plt.legend()
+        else:
+            plt.text(0.5, 0.5, 'No Perfect Storms\nDetected', 
+                    transform=plt.gca().transAxes, ha='center', va='center')
+            plt.title('Perfect Storm Detection')
         
         plt.tight_layout()
         plt.savefig(f'cpf_synthetic_org_{i+1}.png', dpi=300, bbox_inches='tight')
@@ -306,7 +423,7 @@ if __name__ == "__main__":
     
     # Generate summary report
     print("\n" + "="*50)
-    print("CPF SYNTHETIC PILOT STUDY SUMMARY")
+    print("CPF COMPREHENSIVE SYNTHETIC PILOT STUDY")
     print("="*50)
     
     for org_id, data in results.items():
@@ -314,4 +431,18 @@ if __name__ == "__main__":
         print(f"  Base incident rate: {data['incident_rate']:.1%}")
         print(f"  Authority correlation: {data['correlations'].get('authority_compliance_same_day', 0):.3f}")
         print(f"  Temporal correlation: {data['correlations'].get('urgency_bypass_lag1', 0):.3f}")
-        print(f"  Convergent correlation: {data['correlations'].get('convergent_risk_same_day', 0):.3f}")
+        print(f"  Social correlation: {data['correlations'].get('social_influence_same_day', 0):.3f}")
+        print(f"  Affective correlation: {data['correlations'].get('affective_vuln_same_day', 0):.3f}")
+        print(f"  Cognitive correlation: {data['correlations'].get('cognitive_load_same_day', 0):.3f}")
+        print(f"  Group dynamics correlation: {data['correlations'].get('group_dynamics_same_day', 0):.3f}")
+        print(f"  Stress response correlation: {data['correlations'].get('stress_response_same_day', 0):.3f}")
+        print(f"  Unconscious processes correlation: {data['correlations'].get('unconscious_processes_same_day', 0):.3f}")
+        print(f"  AI bias correlation: {data['correlations'].get('ai_bias_same_day', 0):.3f}")
+        print(f"  Convergent risk correlation: {data['correlations'].get('convergent_risk_same_day', 0):.3f}")
+        
+        # Highlight strongest predictors
+        correlations = data['correlations']
+        strongest_predictors = sorted([(k, v) for k, v in correlations.items() 
+                                     if 'same_day' in k and 'security_incident' not in k], 
+                                    key=lambda x: abs(x[1]), reverse=True)[:3]
+        print(f"  Top 3 predictors: {[f'{k.replace('_same_day', '')}: {v:.3f}' for k, v in strongest_predictors]}")
