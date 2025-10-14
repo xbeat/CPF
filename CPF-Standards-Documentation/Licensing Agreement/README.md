@@ -263,7 +263,7 @@ Organizations seeking to validate their systematic implementation of psychologic
 
 ---
 
-### 5. Authorized Service Providers (Optional Certification)
+### 5. Authorized Service Providers
 
 **Role:**
 Consulting firms or professional services organizations that provide CPF-related services and have achieved organizational certification to use the "CPF Authorized Service Provider" designation.
@@ -274,12 +274,6 @@ Consulting firms or professional services organizations that provide CPF-related
 - ✅ Priority listing in CPF provider directory
 - ✅ Access to exclusive CPF resources and tools
 - ✅ Demonstrates organizational commitment to quality
-
-**vs. Non-Certified Firms:**
-- ❌ Cannot use "Authorized Service Provider" designation
-- ✅ Can still employ CPF certified professionals
-- ✅ Can state "We employ CPF certified professionals"
-- ❌ No access to exclusive provider benefits
 
 **Requirements:**
 - Minimum number of certified CPF professionals on staff (varies by firm size)
