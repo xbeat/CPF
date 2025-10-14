@@ -1,5 +1,7 @@
 # Cybersecurity Psychology Framework (CPF) Implementation
 
+[![arXiv](https://img.shields.io/badge/arXiv-2510.09635-b31b1b.svg)](https://arxiv.org/abs/2510.09635)
+[![DOI](https://img.shields.io/badge/DOI-10.48550/arXiv.2510.09635-blue.svg)](https://doi.org/10.48550/arXiv.2510.09635)
 [![DOI](https://zenodo.org/badge/DOI/10.2139/ssrn.5387222.svg)](http://dx.doi.org/10.2139/ssrn.5387222)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16944972.svg)](https://doi.org/10.5281/zenodo.16944972)
 [![DOI](https://zenodo.org/badge/DOI/10.57967/hf/6704.svg)](https://doi.org/10.57967/hf/6704)
