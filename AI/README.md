@@ -4,7 +4,7 @@
 [![DOI](https://img.shields.io/badge/DOI-10.48550/arXiv.2510.09635-blue.svg)](https://doi.org/10.48550/arXiv.2510.09635)
 [![DOI](https://zenodo.org/badge/DOI/10.2139/ssrn.5387222.svg)](http://dx.doi.org/10.2139/ssrn.5387222)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16944972.svg)](https://doi.org/10.5281/zenodo.16944972)
-[![DOI](https://zenodo.org/badge/DOI/10.57967/hf/6704.svg)](https://doi.org/10.57967/hf/6704)
+[![HuggingFace DOI](https://img.shields.io/badge/DOI-10.57967/hf/6704-ffd21e.svg?logo=huggingface)](https://doi.org/10.57967/hf/6704)
 
 This repository contains comprehensive implementation guides, research papers, and deployment tutorials for the **Cybersecurity Psychology Framework (CPF)** using Small Language Models (SLMs). The CPF addresses the critical gap in cybersecurity by detecting pre-cognitive psychological vulnerabilities that contribute to 85% of security breaches.
 
