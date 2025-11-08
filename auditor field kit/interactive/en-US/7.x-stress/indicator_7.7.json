@@ -1,0 +1,865 @@
+{
+  "indicator": "7.7",
+  "title": "INDICATOR 7.7 FIELD KIT",
+  "subtitle": "Stress-Induced Tunnel Vision",
+  "category": "Stress Response Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 7.x",
+
+  "description": {
+    "short": "Measures vulnerability to attentional narrowing under stress that causes security teams to miss critical peripheral security indicators while focusing exclusively on immediate obvious threats",
+    "context": "Stress-induced tunnel vision represents a fundamental neurobiological response where acute or chronic stress narrows cognitive processing to focus exclusively on immediate perceived threats while filtering out peripheral information crucial for comprehensive security assessment. This phenomenon occurs through activation of the sympathetic nervous system and HPA axis, which floods the system with stress hormones creating a cognitive 'spotlight' that illuminates only a fraction of the total information environment. The mechanism operates through attentional narrowing, working memory degradation, and increased reliance on heuristic shortcuts that may be inappropriate for novel or complex security threats.",
+    "impact": "Organizations with high-stress environments systematically miss security incidents that fall outside their immediate focus area. The Target breach (2013) exemplifies this - overwhelming alerts caused teams to miss sophisticated APT indicators while focused on known threat patterns. During high-stress periods, response times increase, false positive/negative rates worsen, and complex multi-vector attacks succeed while teams remain focused narrowly on initial attack symptoms rather than comprehensive threat landscape assessment.",
+    "psychological_basis": "Yerkes-Dodson Law demonstrates performance follows an inverted-U curve relative to arousal levels - beyond optimal arousal, increased stress leads to performance degradation, with complex cognitive tasks showing earlier degradation than simple tasks. Easterbrook's cue utilization theory explains how stress narrows attention span exponentially. LeDoux's research on the amygdala shows stress responses occur 300-500ms before conscious awareness, meaning tunnel vision effects begin before individuals recognize they are experiencing stress."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Resilient",
+        "description": "Documented procedures ensure comprehensive threat assessment during stress. Parallel investigation teams maintain routine monitoring during incidents. Mandatory scope assessment protocols with multi-vector checks. Decision validation requires external perspective for extended incidents. Cross-functional consultation occurs in 80%+ of complex events.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Developing",
+        "description": "Procedures exist but inconsistently applied during high-stress periods. Routine monitoring reduced but not eliminated during incidents. Informal scope assessment with occasional documented checks. Cross-functional consultation occurs in 50-80% of complex events.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Critical",
+        "description": "No documented procedures or procedures consistently abandoned under pressure. Routine monitoring completely stops during active incident response. No formal scope assessment or single-threat assumption standard. Cross-team consultation occurs in less than 50% of complex security events.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_time_allocation": 0.19,
+      "q2_alert_investigation": 0.17,
+      "q3_cross_team_communication": 0.15,
+      "q4_scope_assessment": 0.16,
+      "q5_decision_validation": 0.13,
+      "q6_routine_monitoring": 0.12,
+      "q7_post_incident_discovery": 0.08
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_7.7(t) = w1·TVI(t) + w2·A_width(S(t)) + w3·BD(t)",
+      "components": {
+        "tunnel_vision_index": {
+          "formula": "TVI(t) = (1 - PDR(t)) · e^(-α·CSF(t)) · f(A_width(S(t)))",
+          "description": "Composite tunnel vision measurement combining peripheral detection, context switching, and attention width",
+          "variables": {
+            "PDR": "Peripheral Detection Rate = N_peripheral_detected / N_peripheral_present",
+            "CSF": "Context Switching Frequency = N_context_switches / T_session",
+            "A_width": "Attention Width function of stress level",
+            "f": "Transformation function f(A_width) = 1 - tanh(β·A_width)"
+          },
+          "parameters": {
+            "alpha": 0.3,
+            "beta": 0.5
+          }
+        },
+        "attention_narrowing": {
+          "formula": "A_width(S) = A_max · e^(-λ·S²)",
+          "description": "Attention span narrowing following Easterbrook's cue utilization theory",
+          "variables": {
+            "A_max": "Maximum attention span under zero stress (baseline)",
+            "S": "Current stress level estimated from behavioral markers",
+            "λ": "Narrowing rate constant controlling sensitivity"
+          },
+          "parameters": {
+            "A_max": 1.0,
+            "lambda": 0.4
+          }
+        },
+        "behavioral_deviation": {
+          "formula": "BD(t) = √(Σ((b_j(t) - μ_bj) / σ_bj)²)",
+          "description": "Mahalanobis-like distance for behavioral pattern deviations",
+          "variables": {
+            "b_j": "Behavioral metrics: session_duration, click_patterns, navigation_behavior",
+            "μ_bj": "Baseline mean for behavior j",
+            "σ_bj": "Baseline standard deviation for behavior j"
+          }
+        }
+      },
+      "default_weights": {
+        "w1_tvi": 0.45,
+        "w2_attention": 0.35,
+        "w3_behavior": 0.2
+      },
+      "temporal_decay": {
+        "formula": "T_7.7(t) = α·D_7.7(t) + (1-α)·T_7.7(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 1800,
+        "description": "Exponential smoothing with 30-minute time constant for tunnel vision persistence"
+      }
+    },
+    "detection_threshold": {
+      "formula": "R_7.7(t) = 1 if TVI(t) > θ_tunnel AND threat_level(t) > θ_threat else 0",
+      "thresholds": {
+        "theta_tunnel": 0.6,
+        "theta_threat": 0.5
+      },
+      "amplification": "D_7.7(t) = TVI(t) · (1 + γ·threat_level(t))",
+      "gamma": 0.4
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "incident_response_documentation",
+        "security_team_interviews",
+        "post_incident_review_reports",
+        "cross_functional_communication_logs"
+      ],
+      "evidence_required": [
+        "incident_response_timelines_with_activity_allocation",
+        "alert_investigation_procedures_documentation",
+        "cross_team_consultation_records",
+        "scope_assessment_checklists_from_recent_incidents"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "siem_alert_logs",
+          "fields": ["alert_id", "severity", "investigation_time", "resolution_status", "analyst_id", "timestamp"],
+          "retention": "180_days"
+        },
+        {
+          "source": "incident_response_system",
+          "fields": ["incident_id", "response_team", "activity_log", "scope_changes", "duration", "stress_indicators"],
+          "retention": "365_days"
+        },
+        {
+          "source": "collaboration_platform_logs",
+          "fields": ["channel_id", "participant_count", "message_frequency", "cross_team_indicators", "timestamp"],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "security_training_simulations",
+          "fields": ["simulation_id", "stress_level", "performance_metrics", "tunnel_vision_indicators"],
+          "retention": "730_days"
+        },
+        {
+          "source": "decision_audit_logs",
+          "fields": ["decision_id", "decision_time", "validation_performed", "reversal_flag", "stress_context"],
+          "retention": "365_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "peripheral_detection_rate": {
+          "calculation": "Ratio of peripheral alerts investigated vs total peripheral alerts present",
+          "query": "SELECT COUNT(investigated=true WHERE priority='low')/COUNT(*) FROM alerts WHERE priority='low' AND concurrent_high_priority_incident=true"
+        },
+        "context_switching_frequency": {
+          "calculation": "Number of different security contexts addressed per time unit",
+          "query": "SELECT COUNT(DISTINCT security_context)/session_duration FROM analyst_sessions WHERE incident_active=true"
+        },
+        "scope_assessment_completion": {
+          "calculation": "Percentage of incidents with documented comprehensive scope assessment",
+          "query": "SELECT (COUNT(scope_assessment_complete=true)/COUNT(*)) FROM incidents WHERE severity>='high'"
+        }
+      }
+    },
+    "integration_apis": {
+      "siem": "Splunk/Sentinel API - Alert Correlation, Investigation Patterns, Response Metrics",
+      "incident_management": "PagerDuty/ServiceNow API - Response Timeline, Team Assignments, Scope Documentation",
+      "collaboration_platforms": "Slack/Teams API - Communication Patterns, Cross-Team Interaction, Stress Language Markers",
+      "security_orchestration": "SOAR Platform API - Automated Workflow Execution, Decision Points, Multi-Vector Analysis"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Impairment",
+        "probability": 0.85,
+        "factor": 1.65,
+        "description": "Acute stress directly causes attentional narrowing through sympathetic nervous system activation",
+        "formula": "P(7.7|7.1) = 0.85",
+        "evidence": "Easterbrook's cue utilization theory - stress reduces range of cues utilized in decision-making"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "Time pressure amplifies tunnel vision by forcing rapid threat prioritization",
+        "formula": "P(7.7|2.1) = 0.75"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "Cognitive depletion reduces working memory capacity needed for broad attention",
+        "formula": "P(7.7|5.2) = 0.7"
+      },
+      {
+        "indicator": "7.8",
+        "name": "Cortisol-Impaired Memory",
+        "probability": 0.75,
+        "factor": 1.45,
+        "description": "Memory impairment prevents access to comprehensive threat assessment procedures",
+        "formula": "P(7.7|7.8) = 0.75"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue",
+        "probability": 0.65,
+        "factor": 1.35,
+        "description": "Tunnel vision prevents proper alert triage, increasing fatigue from missed context"
+      },
+      {
+        "indicator": "7.8",
+        "name": "Cortisol-Impaired Memory",
+        "probability": 0.6,
+        "factor": 1.3,
+        "description": "Stress-induced tunnel vision correlates with cortisol elevation affecting memory"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["7.7", "7.1", "2.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 3.2,
+      "threshold_critical": 4.5,
+      "description": "Perfect storm: Tunnel vision + Acute stress + Time pressure = 420% increased risk of missing multi-vector attacks",
+      "real_world_example": "Target 2013 - overwhelming holiday season alerts created tunnel vision preventing recognition of sophisticated APT indicators"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["7.1", "2.1", "5.2", "7.8"],
+      "child_nodes": ["5.1", "7.8"],
+      "conditional_probability_table": {
+        "P_7.7_base": 0.18,
+        "P_7.7_given_acute_stress": 0.52,
+        "P_7.7_given_urgency": 0.45,
+        "P_7.7_given_fatigue": 0.40,
+        "P_7.7_given_all": 0.88
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_time_allocation",
+          "weight": 0.19,
+          "title": "Crisis Response Time Allocation",
+          "question": "During your last major security incident, what percentage of the response team's time was spent on comprehensive threat hunting versus addressing the most obvious symptoms?",
+          "options": [
+            {
+              "value": "balanced",
+              "score": 0,
+              "label": "Balanced - 40%+ time spent on comprehensive analysis and multi-vector threat hunting"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Moderate - 20-40% time on comprehensive analysis, majority on immediate symptoms"
+            },
+            {
+              "value": "narrow",
+              "score": 1,
+              "label": "Narrow - Less than 20% time on comprehensive analysis, almost exclusive focus on obvious symptoms"
+            }
+          ],
+          "evidence_required": "Incident timeline documentation, activity logs, specific time allocation examples",
+          "soc_mapping": "Activity time allocation from incident response system logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_alert_investigation",
+          "weight": 0.17,
+          "title": "Alert Investigation Depth",
+          "question": "When your security team receives multiple high-priority alerts simultaneously, what is your standard procedure for ensuring all alerts receive thorough investigation?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Documented parallel investigation procedures with evidence of consistent use during multi-alert scenarios"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Procedures exist but inconsistently applied, some alerts receive reduced investigation during pressure"
+            },
+            {
+              "value": "sequential",
+              "score": 1,
+              "label": "No parallel procedures, alerts investigated sequentially with later alerts often neglected"
+            }
+          ],
+          "evidence_required": "Alert investigation procedures, recent multi-alert scenario documentation",
+          "soc_mapping": "peripheral_detection_rate during high-stress alert periods"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_cross_team_communication",
+          "weight": 0.15,
+          "title": "Cross-Team Communication Under Pressure",
+          "question": "How often do your security analysts consult with other teams (network, application, compliance) when investigating complex security events during high-stress periods?",
+          "options": [
+            {
+              "value": "consistent",
+              "score": 0,
+              "label": "Consistent consultation in 80%+ of complex events with documented cross-team involvement"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Moderate consultation in 50-80% of events, reduced during highest stress periods"
+            },
+            {
+              "value": "rare",
+              "score": 1,
+              "label": "Rare consultation in less than 50% of events, siloed investigation during stress"
+            }
+          ],
+          "evidence_required": "Cross-team consultation records, collaboration platform logs, recent incident examples",
+          "soc_mapping": "context_switching_frequency and cross-team interaction patterns"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_scope_assessment",
+          "weight": 0.16,
+          "title": "Incident Response Scope Assessment",
+          "question": "What's your documented process for determining whether a security incident might be part of a larger, coordinated attack rather than an isolated event?",
+          "options": [
+            {
+              "value": "formal",
+              "score": 0,
+              "label": "Formal scope assessment protocol with documented multi-vector checks and evidence of consistent use"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Informal scope assessment, sometimes performed but not systematically documented"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No formal process, single-threat assumption standard unless evidence forces broader view"
+            }
+          ],
+          "evidence_required": "Scope assessment procedure documentation, recent incident scope analysis examples",
+          "soc_mapping": "scope_assessment_completion rate from incident logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_decision_validation",
+          "weight": 0.13,
+          "title": "Decision Validation Under Time Pressure",
+          "question": "When facing urgent security decisions (system shutdown, access revocation, emergency patches), what's your process for double-checking these decisions before implementation?",
+          "options": [
+            {
+              "value": "required",
+              "score": 0,
+              "label": "Required two-person validation for all critical actions with documented verification"
+            },
+            {
+              "value": "optional",
+              "score": 0.5,
+              "label": "Validation recommended but can be bypassed during 'emergency' situations"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No validation requirement, single decision-maker for urgent actions"
+            }
+          ],
+          "evidence_required": "Decision validation procedures, recent critical decision examples with validation records",
+          "soc_mapping": "Decision validation patterns from audit logs during high-stress periods"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_routine_monitoring",
+          "weight": 0.12,
+          "title": "Resource Allocation During Crisis",
+          "question": "How does your organization ensure that routine security monitoring continues when the team is focused on active incident response?",
+          "options": [
+            {
+              "value": "maintained",
+              "score": 0,
+              "label": "Routine monitoring continues during 90%+ of incidents with designated 'business as usual' team"
+            },
+            {
+              "value": "reduced",
+              "score": 0.5,
+              "label": "Routine monitoring reduced but not eliminated, some coverage maintained"
+            },
+            {
+              "value": "suspended",
+              "score": 1,
+              "label": "Routine monitoring completely stops during active incident response"
+            }
+          ],
+          "evidence_required": "Staffing procedures during incidents, monitoring coverage logs during recent incidents",
+          "soc_mapping": "Alert investigation rates for routine alerts during active incidents"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_post_incident_discovery",
+          "weight": 0.08,
+          "title": "Post-Incident Comprehensive Review",
+          "question": "After resolving security incidents, how often do you discover additional attack vectors or indicators that were initially missed during the response?",
+          "options": [
+            {
+              "value": "rare",
+              "score": 0,
+              "label": "Rare - Less than 20% of incidents reveal significant missed indicators in post-analysis"
+            },
+            {
+              "value": "occasional",
+              "score": 0.5,
+              "label": "Occasional - 20-40% of incidents reveal some missed indicators during initial response"
+            },
+            {
+              "value": "frequent",
+              "score": 1,
+              "label": "Frequent - More than 40% of incidents reveal significant missed indicators post-resolution"
+            }
+          ],
+          "evidence_required": "Post-incident review documentation, missed indicator tracking, recent discovery examples",
+          "soc_mapping": "Post-incident discovery rate tracked through review system"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Opening Questions - Incident Response Patterns",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "During your last major security incident, walk me through how the response team allocated their time between addressing immediate symptoms and comprehensive threat hunting. What exactly did they focus on hour by hour?",
+              "scoring_guidance": {
+                "green": "Specific time allocation showing balanced focus, documented comprehensive analysis, evidence of multi-vector investigation",
+                "yellow": "Some comprehensive analysis but majority of time on immediate symptoms, incomplete documentation",
+                "red": "Exclusive focus on obvious symptoms, no comprehensive threat hunting, single-threat assumption"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show me the incident timeline with activity breakdowns - where did the team spend each hour?",
+                  "evidence_type": "timeline_documentation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Were there any security indicators you discovered after the incident that were present during response but missed?",
+                  "evidence_type": "missed_indicator_example"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Give me a recent example where you had 5+ critical security alerts within a 2-hour window. How did your team handle investigating all of them thoroughly?",
+              "scoring_guidance": {
+                "green": "Specific example showing parallel investigation, all alerts investigated, documented procedures followed",
+                "yellow": "Mixed response with some alerts deprioritized, partial investigation of lower-priority items",
+                "red": "Sequential handling with later alerts neglected, tunnel vision on first or most obvious alert"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Which alerts received full investigation and which received reduced attention - why?",
+                  "evidence_type": "prioritization_decision"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Did any of the lower-priority alerts turn out to be significant in retrospect?",
+                  "evidence_type": "missed_threat_example"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cross-Functional Collaboration and Scope Assessment",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Tell me about a recent incident where cross-team consultation (network, application, compliance) either helped or would have helped understand the full scope. What actually happened?",
+              "scoring_guidance": {
+                "green": "Specific example showing proactive cross-team consultation revealing broader scope, documented collaboration",
+                "yellow": "Some cross-team communication but delayed or incomplete, missed opportunities for collaboration",
+                "red": "Siloed investigation, no cross-team consultation, or consultation only after escalation"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "At what point in the incident did you involve other teams - immediately or after initial investigation?",
+                  "evidence_type": "collaboration_timing"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Show me the communication records between teams during this incident",
+                  "evidence_type": "collaboration_artifact"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "What's your documented process for determining whether a security incident might be part of a larger coordinated attack? Walk me through how this worked in your most recent significant incident.",
+              "scoring_guidance": {
+                "green": "Formal scope assessment protocol with documented multi-vector checks, evidence of systematic use",
+                "yellow": "Informal scope assessment sometimes performed, inconsistent application",
+                "red": "No formal process, scope discovered reactively rather than assessed proactively"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show me the scope assessment checklist or procedure document",
+                  "evidence_type": "procedure_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Have you ever discovered a multi-vector attack after initially treating it as single-vector?",
+                  "evidence_type": "scope_discovery_example"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Decision Quality and Monitoring Continuity",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Tell me about a time when your team faced an urgent security decision under pressure. How did you validate the decision before implementing it?",
+              "scoring_guidance": {
+                "green": "Required validation process with documented two-person review, examples of validation preventing errors",
+                "yellow": "Some validation but can be bypassed for 'emergencies', inconsistent application",
+                "red": "No validation requirement, single decision-maker under pressure, decisions regretted in retrospect"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Have you ever made a decision during an incident that you later wished you'd validated more thoroughly?",
+                  "evidence_type": "decision_regret_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Show me the approval records for critical decisions during your last major incident",
+                  "evidence_type": "decision_audit_trail"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "During your last major incident, how did you ensure routine security monitoring continued? Give me specific examples of what was and wasn't monitored.",
+              "scoring_guidance": {
+                "green": "Dedicated team maintained routine monitoring, evidence of continued coverage, specific examples",
+                "yellow": "Partial monitoring continued with reduced coverage, some gaps acknowledged",
+                "red": "All resources diverted to incident, routine monitoring suspended, no coverage maintained"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show me the alert logs during the incident - were routine alerts still being investigated?",
+                  "evidence_type": "monitoring_continuity_evidence"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What's your staffing policy for maintaining coverage during extended incidents?",
+                  "evidence_type": "staffing_procedure"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"During incidents we focus on stopping the bleeding before looking for other problems...\"",
+              "severity": "high",
+              "score_impact": 0.17,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"We don't have time for comprehensive analysis when we're under attack...\"",
+              "severity": "critical",
+              "score_impact": 0.20,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"All hands on deck during incidents - routine monitoring can wait...\"",
+              "severity": "high",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"We investigate the most critical alerts first and get to others when we can...\"",
+              "severity": "medium",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Cross-team consultation slows down our incident response...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"We often discover additional attack vectors in post-incident analysis...\"",
+              "severity": "medium",
+              "score_impact": 0.14,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject multi-vector attack simulations monthly to test comprehensive threat assessment",
+      "correlation_analysis": "Compare tunnel vision indicators with missed threat detection rates (target correlation > 0.75)",
+      "drift_detection": "Monitor investigation scope patterns, recalibrate if scope narrowing trend detected (p < 0.05)"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted attention narrowing matches observed investigation scope",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Scope assessment completion rate drops below 60% or drift detected"
+    },
+    "success_metrics": [
+      {
+        "metric": "Incident Scope Accuracy Rate",
+        "formula": "% of incidents where initial scope assessment matches final post-incident analysis",
+        "baseline": "current accuracy rate from past 90 days",
+        "target": "85% accuracy within 90 days",
+        "measurement": "monthly post-incident review comparison"
+      },
+      {
+        "metric": "Multi-Vector Detection Rate",
+        "formula": "% of complex attacks where all vectors identified during active response vs post-incident",
+        "baseline": "current detection rate from incident reviews",
+        "target": "75% detection during active response within 180 days",
+        "measurement": "quarterly red team review analysis"
+      },
+      {
+        "metric": "Response Quality Under Pressure",
+        "formula": "Decision reversal rates and missed indicators during high-stress periods",
+        "baseline": "current reversal and miss rates",
+        "target": "<15% decision reversals, <25% missed critical indicators within 90 days",
+        "measurement": "monthly stress-period performance analysis"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Incident Response Decision Trees",
+        "description": "Implement mandatory decision trees for all security incidents that force consideration of multiple attack vectors before proceeding",
+        "implementation": "Create detailed decision trees with specific checkpoints: 'Have you checked for lateral movement?', 'Have you verified this isn't a distraction attack?', 'What systems weren't affected?', 'Have you consulted with network/app/compliance teams?'. Require documented completion of all checkpoints before incident closure. Integrate into incident management system with automatic reminders.",
+        "technical_controls": "Decision tree workflow in incident management platform; automated checkpoint reminders; completion tracking with audit trail; escalation for incomplete assessments",
+        "roi": "340% average within 18 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Parallel Investigation Teams",
+        "description": "Establish minimum staffing requirements ensuring routine security monitoring continues during incident response",
+        "implementation": "Create formal 'business as usual' teams that cannot be reassigned to incident response without executive approval. Implement rotating incident response assignments to prevent team exhaustion. Define clear boundaries: IR team handles active incident, BAU team maintains routine monitoring and investigates new alerts. Minimum 30% of security staff must remain on BAU during any incident.",
+        "technical_controls": "Staffing assignment system with role enforcement; automated workload balancing; BAU coverage monitoring; alert routing based on team assignments",
+        "roi": "390% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Stress Circuit Breakers",
+        "description": "Implement mandatory pause protocols when incident response exceeds defined stress thresholds",
+        "implementation": "Define stress triggers: multiple critical alerts, response time >4 hours, executive escalation, team fatigue indicators. Automatic activation of circuit breakers requiring 15-minute team huddles every 2 hours during extended incidents to reassess scope and approach. External perspective requirement for incidents lasting >8 hours (consultant, different team, or senior review). Documented pause and reassessment in incident timeline.",
+        "technical_controls": "Stress indicator monitoring; automated circuit breaker triggers; timer-based huddle reminders; external reviewer notification system",
+        "roi": "310% average within 18 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Cross-Functional Review Panels",
+        "description": "Establish mandatory consultation requirements with network, application, and compliance teams for all critical/high severity incidents",
+        "implementation": "Create standardized consultation templates with specific questions each team must answer: Network team verifies lateral movement checks, App team confirms application-layer attack vectors assessed, Compliance validates regulatory implications considered. Implement escalation triggers when consultation reveals conflicting information or missed vectors. Include cross-functional review in incident closure criteria.",
+        "technical_controls": "Consultation workflow automation; cross-team notification system; response collection and analysis; conflict detection and escalation",
+        "roi": "360% average within 12 months",
+        "effort": "medium",
+        "timeline": "60 days"
+      },
+      {
+        "id": "sol_5",
+        "title": "Automated Scope Assessment Tools",
+        "description": "Deploy security orchestration tools that automatically correlate incidents across time windows, attack vectors, and affected systems",
+        "implementation": "Configure SOAR platform to automatically analyze: (1) temporal correlation - similar incidents in past 72 hours, (2) systemic correlation - same attack patterns across different systems, (3) user correlation - targeting patterns, (4) TTP correlation - matching tactics/techniques/procedures. Generate automated scope assessment reports requiring analyst review before declaring incidents 'contained'. Alert for potential multi-vector attacks based on statistical patterns.",
+        "technical_controls": "SOAR platform configuration; correlation rule development; automated scope report generation; analyst workflow requiring scope review; statistical anomaly detection",
+        "roi": "450% average within 18 months",
+        "effort": "high",
+        "timeline": "90 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Post-Incident Red Team Reviews",
+        "description": "Conduct structured red team reviews within 48 hours of incident resolution specifically looking for missed indicators and alternative attack vectors",
+        "implementation": "Establish dedicated red team (internal or external) that reviews all critical incidents within 48 hours of resolution. Review focuses on: indicators present but not detected, attack vectors not investigated, scope limitations that may have missed activity. Include external security consultants in reviews for critical incidents. Maintain database of 'missed indicators' to identify tunnel vision patterns and training needs. Feed findings back into detection rules and training programs.",
+        "technical_controls": "Red team review workflow; missed indicator database; pattern analysis tools; training program integration; detection rule update process",
+        "roi": "280% average within 18 months",
+        "effort": "medium",
+        "timeline": "30-45 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_2", "sol_5"],
+      "high_value": ["sol_1", "sol_4"],
+      "stress_management": ["sol_3"],
+      "continuous_improvement": ["sol_6"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Multi-Vector Distraction Attacks",
+      "description": "Attackers launch obvious, noisy attacks (DDoS, defacements, ransomware) to trigger tunnel vision, then execute their primary objective (data exfiltration, lateral movement, credential harvesting) while security teams focus exclusively on the distraction",
+      "attack_vector": "Coordinated multi-stage attack with obvious distraction preceding stealthy primary attack",
+      "psychological_mechanism": "Stress-induced attentional narrowing causes teams to focus exclusively on loud, obvious threats while missing subtle sophisticated activity",
+      "historical_example": "Target 2013 breach - overwhelming alerts caused teams to miss sophisticated APT indicators while focused on known threat patterns",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["simultaneous_high_volume_low_sophistication_attacks", "unusual_quiet_activity_during_noisy_incident", "data_movement_during_distraction", "tunnel_vision_indicators"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Crisis Amplification Exploitation",
+      "description": "During natural business crises (earnings releases, regulatory audits, system migrations), attackers exploit organizational stress by launching attacks knowing that tunnel vision will prevent comprehensive threat assessment",
+      "attack_vector": "Timing attacks to coincide with known organizational stress periods when tunnel vision is most severe",
+      "psychological_mechanism": "Pre-existing organizational stress amplifies attentional narrowing, reducing peripheral threat detection capacity",
+      "historical_example": "COVID-19 pandemic - widespread exploitation of organizational stress and tunnel vision on operational continuity rather than security",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["attacks_during_known_stress_periods", "reduced_alert_investigation_breadth", "increased_time_to_detection", "scope_limitation_patterns"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Authority-Based Social Engineering During Incidents",
+      "description": "Attackers impersonate executives during high-stress incident response when employees are already under pressure, exploiting tunnel vision to bypass normal verification procedures",
+      "attack_vector": "CEO fraud, executive impersonation, fake incident responder during active security incidents",
+      "psychological_mechanism": "Incident-induced tunnel vision prevents verification behaviors; stress reduces prefrontal cortex control over automatic compliance",
+      "historical_example": "Multiple BEC incidents during security crises when verification procedures bypassed due to incident focus",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["authority_requests_during_incidents", "verification_bypasses", "unusual_executive_access_requests", "stress_period_correlation"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Complex Attack Staging",
+      "description": "Sophisticated attackers use initial compromise to create ongoing low-level stress through system instability or performance issues, then exploit the resulting tunnel vision to execute advanced persistent threat activities while security teams remain focused on system reliability rather than security indicators",
+      "attack_vector": "Multi-stage attack creating chronic stress conditions before executing primary objectives",
+      "psychological_mechanism": "Chronic stress from system issues creates persistent tunnel vision preventing recognition of APT indicators",
+      "historical_example": "Equifax 2017 - organizational stress from handling multiple simultaneous vulnerabilities created tunnel vision preventing proper coordination",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["prolonged_system_instability", "chronic_stress_indicators", "APT_indicators_during_operational_issues", "delayed_threat_recognition"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Yerkes, R.M. & Dodson, J.D. (1908). The Relation of Strength of Stimulus to Rapidity of Habit-Formation",
+      "Easterbrook, J.A. (1959). The Effect of Emotion on Cue Utilization",
+      "LeDoux, J. (1996). The Emotional Brain",
+      "Selye, H. (1956). The Stress of Life",
+      "Miller, G.A. (1956). The Magical Number Seven, Plus or Minus Two"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}
