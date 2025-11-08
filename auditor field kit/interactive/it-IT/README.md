@@ -42,15 +42,13 @@ Ogni file JSON segue lo schema standardizzato con testo tradotto in italiano:
   "subtitle": "Nome Specifico della Vulnerabilità",
   "category": "Nome Categoria",
   "version": "1.0",
-  "description": "Descrizione dettagliata in italiano...",
+  "description": { ... },
   "scoring": {
     "method": "bayesian_weighted",
     "weights": { ... },
     "question_weights": { ... }
   },
-  "detection_formula": {
-    "mathematical_model": { ... }
-  },
+  "detection_formula": { ... },
   "data_sources": [ ... ],
   "interdependencies": { ... },
   "sections": [

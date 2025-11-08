@@ -42,15 +42,13 @@ Each indicator JSON file follows this standardized schema:
   "subtitle": "Specific Vulnerability Name",
   "category": "Category Name",
   "version": "1.0",
-  "description": "Detailed description...",
+  "description": { ... },
   "scoring": {
     "method": "bayesian_weighted",
     "weights": { ... },
     "question_weights": { ... }
   },
-  "detection_formula": {
-    "mathematical_model": { ... }
-  },
+  "detection_formula": { ... },
   "data_sources": [ ... ],
   "interdependencies": { ... },
   "sections": [
