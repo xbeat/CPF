@@ -1,0 +1,973 @@
+{
+  "indicator": "2.6",
+  "title": "INDICATOR 2.6 FIELD KIT",
+  "subtitle": "Temporal Exhaustion Patterns",
+  "category": "Temporal Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 2.x",
+
+  "description": {
+    "short": "Measures systematic degradation of security vigilance during extended work periods, irregular shifts, or sustained high-stress operations that deplete cognitive resources needed for sound security decisions",
+    "context": "Temporal exhaustion patterns occur when security teams work extended hours, irregular shifts, or face sustained high-stress periods that deplete cognitive resources needed for sound security decisions. This creates predictable windows when staff are more likely to miss threats, skip security procedures, or fall victim to social engineering attacks. Organizations with inadequate fatigue management become vulnerable during night shifts, after major incidents, holiday periods, and extended operational cycles when exhausted personnel make critical security errors.",
+    "impact": "Organizations experiencing temporal exhaustion vulnerabilities suffer from increased false positive rates and missed threats during night shifts and extended operations, password security degradation during high-workload periods, and incident response breakdown. Historical incidents include Target Corporation (2013) breach during holiday season with extended IT staff hours, Anthem Healthcare (2015) during concurrent system updates creating sustained cognitive load, and NotPetya (2017) spreading rapidly during European summer holidays with reduced staffing.",
+    "psychological_basis": "Ego Depletion Theory (Roy Baumeister) demonstrates that self-control operates like a muscle that becomes fatigued with use. In cybersecurity contexts, continuous vigilance requirements deplete finite psychological resources, progressively impairing judgment. Circadian Rhythm Disruption affects attention, working memory, and risk assessment capabilities. Selye's General Adaptation Syndrome describes how prolonged stress exposure leads to exhaustion characterized by depleted physiological and psychological resources. Neurologically, prefrontal cortex glucose depletion leads to impaired executive function after 2-4 hours of intensive cognitive work, while cortisol dysregulation from chronic stress impairs memory consolidation and threat assessment accuracy."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Resilient",
+        "description": "Maximum shifts are 8-10 hours with mandatory 10+ hour rest periods. Formal fatigue management policies with documented recent examples. Adequate staffing maintains normal coverage during nights/weekends/holidays. Incident response includes mandatory rotation procedures for 8+ hour events. Regular workload monitoring with documented redistributions in past 6 months. Annual manager training on fatigue recognition with attendance records. Security systems include fatigue-aware alerting and decision support features.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Developing",
+        "description": "Some shifts exceed 10 hours but rest policies exist with occasional enforcement. Informal fatigue management with inconsistent application. Reduced but adequate coverage during off-hours with some documented gaps. Incident response has some rotation procedures but not consistently followed. Workload monitoring exists but redistribution is reactive rather than proactive. Manager training on fatigue exists but is outdated or incomplete. Some system adaptations for high-stress periods but not comprehensive.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Critical",
+        "description": "Regular shifts exceed 12 hours or no mandatory rest period policies. No formal fatigue management or consistent rest period enforcement. Skeleton crews during nights/weekends with documented security coverage gaps. No rotation procedures for extended incident response (12+ hours). No systematic workload monitoring or evidence of fatigue-based redistributions. No manager training on recognizing or managing team exhaustion. Security systems do not account for operator fatigue states or decision quality.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_shift_duration": 0.18,
+      "q2_recovery_time": 0.16,
+      "q3_night_weekend_coverage": 0.15,
+      "q4_incident_fatigue": 0.14,
+      "q5_workload_monitoring": 0.13,
+      "q6_manager_training": 0.12,
+      "q7_alert_adaptation": 0.12
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_2.6(t) = w1·R_2.6(t) + w2·A_2.6(t) + w3·B_2.6(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_2.6(t) = 1 if F(t)/F_threshold > 1.0 AND V_circ(t)/V_0 < 0.7, else 0",
+          "description": "Binary detection based on cumulative fatigue exceeding threshold combined with circadian performance degradation",
+          "threshold": {
+            "F_ratio": 1.0,
+            "V_circ_ratio": 0.7
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_2.6(t) = sqrt((x(t) - μ)ᵀ Σ⁻¹ (x(t) - μ))",
+          "description": "Mahalanobis distance for multivariate exhaustion patterns",
+          "variables": {
+            "x(t)": "observation vector [response_time, error_rate, alert_investigation_rate, hours_worked]",
+            "μ": "baseline mean from historical performance data",
+            "Σ": "covariance matrix accounting for individual variation and shift patterns"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_2.6(t) = P(exhausted|factors) = [P(factors|exhausted) × P(exhausted)] / P(factors)",
+          "factors": [
+            "consecutive_hours_worked",
+            "time_since_last_break",
+            "circadian_low_point",
+            "cumulative_workload",
+            "error_rate_increase",
+            "response_time_degradation"
+          ],
+          "priors": {
+            "P_normal_performance": 0.75,
+            "P_exhausted": 0.25
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.3,
+        "w2_anomaly": 0.4,
+        "w3_bayesian": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_2.6(t) = α·D_2.6(t) + (1-α)·T_2.6(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200,
+        "description": "Exponential smoothing with 2-hour time constant to capture fatigue accumulation"
+      }
+    },
+    "vigilance_decay": {
+      "formula": "V(t) = V_0 · e^(-α·t) + V_min",
+      "description": "Vigilance decay function modeling performance degradation over continuous work period",
+      "parameters": {
+        "V_0": "Initial vigilance level (baseline performance)",
+        "alpha": "Decay rate (typically 0.1-0.15 per hour)",
+        "t": "Hours of continuous work",
+        "V_min": "Minimum sustainable vigilance level"
+      }
+    },
+    "circadian_modulation": {
+      "formula": "V_circ(t) = V(t) · (1 + A·sin(2π(t - φ)/24 + ψ))",
+      "description": "Circadian rhythm modulation of vigilance accounting for time-of-day effects",
+      "parameters": {
+        "A": "Circadian amplitude (typically 0.15-0.25)",
+        "φ": "Phase shift for organizational time zone",
+        "ψ": "Individual chronotype adjustment",
+        "t": "Hour of day (0-24)"
+      }
+    },
+    "cumulative_fatigue": {
+      "formula": "F(t) = ∫[0 to t] W(τ)·e^(-λ(t-τ)) dτ",
+      "description": "Cumulative fatigue model with exponential recovery",
+      "parameters": {
+        "W(τ)": "Workload function over time",
+        "λ": "Recovery rate during rest periods",
+        "t": "Current time",
+        "τ": "Integration variable (past time)"
+      }
+    },
+    "detection_threshold": {
+      "formula": "D_2.6(t) = (F(t)/F_threshold) · (1 - V_circ(t)/V_0)",
+      "description": "Combined detection score incorporating fatigue accumulation and circadian performance",
+      "interpretation": "Values > 0.5 indicate high exhaustion vulnerability requiring intervention"
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "shift_schedule_documentation",
+        "incident_response_logs",
+        "workload_distribution_records",
+        "manager_training_records"
+      ],
+      "evidence_required": [
+        "shift_schedules_with_duration_tracking",
+        "rest_period_policies_and_enforcement_logs",
+        "recent_extended_incident_response_examples",
+        "workload_redistribution_documentation",
+        "fatigue_management_training_materials"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "workforce_management_system",
+          "fields": ["employee_id", "shift_start", "shift_end", "shift_duration", "rest_period", "timestamp"],
+          "retention": "180_days"
+        },
+        {
+          "source": "security_alert_logs",
+          "fields": ["analyst_id", "alert_received", "alert_investigated", "investigation_duration", "alert_disposition", "timestamp"],
+          "retention": "90_days"
+        },
+        {
+          "source": "incident_response_tickets",
+          "fields": ["ticket_id", "assigned_staff", "response_start", "response_end", "staff_rotation_events", "timestamp"],
+          "retention": "365_days"
+        },
+        {
+          "source": "performance_metrics",
+          "fields": ["analyst_id", "response_time", "error_rate", "false_positive_rate", "decision_quality_score", "timestamp"],
+          "retention": "180_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "biometric_systems",
+          "fields": ["user_id", "typing_speed", "typing_errors", "mouse_movement_patterns", "timestamp"],
+          "retention": "30_days",
+          "note": "Only if ethically and legally appropriate with consent"
+        },
+        {
+          "source": "hr_systems",
+          "fields": ["employee_id", "sick_leave_usage", "pto_patterns", "overtime_hours", "burnout_indicators"],
+          "retention": "365_days"
+        },
+        {
+          "source": "environmental_sensors",
+          "fields": ["location", "light_levels", "temperature", "timestamp"],
+          "retention": "90_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "F_ratio": {
+          "calculation": "Cumulative fatigue score relative to threshold",
+          "query": "SELECT (SUM(shift_duration * workload_intensity) / 8.0) as F_ratio FROM workforce_logs WHERE employee_id IN (security_team) AND timestamp > NOW() - INTERVAL '7 days'"
+        },
+        "V_circ_ratio": {
+          "calculation": "Current circadian performance relative to baseline",
+          "query": "SELECT AVG(performance_score) / baseline_performance as V_circ FROM performance_metrics WHERE HOUR(timestamp) = HOUR(NOW()) AND employee_id IN (security_team)"
+        },
+        "response_time_degradation": {
+          "calculation": "Current response time compared to baseline",
+          "query": "SELECT AVG(response_time) / baseline_response_time FROM alert_logs WHERE analyst_id = ? AND timestamp > NOW() - INTERVAL '2 hours'"
+        },
+        "error_rate": {
+          "calculation": "Current error rate in security procedures",
+          "query": "SELECT COUNT(errors) / COUNT(actions) FROM security_actions WHERE timestamp > NOW() - INTERVAL '4 hours' AND shift_hours > 6"
+        }
+      }
+    },
+    "integration_apis": {
+      "workforce_management": "API - Shift Schedules, Time Tracking, Rest Period Compliance",
+      "siem": "Splunk/Sentinel API - Performance Metrics, Alert Processing Times",
+      "incident_management": "ServiceNow/Jira API - Ticket Assignment, Duration, Staff Rotation",
+      "hr_systems": "Workday/BambooHR API - Overtime, Leave Patterns, Burnout Indicators"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "2.2",
+        "name": "Time Pressure Cognitive Degradation",
+        "probability": 0.8,
+        "factor": 1.5,
+        "description": "Time pressure combined with exhaustion creates compounding cognitive impairment",
+        "formula": "P(2.6|2.2) = 0.8"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "Stress amplifies fatigue effects and accelerates cognitive resource depletion",
+        "formula": "P(2.6|7.1) = 0.75"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.85,
+        "factor": 1.6,
+        "description": "Decision fatigue and temporal exhaustion share overlapping mechanisms and compound each other",
+        "formula": "P(2.6|5.2) = 0.85"
+      },
+      {
+        "indicator": "2.7",
+        "name": "Time-of-Day Vulnerability Windows",
+        "probability": 0.7,
+        "factor": 1.3,
+        "description": "Circadian low points amplify exhaustion effects on security performance",
+        "formula": "P(2.6|2.7) = 0.7"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Security Bypass",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Exhausted personnel more likely to bypass security controls under any time pressure"
+      },
+      {
+        "indicator": "1.1",
+        "name": "Unquestioning Compliance",
+        "probability": 0.55,
+        "factor": 1.25,
+        "description": "Fatigue reduces critical thinking and increases automatic compliance with authority"
+      },
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "Temporal exhaustion accelerates onset and severity of alert fatigue"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["2.6", "2.2", "7.1", "2.7"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 3.2,
+      "threshold_critical": 4.0,
+      "description": "Perfect storm: Temporal exhaustion + Time pressure + Acute stress + Circadian low point = 320% increased security failure probability during night shift extended incidents",
+      "real_world_example": "Target Corporation 2013 - Holiday season extended hours combined with high workload led to missed critical security alerts during overnight periods"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["2.2", "7.1", "5.2", "2.7"],
+      "child_nodes": ["2.1", "1.1", "5.1"],
+      "conditional_probability_table": {
+        "P_2.6_base": 0.20,
+        "P_2.6_given_time_pressure": 0.50,
+        "P_2.6_given_stress": 0.45,
+        "P_2.6_given_decision_fatigue": 0.55,
+        "P_2.6_given_circadian_low": 0.40,
+        "P_2.6_given_all": 0.88
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_shift_duration",
+          "weight": 0.18,
+          "title": "Maximum Shift Duration and Rest Policies",
+          "question": "What is the longest continuous shift your security team members work during normal operations and incident response? What are your mandatory rest period policies?",
+          "options": [
+            {
+              "value": "green",
+              "score": 0,
+              "label": "Maximum shifts are 8-10 hours with mandatory 10+ hour rest periods between shifts, documented and consistently enforced"
+            },
+            {
+              "value": "yellow",
+              "score": 0.5,
+              "label": "Some shifts exceed 10 hours, rest policies exist but enforcement is inconsistent or varies by situation"
+            },
+            {
+              "value": "red",
+              "score": 1,
+              "label": "Regular shifts exceed 12 hours or no mandatory rest period policies exist"
+            }
+          ],
+          "evidence_required": "Shift schedule documentation, rest period policy, recent examples of shift durations",
+          "soc_mapping": "shift_duration from workforce_management_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_recovery_time",
+          "weight": 0.16,
+          "title": "Post-Incident Recovery Time",
+          "question": "How much mandatory rest time do you provide after major security incidents or extended work periods? Tell us about a recent incident and the actual recovery time your team received.",
+          "options": [
+            {
+              "value": "green",
+              "score": 0,
+              "label": "Formal fatigue management policies with mandatory recovery time equal to or greater than incident duration, with documented recent examples"
+            },
+            {
+              "value": "yellow",
+              "score": 0.5,
+              "label": "Informal fatigue management with some recovery time provided but inconsistently applied"
+            },
+            {
+              "value": "red",
+              "score": 1,
+              "label": "No formal fatigue management or consistent rest period enforcement after major incidents"
+            }
+          ],
+          "evidence_required": "Recent major incident response logs, documented recovery time assignments, fatigue management policy",
+          "soc_mapping": "rest_period from incident_response_tickets"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_night_weekend_coverage",
+          "weight": 0.15,
+          "title": "Night, Weekend, and Holiday Staffing",
+          "question": "How do you staff security operations during nights, weekends, and holidays? Provide a specific example of staffing levels during your last holiday period or weekend emergency.",
+          "options": [
+            {
+              "value": "green",
+              "score": 0,
+              "label": "Adequate staffing maintains normal coverage levels during nights, weekends, and holidays with full operational capability"
+            },
+            {
+              "value": "yellow",
+              "score": 0.5,
+              "label": "Reduced but adequate coverage during off-hours with some documented gaps in capability"
+            },
+            {
+              "value": "red",
+              "score": 1,
+              "label": "Skeleton crews during nights and weekends with documented security coverage gaps or single-person operations"
+            }
+          ],
+          "evidence_required": "Shift schedules for nights/weekends/holidays, recent holiday period staffing example, coverage gap documentation",
+          "soc_mapping": "staffing_levels by time_period from workforce_management_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_incident_fatigue",
+          "weight": 0.14,
+          "title": "Extended Incident Response Fatigue Management",
+          "question": "When a major security incident requires 12+ hours of response time, what procedures do you have to manage team fatigue and maintain decision quality? Give us an example of your longest recent incident response.",
+          "options": [
+            {
+              "value": "green",
+              "score": 0,
+              "label": "Incident response includes mandatory rotation procedures for events exceeding 8 hours with documented handover processes and fresh team assignments"
+            },
+            {
+              "value": "yellow",
+              "score": 0.5,
+              "label": "Some rotation procedures exist for extended incidents but not consistently followed or documented"
+            },
+            {
+              "value": "red",
+              "score": 1,
+              "label": "No rotation procedures for extended incident response, same team continues until incident resolution regardless of duration"
+            }
+          ],
+          "evidence_required": "Incident response playbooks with rotation procedures, recent extended incident example with rotation logs",
+          "soc_mapping": "staff_rotation_events from incident_response_tickets"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_workload_monitoring",
+          "weight": 0.13,
+          "title": "Workload Distribution and Fatigue Monitoring",
+          "question": "How do you monitor and redistribute security workloads when team members show signs of exhaustion or overwork? Tell us about a time when you had to adjust workloads due to staff fatigue.",
+          "options": [
+            {
+              "value": "green",
+              "score": 0,
+              "label": "Regular systematic workload monitoring with documented workload redistributions based on fatigue indicators in past 6 months"
+            },
+            {
+              "value": "yellow",
+              "score": 0.5,
+              "label": "Workload monitoring exists but redistribution is reactive rather than proactive, inconsistent documentation"
+            },
+            {
+              "value": "red",
+              "score": 1,
+              "label": "No systematic workload monitoring or evidence of fatigue-based workload redistributions"
+            }
+          ],
+          "evidence_required": "Workload monitoring system documentation, recent redistribution examples, fatigue indicator tracking",
+          "soc_mapping": "workload_intensity and redistribution_events from workforce_management_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_manager_training",
+          "weight": 0.12,
+          "title": "Manager Fatigue Recognition Training",
+          "question": "What training do your security managers receive to recognize and respond to team exhaustion that could compromise security decisions? Describe your most recent manager training on this topic.",
+          "options": [
+            {
+              "value": "green",
+              "score": 0,
+              "label": "Annual manager training on fatigue recognition and intervention with documented attendance records and competency assessment"
+            },
+            {
+              "value": "yellow",
+              "score": 0.5,
+              "label": "Manager training on fatigue exists but is outdated (>2 years), incomplete, or lacks practical fatigue recognition skills"
+            },
+            {
+              "value": "red",
+              "score": 1,
+              "label": "No manager training on recognizing or managing team exhaustion and its security implications"
+            }
+          ],
+          "evidence_required": "Manager training curriculum on fatigue management, attendance records, recent training date and content",
+          "soc_mapping": "training_records from hr_systems"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_alert_adaptation",
+          "weight": 0.12,
+          "title": "Fatigue-Aware Security System Adaptation",
+          "question": "How do your security monitoring systems and procedures adapt when operators are working extended hours or during known high-fatigue periods? Give us an example of system adjustments made during a recent high-stress period.",
+          "options": [
+            {
+              "value": "green",
+              "score": 0,
+              "label": "Security systems include fatigue-aware alerting with automated decision support, reduced manual decision requirements, and verification checks during high-fatigue periods"
+            },
+            {
+              "value": "yellow",
+              "score": 0.5,
+              "label": "Some system adaptations exist for high-stress periods but not comprehensive or consistently applied"
+            },
+            {
+              "value": "red",
+              "score": 1,
+              "label": "Security systems do not account for operator fatigue states or adapt decision complexity based on work duration"
+            }
+          ],
+          "evidence_required": "System configuration for fatigue-aware operations, recent examples of system adaptations, decision support tool documentation",
+          "soc_mapping": "alert_complexity_adaptation from security_alert_logs"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Green options (score 0) indicate low vulnerability with strong fatigue management practices. Yellow options (score 0.5) indicate partial implementation. Red options (score 1.0) indicate high vulnerability with inadequate fatigue management. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Opening Questions - Work Schedule and Fatigue Management",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "What is the longest continuous shift your security team members work during normal operations and incident response? Include specific examples of recent extended work periods.",
+              "scoring_guidance": {
+                "green": "Specific shift duration limits (8-10 hours max) with documented enforcement and recent examples showing compliance",
+                "yellow": "General awareness of shift duration issues but inconsistent enforcement or vague policies",
+                "red": "No clear limits on shift duration, or regular 12+ hour shifts treated as normal"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Describe the last time someone on your security team worked more than 10 hours continuously - what were the circumstances and what happened afterward?",
+                  "evidence_type": "specific_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What happens when someone reaches your maximum shift duration during an active incident?",
+                  "evidence_type": "procedural_enforcement"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "How much mandatory rest time do you provide after major security incidents or extended work periods? Tell us about a recent incident and the actual recovery time your team received.",
+              "scoring_guidance": {
+                "green": "Formal policies with specific recovery time requirements (equal to or greater than incident duration), recent examples of enforcement",
+                "yellow": "Informal understanding that rest is needed but no formal policies or inconsistent application",
+                "red": "No recovery time policies, expectation that team returns to normal schedule immediately"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What was your team's longest incident response in the past year, and how much recovery time did they receive afterward?",
+                  "evidence_type": "specific_incident"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you ensure people actually rest during recovery periods rather than being called back for other issues?",
+                  "evidence_type": "enforcement_mechanism"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "How do you staff security operations during nights, weekends, and holidays? Provide a specific example of staffing levels during your last holiday period or weekend emergency.",
+              "scoring_guidance": {
+                "green": "Detailed staffing plan with adequate coverage across all shifts, specific recent examples showing maintained capability",
+                "yellow": "Reduced staffing acknowledged but claimed to be adequate, some gaps in coverage",
+                "red": "Skeleton crews or single-person operations during off-hours, clear capability gaps"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "During your last major holiday (Christmas, Thanksgiving), how many security staff were on duty compared to normal weekday operations?",
+                  "evidence_type": "specific_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Has there ever been a security incident during night shift or weekend when you wished you had more staff available?",
+                  "evidence_type": "gap_identification"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "When a major security incident requires 12+ hours of response time, what procedures do you have to manage team fatigue and maintain decision quality? Give us an example of your longest recent incident response.",
+              "scoring_guidance": {
+                "green": "Documented rotation procedures with specific timeframes (6-8 hours), recent incident showing successful rotation implementation",
+                "yellow": "General awareness of rotation needs but ad-hoc implementation, no formal procedures",
+                "red": "No rotation procedures, same team continues until resolution regardless of duration"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Walk me through your longest recent incident - who responded, for how long, and what rotation or relief occurred?",
+                  "evidence_type": "detailed_incident_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you handle handover between rotated team members during active incidents to maintain situational awareness?",
+                  "evidence_type": "procedural_detail"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Workload Monitoring and Adaptive Systems",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "How do you monitor and redistribute security workloads when team members show signs of exhaustion or overwork? Tell us about a time when you had to adjust workloads due to staff fatigue.",
+              "scoring_guidance": {
+                "green": "Systematic monitoring with specific metrics, recent documented examples of proactive workload redistribution",
+                "yellow": "Reactive monitoring, redistribution happens but based on complaints or obvious problems",
+                "red": "No systematic monitoring, workload redistribution rarely or never occurs"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What specific indicators do you monitor to detect when someone is becoming exhausted or overworked?",
+                  "evidence_type": "monitoring_metrics"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Give me a specific example from the past 6 months when you redistributed workload because of fatigue concerns.",
+                  "evidence_type": "specific_example"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "How do your security monitoring systems and procedures adapt when operators are working extended hours or during known high-fatigue periods? Give us an example of system adjustments made during a recent high-stress period.",
+              "scoring_guidance": {
+                "green": "Specific system adaptations with examples (reduced alert complexity, increased automation, additional verification), recent implementation",
+                "yellow": "General awareness that systems should adapt but minimal actual implementation",
+                "red": "No system adaptation for fatigue states, same complexity regardless of operator condition"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Do your security tools know when an analyst has been working for 8+ hours and adjust their operation accordingly?",
+                  "evidence_type": "technical_capability"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What decision support or automation increases when you know operators are fatigued?",
+                  "evidence_type": "adaptive_features"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cultural & Management Factors",
+          "weight": 0.40,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "What training do your security managers receive to recognize and respond to team exhaustion that could compromise security decisions? Describe your most recent manager training on this topic.",
+              "scoring_guidance": {
+                "green": "Recent (within 1 year) comprehensive training with specific fatigue recognition skills, documented competency assessment",
+                "yellow": "Training exists but outdated or generic, lacks specific exhaustion recognition skills",
+                "red": "No manager training on fatigue recognition or security implications of exhaustion"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What are the specific signs your managers are trained to recognize that indicate someone is too exhausted to make good security decisions?",
+                  "evidence_type": "training_content"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "When was the last time a manager actually intervened to remove someone from duty due to fatigue concerns?",
+                  "evidence_type": "application_example"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q8",
+              "text": "What is your organization's culture around admitting fatigue or requesting relief? How comfortable do security staff feel saying they're too exhausted to continue?",
+              "scoring_guidance": {
+                "green": "Explicit policies protecting staff who admit fatigue, multiple examples of people requesting and receiving relief without negative consequences",
+                "yellow": "Mixed culture, some staff comfortable requesting relief but others hesitant",
+                "red": "Cultural expectation to work through exhaustion, admission of fatigue seen as weakness or lack of dedication"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Has anyone on your security team ever requested relief during a shift because they were too tired to continue effectively? What happened?",
+                  "evidence_type": "cultural_indicator"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Are there explicit policies protecting people who admit fatigue from negative career consequences?",
+                  "evidence_type": "policy_protection"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Our security team is dedicated - they work as long as needed without complaining...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"We can't afford to have people resting when there's an active incident...\"",
+              "severity": "critical",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Our night shift is just one person, but nothing usually happens overnight...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"We expect our incident response team to stay until the job is done, period...\"",
+              "severity": "high",
+              "score_impact": 0.10,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"People who can't handle long hours probably shouldn't be in security...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"We're understaffed, so everyone just has to work extra hours - there's no alternative...\"",
+              "severity": "medium",
+              "score_impact": 0.09,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Fatigue management is a nice idea but not practical in a 24/7 security operation...\"",
+              "severity": "high",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "\"Our team takes pride in pulling all-nighters during major incidents...\"",
+              "severity": "medium",
+              "score_impact": 0.10,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject simulated exhaustion patterns monthly using shift schedule variations",
+      "correlation_analysis": "Compare manual fatigue assessments with automated performance degradation detection (target correlation > 0.80)",
+      "drift_detection": "Kolmogorov-Smirnov test on circadian performance patterns, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted fatigue levels match observed performance degradation",
+      "baseline_period": "60_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Incident Response Consistency",
+        "formula": "Variation in security incident detection and response times across all shifts and stress periods",
+        "baseline": "audit current variation across shifts",
+        "target": "<20% variation in response effectiveness between normal operations and high-fatigue periods within 90 days",
+        "measurement": "automated time-series analysis of incident metrics by shift and work duration"
+      },
+      {
+        "metric": "Decision Quality Maintenance",
+        "formula": "Security decision accuracy and false positive rates during extended operations, night shifts, and post-incident periods",
+        "baseline": "current decision quality metrics",
+        "target": "maintain decision accuracy within 10% of baseline during high-fatigue periods within 90 days",
+        "measurement": "quarterly analysis of decision outcomes correlated with fatigue indicators"
+      },
+      {
+        "metric": "Team Sustainability Indicators",
+        "formula": "Security team turnover, sick leave usage, and job satisfaction scores related to work-life balance",
+        "baseline": "current team health metrics",
+        "target": "<15% annual turnover in security roles and >80% positive scores on workload sustainability measures",
+        "measurement": "quarterly HR metrics review and annual satisfaction survey"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Automated Fatigue Management System",
+        "description": "Implement workforce management software that tracks work hours, mandates rest periods, and automatically escalates coverage when fatigue thresholds are reached",
+        "implementation": "Deploy workforce management platform integrated with security alerting to adjust alert sensitivity and require supervisor approval for security decisions after defined work hours. System automatically tracks shift duration, enforces rest periods, and provides fatigue pattern analysis. Include real-time dashboard showing team fatigue status and coverage adequacy.",
+        "technical_controls": "Workforce management platform, SIEM integration for alert adaptation, automated escalation workflows, fatigue threshold monitoring",
+        "roi": "340% average within 18 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Follow-the-Sun Security Operations",
+        "description": "Establish geographically distributed security monitoring with handoff procedures ensuring 24/7 coverage without requiring extended individual shifts",
+        "implementation": "Partner with managed security service provider or establish distributed internal teams across time zones. Implement formal knowledge transfer protocols with 30-60 minute overlap periods to maintain situational awareness across shifts. Create standardized handoff documentation templates and communication channels.",
+        "technical_controls": "Global SOC architecture, collaboration platforms for shift handoffs, shared threat intelligence, standardized playbooks",
+        "roi": "380% average within 24 months",
+        "effort": "high",
+        "timeline": "90-180 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Tiered Incident Response with Rotation",
+        "description": "Create incident response procedures that automatically rotate team members every 6-8 hours during extended incidents, with fresh team members briefed by departing staff",
+        "implementation": "Develop tiered incident response roster with primary, secondary, and tertiary response teams. Establish rotation triggers (6-8 hour marks) with mandatory handoff procedures. Include deputy roles and cross-training to ensure continuous coverage without individual overextension. Document handoff templates capturing critical context.",
+        "technical_controls": "Incident management platform with rotation scheduling, handoff documentation templates, context preservation systems, on-call rotation automation",
+        "roi": "310% average within 12 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Cognitive Load Reduction Tools",
+        "description": "Deploy decision support systems that simplify security choices during high-stress periods, including automated threat analysis and AI-assisted alert prioritization",
+        "implementation": "Implement SOAR (Security Orchestration, Automation and Response) platform to automate routine decisions and investigation tasks. Deploy AI-assisted alert triage that increases automation during detected high-fatigue periods. Create standardized response playbooks that reduce cognitive burden while maintaining security effectiveness. Configure systems to automatically escalate complex decisions when fatigue detected.",
+        "technical_controls": "SOAR platform, AI-powered alert triage, decision trees and playbooks, automated evidence collection, fatigue-aware decision routing",
+        "roi": "420% average within 18 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_5",
+        "title": "Supervisor Fatigue Monitoring Protocol",
+        "description": "Train security managers to recognize exhaustion indicators and establish clear escalation procedures when team members show signs of cognitive impairment",
+        "implementation": "Develop and deliver annual manager training on fatigue recognition with specific behavioral, performance, and physiological indicators. Create intervention protocols with clear escalation procedures and mandatory rest period assignments. Establish formal handover procedures when relieving exhausted staff. Include psychological safety policies protecting staff who admit fatigue.",
+        "technical_controls": "Manager training program, fatigue indicator checklist, intervention workflow system, handover documentation templates, policy protection frameworks",
+        "roi": "280% average within 12 months",
+        "effort": "low",
+        "timeline": "30-45 days initial, ongoing"
+      },
+      {
+        "id": "sol_6",
+        "title": "Adaptive Security Controls",
+        "description": "Configure security systems to increase automation and reduce manual decisions during identified high-fatigue periods while providing additional verification checks for critical decisions",
+        "implementation": "Implement fatigue-aware security controls that automatically adjust alert complexity and decision requirements based on shift duration, time of day, and detected fatigue indicators. Increase automation during night shifts and extended incidents. Add additional verification steps (dual approval, automated cross-checks) for critical security decisions made during vulnerable windows. Reduce alert volume through intelligent filtering during high-fatigue periods.",
+        "technical_controls": "Adaptive alerting engine, fatigue state detection, automated verification systems, intelligent alert filtering, dual-approval workflows for critical decisions",
+        "roi": "350% average within 18 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_3", "sol_5"],
+      "high_value": ["sol_4", "sol_6"],
+      "structural_foundation": ["sol_1", "sol_2"],
+      "quick_wins": ["sol_5"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Late-Shift Social Engineering",
+      "description": "Attackers systematically target organizations during night shifts (2-6 AM) when skeleton security crews are operating with impaired judgment",
+      "attack_vector": "Phone calls or emails to exhausted night shift staff claiming to be executives or IT support requiring immediate access or credential reset",
+      "psychological_mechanism": "Circadian low point combined with cognitive depletion reduces critical thinking and verification behaviors",
+      "historical_example": "Recent case involved attackers calling help desk staff at 3 AM claiming to be executives locked out of systems, successfully obtaining credentials from exhausted staff who skipped normal verification procedures, leading to complete network compromise and 48 hours before detection",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["V_circ_ratio < 0.5", "shift_hours > 10", "time_of_day between 2-6 AM", "verification_skipped", "unusual_access_request"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Post-Incident Exploitation",
+      "description": "After a major incident requiring 18+ hours of continuous response, the exhausted security team misses a secondary intrusion that occurs during their recovery period",
+      "attack_vector": "Attackers monitor organization's incident response patterns and time their real attack for when the team would be cognitively depleted",
+      "psychological_mechanism": "Ego depletion and stress response exhaustion leave minimal cognitive resources for detecting new threats",
+      "historical_example": "After major DDoS attack requiring 18 hours of continuous response, exhausted security team missed secondary intrusion that occurred during recovery period. Attackers had monitored organization's incident response pattern and timed their real attack for when team would be focused on DDoS recovery rather than monitoring for other threats",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["F_ratio > 1.2", "recent_major_incident", "reduced_alert_investigation_rate", "response_time_degradation > 50%"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Holiday/Weekend Breach Windows",
+      "description": "Organization with minimal holiday IT staffing suffers ransomware attack when only one exhausted security analyst is monitoring systems",
+      "attack_vector": "Ransomware deployment timed for holiday period when reduced staffing and analyst exhaustion create detection blind spots",
+      "psychological_mechanism": "Single-person operations create decision fatigue and reduced verification, while holiday stress amplifies exhaustion",
+      "historical_example": "Healthcare organization with minimal holiday IT staffing suffered ransomware attack on Christmas Eve when only one security analyst was monitoring systems. The exhausted analyst, working alone for 14 hours, dismissed multiple alerts as false positives that were actually early indicators of ransomware deployment, resulting in complete system encryption and patient care disruption",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["staffing_level < 50% normal", "holiday_period", "single_analyst_shift", "alert_dismissal_rate > baseline", "shift_duration > 12 hours"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Decision Fatigue in Access Control",
+      "description": "During system migration requiring 16-hour administrator shifts, security approval processes are repeatedly bypassed as exhausted personnel approve access requests without proper verification",
+      "attack_vector": "Attackers submit access requests during known high-fatigue periods when verification processes are degraded",
+      "psychological_mechanism": "Decision fatigue and cognitive load reduction lead to procedural shortcuts and reduced verification rigor",
+      "historical_example": "During system migration requiring 16-hour administrator shifts, security approval processes were repeatedly bypassed as exhausted personnel approved access requests without proper verification to reduce cognitive load. This led to unauthorized access persisting for weeks and sensitive data exposure that wasn't discovered until the next security audit",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["shift_duration > 14 hours", "approval_rate > baseline", "verification_time_reduced", "access_request_volume_high", "project_deadline_approaching"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Baumeister, R. F., & Gailliot, M. (2007). Ego depletion and self-control",
+      "Buckner, R. L., Andrews-Hanna, J. R., & Schacter, D. L. (2008). Default mode network and mind-wandering",
+      "Lupien, S. J., McEwen, B. S., Gunnar, M. R., & Heim, C. (2009). Effects of stress throughout the lifespan on brain, behavior and cognition",
+      "Kahneman, D. (2011). Thinking, Fast and Slow - System 1/System 2 framework",
+      "Killgore, W. D., Balkin, T. J., & Wesensten, N. J. (2006). Impaired decision making following sleep deprivation",
+      "Goodall, J. R., Lutters, W. G., & Komlodi, A. (2009). Security analyst performance degradation in SOC environments",
+      "Selye, H. (1976). The Stress of Life - General Adaptation Syndrome"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}
