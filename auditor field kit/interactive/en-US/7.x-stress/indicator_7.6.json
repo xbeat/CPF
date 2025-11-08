@@ -1,0 +1,893 @@
+{
+  "indicator": "7.6",
+  "title": "INDICATOR 7.6 FIELD KIT",
+  "subtitle": "Fawn Response Overcompliance",
+  "category": "Stress Response Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 7.x",
+
+  "description": {
+    "short": "Measures vulnerability to systematic security boundary violations when employees cannot say 'no' to requests due to compulsive people-pleasing and conflict avoidance under stress",
+    "context": "The fawn response represents a sophisticated psychological defense mechanism that manifests as excessive compliance, appeasement, and submission when faced with perceived threats or authority. Unlike the more recognized fight-flight-freeze responses, fawning is a relational survival strategy that attempts to neutralize threat through hypervigilant accommodation of others' needs and desires. In organizational contexts, fawn response overcompliance manifests as an inability to enforce security boundaries when doing so might create interpersonal conflict or displease authority figures. Individuals exhibiting this vulnerability will systematically bypass security protocols to avoid disappointing colleagues, supervisors, or external parties, even when they consciously recognize the security risks involved.",
+    "impact": "Organizations with high fawn response patterns experience 3x higher rates of social engineering success and insider-enabled breaches. This vulnerability creates systematic security policy exception creep as employees grant inappropriate access levels to avoid interpersonal conflict. Historical incidents include the 2013 Target breach involving HVAC contractor employees who provided credentials after sustained social engineering that exploited fawn responses, and the 2016 Bangladesh Bank heist where internal employees provided access after attackers used personal relationships and guilt-based manipulation.",
+    "psychological_basis": "The fawn response was first systematically described by Pete Walker (2013) in his work on complex trauma responses, building on Selye's (1956) foundational stress response research. Neurobiological validation comes from polyvagal theory research by Stephen Porges (2011), demonstrating that the dorsal vagal complex activation creates states of submission and freeze-fawn responses. fMRI studies show increased activity in the anterior cingulate cortex (empathy center) and decreased activity in the prefrontal cortex (executive decision-making) during fawn responses."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Resilient",
+        "description": "Security exceptions require formal approval process with documentation. Employees consistently enforce policies despite interpersonal pressure. Regular incidents of staff saying 'no' to inappropriate requests. Clear escalation procedures for authority figure conflicts. Proactive reporting of violations regardless of relationships.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Developing",
+        "description": "Some informal exceptions granted based on relationships. Employees sometimes struggle to enforce boundaries with liked colleagues. Occasional bypasses for 'urgent' requests without proper approvals. Mixed reporting patterns - some violations unreported to avoid conflict. Authority figures sometimes receive preferential treatment.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Critical",
+        "description": "Frequent security exceptions granted to avoid interpersonal conflict. Employees regularly share passwords, access, or bypass controls when asked nicely. Consistent pattern of accommodation over security enforcement. Rare or no incidents of boundary enforcement with authority figures. Poor reporting of violations when they involve personal relationships.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_exception_frequency": 0.18,
+      "q2_override_process": 0.16,
+      "q3_boundary_enforcement": 0.15,
+      "q4_relationship_pressure": 0.14,
+      "q5_authority_override": 0.13,
+      "q6_incident_reporting": 0.12,
+      "q7_automated_controls": 0.08,
+      "q8_recognition_program": 0.04
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_7.6(t) = w1·P_fawn(t) + w2·FI(t) + w3·SR_fawn(t) + w4·R(t)",
+      "components": {
+        "fawn_probability": {
+          "formula": "P_fawn(S,H,D) = σ(α·S + β·H + γ·D)",
+          "description": "Fawn response probability based on stress level, hierarchy position, and dependency level",
+          "variables": {
+            "S": "Current stress level from behavioral markers",
+            "H": "Hierarchy position differential (authority gradient)",
+            "D": "Dependency level on requester",
+            "σ": "Sigmoid function σ(x) = 1/(1+e^(-x))"
+          },
+          "parameters": {
+            "alpha": 0.4,
+            "beta": 0.35,
+            "gamma": 0.25
+          }
+        },
+        "fawn_index": {
+          "formula": "FI(t) = P_fawn(t) · (w1·ASF(t) + w2·ADI(t))",
+          "description": "Composite fawn behavior index combining approval seeking and authority deference",
+          "components": {
+            "ASF": "Approval Seeking Frequency = N_approval_requests / N_decisions",
+            "ADI": "Authority Deference Increase = (compliance_current / compliance_baseline) - 1"
+          },
+          "weights": {
+            "w1_asf": 0.6,
+            "w2_adi": 0.4
+          }
+        },
+        "security_risk": {
+          "formula": "SR_fawn(t) = FI(t) · (1 - verification_rate(t))",
+          "description": "Security risk score inversely proportional to verification behaviors",
+          "interpretation": "Higher scores indicate increased risk of security bypasses due to fawn response"
+        },
+        "recovery_state": {
+          "formula": "R(t) = A·e^(-t/τ_fast) + B·e^(-t/τ_slow)",
+          "description": "Bi-exponential recovery from fawn response episodes",
+          "parameters": {
+            "tau_fast": 1800,
+            "tau_slow": 14400,
+            "A": 0.7,
+            "B": 0.3
+          }
+        }
+      },
+      "default_weights": {
+        "w1_probability": 0.3,
+        "w2_index": 0.35,
+        "w3_risk": 0.25,
+        "w4_recovery": 0.1
+      },
+      "temporal_decay": {
+        "formula": "T_7.6(t) = α·D_7.6(t) + (1-α)·T_7.6(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 3600,
+        "description": "Exponential smoothing with 1-hour time constant for fawn response persistence"
+      }
+    },
+    "behavioral_markers": {
+      "formula": "BM(t) = Σ(w_i · marker_i(t))",
+      "markers": [
+        "excessive_apologies_in_security_communications",
+        "permission_seeking_for_standard_procedures",
+        "self_blame_after_enforcing_boundaries",
+        "language_personalizing_security_policies"
+      ],
+      "detection_threshold": {
+        "critical": "SR_fawn(t) > 0.7 AND verification_rate < 0.3",
+        "warning": "SR_fawn(t) > 0.5 AND approval_seeking > 2σ above baseline"
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews_boundary_enforcement",
+        "exception_request_logs",
+        "incident_reporting_patterns",
+        "organizational_culture_surveys"
+      ],
+      "evidence_required": [
+        "security_exception_documentation_past_90_days",
+        "employee_comfort_survey_results_boundary_enforcement",
+        "incident_reports_involving_interpersonal_pressure",
+        "recognition_program_evidence_security_enforcement"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "access_control_logs",
+          "fields": ["access_grant", "requester_id", "approver_id", "approval_time", "justification", "exception_flag"],
+          "retention": "180_days"
+        },
+        {
+          "source": "exception_request_system",
+          "fields": ["request_id", "request_type", "approval_chain", "approval_speed", "requester_authority_level"],
+          "retention": "365_days"
+        },
+        {
+          "source": "communication_analysis",
+          "fields": ["message_id", "sender", "receiver", "emotional_tone", "compliance_language", "apology_frequency"],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "training_completion_logs",
+          "fields": ["employee_id", "training_type", "boundary_enforcement_scenarios", "performance_score"],
+          "retention": "730_days"
+        },
+        {
+          "source": "incident_response_logs",
+          "fields": ["incident_id", "reporter_id", "relationship_to_violator", "report_delay", "interpersonal_hesitation_noted"],
+          "retention": "365_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "verification_rate": {
+          "calculation": "Count of secondary verification performed / Count of high-risk requests",
+          "query": "SELECT COUNT(verification_performed=true)/COUNT(*) FROM access_requests WHERE risk_level='high' AND time_window='24h'"
+        },
+        "approval_seeking_frequency": {
+          "calculation": "Ratio of requests requiring approval vs autonomous decisions",
+          "query": "SELECT (COUNT(approval_requests)/COUNT(total_decisions)) FROM decision_logs WHERE employee_role='security' AND time_window='7d'"
+        },
+        "exception_grant_rate": {
+          "calculation": "Percentage of security exception requests that are approved",
+          "query": "SELECT (COUNT(status='approved')/COUNT(*)) FROM exception_requests WHERE time_window='30d'"
+        }
+      }
+    },
+    "integration_apis": {
+      "pam_system": "CyberArk/BeyondTrust API - Exception Requests, Approval Workflows",
+      "identity_management": "Okta/Azure AD API - Access Grant Patterns, Authority Relationships",
+      "communication_platforms": "Slack/Teams API - Communication Sentiment, Language Patterns",
+      "ticketing_systems": "ServiceNow/Jira API - Security Request Patterns, Approval Chains"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Impairment",
+        "probability": 0.75,
+        "factor": 1.45,
+        "description": "Acute stress amplifies fawn response by reducing prefrontal cortex control over automatic compliance patterns",
+        "formula": "P(7.6|7.1) = 0.75"
+      },
+      {
+        "indicator": "1.3",
+        "name": "Authority Figure Impersonation Susceptibility",
+        "probability": 0.8,
+        "factor": 1.6,
+        "description": "Authority pressure combined with fawn response creates perfect storm for security bypass",
+        "formula": "P(7.6|1.3) = 0.8"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "Time pressure amplifies guilt and discomfort with boundary enforcement",
+        "formula": "P(7.6|2.1) = 0.7"
+      },
+      {
+        "indicator": "6.1",
+        "name": "Groupthink Conformity",
+        "probability": 0.65,
+        "factor": 1.35,
+        "description": "Group pressure to maintain harmony amplifies individual fawn responses",
+        "formula": "P(7.6|6.1) = 0.65"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "1.1",
+        "name": "Unquestioning Compliance",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "Fawn response normalizes automatic compliance patterns across organization"
+      },
+      {
+        "indicator": "3.2",
+        "name": "Reciprocity Exploitation",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Fawn-responders are particularly vulnerable to reciprocity-based manipulation"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["7.6", "1.3", "2.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 4.0,
+      "description": "Perfect storm: Fawn response + Authority impersonation + Time pressure = 380% increased breach probability through social engineering",
+      "real_world_example": "Target 2013 breach - HVAC contractor employees unable to refuse requests from apparent authority figures during high-stress holiday period"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["7.1", "1.3", "2.1", "6.1"],
+      "child_nodes": ["1.1", "3.2"],
+      "conditional_probability_table": {
+        "P_7.6_base": 0.12,
+        "P_7.6_given_stress": 0.42,
+        "P_7.6_given_authority": 0.55,
+        "P_7.6_given_urgency": 0.38,
+        "P_7.6_given_all": 0.85
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_exception_frequency",
+          "weight": 0.18,
+          "title": "Security Exception Frequency",
+          "question": "How often do employees grant security exceptions (access, password sharing, policy bypasses) when asked directly by colleagues or external parties?",
+          "options": [
+            {
+              "value": "rarely",
+              "score": 0,
+              "label": "Rarely - Less than 5 informal exceptions per month per 100 employees, all documented"
+            },
+            {
+              "value": "occasionally",
+              "score": 0.5,
+              "label": "Occasionally - 5-15 exceptions per month with some informal approvals"
+            },
+            {
+              "value": "frequently",
+              "score": 1,
+              "label": "Frequently - More than 15 exceptions per month, many undocumented informal accommodations"
+            }
+          ],
+          "evidence_required": "Exception request logs past 90 days, specific recent examples",
+          "soc_mapping": "exception_grant_rate from exception request system"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_override_process",
+          "weight": 0.16,
+          "title": "Override Process Formality",
+          "question": "What's your current procedure when an employee wants to override a security policy to help someone who seems frustrated or upset?",
+          "options": [
+            {
+              "value": "formal",
+              "score": 0,
+              "label": "Formal multi-person approval required with documented justification and audit trail"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Informal process exists but can be bypassed based on relationships or urgency"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No formal process - employees make individual decisions based on interpersonal dynamics"
+            }
+          ],
+          "evidence_required": "Override procedure documentation, recent override examples with approval records",
+          "soc_mapping": "approval_seeking_frequency from decision logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_boundary_enforcement",
+          "weight": 0.15,
+          "title": "Boundary Enforcement Capability",
+          "question": "How do employees typically respond when they need to deny access requests or enforce security boundaries?",
+          "options": [
+            {
+              "value": "confident",
+              "score": 0,
+              "label": "Confidently enforce boundaries using provided scripts and escalation procedures"
+            },
+            {
+              "value": "hesitant",
+              "score": 0.5,
+              "label": "Hesitant enforcement with visible discomfort, seeking manager approval for standard denials"
+            },
+            {
+              "value": "avoidant",
+              "score": 1,
+              "label": "Actively avoid saying 'no', grant exceptions to prevent interpersonal conflict"
+            }
+          ],
+          "evidence_required": "Recent boundary enforcement examples, employee feedback on comfort levels",
+          "soc_mapping": "verification_rate from access control logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_relationship_pressure",
+          "weight": 0.14,
+          "title": "Relationship Pressure Response",
+          "question": "What happens when security enforcement might damage relationships with important clients, vendors, or internal stakeholders?",
+          "options": [
+            {
+              "value": "maintained",
+              "score": 0,
+              "label": "Security policies maintained regardless of relationship concerns, with supportive escalation"
+            },
+            {
+              "value": "modified",
+              "score": 0.5,
+              "label": "Policies sometimes modified or expedited to preserve key relationships"
+            },
+            {
+              "value": "bypassed",
+              "score": 1,
+              "label": "Policies regularly bypassed when relationship preservation is at stake"
+            }
+          ],
+          "evidence_required": "Examples of relationship-based decisions, VIP exception logs",
+          "soc_mapping": "Exception patterns correlated with requester importance level"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_authority_override",
+          "weight": 0.13,
+          "title": "Authority Override Patterns",
+          "question": "How often do security policies get bypassed when senior executives, important clients, or authority figures make direct requests?",
+          "options": [
+            {
+              "value": "never",
+              "score": 0,
+              "label": "Never - Same verification procedures apply regardless of authority level"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.5,
+              "label": "Sometimes - Authority figures receive expedited but still documented approval"
+            },
+            {
+              "value": "frequently",
+              "score": 1,
+              "label": "Frequently - Authority figure requests bypass normal security controls"
+            }
+          ],
+          "evidence_required": "Executive exception logs, specific examples with authority figures",
+          "soc_mapping": "Approval patterns filtered by requester authority level"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_incident_reporting",
+          "weight": 0.12,
+          "title": "Incident Reporting Culture",
+          "question": "When employees notice security violations that involve people they work closely with or like, how often do they report these incidents?",
+          "options": [
+            {
+              "value": "always",
+              "score": 0,
+              "label": "Always reported regardless of relationships, with protection policies for reporters"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.5,
+              "label": "Sometimes reported but delays or hesitation when relationships are involved"
+            },
+            {
+              "value": "rarely",
+              "score": 1,
+              "label": "Rarely reported when personal relationships are at stake, culture of protecting colleagues"
+            }
+          ],
+          "evidence_required": "Incident reporting rates, anonymous survey results on reporting comfort",
+          "soc_mapping": "Report delay correlation with reporter-violator relationship proximity"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_automated_controls",
+          "weight": 0.08,
+          "title": "Automated Exception Controls",
+          "question": "Are technical controls in place that prevent individual employees from granting security exceptions without automated multi-party approval?",
+          "options": [
+            {
+              "value": "yes",
+              "score": 0,
+              "label": "Yes - Automated systems require multi-person approval for all exceptions, no manual bypass"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Partial - Some automated controls but manual bypass possible for 'urgent' situations"
+            },
+            {
+              "value": "no",
+              "score": 1,
+              "label": "No - Individual employees can grant exceptions based on personal judgment"
+            }
+          ],
+          "evidence_required": "Technical control documentation, system configuration screenshots",
+          "soc_mapping": "Exception grant patterns showing multi-party approval requirement enforcement"
+        },
+        {
+          "type": "radio-list",
+          "number": 8,
+          "id": "q8_recognition_program",
+          "weight": 0.04,
+          "title": "Boundary Enforcement Recognition",
+          "question": "Does your organization explicitly recognize and reward employees who appropriately enforce security boundaries despite interpersonal pressure?",
+          "options": [
+            {
+              "value": "yes",
+              "score": 0,
+              "label": "Yes - Regular recognition program celebrates appropriate boundary enforcement"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Informal recognition but not systematic or widely communicated"
+            },
+            {
+              "value": "no",
+              "score": 1,
+              "label": "No recognition program, or emphasis is on 'being helpful' without security context"
+            }
+          ],
+          "evidence_required": "Recognition program documentation, recent award examples",
+          "soc_mapping": "Cultural indicators from employee surveys and manager communications"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Opening Questions - Exception Patterns",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Give me a recent example where someone in your organization bent or broke a security rule because they didn't want to disappoint someone asking for help. What exactly happened?",
+              "scoring_guidance": {
+                "green": "No recent examples, or examples show proper escalation and boundary maintenance despite pressure",
+                "yellow": "Some examples of bending rules with recognition of problem and attempts to address",
+                "red": "Multiple recent examples with normalization of accommodation over security"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What happened to the employee who accommodated the request - were they recognized, punished, or ignored?",
+                  "evidence_type": "cultural_response"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How did you discover this accommodation - through self-reporting, audit, or incident?",
+                  "evidence_type": "detection_method"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "When employees receive requests from apparent authority figures or important clients that violate security policy, what's your standard procedure for helping them say 'no' appropriately?",
+              "scoring_guidance": {
+                "green": "Specific scripts, buddy system, or automated controls that remove individual burden",
+                "yellow": "General guidance but no concrete support tools or procedures",
+                "red": "No procedure or expectation that employees should accommodate authority requests"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show me the specific language or script employees use to decline authority requests",
+                  "evidence_type": "procedural_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Have you ever had an employee disciplined for saying 'yes' to an authority figure when they should have said 'no'?",
+                  "evidence_type": "accountability_example"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Relationship Dynamics and Authority Patterns",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "What happens when security enforcement might damage relationships with important stakeholders? Walk me through your organization's typical approach with a specific example.",
+              "scoring_guidance": {
+                "green": "Clear examples of maintaining security boundaries despite relationship concerns, with organizational support",
+                "yellow": "Mixed approach with some relationship accommodations and recognition of tension",
+                "red": "Consistent pattern of security compromise to preserve relationships"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Who makes the final call when relationship preservation conflicts with security policy?",
+                  "evidence_type": "decision_authority"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Can you show me documentation from a time when you chose security over a key relationship?",
+                  "evidence_type": "priority_evidence"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "How often do security policies get bypassed when senior executives or important clients make direct requests? Give me your three most recent examples.",
+              "scoring_guidance": {
+                "green": "Rare bypasses with formal exception process and documentation, authority figures follow same procedures",
+                "yellow": "Occasional bypasses with some documentation, expedited process for authority",
+                "red": "Frequent bypasses, authority figures exempt from normal security procedures"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What training do executives receive about their responsibility to model security compliance?",
+                  "evidence_type": "leadership_training"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cultural Factors and Support Systems",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "When employees enforce security boundaries and someone gets upset or disappointed, what support do they receive from management and the organization?",
+              "scoring_guidance": {
+                "green": "Explicit support, recognition, protection policies, examples of backing employees who enforced boundaries",
+                "yellow": "General support in principle but limited concrete examples or protection",
+                "red": "No support systems or implicit pressure to accommodate to avoid conflict"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Tell me about a time when an employee was explicitly praised for saying 'no' to a security exception request",
+                  "evidence_type": "positive_reinforcement"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Do you have written policies protecting employees who enforce security boundaries from retaliation?",
+                  "evidence_type": "protection_policy"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "What technical controls prevent individual employees from being personally responsible for saying 'no' to security exception requests?",
+              "scoring_guidance": {
+                "green": "Automated multi-party approval, technical enforcement, buddy systems that distribute responsibility",
+                "yellow": "Some technical controls but bypasses possible or individual discretion remains",
+                "red": "No technical controls, all decisions are individual and interpersonal"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show me the system configuration that requires multiple approvals for security exceptions",
+                  "evidence_type": "technical_control"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"We trust our people to make good judgment calls about security exceptions...\"",
+              "severity": "high",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"It would be disrespectful to verify executives' identities or deny their requests...\"",
+              "severity": "critical",
+              "score_impact": 0.19,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Security policies shouldn't get in the way of important business relationships...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"We value being helpful and accommodating to our colleagues and clients...\"",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Employees who are too rigid about security rules don't fit our culture...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"We've never had problems because our team knows when to be flexible...\"",
+              "severity": "medium",
+              "score_impact": 0.10,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject simulated social engineering scenarios leveraging interpersonal pressure monthly",
+      "correlation_analysis": "Compare manual audit scores with automated behavioral pattern detection (target correlation > 0.80)",
+      "drift_detection": "Kolmogorov-Smirnov test on exception grant patterns, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted fawn response probabilities match observed accommodation frequencies",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Security Exception Reduction Rate",
+        "formula": "% reduction in informal security exceptions from baseline",
+        "baseline": "count exceptions past 90 days before intervention",
+        "target": "50% reduction within 90 days",
+        "measurement": "monthly exception log audit"
+      },
+      {
+        "metric": "Boundary Enforcement Incident Increase",
+        "formula": "% increase in documented instances of appropriate request denial",
+        "baseline": "count boundary enforcements past 90 days",
+        "target": "200% increase within 90 days",
+        "measurement": "positive incident tracking system"
+      },
+      {
+        "metric": "Employee Confidence in Security Enforcement",
+        "formula": "% of employees reporting comfort with boundary enforcement despite pressure",
+        "baseline": "initial anonymous survey",
+        "target": "80% confident or very confident within 180 days",
+        "measurement": "quarterly anonymous survey"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Automated Exception Approval System",
+        "description": "Deploy technical controls that require multi-person approval for all security exceptions, removing individual decision-making burden",
+        "implementation": "Implement automated workflow systems requiring minimum two approvals from different organizational levels for any security policy exception. System logs all requests with full audit trail and automatically escalates requests that bypass the system. Configuration prevents any single individual from approving their own exception requests or those from their direct reports.",
+        "technical_controls": "Workflow automation platform integrated with IAM, PAM, and ticketing systems; automated escalation for bypass attempts; dashboard showing exception patterns by department and individual",
+        "roi": "380% average within 18 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Security Hero Recognition Program",
+        "description": "Create organizational rewards specifically for security boundary enforcement, reframing policy adherence as helping rather than hindering",
+        "implementation": "Establish monthly recognition program celebrating employees who properly escalated requests, enforced policies despite pressure, or reported security concerns involving colleagues. Include specific 'Security Boundary Hero' awards with tangible rewards and public recognition. Share anonymized stories of successful boundary enforcement in organization communications.",
+        "technical_controls": "Recognition nomination system integrated with security incident tracking; automated identification of boundary enforcement examples; public dashboard celebrating security heroes",
+        "roi": "290% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days initial, ongoing program"
+      },
+      {
+        "id": "sol_3",
+        "title": "Boundary Enforcement Scripts and Training",
+        "description": "Provide employees with specific language templates for common scenarios focused on helpful redirection rather than rejection",
+        "implementation": "Develop and distribute scripted responses for common security exception scenarios: 'I'd love to help, but our security policy requires me to direct you to [proper process]. Let me help you get started with the correct channel.' Include role-playing exercises in security training specifically practicing these scripts under pressure. Create laminated reference cards with scripts for common scenarios.",
+        "technical_controls": "Training platform with scenario simulations; performance tracking on boundary enforcement exercises; automated delivery of refresher training when stress indicators are high",
+        "roi": "310% average within 12 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Anonymous Reporting and Escalation Tools",
+        "description": "Implement systems allowing employees to escalate concerning requests without direct confrontation",
+        "implementation": "Deploy anonymous reporting system (chatbot, web form, phone hotline) that allows employees to escalate security exception requests they're uncomfortable with. System routes requests to security team who can intervene with 'automatic policy enforcement' messaging that removes individual responsibility. Include 'security consultation' option where employees can check whether accommodation is appropriate without fear of judgment.",
+        "technical_controls": "Anonymous reporting platform with secure submission; automated routing to security team; response templates maintaining employee anonymity; integration with incident tracking",
+        "roi": "260% average within 18 months",
+        "effort": "medium",
+        "timeline": "60 days"
+      },
+      {
+        "id": "sol_5",
+        "title": "Authority Figure Verification Protocols",
+        "description": "Establish mandatory callback or secondary confirmation procedures for any requests from executives or external VIPs",
+        "implementation": "Implement technical requirement that all requests from C-level executives, board members, or designated VIPs trigger automatic verification workflow. Employees must use verified contact database to confirm request through separate communication channel. System prevents request fulfillment until verification is documented. Technical controls remove personal burden of questioning authority while maintaining security.",
+        "technical_controls": "Verified contact database with out-of-band communication channels; automated verification reminders; system-enforced verification completion before access grant; executive education on verification protocols",
+        "roi": "420% average within 18 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Team-Based Security Responsibility",
+        "description": "Restructure security enforcement as team rather than individual responsibility creating buddy systems and committee approaches",
+        "implementation": "Implement 'security buddy system' where high-risk decisions require consultation with designated security partner. Create rotating 'security oversight committees' for departments handling sensitive data. Establish policy that no individual is solely responsible for security decisions - all exception requests require team discussion. Build psychological safety through distributed responsibility.",
+        "technical_controls": "Buddy system assignment and rotation management; committee scheduling and decision tracking; automated alerts when individual makes security decisions without consultation; team performance metrics",
+        "roi": "240% average within 18 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_3"],
+      "high_value": ["sol_2", "sol_5"],
+      "cultural_foundation": ["sol_6"],
+      "support_infrastructure": ["sol_4"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Authority Figure Impersonation with Emotional Pressure",
+      "description": "Attackers pose as executives or important clients, combining authority claims with emotional appeals that exploit fawn response: 'I'm really counting on you to help me access these files quickly - this deadline is stressing me out and I need someone I can trust.'",
+      "attack_vector": "Social engineering via email, phone, or in-person contact using emotional manipulation and authority pressure",
+      "psychological_mechanism": "Fawn response activates dorsal vagal complex creating submission state; employees prioritize emotional caretaking over security verification",
+      "historical_example": "Target 2013 breach - HVAC contractor employees provided credentials after sustained social engineering exploiting fawn responses and relationship building",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["approval_without_verification", "rapid_exception_grant", "emotional_language_in_justification", "lack_of_escalation"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Relationship-Leveraged Credential Sharing",
+      "description": "External attackers build personal relationships with employees over weeks or months, then exploit the emotional connection: 'After everything we've been through on this project, I'm sure you trust me enough to share your login so I can finish this work tonight.'",
+      "attack_vector": "Long-term relationship development followed by trust-leveraged request for credentials or inappropriate access",
+      "psychological_mechanism": "Investment in relationship creates emotional obligation; fawn response prevents boundary enforcement that might damage carefully built rapport",
+      "historical_example": "Bangladesh Bank 2016 heist - internal employees provided access after attackers used personal relationships and guilt-based manipulation over extended period",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["credential_sharing", "relationship_based_access", "access_outside_work_hours", "personal_communication_channels"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Crisis Exploitation with Team Blame Dynamics",
+      "description": "Attackers create artificial urgency combined with group responsibility pressure: 'If I can't get access right now, the whole team will miss our deadline and everyone will know security blocked us from succeeding.'",
+      "attack_vector": "Social engineering during organizational stress using team-based guilt and blame threats",
+      "psychological_mechanism": "Fawn response combined with protective instincts toward team; fear of being blamed for team failure overrides individual security judgment",
+      "historical_example": "Multiple APT campaigns targeting stressed teams during quarter-end reporting, merger activities, or major project deadlines",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["deadline_pressure_markers", "team_blame_language", "urgent_exception_requests", "stress_period_correlation"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Guilt-Based Exception Escalation",
+      "description": "Starting with small favors, attackers gradually escalate requests while maintaining emotional pressure: 'I thought I could count on you to help with this simple access request - you've always been so helpful before, I'm disappointed.'",
+      "attack_vector": "Progressive compromise through escalating small requests with guilt induction for any hesitation",
+      "psychological_mechanism": "Commitment and consistency bias combined with fawn response; each accommodation increases guilt and obligation for subsequent requests",
+      "historical_example": "RSA 2011 breach began with employees' desire to be helpful to apparent colleagues making seemingly reasonable requests for assistance",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["escalating_access_patterns", "repeated_requests_same_employee", "guilt_language_markers", "progressive_policy_violations"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Walker, P. (2013). Complex PTSD: From Surviving to Thriving",
+      "Porges, S. (2011). The Polyvagal Theory: Neurophysiological Foundations of Emotions",
+      "Selye, H. (1956). The Stress of Life",
+      "Neff, K. (2003). Self-Compassion: An Alternative Conceptualization",
+      "Karpman, S. (1968). Fairy Tales and Script Drama Analysis"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}
