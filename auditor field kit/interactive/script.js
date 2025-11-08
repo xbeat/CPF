@@ -124,7 +124,7 @@ function renderFieldKit(data) {
     document.getElementById('header').innerHTML = `
         <div class="header-content">
             <h1>Indicator ${data.indicator} Field Kit</h1>
-            <div class="subtitle">${data.title}</div>
+            <div class="subtitle">${data.subtitle || data.title}</div>
             <div class="indicator-badge">${data.category}</div>
         </div>
     `;
@@ -216,9 +216,9 @@ function renderItem(item, itemId) {
                 <div class="radio-group">
                     ${item.options.map(opt => `
                         <div class="radio-option ${opt.value}">
-                            <input type="radio" name="${itemId}" id="${itemId}_${opt.value}" value="${opt.value}" 
+                            <input type="radio" name="${itemId}" id="${itemId}_${opt.value}" value="${opt.value}"
                                     ${value === opt.value ? 'checked' : ''}
-                                    onchange="updateResponse('${itemId}', '${opt.value}')">
+                                    onchange="updateResponseWithAutoScore('${itemId}', '${opt.value}')">
                             <label for="${itemId}_${opt.value}" class="radio-label">
                                 ${opt.label}
                             </label>
@@ -258,7 +258,7 @@ function renderItem(item, itemId) {
         const checked = value ? 'checked' : '';
         let html = `
             <div class="checkbox-item ${checked}">
-                <input type="checkbox" id="${itemId}" ${checked} onchange="updateResponse('${itemId}', this.checked)">
+                <input type="checkbox" id="${itemId}" ${checked} onchange="updateResponseWithAutoScore('${itemId}', this.checked)">
                 <label for="${itemId}">${item.label}</label>
             </div>
         `;
@@ -432,22 +432,23 @@ function generateReport() {
                 </h2>
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">
                     <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Quick Assessment</div>
+                        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Quick Assessment (70%)</div>
                         <div style="font-size: 24px; font-weight: bold; color: #1a1a2e;">
                             ${(currentScore.quick_assessment * 100).toFixed(1)}%
                         </div>
                     </div>
                     <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Conversation</div>
-                        <div style="font-size: 24px; font-weight: bold; color: #1a1a2e;">
-                            ${(currentScore.conversation_depth * 100).toFixed(1)}%
-                        </div>
-                    </div>
-                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Red Flags</div>
+                        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Red Flags (30%)</div>
                         <div style="font-size: 24px; font-weight: bold; color: #1a1a2e;">
                             ${(currentScore.red_flags * 100).toFixed(1)}%
                         </div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; border: 2px dashed #888;">
+                        <div style="font-size: 12px; color: #888; margin-bottom: 5px;">Conversation Completeness</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #666;">
+                            ${currentScore.details.conversation_breakdown.answered_questions}/${currentScore.details.conversation_breakdown.total_questions}
+                        </div>
+                        <div style="font-size: 10px; color: #999; margin-top: 3px;">(informational)</div>
                     </div>
                 </div>
                 <div style="background: white; padding: 15px; border-radius: 8px;">
@@ -555,7 +556,7 @@ function generateReport() {
 function selectRadioOption(itemId, value) {
     // Aggiorna i dati
     currentData.responses[itemId] = value;
-    
+
     // Aggiorna l'interfaccia - rimuove 'checked' da tutti e lo aggiunge a quello selezionato
     const container = document.querySelector(`[data-item-id="${itemId}"]`);
     if (container) {
@@ -568,7 +569,7 @@ function selectRadioOption(itemId, value) {
                 checkbox.checked = false;
             }
         });
-        
+
         const selectedOption = container.querySelector(`[data-value="${value}"]`);
         if (selectedOption) {
             selectedOption.classList.add('checked');
@@ -578,6 +579,14 @@ function selectRadioOption(itemId, value) {
                 checkbox.checked = true;
             }
         }
+    }
+
+    // Trigger auto-calculation
+    if (currentData.fieldKit && currentData.fieldKit.scoring) {
+        clearTimeout(window.autoScoreTimeout);
+        window.autoScoreTimeout = setTimeout(() => {
+            calculateIndicatorScore();
+        }, 1000);
     }
 }
 
@@ -715,12 +724,11 @@ function calculateIndicatorScore() {
         currentScore.quick_assessment = totalWeight > 0 ? weightedScore / totalWeight : 0;
     }
 
-    // 2. CALCULATE CONVERSATION DEPTH SCORE (automatic based on completeness)
+    // 2. TRACK CONVERSATION COMPLETENESS (informational only, not part of vulnerability score)
     const convSection = sections.find(s => s.id === 'client-conversation');
     if (convSection && convSection.subsections) {
         let totalQuestions = 0;
         let answeredQuestions = 0;
-        let totalQualityScore = 0;
 
         convSection.subsections.forEach((subsection, subIdx) => {
             if (subsection.items) {
@@ -728,16 +736,13 @@ function calculateIndicatorScore() {
                     if (item.type === 'question') {
                         totalQuestions++;
                         const itemId = `s1_sub${subIdx}_i${iIdx}`;
-                        
+
                         // Check main question
                         const mainResponse = currentData.responses[itemId];
                         if (mainResponse && mainResponse.trim().length > 0) {
                             answeredQuestions++;
-                            // Quality score based on length (simple heuristic)
-                            const qualityScore = Math.min(mainResponse.length / 200, 1);
-                            totalQualityScore += qualityScore;
                         }
-                        
+
                         // Check follow-ups
                         if (item.followups) {
                             item.followups.forEach((followup, fIdx) => {
@@ -746,8 +751,6 @@ function calculateIndicatorScore() {
                                 const followupResponse = currentData.responses[followupId];
                                 if (followupResponse && followupResponse.trim().length > 0) {
                                     answeredQuestions++;
-                                    const qualityScore = Math.min(followupResponse.length / 150, 1);
-                                    totalQualityScore += qualityScore;
                                 }
                             });
                         }
@@ -756,16 +759,15 @@ function calculateIndicatorScore() {
             }
         });
 
-        // Conversation score: average of completion rate and quality
+        // Conversation completeness (for reference only, NOT part of vulnerability score)
         const completionRate = totalQuestions > 0 ? answeredQuestions / totalQuestions : 0;
-        const qualityRate = totalQuestions > 0 ? totalQualityScore / totalQuestions : 0;
-        currentScore.conversation_depth = (completionRate * 0.6 + qualityRate * 0.4);
-        
+        currentScore.conversation_depth = 0; // NOT USED in final score calculation
+
         currentScore.details.conversation_breakdown = {
             total_questions: totalQuestions,
             answered_questions: answeredQuestions,
             completion_rate: completionRate,
-            quality_rate: qualityRate
+            is_informational: true // Flag to indicate this is NOT a vulnerability score
         };
     }
 
@@ -790,13 +792,23 @@ function calculateIndicatorScore() {
         currentScore.red_flags = Math.min(totalRedFlagImpact, 1); // Cap at 1.0
     }
 
-    // 4. CALCULATE FINAL SCORE
-    const weights = scoring.weights || { quick_assessment: 0.4, conversation_depth: 0.35, red_flags: 0.25 };
+    // 4. CALCULATE FINAL VULNERABILITY SCORE
+    // NOTE: Conversation depth is NOT included (it's informational only)
+    // Score = Quick Assessment (70%) + Red Flags (30%)
+    const QUICK_WEIGHT = 0.70;
+    const RED_FLAGS_WEIGHT = 0.30;
+
     currentScore.final_score = (
-        currentScore.quick_assessment * weights.quick_assessment +
-        currentScore.conversation_depth * weights.conversation_depth +
-        currentScore.red_flags * weights.red_flags
+        currentScore.quick_assessment * QUICK_WEIGHT +
+        currentScore.red_flags * RED_FLAGS_WEIGHT
     );
+
+    // Store actual weights used
+    currentScore.weights_used = {
+        quick_assessment: QUICK_WEIGHT,
+        red_flags: RED_FLAGS_WEIGHT,
+        conversation_depth: 0  // Not used in vulnerability score
+    };
 
     // 5. DETERMINE MATURITY LEVEL
     const maturityLevels = scoring.maturity_levels;
@@ -868,14 +880,14 @@ function showScoreSummary() {
     }
 
     const maturityConfig = currentData.fieldKit.scoring.maturity_levels[currentScore.maturity_level];
-    const weights = currentData.fieldKit.scoring.weights;
+    const weights = currentScore.weights_used || { quick_assessment: 0.70, red_flags: 0.30, conversation_depth: 0 };
 
     const summaryHTML = `
         <div id="score-summary-section" class="score-summary-section">
             <div class="score-summary-title">
-                📊 Score Summary & Analysis
+                📊 Vulnerability Score Summary & Analysis
             </div>
-            
+
             <div class="score-breakdown">
                 <div class="score-component">
                     <div class="component-label">Quick Assessment</div>
@@ -885,22 +897,22 @@ function showScoreSummary() {
                         (Weight: ${(weights.quick_assessment * 100)}%)
                     </div>
                 </div>
-                
-                <div class="score-component">
-                    <div class="component-label">Conversation Depth</div>
-                    <div class="component-value">${(currentScore.conversation_depth * 100).toFixed(1)}%</div>
-                    <div class="component-description">
-                        ${currentScore.details.conversation_breakdown.answered_questions}/${currentScore.details.conversation_breakdown.total_questions} answered
-                        (Weight: ${(weights.conversation_depth * 100)}%)
-                    </div>
-                </div>
-                
+
                 <div class="score-component">
                     <div class="component-label">Red Flags</div>
                     <div class="component-value">${(currentScore.red_flags * 100).toFixed(1)}%</div>
                     <div class="component-description">
                         ${currentScore.details.red_flags_list.length} flags detected
                         (Weight: ${(weights.red_flags * 100)}%)
+                    </div>
+                </div>
+
+                <div class="score-component" style="border: 2px dashed #888; background: #f5f5f5;">
+                    <div class="component-label">Conversation Completeness</div>
+                    <div class="component-value" style="color: #666;">${(currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0)}%</div>
+                    <div class="component-description" style="color: #888;">
+                        ${currentScore.details.conversation_breakdown.answered_questions}/${currentScore.details.conversation_breakdown.total_questions} questions answered
+                        <br><em>(Informational only - not included in vulnerability score)</em>
                     </div>
                 </div>
                 
@@ -948,10 +960,11 @@ function showScoreSummary() {
                 ` : ''}
                 
                 <div class="calculation-formula">
-                    <strong>Calculation Formula:</strong><br>
-                    Final Score = (Quick × ${weights.quick_assessment}) + (Conversation × ${weights.conversation_depth}) + (RedFlags × ${weights.red_flags})<br>
-                    Final Score = (${currentScore.quick_assessment.toFixed(3)} × ${weights.quick_assessment}) + (${currentScore.conversation_depth.toFixed(3)} × ${weights.conversation_depth}) + (${currentScore.red_flags.toFixed(3)} × ${weights.red_flags})<br>
-                    <strong>Final Score = ${currentScore.final_score.toFixed(3)}</strong>
+                    <strong>Vulnerability Score Calculation:</strong><br>
+                    Final Score = (Quick Assessment × ${weights.quick_assessment}) + (Red Flags × ${weights.red_flags})<br>
+                    Final Score = (${currentScore.quick_assessment.toFixed(3)} × ${weights.quick_assessment}) + (${currentScore.red_flags.toFixed(3)} × ${weights.red_flags})<br>
+                    <strong>Final Score = ${currentScore.final_score.toFixed(3)} (${(currentScore.final_score * 100).toFixed(1)}%)</strong><br>
+                    <em style="color: #888; font-size: 12px;">Note: Conversation completeness is tracked separately for reference</em>
                 </div>
             </div>
         </div>
