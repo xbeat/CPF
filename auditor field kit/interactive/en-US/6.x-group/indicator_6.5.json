@@ -1,0 +1,908 @@
+{
+  "indicator": "6.5",
+  "title": "INDICATOR 6.5 FIELD KIT",
+  "subtitle": "Bystander Effect in Incident Response",
+  "category": "Group Dynamic Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 6.x",
+
+  "description": {
+    "short": "Measures vulnerability to delayed incident response when multiple potential responders assume 'someone else' will handle the cybersecurity threat",
+    "context": "The bystander effect in incident response occurs when multiple potential responders are available, but each assumes 'someone else' will handle the cybersecurity threat, creating dangerous delays. This psychological phenomenon exploits diffusion of responsibility - the more people who could act, the less likely any individual will take action. Organizations with larger security teams, matrix management structures, or distributed security responsibilities are particularly vulnerable to attacks that rely on delayed response times.",
+    "impact": "Organizations vulnerable to bystander effects experience delayed incident containment, critical security events going unreported due to assumption others have escalated, and reduced response times when more people are available to respond. The 2013 Target breach exemplifies this with multiple security team members receiving alerts but each assuming others were investigating, resulting in 17-day delay. Organizations show significant delays between alert detection and human response initiation during business hours when more personnel are available.",
+    "psychological_basis": "Darley and Latané's (1968) landmark experiments demonstrating individuals are less likely to help in emergencies when others are present. Three primary pathways: diffusion of responsibility (individual accountability decreases as group size increases), audience inhibition (fear of public failure prevents action), and social influence (looking to others for response cues leading to collective inaction). Neuroscience research shows bystander situations activate different neural pathways with reduced anterior cingulate cortex activation (personal responsibility) and increased superior temporal sulcus activation (social cognition)."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Clear Individual Accountability",
+        "description": "Named individuals assigned as primary responders for specific incident types. Response assignment happens within 15 minutes of alert detection. Written procedures specify exactly who takes ownership in multi-team scenarios. Regular exercises demonstrate quick, clear responsibility assignment. Metrics show consistent response times regardless of team size or time of day.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Mixed or Unclear Accountability",
+        "description": "General team responsibility but unclear individual assignment for specific incidents. Response times vary significantly based on number of available personnel. Some procedures exist but gaps in coverage for cross-team or vendor incidents. Evidence of occasional delays due to assumption that others are responding.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Diffused Responsibility Patterns",
+        "description": "No clear individual assignment for incident response roles. Regular delays between alert detection and human response initiation. Multiple examples of incidents where several people could have responded but no one did initially. Response times are slower when more people are available to respond. Post-incident analysis frequently reveals 'someone else was handling it' assumptions.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_incident_assignment": 0.18,
+      "q2_reporting_expectations": 0.16,
+      "q3_cross_team_coordination": 0.15,
+      "q4_offhours_response": 0.14,
+      "q5_escalation_authority": 0.13,
+      "q6_alert_fatigue": 0.12,
+      "q7_vendor_incidents": 0.12
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_6.5(t) = w1·R_6.5(t) + w2·A_6.5(t) + w3·B_6.5(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_6.5(t) = 1 if P_response(i,n) < 0.3 AND RT_expected(n) > 2·RT_base, else 0",
+          "description": "Binary detection based on Individual Response Probability and Expected Response Time",
+          "threshold": {
+            "P_response": 0.3,
+            "RT_ratio": 2.0
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_6.5(t) = sqrt((x(t) - μ)ᵀ Σ⁻¹ (x(t) - μ))",
+          "description": "Mahalanobis distance for multivariate bystander patterns",
+          "variables": {
+            "x(t)": "observation vector [response_delay, available_responders, initiative_taken]",
+            "μ": "baseline mean from small team incidents",
+            "Σ": "covariance matrix (exponential weighted moving average)"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_6.5(t) = P(bystander_effect|factors) = [P(factors|bystander_effect) × P(bystander_effect)] / P(factors)",
+          "factors": [
+            "team_size",
+            "individual_assignment_clarity",
+            "response_ambiguity",
+            "available_responder_count",
+            "time_to_assignment"
+          ],
+          "priors": {
+            "P_individual_response": 0.70,
+            "P_bystander_effect": 0.30
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.3,
+        "w2_anomaly": 0.4,
+        "w3_bayesian": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_6.5(t) = α·D_6.5(t) + (1-α)·T_6.5(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 3600,
+        "description": "Exponential smoothing with 1-hour time constant"
+      }
+    },
+    "response_probability_model": {
+      "formula": "P_response(i,n) = P_base · (1/√n) · Responsibility_i",
+      "description": "Individual response probability as function of team size n and individual responsibility perception",
+      "components": {
+        "P_base": "Baseline response probability for individual responder (typical: 0.85)",
+        "n": "Number of available responders who could handle the incident",
+        "Responsibility_i": "Individual's perceived responsibility (0-1 scale)"
+      },
+      "interpretation": "Response probability decreases with square root of team size; decreases further with unclear responsibility"
+    },
+    "response_time_model": {
+      "formula": "RT_expected(n) = RT_base · √n · (1 + Ambiguity/Clarity)",
+      "description": "Expected response time as function of team size and role clarity",
+      "components": {
+        "RT_base": "Baseline response time for single assigned responder (minutes)",
+        "n": "Number of potential responders available",
+        "Ambiguity": "Measure of unclear ownership (0-1 scale)",
+        "Clarity": "Measure of clear assignment procedures (0-1 scale)"
+      },
+      "interpretation": "Response time increases with square root of team size, amplified by role ambiguity"
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "incident_response_logs",
+        "escalation_procedures",
+        "team_structure_documentation"
+      ],
+      "evidence_required": [
+        "incident_assignment_procedures",
+        "response_time_metrics",
+        "multi_team_coordination_examples",
+        "individual_response_authority_documentation"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "incident_response_system",
+          "fields": ["incident_id", "alert_timestamp", "response_timestamp", "available_responders", "assigned_individual", "team_size"],
+          "retention": "90_days"
+        },
+        {
+          "source": "alert_management_system",
+          "fields": ["alert_id", "generation_time", "first_acknowledgment_time", "responder_count", "assignment_clarity"],
+          "retention": "90_days"
+        },
+        {
+          "source": "escalation_tracking",
+          "fields": ["incident_id", "escalation_required", "escalation_time", "decision_maker", "delay_reason"],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "shift_coverage_logs",
+          "fields": ["shift_id", "on_call_personnel", "incident_count", "response_times"],
+          "retention": "180_days"
+        },
+        {
+          "source": "cross_team_incidents",
+          "fields": ["incident_id", "teams_involved", "coordination_time", "command_assignment"],
+          "retention": "365_days"
+        },
+        {
+          "source": "simulation_exercises",
+          "fields": ["exercise_id", "participants", "response_patterns", "individual_initiative"],
+          "retention": "365_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "P_response": {
+          "calculation": "Individual response probability from historical incident data",
+          "query": "SELECT (COUNT(individual_responded)/COUNT(*)) * (1/SQRT(available_responders)) as P_response FROM incidents WHERE responsibility_clear=true GROUP BY available_responders"
+        },
+        "RT_expected": {
+          "calculation": "Expected response time based on team size and clarity",
+          "query": "SELECT AVG(response_timestamp - alert_timestamp) * SQRT(available_responders) * (1 + ambiguity_score) as RT_expected FROM incidents GROUP BY available_responders"
+        },
+        "response_delay": {
+          "calculation": "Time between alert and first human response",
+          "query": "SELECT (first_acknowledgment_time - generation_time) as response_delay FROM alerts WHERE time_window='24h'"
+        }
+      }
+    },
+    "integration_apis": {
+      "incident_response": "PagerDuty/xMatters API - Alert Assignment, Response Tracking",
+      "siem": "Splunk/Sentinel API - Alert Generation, Acknowledgment Times",
+      "ticketing_system": "ServiceNow/Jira API - Incident Assignment, Team Coordination",
+      "collaboration_tools": "Slack/Teams API - Response Communication Patterns"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "6.3",
+        "name": "Diffusion of Responsibility",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "Diffused responsibility creates bystander inaction during incidents",
+        "formula": "P(6.5|6.3) = 0.75"
+      },
+      {
+        "indicator": "6.4",
+        "name": "Social Loafing in Security Tasks",
+        "probability": 0.7,
+        "factor": 1.35,
+        "description": "Social loafing reduces individual initiative during incident response",
+        "formula": "P(6.5|6.4) = 0.7"
+      },
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Alert fatigue increases assumption that others will investigate",
+        "formula": "P(6.5|5.1) = 0.65"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.6,
+        "factor": 1.25,
+        "description": "Stress during incidents increases bystander effect through cognitive narrowing",
+        "formula": "P(6.5|7.1) = 0.6"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "Delayed incident response enables attackers to create urgency-based bypass scenarios",
+        "formula": "P(2.1|6.5) = 0.55"
+      },
+      {
+        "indicator": "8.3",
+        "name": "Denial Defense Mechanism",
+        "probability": 0.5,
+        "factor": 1.15,
+        "description": "Bystander inaction reinforced by psychological denial of incident severity",
+        "formula": "P(8.3|6.5) = 0.5"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["6.3", "6.4", "6.5"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 3.5,
+      "threshold_critical": 4.0,
+      "description": "Perfect storm: Diffused responsibility + Social loafing + Bystander effect = 350% increased incident response failure probability",
+      "real_world_example": "Target 2013 - Multiple teams received FireEye alerts but each assumed others were investigating, resulting in 17-day response delay"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["6.3", "6.4", "5.1", "7.1"],
+      "child_nodes": ["2.1", "8.3"],
+      "conditional_probability_table": {
+        "P_6.5_base": 0.30,
+        "P_6.5_given_diffusion": 0.60,
+        "P_6.5_given_loafing": 0.55,
+        "P_6.5_given_fatigue": 0.52,
+        "P_6.5_given_all": 0.87
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_incident_assignment",
+          "weight": 0.18,
+          "title": "Incident Response Assignment",
+          "question": "During a security alert (like suspicious network traffic or potential malware detection), how do you determine which specific person is responsible for the initial investigation?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "Named individual identified within 15 minutes with clear automated assignment"
+            },
+            {
+              "value": "delayed",
+              "score": 0.5,
+              "label": "General team notification with delayed individual assignment"
+            },
+            {
+              "value": "unclear",
+              "score": 1,
+              "label": "No clear process, frequent confusion about who should respond"
+            }
+          ],
+          "evidence_required": "Last security incident with assignment timestamp, incident assignment procedure",
+          "soc_mapping": "Response assignment time from incident_response_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_reporting_expectations",
+          "weight": 0.16,
+          "title": "Reporting Expectations",
+          "question": "When an employee notices something suspicious (unusual email, strange system behavior, policy violation), what is your policy for who should report it and to whom?",
+          "options": [
+            {
+              "value": "clear",
+              "score": 0,
+              "label": "Clear individual reporting requirements with specific contact and follow-up procedures"
+            },
+            {
+              "value": "general",
+              "score": 0.5,
+              "label": "General 'report to security' guidance without specific procedures"
+            },
+            {
+              "value": "unclear",
+              "score": 1,
+              "label": "Unclear reporting expectations or assumption someone else will report"
+            }
+          ],
+          "evidence_required": "Reporting policy documentation, recent suspicious activity report example",
+          "soc_mapping": "Individual reporting rate from security_incident_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_cross_team_coordination",
+          "weight": 0.15,
+          "title": "Cross-Team Incident Coordination",
+          "question": "When a potential security incident affects multiple departments (IT, security, compliance, business units), what is your procedure for ensuring someone takes ownership of the overall response?",
+          "options": [
+            {
+              "value": "clear_command",
+              "score": 0,
+              "label": "Clear incident commander assignment with defined authority and procedures"
+            },
+            {
+              "value": "coordination_attempts",
+              "score": 0.5,
+              "label": "Coordination attempts but unclear overall command authority"
+            },
+            {
+              "value": "fragmented",
+              "score": 1,
+              "label": "Fragmented response with no clear overall ownership"
+            }
+          ],
+          "evidence_required": "Multi-team incident example with command structure documentation",
+          "soc_mapping": "Coordination time from cross_team_incidents"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_offhours_response",
+          "weight": 0.14,
+          "title": "Off-Hours and Weekend Response",
+          "question": "Outside normal business hours, how do you ensure security alerts don't go unaddressed because team members assume others are monitoring?",
+          "options": [
+            {
+              "value": "individual_oncall",
+              "score": 0,
+              "label": "Specific on-call individual with clear escalation and acknowledgment requirements"
+            },
+            {
+              "value": "team_oncall",
+              "score": 0.5,
+              "label": "Team on-call rotation with some individual accountability gaps"
+            },
+            {
+              "value": "unclear_coverage",
+              "score": 1,
+              "label": "Unclear off-hours coverage or assumption team will handle"
+            }
+          ],
+          "evidence_required": "On-call schedule, recent after-hours incident response example",
+          "soc_mapping": "Off-hours response times from shift_coverage_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_escalation_authority",
+          "weight": 0.13,
+          "title": "Escalation Decision Authority",
+          "question": "When security personnel are uncertain whether an incident requires escalation, what is your policy for who makes that decision and how quickly?",
+          "options": [
+            {
+              "value": "clear_authority",
+              "score": 0,
+              "label": "Clear decision authority with time limits and escalation bias toward over-reporting"
+            },
+            {
+              "value": "delayed_decisions",
+              "score": 0.5,
+              "label": "Decision process exists but often delayed or unclear"
+            },
+            {
+              "value": "paralysis",
+              "score": 1,
+              "label": "Decision paralysis common, uncertainty leads to inaction"
+            }
+          ],
+          "evidence_required": "Escalation decision framework, recent escalation decision example",
+          "soc_mapping": "Escalation decision time from escalation_tracking"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_alert_fatigue",
+          "weight": 0.12,
+          "title": "Alert Fatigue Management",
+          "question": "With multiple security alerts happening daily, how do you prevent situations where everyone assumes someone else is investigating important alerts?",
+          "options": [
+            {
+              "value": "individual_assignment",
+              "score": 0,
+              "label": "Individual alert assignment with acknowledgment tracking and escalation"
+            },
+            {
+              "value": "partial_tracking",
+              "score": 0.5,
+              "label": "Some tracking but gaps in individual accountability"
+            },
+            {
+              "value": "group_notification",
+              "score": 1,
+              "label": "Group notifications without individual assignment or tracking"
+            }
+          ],
+          "evidence_required": "Alert assignment configuration, recent high-priority alert handling example",
+          "soc_mapping": "Alert acknowledgment rates from alert_management_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_vendor_incidents",
+          "weight": 0.12,
+          "title": "Third-Party and Vendor Incidents",
+          "question": "When security issues involve external vendors or contractors, what is your procedure for ensuring clear responsibility assignment?",
+          "options": [
+            {
+              "value": "clear_ownership",
+              "score": 0,
+              "label": "Clear internal individual ownership for vendor incident coordination"
+            },
+            {
+              "value": "coordination_gaps",
+              "score": 0.5,
+              "label": "Coordination attempts but unclear internal ownership"
+            },
+            {
+              "value": "fragmented_responsibility",
+              "score": 1,
+              "label": "Fragmented responsibility between IT, procurement, and security"
+            }
+          ],
+          "evidence_required": "Vendor incident procedure, recent vendor security issue example",
+          "soc_mapping": "Vendor incident coordination from cross_team_incidents"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Opening Questions",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "During a security alert (like suspicious network traffic or potential malware detection), how do you determine which specific person is responsible for the initial investigation?",
+              "scoring_guidance": {
+                "green": "Specific individual identified within 15 minutes, automated assignment demonstrated with recent example",
+                "yellow": "General team notification process with eventual assignment but delays",
+                "red": "Frequent confusion or delays in determining who should respond"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Tell us what happened the last time you had multiple people who could have responded to the same security alert.",
+                  "evidence_type": "specific_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you track whether alerts are being addressed versus everyone assuming someone else is investigating?",
+                  "evidence_type": "tracking_mechanism"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "When an employee notices something suspicious (unusual email, strange system behavior, policy violation), what is your policy for who should report it and to whom?",
+              "scoring_guidance": {
+                "green": "Clear reporting requirements with specific procedures and recent examples of successful reporting",
+                "yellow": "General guidance to report but unclear specific procedures or recipients",
+                "red": "Unclear expectations or employees assume others will report"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Give us a recent case where an employee noticed something suspicious - what did they do and why?",
+                  "evidence_type": "behavioral_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you measure individual reporting versus reliance on others to report?",
+                  "evidence_type": "metrics_verification"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "When a potential security incident affects multiple departments (IT, security, compliance, business units), what is your procedure for ensuring someone takes ownership of the overall response?",
+              "scoring_guidance": {
+                "green": "Clear incident commander designation with authority and recent multi-team example",
+                "yellow": "Coordination attempts but unclear command structure or authority gaps",
+                "red": "Fragmented response with no clear overall ownership"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Describe a recent incident that involved multiple teams - how was responsibility assigned and coordinated?",
+                  "evidence_type": "coordination_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Do you use an incident commander model, and if so, how is that person designated during actual incidents?",
+                  "evidence_type": "process_documentation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Coverage and Response Timing",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Outside normal business hours, how do you ensure security alerts don't go unaddressed because team members assume others are monitoring?",
+              "scoring_guidance": {
+                "green": "Specific on-call individual with acknowledgment requirements and recent example",
+                "yellow": "Team coverage with some gaps or unclear individual accountability",
+                "red": "Unclear off-hours coverage or regular gaps"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What happened during your most recent after-hours security alert - who responded and how quickly?",
+                  "evidence_type": "timing_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Show us your on-call schedule and how individual acknowledgment is tracked.",
+                  "evidence_type": "schedule_documentation"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "When security personnel are uncertain whether an incident requires escalation, what is your policy for who makes that decision and how quickly?",
+              "scoring_guidance": {
+                "green": "Clear decision authority with time limits and bias toward escalation demonstrated",
+                "yellow": "Decision process exists but often delayed or involves multiple people",
+                "red": "Decision paralysis common or long delays in escalation decisions"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Describe a situation where your team was unsure whether to escalate an incident - what happened and how long did the decision take?",
+                  "evidence_type": "decision_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Do you have a documented escalation decision matrix or framework?",
+                  "evidence_type": "framework_documentation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Alert and Coordination Management",
+          "weight": 0.40,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "With multiple security alerts happening daily, how do you prevent situations where everyone assumes someone else is investigating important alerts?",
+              "scoring_guidance": {
+                "green": "Individual assignment with tracking and acknowledgment requirements demonstrated",
+                "yellow": "Some tracking but gaps in individual accountability or verification",
+                "red": "Group notifications without assignment or frequent missed alerts"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Tell us about a time when an important alert was delayed or missed - what caused the delay?",
+                  "evidence_type": "failure_analysis"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Show us your alert assignment configuration and acknowledgment tracking system.",
+                  "evidence_type": "technical_configuration"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "When security issues involve external vendors or contractors, what is your procedure for ensuring clear responsibility assignment?",
+              "scoring_guidance": {
+                "green": "Clear internal individual ownership for vendor coordination with recent example",
+                "yellow": "Coordination attempts but unclear or inconsistent internal ownership",
+                "red": "Fragmented responsibility or assumption vendor will handle"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Describe your most recent vendor-related security issue - who took ownership and how was it coordinated?",
+                  "evidence_type": "vendor_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you prevent the gap where IT assumes vendor handles security and procurement assumes IT monitors vendor security?",
+                  "evidence_type": "gap_prevention"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"With our team size, someone is always watching, so we don't need specific assignments...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Response times are actually slower when more people are available to respond...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"We've had incidents where multiple people saw alerts but each thought others were investigating...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"During business hours with full staffing, we sometimes have slower response than off-hours...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Employees are hesitant to report because they assume others have already reported...\"",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Multi-team incidents often have coordination delays while figuring out who's in charge...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Post-incident analysis frequently reveals 'everyone thought someone else was handling it'...\"",
+              "severity": "critical",
+              "score_impact": 0.15,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject simulated multi-responder incident scenarios quarterly",
+      "correlation_analysis": "Compare manual audit scores with automated P_response/RT_expected metrics (target correlation > 0.80)",
+      "drift_detection": "Kolmogorov-Smirnov test, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted bystander scores match observed response delay patterns",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Response Time Consistency",
+        "formula": "Coefficient of variation in incident response times across different team sizes and configurations",
+        "baseline": "Current variance between small team and large team responses",
+        "target": "Reduce variation to less than 20% within 90 days",
+        "measurement": "Weekly response time analysis by team configuration"
+      },
+      {
+        "metric": "Individual Initiative Rate",
+        "formula": "% of security alerts where assigned individual takes definitive action within designated timeframes",
+        "baseline": "Current individual action rate without additional prompting",
+        "target": "80% appropriate individual initiative within 90 days",
+        "measurement": "Monthly workflow analytics with quarterly trending"
+      },
+      {
+        "metric": "Cross-Team Coordination Effectiveness",
+        "formula": "Time from incident declaration to clear command structure establishment",
+        "baseline": "Current multi-team coordination time",
+        "target": "Command assignment within 30 minutes for 95% of incidents",
+        "measurement": "Quarterly incident command log analysis"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Individual Incident Assignment System",
+        "description": "Implement automated assignment of security alerts to specific named individuals based on rotation schedules, expertise areas, and availability",
+        "implementation": "Deploy ticketing/SOAR system that assigns each alert to unique owner within 5 minutes. Include mobile notifications and automatic escalation if no acknowledgment within 15 minutes. Implement round-robin or intelligent assignment based on expertise and workload. Maintain clear backup assignment procedures for unavailability. Track individual response times and investigation quality metrics.",
+        "technical_controls": "ServiceNow/Jira with automated assignment workflows, PagerDuty/xMatters for mobile notifications, SOAR platform for intelligent routing",
+        "roi": "450% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Structured Escalation Decision Matrix",
+        "description": "Create decision trees specifying exactly when and how escalation decisions should be made, removing ambiguity about individual authority",
+        "implementation": "Document decision criteria in incident response playbooks with clear thresholds and authority levels. Provide laminated decision cards for analysts with escalation flowcharts. Implement 30-minute maximum decision windows during business hours. Include escalation bias training encouraging over-reporting rather than under-reporting. Create automatic timer-based escalation reminders.",
+        "technical_controls": "Decision support system integrated with IR platform, automated escalation timers, playbook automation",
+        "roi": "340% average within 18 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Cross-Functional Incident Commander Protocol",
+        "description": "Designate rotating Incident Commander roles providing clear single points of accountability for multi-team incidents",
+        "implementation": "Adapt Incident Command System (ICS) principles from emergency management. Train commanders in coordination and delegation, not just technical expertise. Establish clear legal authority for commanders to assign tasks and request resources from any organizational unit during declared incidents. Create rotation schedule ensuring coverage 24/7. Conduct monthly IC exercises and simulations.",
+        "technical_controls": "Incident command platform, authority documentation, rotation scheduler, exercise simulation tools",
+        "roi": "380% average within 18 months",
+        "effort": "medium",
+        "timeline": "60 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Positive Bystander Recognition Program",
+        "description": "Implement reward systems specifically recognizing employees who report suspicious activities or take initiative during ambiguous situations",
+        "implementation": "Create security awareness newsletters highlighting positive reporting examples. Track good catch metrics with individual recognition. Ensure false positive reports are celebrated rather than penalized to encourage continued vigilance. Integrate recognition into performance review systems. Establish quarterly Security Hero awards with tangible rewards.",
+        "technical_controls": "Recognition platform, metrics dashboard, communication system, award tracking",
+        "roi": "290% average within 24 months",
+        "effort": "low",
+        "timeline": "30 days initial, ongoing"
+      },
+      {
+        "id": "sol_5",
+        "title": "Real-Time Coordination Dashboard",
+        "description": "Deploy shared visibility tools showing all team members who is actively investigating each security alert",
+        "implementation": "Implement SOAR platform with shared dashboard showing real-time investigation status. Include investigation notes and status updates visible to all team members. Create clear indicators of when alerts need additional attention. Enable real-time collaboration without diffusing individual accountability. Integrate with communication platforms for coordination.",
+        "technical_controls": "SOAR platform (Phantom/Demisto/Swimlane), shared dashboard, real-time collaboration tools, mobile access",
+        "roi": "420% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Micro-Simulation Training Program",
+        "description": "Conduct monthly 15-minute tabletop exercises focused specifically on responsibility assignment and individual initiative during ambiguous incidents",
+        "implementation": "Develop scenario library covering different team compositions and incident types. Schedule recurring calendar blocks for exercises. Rotate through different time constraints and ambiguity levels. Include immediate debriefs focusing on decision-making speed and clarity. Maintain exercise metrics database tracking individual and team improvement. Use tools like SimSpace or custom tabletop exercises.",
+        "technical_controls": "Scenario simulation platform, scheduling system, metrics tracking database, debrief documentation tools",
+        "roi": "310% average within 18 months",
+        "effort": "medium",
+        "timeline": "45 days initial, ongoing monthly"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_3"],
+      "high_value": ["sol_2", "sol_5"],
+      "cultural_foundation": ["sol_4"],
+      "capability_building": ["sol_6"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Advanced Persistent Threat (APT) Exploitation",
+      "description": "Attackers conduct reconnaissance over several weeks using low-level suspicious activities across multiple systems. Each security analyst notices anomalies but assumes others are investigating similar indicators. The attacker exploits this 3-week delay to establish persistent access and exfiltrate sensitive data before anyone connects the distributed indicators into a coordinated attack pattern.",
+      "attack_vector": "Low-and-slow reconnaissance exploiting multi-analyst assumption gaps",
+      "psychological_mechanism": "Bystander effect - each analyst assumes others are investigating similar anomalies",
+      "historical_example": "Common APT pattern where distributed indicators go uninvestigated due to team-based monitoring",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["P_response < 0.3", "RT_expected > 2xRT_base", "distributed_indicators", "team_size_large", "no_individual_assignment"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Mass Phishing Campaign Escalation",
+      "description": "A sophisticated phishing campaign targets the organization with personalized emails. Multiple employees receive suspicious messages but each assumes 'IT must be aware since others probably got this too.' The delayed reporting allows attackers to compromise several accounts before security teams realize the scope of the campaign, leading to lateral movement and privileged access compromise.",
+      "attack_vector": "Mass phishing with assumption of collective awareness",
+      "psychological_mechanism": "Pluralistic ignorance - assumption that others' inaction indicates non-threat",
+      "historical_example": "Common pattern where employee reporting delays enable credential compromise",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["delayed_employee_reporting", "multiple_similar_incidents", "assumption_others_reported", "response_time_variance"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Critical Vulnerability Exploitation",
+      "description": "A critical security vulnerability is announced affecting the organization's key systems. The security team, IT operations, and development teams each assume another team is responsible for patch deployment. Attackers exploit this coordination gap during the 10-day delay, gaining initial access that escalates to domain administrator privileges and encrypted backups.",
+      "attack_vector": "Vulnerability exploitation during cross-team coordination gap",
+      "psychological_mechanism": "Diffusion across functional boundaries with unclear ownership",
+      "historical_example": "Equifax 2017 - Multiple teams assumed others were handling Apache Struts vulnerability patching",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["cross_team_incident", "coordination_delay", "unclear_patch_ownership", "exploitation_during_delay"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Insider Threat Detection Failure",
+      "description": "Multiple employees notice a colleague accessing unusual files and working odd hours, but each assumes others have reported the suspicious behavior to security. The insider exploits this lack of reporting to exfiltrate customer data over several months, causing regulatory violations and customer notification requirements that could have been prevented with prompt reporting.",
+      "attack_vector": "Insider threat enabled by employee reporting bystander effect",
+      "psychological_mechanism": "Assumption that if behavior were truly concerning, someone would have reported it",
+      "historical_example": "Multiple insider threat cases where employee observations went unreported",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["employee_observation_unreported", "gradual_insider_escalation", "multiple_potential_reporters", "delayed_detection"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Darley, J.M. & Latané, B. (1968). Bystander intervention in emergencies demonstrating group size reduces individual action",
+      "Latané, B. & Nida, S. (1981). Bystander effect strengthens with group size following power law relationship",
+      "Karau, S.J. & Williams, K.D. (1993). Social loafing increases when individual contributions less identifiable",
+      "Balconi, M. & Vanutelli, M.E. (2017). Neurological basis of bystander effect using fEMG and EEG",
+      "Bion, W.R. (1961). Group dynamics - dependency basic assumption in organizational contexts"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}
