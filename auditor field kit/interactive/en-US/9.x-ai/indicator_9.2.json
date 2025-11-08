@@ -1,0 +1,853 @@
+{
+  "indicator": "9.2",
+  "title": "INDICATOR 9.2 FIELD KIT",
+  "subtitle": "Automation Bias Override",
+  "category": "AI-Specific Bias Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 9.x",
+
+  "description": {
+    "short": "Measures vulnerability to over-relying on automated AI systems while under-utilizing human judgment and manual verification processes",
+    "context": "Automation bias occurs when security teams over-rely on automated systems while under-utilizing human judgment and manual verification processes. This psychological tendency creates vulnerability because staff lose critical thinking skills and fail to question automated recommendations, even when suspicious. Organizations become dangerously dependent on systems that attackers can manipulate, compromise, or exploit during outages.",
+    "impact": "Organizations with high automation bias experience algorithmic manipulation attacks, authority spoofing through fake AI recommendations, dependency cascade failures during system outages, and alert fatigue exploitation. Attackers can poison training data, create systematic blind spots in detection systems, or time attacks during automation downtime when human skills have atrophied.",
+    "psychological_basis": "Mosier & Skitka (1996) first identified automation bias in aviation - pilots consistently failed to detect system malfunctions when automated alerts were absent. Bahner et al. (2008) showed automation bias increases with system reliability, creating paradox where better systems generate greater vulnerability. fMRI studies reveal reduced prefrontal cortex activation during automated decision support, indicating decreased analytical processing (Parasuraman & Manzey, 2010)."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Resilient",
+        "description": "Staff regularly override automated recommendations (5-15% of cases). Documented manual procedures exist. Independent verification of automated decisions is standard practice. Team demonstrates competent manual analysis during system outages. Balanced human-AI collaboration observed.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Developing",
+        "description": "Staff occasionally question automated systems. Some manual backup procedures exist but show increased response times or reduced accuracy when automation unavailable. Inconsistent manual verification practices. Mixed patterns of appropriate AI skepticism versus over-reliance.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Critical",
+        "description": "Staff rarely or never override automated recommendations (<5% of cases). No documented manual procedures. Cannot effectively operate during automation downtime. Complete deference to automated system outputs without independent verification. Critical skill atrophy in manual security analysis.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_override_frequency": 0.18,
+      "q2_manual_verification": 0.16,
+      "q3_system_downtime": 0.15,
+      "q4_decision_confidence": 0.14,
+      "q5_training_balance": 0.13,
+      "q6_alert_investigation": 0.13,
+      "q7_skill_maintenance": 0.11
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_9.2(t) = w1·R_9.2(t) + w2·OR(t) + w3·AB(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_9.2(t) = 1 if OR(t) < 0.1 AND AB(t) > 0.3, else 0",
+          "description": "Binary detection when override rate falls below 10% AND automation bias exceeds 30%",
+          "threshold": {
+            "OR_minimum": 0.1,
+            "AB_maximum": 0.3
+          }
+        },
+        "override_rate": {
+          "formula": "OR(t,w) = Σ[Override_i] / Σ[AI_recommendation_i] where i ∈ W(t,w)",
+          "description": "Ratio of human overrides to total AI recommendations in time window",
+          "variables": {
+            "Override_i": "binary indicator of human decision contrary to AI recommendation",
+            "AI_recommendation_i": "automated system recommendation event",
+            "W(t,w)": "time window for analysis",
+            "OR_expected": "calibrated override rate based on AI accuracy (typically 0.05-0.15)"
+          },
+          "interpretation": "Healthy override rate 5-15% indicates appropriate skepticism. <5% suggests automation bias. >20% suggests automation neglect."
+        },
+        "automation_bias_score": {
+          "formula": "AB(t) = max(0, (OR_expected - OR(t)) / OR_expected)",
+          "description": "Normalized deviation from expected override rate",
+          "variables": {
+            "OR_expected": "expected override rate based on AI system accuracy",
+            "OR(t)": "observed override rate at time t"
+          }
+        },
+        "confidence_performance_correlation": {
+          "formula": "CPC(t) = Cov(AI_confidence, Human_acceptance) / (Std(AI_confidence) · Std(Human_acceptance))",
+          "description": "Correlation between AI confidence scores and human acceptance rates",
+          "interpretation": "High positive correlation (>0.8) may indicate automation bias if humans blindly trust high-confidence AI outputs"
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.3,
+        "w2_override_rate": 0.4,
+        "w3_bias_score": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_9.2(t) = α·D_9.2(t) + (1-α)·T_9.2(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200,
+        "description": "Exponential smoothing with 2-hour time constant for automation bias patterns"
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "security_analyst_interviews",
+        "manual_procedure_documentation",
+        "system_downtime_response_records",
+        "training_program_review"
+      ],
+      "evidence_required": [
+        "override_decision_logs",
+        "manual_analysis_procedures",
+        "automation_downtime_incident_reports",
+        "skill_assessment_results"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "siem_decision_logs",
+          "fields": ["alert_id", "ai_recommendation", "analyst_action", "override_flag", "timestamp", "analyst_id"],
+          "retention": "90_days"
+        },
+        {
+          "source": "automated_response_system",
+          "fields": ["recommendation_id", "confidence_score", "human_override", "override_reason", "outcome"],
+          "retention": "90_days"
+        },
+        {
+          "source": "threat_detection_platform",
+          "fields": ["detection_method", "automated_score", "manual_review_flag", "final_decision"],
+          "retention": "180_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "analyst_performance_metrics",
+          "fields": ["analyst_id", "manual_detection_rate", "automation_dependency_score", "skill_assessment_scores"],
+          "retention": "365_days"
+        },
+        {
+          "source": "system_availability_logs",
+          "fields": ["system_id", "downtime_start", "downtime_end", "manual_operations_quality"],
+          "retention": "180_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "OR_override_rate": {
+          "calculation": "Override frequency within time window",
+          "query": "SELECT (COUNT(override_flag=true) / COUNT(*)) as OR FROM siem_decisions WHERE time_window='7d'"
+        },
+        "AB_automation_bias": {
+          "calculation": "Deviation from expected override rate",
+          "query": "SELECT MAX(0, (0.10 - OR_observed) / 0.10) as AB FROM override_metrics WHERE time_window='30d'"
+        },
+        "CPC_correlation": {
+          "calculation": "Correlation between AI confidence and human acceptance",
+          "query": "SELECT CORR(ai_confidence, human_accepted) as CPC FROM recommendations WHERE time_window='30d'"
+        }
+      }
+    },
+    "integration_apis": {
+      "siem_platforms": "Splunk/Sentinel API - Alert Decisions, Override Logs",
+      "soar_systems": "SOAR API - Automated Playbook Executions, Manual Interventions",
+      "threat_intel": "TIP API - Automated vs Manual Threat Classifications",
+      "lms_training": "Learning Management System - Skill Assessment Scores"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.7,
+        "factor": 1.35,
+        "description": "Cognitive depletion increases delegation to automated systems as path of least resistance",
+        "formula": "P(9.2|5.2) = 0.7"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Stress amplifies automation bias as individuals seek quick cognitive shortcuts",
+        "formula": "P(9.2|7.1) = 0.65"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.6,
+        "factor": 1.28,
+        "description": "Time pressure increases automation reliance and reduces manual verification",
+        "formula": "P(9.2|2.1) = 0.6"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "9.7",
+        "name": "AI Hallucination Acceptance",
+        "probability": 0.7,
+        "factor": 1.38,
+        "description": "Automation bias reduces verification of AI-generated false information",
+        "formula": "P(9.7|9.2) = 0.7"
+      },
+      {
+        "indicator": "9.8",
+        "name": "Human-AI Team Dysfunction",
+        "probability": 0.65,
+        "factor": 1.32,
+        "description": "Over-reliance on automation degrades human-AI collaboration effectiveness",
+        "formula": "P(9.8|9.2) = 0.65"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["9.2", "5.2", "7.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.2,
+      "threshold_critical": 3.0,
+      "description": "Perfect storm: Automation Bias + Decision Fatigue + Acute Stress = 220% increased failure probability during automation compromise",
+      "real_world_example": "SOC failures during SIEM compromise when fatigued analysts cannot function without automated alerts"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["5.2", "7.1", "2.1"],
+      "child_nodes": ["9.7", "9.8"],
+      "conditional_probability_table": {
+        "P_9.2_base": 0.20,
+        "P_9.2_given_fatigue": 0.42,
+        "P_9.2_given_stress": 0.38,
+        "P_9.2_given_urgency": 0.35,
+        "P_9.2_given_all": 0.72
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_override_frequency",
+          "weight": 0.18,
+          "title": "AI Recommendation Override Frequency",
+          "question": "In the past 6 months, how often have your security staff overridden or questioned automated security recommendations (SIEM alerts, AI threat detection, automated blocking decisions)?",
+          "options": [
+            {
+              "value": "appropriate",
+              "score": 0,
+              "label": "Regular override activity (5-15% of automated recommendations) with documented decision rationale"
+            },
+            {
+              "value": "occasional",
+              "score": 0.5,
+              "label": "Occasional overrides but less than 5% or more than 20% suggesting bias or neglect"
+            },
+            {
+              "value": "rare",
+              "score": 1,
+              "label": "Rarely or never override automated recommendations (<5% of cases)"
+            }
+          ],
+          "evidence_required": "Override logs from past 6 months, specific override example with rationale",
+          "soc_mapping": "OR_override_rate from siem_decision_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_manual_verification",
+          "weight": 0.16,
+          "title": "Manual Verification for Low-Risk Automated Assessments",
+          "question": "What's your standard procedure when automated security systems flag something as 'low risk' or 'safe'?",
+          "options": [
+            {
+              "value": "verify",
+              "score": 0,
+              "label": "Manual verification or sampling required even for low-risk automated assessments"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.5,
+              "label": "Occasional spot-checking but generally trust low-risk classifications"
+            },
+            {
+              "value": "trust",
+              "score": 1,
+              "label": "Automatically trust low-risk assessments without verification"
+            }
+          ],
+          "evidence_required": "Verification procedure documentation, recent low-risk handling example",
+          "soc_mapping": "Manual verification rate from threat_detection_platform"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_system_downtime",
+          "weight": 0.15,
+          "title": "Security Operations During Automation Downtime",
+          "question": "What happens to your security operations when your primary automated security tools (SIEM, AI detection, automated monitoring) are unavailable?",
+          "options": [
+            {
+              "value": "maintain",
+              "score": 0,
+              "label": "Security operations continue effectively with <25% performance degradation using manual procedures"
+            },
+            {
+              "value": "degraded",
+              "score": 0.5,
+              "label": "Significant degradation (25-50%) but team can function with reduced effectiveness"
+            },
+            {
+              "value": "collapse",
+              "score": 1,
+              "label": "Security operations severely compromised (>50% degradation) or essentially non-functional"
+            }
+          ],
+          "evidence_required": "Downtime incident report, manual operations performance metrics",
+          "soc_mapping": "Manual operations quality from system_availability_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_decision_confidence",
+          "weight": 0.14,
+          "title": "Analyst Confidence Without Automation",
+          "question": "How do your security analysts make decisions when automated systems provide conflicting or unclear recommendations?",
+          "options": [
+            {
+              "value": "confident",
+              "score": 0,
+              "label": "Analysts demonstrate confidence and competence in manual analysis and independent decision-making"
+            },
+            {
+              "value": "uncertain",
+              "score": 0.5,
+              "label": "Analysts show hesitation but can make decisions with additional time or consultation"
+            },
+            {
+              "value": "dependent",
+              "score": 1,
+              "label": "Analysts struggle significantly without clear automated guidance or defer decisions"
+            }
+          ],
+          "evidence_required": "Decision-making examples during ambiguous situations, analyst interviews",
+          "soc_mapping": "Analyst confidence scores from performance assessments"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_training_balance",
+          "weight": 0.13,
+          "title": "Training Focus - Manual vs Automated Skills",
+          "question": "What percentage of your security team's training time is spent on manual analysis techniques versus learning to use automated tools?",
+          "options": [
+            {
+              "value": "balanced",
+              "score": 0,
+              "label": "Balanced training (40%+ on manual analysis skills) including automation-free exercises"
+            },
+            {
+              "value": "tool_heavy",
+              "score": 0.5,
+              "label": "Predominantly tool-focused (70%+ automation) with some manual skills training"
+            },
+            {
+              "value": "automation_only",
+              "score": 1,
+              "label": "Almost exclusively focused on automation tools with minimal manual analysis training"
+            }
+          ],
+          "evidence_required": "Training curriculum breakdown, manual skills training examples",
+          "soc_mapping": "Training allocation from lms_training system"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_alert_investigation",
+          "weight": 0.13,
+          "title": "Alert Investigation Depth",
+          "question": "When automated systems generate security alerts, what's your standard investigation process before taking action?",
+          "options": [
+            {
+              "value": "thorough",
+              "score": 0,
+              "label": "Thorough investigation including manual log review and contextual analysis before action"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Basic verification but heavy reliance on automated context and recommendations"
+            },
+            {
+              "value": "automated",
+              "score": 1,
+              "label": "Minimal investigation, primarily trust automated analysis and take recommended actions"
+            }
+          ],
+          "evidence_required": "Investigation procedures, recent alert handling walkthrough",
+          "soc_mapping": "Investigation depth metrics from siem_decision_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_skill_maintenance",
+          "weight": 0.11,
+          "title": "Manual Analysis Skill Maintenance",
+          "question": "How do you ensure your security staff maintain the ability to perform security analysis without automated assistance?",
+          "options": [
+            {
+              "value": "regular",
+              "score": 0,
+              "label": "Regular automation-free exercises and manual analysis competency testing"
+            },
+            {
+              "value": "occasional",
+              "score": 0.5,
+              "label": "Occasional manual exercises but no systematic skill maintenance program"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No formal program for maintaining manual security analysis skills"
+            }
+          ],
+          "evidence_required": "Manual exercise schedules, skill assessment records",
+          "soc_mapping": "Skill assessment scores from analyst_performance_metrics"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Opening Questions - Override and Verification Patterns",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "In the past 6 months, how often have your security staff overridden or questioned automated security recommendations (SIEM alerts, AI threat detection, automated blocking decisions)? Tell us your specific example of when someone last overrode an automated security decision.",
+              "scoring_guidance": {
+                "green": "Regular override activity (5-15%) with specific recent example and clear rationale",
+                "yellow": "Occasional overrides but no clear pattern or examples",
+                "red": "Rarely or never override, or cannot provide recent examples"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What was the outcome when someone questioned an automated recommendation - were they right?",
+                  "evidence_type": "outcome_validation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Do you track and analyze override decisions to learn from them?",
+                  "evidence_type": "learning_process"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "What's your standard procedure when automated security systems flag something as 'low risk' or 'safe'? Give us a recent example of how your team handled a 'low risk' automated assessment.",
+              "scoring_guidance": {
+                "green": "Clear verification procedures even for low-risk items with recent example",
+                "yellow": "Informal verification sometimes but not systematic",
+                "red": "Automatic trust in low-risk classifications without verification"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Have you ever found a false negative - something automated systems missed that manual review caught?",
+                  "evidence_type": "false_negative_example"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Automation Downtime and Manual Capabilities",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "What happens to your security operations when your primary automated security tools (SIEM, AI detection, automated monitoring) are unavailable? Describe a specific incident when automation was down and how your team responded.",
+              "scoring_guidance": {
+                "green": "Effective manual operations demonstrated with specific downtime example showing <25% degradation",
+                "yellow": "Significant degradation but team functioned, or no recent downtime to reference",
+                "red": "Operations severely compromised or collapsed without automation"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Do you have documented manual procedures for security operations during automation outages?",
+                  "evidence_type": "manual_procedures"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How long would it take to detect a major breach if all automated systems were offline?",
+                  "evidence_type": "capability_assessment"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "How do your security analysts make decisions when automated systems provide conflicting or unclear recommendations? Tell us about a recent case where your team had to make a security decision without clear automated guidance.",
+              "scoring_guidance": {
+                "green": "Analysts demonstrate confidence and competence with specific example of independent analysis",
+                "yellow": "Some capability but significant hesitation or delays",
+                "red": "Analysts defer decisions or struggle significantly without automation guidance"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Do newer analysts have the same manual analysis skills as senior team members?",
+                  "evidence_type": "skill_distribution"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Training and Skill Maintenance",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "What percentage of your security team's training time is spent on manual analysis techniques versus learning to use automated tools? Give us an example of recent manual security skills training your team completed.",
+              "scoring_guidance": {
+                "green": "Balanced training (40%+ manual) with specific recent manual skills examples",
+                "yellow": "Predominantly tool-focused but some manual training",
+                "red": "Almost exclusively automation tools, minimal manual skills training"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Can your analysts perform packet analysis, log correlation, or threat hunting without automated tools?",
+                  "evidence_type": "core_skill_verification"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "When automated systems generate security alerts, what's your standard investigation process before taking action? Describe your most recent security alert and walk us through exactly how it was investigated.",
+              "scoring_guidance": {
+                "green": "Thorough manual investigation with specific detailed example",
+                "yellow": "Basic verification but heavy automation reliance",
+                "red": "Minimal investigation, primarily automated response"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What would happen if your automated alert enrichment and context systems were unavailable?",
+                  "evidence_type": "dependency_assessment"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "How do you ensure your security staff maintain the ability to perform security analysis without automated assistance? Tell us about a specific exercise or process where your team practiced manual security analysis.",
+              "scoring_guidance": {
+                "green": "Regular automation-free exercises with specific recent example",
+                "yellow": "Occasional exercises but no systematic program",
+                "red": "No formal skill maintenance program"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Do you test analysts' manual analysis skills during performance reviews or hiring?",
+                  "evidence_type": "assessment_practice"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"We trust our automated systems, they're more accurate than humans...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"I don't remember the last time someone overrode an automated decision...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Without our SIEM, we'd be blind - we couldn't operate...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Questioning automated recommendations slows down our response time...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Our newer analysts don't know how to do packet analysis - they just use the tools...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Manual investigation takes too long, we rely on automated enrichment...\"",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Training focuses on learning our tools, not manual analysis skills...\"",
+              "severity": "medium",
+              "score_impact": 0.10,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject scenarios requiring manual analysis monthly to test automation dependency",
+      "correlation_analysis": "Compare manual audit scores with automated override rate metrics (target correlation > 0.80)",
+      "drift_detection": "Kolmogorov-Smirnov test on override patterns, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure override rates correlate with actual automation accuracy",
+      "baseline_period": "60_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Override Rate Maintenance",
+        "formula": "% of automated recommendations receiving human override within healthy range (5-15%)",
+        "baseline": "current override rate from SIEM logs",
+        "target": "maintain 5-15% override rate monthly",
+        "measurement": "automated logging and monthly analysis"
+      },
+      {
+        "metric": "Manual Operations Performance",
+        "formula": "Performance degradation during planned automation downtime exercises",
+        "baseline": "initial downtime exercise performance",
+        "target": "<25% degradation within 90 days",
+        "measurement": "quarterly automation downtime exercises"
+      },
+      {
+        "metric": "Skill Competency Retention",
+        "formula": "Pass rate on manual security analysis competency tests",
+        "baseline": "initial skill assessment",
+        "target": ">80% pass rate on quarterly tests within 90 days",
+        "measurement": "quarterly competency testing"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Mandatory Override Protocols",
+        "description": "Implement policy requiring manual verification of all automated decisions above specified risk thresholds",
+        "implementation": "Create audit trail showing when staff questioned or overrode automated recommendations. Establish target override rates (5-15%) and investigate teams with rates outside this range. Require documentation of override rationale for learning and calibration.",
+        "technical_controls": "Override tracking system, automated anomaly detection for override rate deviations, audit dashboard",
+        "roi": "310% average within 12 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Automation-Free Exercises",
+        "description": "Schedule monthly 'manual mode' exercises where automated systems are disabled and staff must detect, analyze, and respond using only manual techniques",
+        "implementation": "Conduct tabletop and live exercises with automation disabled. Document performance gaps and provide targeted training for identified weaknesses. Track performance improvement over time.",
+        "technical_controls": "Exercise scenarios, performance metrics tracking, gap analysis system",
+        "roi": "270% average within 18 months",
+        "effort": "medium",
+        "timeline": "ongoing monthly program"
+      },
+      {
+        "id": "sol_3",
+        "title": "Dual-Decision Architecture",
+        "description": "Require independent human analysis for critical security decisions alongside automated recommendations",
+        "implementation": "Implement workflow where both human analyst and automated system must agree before high-impact actions (blocking, escalation, incident declaration). Create decision review process for disagreements.",
+        "technical_controls": "Dual-approval workflow system, decision logging, conflict resolution framework",
+        "roi": "340% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Structured Skepticism Training",
+        "description": "Provide specific training on questioning automated outputs, recognizing system limitations, and maintaining healthy skepticism",
+        "implementation": "Include real case studies of automation failures. Teach staff to identify situations requiring manual override. Practice critical evaluation of AI recommendations with hands-on exercises.",
+        "technical_controls": "Training modules, competency assessments, case study database",
+        "roi": "230% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days initial, quarterly updates"
+      },
+      {
+        "id": "sol_5",
+        "title": "Skill Degradation Monitoring",
+        "description": "Implement regular competency testing for manual security analysis skills",
+        "implementation": "Track individual and team performance over time on manual analysis tasks. Identify skill atrophy before it becomes critical. Require remedial training when manual analysis scores decline below acceptable thresholds.",
+        "technical_controls": "Skill assessment platform, performance tracking system, training remediation workflows",
+        "roi": "250% average within 18 months",
+        "effort": "medium",
+        "timeline": "45 days initial, quarterly assessment"
+      },
+      {
+        "id": "sol_6",
+        "title": "Automation Transparency Requirements",
+        "description": "Mandate that all automated security tools provide explainable outputs showing reasoning, confidence levels, and data sources",
+        "implementation": "Train staff to evaluate automated explanations and identify when automated logic may be flawed or insufficient. Require vendors to provide transparency into AI decision-making processes.",
+        "technical_controls": "Explainability dashboard, confidence score visualization, decision audit trails",
+        "roi": "290% average within 12 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_3"],
+      "high_value": ["sol_2", "sol_6"],
+      "cultural_foundation": ["sol_4"],
+      "governance": ["sol_5"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Algorithmic Manipulation Attack",
+      "description": "Attackers poison machine learning training data or exploit algorithmic vulnerabilities to create systematic blind spots. Over-reliant staff miss obvious threats because automated systems classify them as benign.",
+      "attack_vector": "Training data poisoning, adversarial machine learning, model inversion attacks",
+      "psychological_mechanism": "Automation bias prevents recognition of compromised AI system behavior",
+      "historical_example": "ML model poisoning attacks creating systematic detection blind spots in security platforms",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["classification_anomalies", "unusual_false_negative_patterns", "model_drift_indicators"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Authority Spoofing via Fake AI Recommendations",
+      "description": "Social engineers impersonate automated security systems through fake dashboards or reports, convincing staff to approve malicious activities by claiming 'AI recommends approval' or 'automated risk assessment shows low threat'.",
+      "attack_vector": "Fake security dashboards, spoofed SIEM alerts, manipulated automated reports",
+      "psychological_mechanism": "Staff comply without verification due to automation bias and trust in AI authority",
+      "historical_example": "Business email compromise attacks enhanced with fake 'AI-verified' security assessments",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["unverified_automation_sources", "unusual_approval_patterns", "bypassed_verification_protocols"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Dependency Cascade Failure",
+      "description": "During planned maintenance or unexpected outage of automated security systems, security operations collapse because staff cannot function without AI assistance. Attackers time major operations during these vulnerability windows.",
+      "attack_vector": "Exploitation during automation downtime, timing attacks during system maintenance",
+      "psychological_mechanism": "Manual detection skill atrophy creates critical gaps during automation unavailability",
+      "historical_example": "Major breaches occurring during SIEM maintenance windows when manual monitoring failed",
+      "likelihood": "low",
+      "impact": "critical",
+      "detection_indicators": ["automation_downtime", "degraded_manual_operations", "response_time_increases"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Alert Fatigue Exploitation",
+      "description": "Attackers flood automated systems with low-level alerts to desensitize operators, then embed genuine malicious activities during high-volume periods when automation bias peaks. Critical threats missed because staff assume automated prioritization is accurate.",
+      "attack_vector": "Alert flooding, volumetric attacks, priority manipulation",
+      "psychological_mechanism": "Automation bias increases during alert fatigue, reducing manual investigation of routine alerts",
+      "historical_example": "APT campaigns hiding in alert noise, exploiting analyst reliance on automated triage",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["alert_volume_spikes", "decreased_investigation_depth", "manual_review_rate_drops"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "created_date": "2025-11-08",
+    "last_modified": "2025-11-08",
+    "version_history": [],
+    "research_basis": [
+      "Mosier, K. L., & Skitka, L. J. (1996). Human decision makers and automated decision aids: Made for each other?",
+      "Bahner, J. E., et al. (2008). Misuse of automated decision aids: Complacency, automation bias and the impact of training experience",
+      "Parasuraman, R., & Manzey, D. H. (2010). Complacency and bias in human use of automation: An attentional integration",
+      "Goddard, K., et al. (2012). Automation bias: A systematic review of frequency, effect mediators, and mitigators",
+      "Rice, S. (2009). Examining single- and multi-level effects on automation reliance and compliance"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}
