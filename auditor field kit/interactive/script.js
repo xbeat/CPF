@@ -827,74 +827,68 @@ function calculateIndicatorScore() {
 
 function updateScoreDisplay() {
     const scoreBarDiv = document.getElementById('score-bar');
-    if (!scoreBarDiv) {
-        // Create score bar if doesn't exist
-        const metadataBar = document.getElementById('metadata-bar');
-        const newScoreBar = document.createElement('div');
-        newScoreBar.id = 'score-bar';
-        newScoreBar.className = 'score-bar';
-        metadataBar.parentNode.insertBefore(newScoreBar, metadataBar.nextSibling);
-    }
-
-    // Preserve state of detailed breakdown panel before regenerating HTML
     const existingBreakdown = document.getElementById('score-detailed-breakdown');
-    const wasBreakdownVisible = existingBreakdown && existingBreakdown.style.display !== 'none';
-    const existingDetails = document.getElementById('score-details-content');
-    const wereDetailsVisible = existingDetails && existingDetails.classList.contains('visible');
 
     const maturityConfig = currentData.fieldKit.scoring.maturity_levels[currentScore.maturity_level];
     const scorePercentage = (currentScore.final_score * 100).toFixed(1);
-
     const weights = currentScore.weights_used || { quick_assessment: 0.70, red_flags: 0.30, conversation_depth: 0 };
 
-    document.getElementById('score-bar').innerHTML = `
+    // FIRST TIME: Create full HTML structure
+    if (!scoreBarDiv || !existingBreakdown) {
+        if (!scoreBarDiv) {
+            const metadataBar = document.getElementById('metadata-bar');
+            const newScoreBar = document.createElement('div');
+            newScoreBar.id = 'score-bar';
+            newScoreBar.className = 'score-bar sticky-score-bar';
+            metadataBar.parentNode.insertBefore(newScoreBar, metadataBar.nextSibling);
+        }
+
+        document.getElementById('score-bar').innerHTML = `
         <div class="score-container">
             <div class="score-progress-section">
                 <div class="score-label">
                     <span>Vulnerability Score</span>
-                    <span class="score-value">${scorePercentage}%</span>
+                    <span class="score-value" id="score-val">${scorePercentage}%</span>
                 </div>
                 <div class="progress-bar-container">
-                    <div class="progress-bar-fill ${currentScore.maturity_level}"
-                         style="width: ${scorePercentage}%">
+                    <div class="progress-bar-fill ${currentScore.maturity_level}" id="score-bar-fill" style="width: ${scorePercentage}%">
                         ${scorePercentage}%
                     </div>
                 </div>
             </div>
             <div class="maturity-badge-container">
                 <div class="maturity-label">MATURITY LEVEL</div>
-                <div class="maturity-badge ${currentScore.maturity_level}">
+                <div class="maturity-badge ${currentScore.maturity_level}" id="maturity-badge">
                     ${maturityConfig.label}
                 </div>
             </div>
         </div>
 
-        <!-- DETAILED BREAKDOWN (collapsible, inside score bar) -->
         <div id="score-detailed-breakdown" class="score-detailed-breakdown" style="display: none;">
             <div class="score-breakdown">
                 <div class="score-component">
                     <div class="component-label">Quick Assessment</div>
-                    <div class="component-value">${(currentScore.quick_assessment * 100).toFixed(1)}%</div>
+                    <div class="component-value" id="quick-val">${(currentScore.quick_assessment * 100).toFixed(1)}%</div>
                     <div class="component-description">
-                        Based on ${currentScore.details.quick_assessment_breakdown.length} questions
+                        Based on <span id="quick-count">${currentScore.details.quick_assessment_breakdown.length}</span> questions
                         (Weight: ${(weights.quick_assessment * 100)}%)
                     </div>
                 </div>
 
                 <div class="score-component">
                     <div class="component-label">Red Flags</div>
-                    <div class="component-value">${(currentScore.red_flags * 100).toFixed(1)}%</div>
+                    <div class="component-value" id="flags-val">${(currentScore.red_flags * 100).toFixed(1)}%</div>
                     <div class="component-description">
-                        ${currentScore.details.red_flags_list.length} flags detected
+                        <span id="flags-count">${currentScore.details.red_flags_list.length}</span> flags detected
                         (Weight: ${(weights.red_flags * 100)}%)
                     </div>
                 </div>
 
                 <div class="score-component" style="border: 2px dashed #ccc; background: #fafafa;">
                     <div class="component-label">Conversation Completeness</div>
-                    <div class="component-value" style="color: #666;">${(currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0)}%</div>
+                    <div class="component-value" style="color: #666;" id="conv-val">${(currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0)}%</div>
                     <div class="component-description" style="color: #888; font-size: 12px;">
-                        ${currentScore.details.conversation_breakdown.answered_questions}/${currentScore.details.conversation_breakdown.total_questions} answered
+                        <span id="conv-answered">${currentScore.details.conversation_breakdown.answered_questions}</span>/<span id="conv-total">${currentScore.details.conversation_breakdown.total_questions}</span> answered
                         <br><em>(Informational only)</em>
                     </div>
                 </div>
@@ -902,7 +896,7 @@ function updateScoreDisplay() {
 
             <div class="score-interpretation">
                 <div class="interpretation-title">📋 Interpretation</div>
-                <div class="interpretation-text">
+                <div class="interpretation-text" id="interp-text">
                     <strong style="color: ${maturityConfig.color};">${maturityConfig.label}:</strong> ${maturityConfig.description}
                 </div>
             </div>
@@ -915,14 +909,14 @@ function updateScoreDisplay() {
 
             <div id="score-details-content" class="score-details-content">
                 <h4 style="margin-bottom: 15px; color: var(--primary);">Quick Assessment Breakdown</h4>
-                ${currentScore.details.quick_assessment_breakdown.map(item => `
+                <div id="quick-breakdown">${currentScore.details.quick_assessment_breakdown.map(item => `
                     <div class="detail-row">
                         <span class="detail-label">${item.question}</span>
                         <span class="detail-value">${(item.weighted_score * 100).toFixed(1)}%</span>
                     </div>
-                `).join('')}
+                `).join('')}</div>
 
-                ${currentScore.details.red_flags_list.length > 0 ? `
+                <div id="flags-breakdown">${currentScore.details.red_flags_list.length > 0 ? `
                     <h4 style="margin: 20px 0 15px; color: var(--danger);">Red Flags Detected</h4>
                     ${currentScore.details.red_flags_list.map(flag => `
                         <div class="detail-row">
@@ -930,37 +924,72 @@ function updateScoreDisplay() {
                             <span class="detail-value" style="color: var(--danger);">+${(flag.impact * 100).toFixed(1)}%</span>
                         </div>
                     `).join('')}
-                ` : ''}
+                ` : ''}</div>
 
-                <div class="calculation-formula">
+                <div class="calculation-formula" id="calc-formula">
                     <strong>Vulnerability Score Calculation:</strong><br>
                     Final Score = (Quick Assessment × ${weights.quick_assessment}) + (Red Flags × ${weights.red_flags})<br>
                     Final Score = (${currentScore.quick_assessment.toFixed(3)} × ${weights.quick_assessment}) + (${currentScore.red_flags.toFixed(3)} × ${weights.red_flags})<br>
-                    <strong>Final Score = ${currentScore.final_score.toFixed(3)} (${(currentScore.final_score * 100).toFixed(1)}%)</strong><br>
+                    <strong>Final Score = ${currentScore.final_score.toFixed(3)} (${scorePercentage}%)</strong><br>
                     <em style="color: #888; font-size: 12px;">Note: Conversation completeness is tracked separately for reference</em>
                 </div>
             </div>
-        </div>
-    `;
+        </div>`;
 
-    const scoreBar = document.getElementById('score-bar');
-    scoreBar.style.display = 'block';
-    scoreBar.classList.add('sticky-score-bar');
+        document.getElementById('score-bar').style.display = 'block';
 
-    // Restore state of panels after HTML regeneration
-    if (wasBreakdownVisible) {
-        const newBreakdown = document.getElementById('score-detailed-breakdown');
-        if (newBreakdown) {
-            newBreakdown.style.display = 'block';
-        }
-    }
-    if (wereDetailsVisible) {
-        const newDetails = document.getElementById('score-details-content');
-        if (newDetails) {
-            newDetails.classList.add('visible');
-        }
+    } else {
+        // SUBSEQUENT UPDATES: Only update values, NO HTML regeneration
+        document.getElementById('score-val').textContent = scorePercentage + '%';
+
+        const fill = document.getElementById('score-bar-fill');
+        fill.className = `progress-bar-fill ${currentScore.maturity_level}`;
+        fill.style.width = scorePercentage + '%';
+        fill.textContent = scorePercentage + '%';
+
+        const badge = document.getElementById('maturity-badge');
+        badge.className = `maturity-badge ${currentScore.maturity_level}`;
+        badge.textContent = maturityConfig.label;
+
+        document.getElementById('quick-val').textContent = (currentScore.quick_assessment * 100).toFixed(1) + '%';
+        document.getElementById('quick-count').textContent = currentScore.details.quick_assessment_breakdown.length;
+
+        document.getElementById('flags-val').textContent = (currentScore.red_flags * 100).toFixed(1) + '%';
+        document.getElementById('flags-count').textContent = currentScore.details.red_flags_list.length;
+
+        document.getElementById('conv-val').textContent = (currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0) + '%';
+        document.getElementById('conv-answered').textContent = currentScore.details.conversation_breakdown.answered_questions;
+        document.getElementById('conv-total').textContent = currentScore.details.conversation_breakdown.total_questions;
+
+        document.getElementById('interp-text').innerHTML = `<strong style="color: ${maturityConfig.color};">${maturityConfig.label}:</strong> ${maturityConfig.description}`;
+
+        document.getElementById('quick-breakdown').innerHTML = currentScore.details.quick_assessment_breakdown.map(item => `
+            <div class="detail-row">
+                <span class="detail-label">${item.question}</span>
+                <span class="detail-value">${(item.weighted_score * 100).toFixed(1)}%</span>
+            </div>
+        `).join('');
+
+        document.getElementById('flags-breakdown').innerHTML = currentScore.details.red_flags_list.length > 0 ? `
+            <h4 style="margin: 20px 0 15px; color: var(--danger);">Red Flags Detected</h4>
+            ${currentScore.details.red_flags_list.map(flag => `
+                <div class="detail-row">
+                    <span class="detail-label">⚠️ ${flag.flag}</span>
+                    <span class="detail-value" style="color: var(--danger);">+${(flag.impact * 100).toFixed(1)}%</span>
+                </div>
+            `).join('')}
+        ` : '';
+
+        document.getElementById('calc-formula').innerHTML = `
+            <strong>Vulnerability Score Calculation:</strong><br>
+            Final Score = (Quick Assessment × ${weights.quick_assessment}) + (Red Flags × ${weights.red_flags})<br>
+            Final Score = (${currentScore.quick_assessment.toFixed(3)} × ${weights.quick_assessment}) + (${currentScore.red_flags.toFixed(3)} × ${weights.red_flags})<br>
+            <strong>Final Score = ${currentScore.final_score.toFixed(3)} (${scorePercentage}%)</strong><br>
+            <em style="color: #888; font-size: 12px;">Note: Conversation completeness is tracked separately for reference</em>
+        `;
     }
 }
+
 
 // showScoreSummary() removed - detailed breakdown now integrated in score bar
 
