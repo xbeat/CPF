@@ -16,20 +16,73 @@ setInterval(() => {
     }
 }, 30000);
 
+// Language code mapping
+const LANG_MAP = {
+    'EN': 'en-US',
+    'IT': 'it-IT',
+    'ES': 'es-ES',
+    'FR': 'fr-FR',
+    'DE': 'de-DE'
+};
+
+// Category mapping
+const CATEGORY_MAP = {
+    '1': 'authority',
+    '2': 'temporal',
+    '3': 'social',
+    '4': 'affective',
+    '5': 'cognitive',
+    '6': 'group',
+    '7': 'stress',
+    '8': 'unconscious',
+    '9': 'ai',
+    '10': 'convergent'
+};
+
 async function loadJSON() {
-    const url = prompt('Enter JSON URL or indicator ID (e.g., 1.1):');
-    if (!url) return;
+    const input = prompt('Enter indicator (format: X.Y-LANG or X.Y for en-US)\nExamples: 1.3-IT, 2.1-EN, 1.3');
+    if (!input) return;
+
     try {
-        let fetchUrl = url;
-        if (url.match(/^\d+\.\d+$/)) {
-            fetchUrl = `https://raw.githubusercontent.com/xbeat/CPF/main/field_kits_json/${url}.json`;
+        let fetchUrl = input;
+
+        // Check if it's an indicator format (X.Y or X.Y-LANG)
+        const indicatorMatch = input.match(/^(\d{1,2})\.(\d{1,2})(?:-([A-Z]{2}))?$/i);
+
+        if (indicatorMatch) {
+            const indicator = `${indicatorMatch[1]}.${indicatorMatch[2]}`;
+            const lang = indicatorMatch[3] || 'EN';
+
+            // Map language code to ISO format
+            const isoLang = LANG_MAP[lang.toUpperCase()] || 'en-US';
+
+            // Get category info
+            const categoryNum = indicatorMatch[1];
+            const categoryName = CATEGORY_MAP[categoryNum];
+
+            if (!categoryName) {
+                throw new Error(`Invalid category number: ${categoryNum}. Must be 1-10.`);
+            }
+
+            // Construct GitHub raw URL for multilingual structure
+            fetchUrl = `https://raw.githubusercontent.com/xbeat/CPF/main/auditor%20field%20kit/interactive/${isoLang}/${categoryNum}.x-${categoryName}/indicator_${indicator}.json`;
+            console.log('Loading from:', fetchUrl);
         }
+
         const response = await fetch(fetchUrl);
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error(`Indicator not found. The JSON file may not exist yet at: ${fetchUrl}`);
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         const data = await response.json();
         currentData.fieldKit = data;
         renderFieldKit(data);
     } catch (error) {
         alert('Error loading JSON: ' + error.message);
+        console.error('Load error:', error);
     }
 }
 
