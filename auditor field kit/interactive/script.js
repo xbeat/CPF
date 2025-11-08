@@ -836,6 +836,12 @@ function updateScoreDisplay() {
         metadataBar.parentNode.insertBefore(newScoreBar, metadataBar.nextSibling);
     }
 
+    // Preserve state of detailed breakdown panel before regenerating HTML
+    const existingBreakdown = document.getElementById('score-detailed-breakdown');
+    const wasBreakdownVisible = existingBreakdown && existingBreakdown.style.display !== 'none';
+    const existingDetails = document.getElementById('score-details-content');
+    const wereDetailsVisible = existingDetails && existingDetails.classList.contains('visible');
+
     const maturityConfig = currentData.fieldKit.scoring.maturity_levels[currentScore.maturity_level];
     const scorePercentage = (currentScore.final_score * 100).toFixed(1);
 
@@ -940,6 +946,20 @@ function updateScoreDisplay() {
     const scoreBar = document.getElementById('score-bar');
     scoreBar.style.display = 'block';
     scoreBar.classList.add('sticky-score-bar');
+
+    // Restore state of panels after HTML regeneration
+    if (wasBreakdownVisible) {
+        const newBreakdown = document.getElementById('score-detailed-breakdown');
+        if (newBreakdown) {
+            newBreakdown.style.display = 'block';
+        }
+    }
+    if (wereDetailsVisible) {
+        const newDetails = document.getElementById('score-details-content');
+        if (newDetails) {
+            newDetails.classList.add('visible');
+        }
+    }
 }
 
 // showScoreSummary() removed - detailed breakdown now integrated in score bar
