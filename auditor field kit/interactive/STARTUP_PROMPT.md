@@ -13,7 +13,9 @@ Use this prompt to generate complete JSON field kits for all 10 indicators in a 
 **Indicators to Generate**: [X].1 through [X].10
 **Reference Schema**: `/auditor field kit/interactive/en-US/1.x-authority/indicator_1.3.json`
 **Output Directory**: `/auditor field kit/interactive/en-US/[X].x-[category-name]/`
+**Reference Prompt** `/auditor field kit/interactive/PROMPT_TEMPLATE.md`
 
+Confirm in what language the indicator will be written
 ---
 
 ## CATEGORY SELECTION
