@@ -330,10 +330,11 @@ function renderItem(item, itemId) {
                         <div style="font-size: 14px; color: var(--text-light); margin-bottom: 5px;">
                             <em>${followup.type}:</em> ${followup.text}
                         </div>
-                        <textarea id="${followupId}" 
-                                  placeholder="Notes..." 
+                        <textarea id="${followupId}"
+                                  placeholder="Notes..."
                                   style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; min-height: 60px; font-family: inherit; font-size: 14px;"
-                                  onchange="updateResponse('${followupId}', this.value)">${followupValue}</textarea>
+                                  onchange="updateResponseWithAutoScore('${followupId}', this.value)"
+                                  onblur="updateResponseWithAutoScore('${followupId}', this.value)">${followupValue}</textarea>
                     </div>
                 `;
             });
@@ -581,12 +582,9 @@ function selectRadioOption(itemId, value) {
         }
     }
 
-    // Trigger auto-calculation
+    // Trigger auto-calculation IMMEDIATELY (no lag)
     if (currentData.fieldKit && currentData.fieldKit.scoring) {
-        clearTimeout(window.autoScoreTimeout);
-        window.autoScoreTimeout = setTimeout(() => {
-            calculateIndicatorScore();
-        }, 1000);
+        calculateIndicatorScore();
     }
 }
 
@@ -734,16 +732,9 @@ function calculateIndicatorScore() {
             if (subsection.items) {
                 subsection.items.forEach((item, iIdx) => {
                     if (item.type === 'question') {
-                        totalQuestions++;
                         const itemId = `s1_sub${subIdx}_i${iIdx}`;
 
-                        // Check main question
-                        const mainResponse = currentData.responses[itemId];
-                        if (mainResponse && mainResponse.trim().length > 0) {
-                            answeredQuestions++;
-                        }
-
-                        // Check follow-ups
+                        // Only count follow-ups (main questions don't have input fields, only text)
                         if (item.followups) {
                             item.followups.forEach((followup, fIdx) => {
                                 totalQuestions++;
@@ -852,7 +843,7 @@ function updateScoreDisplay() {
                     <span class="score-value">${scorePercentage}%</span>
                 </div>
                 <div class="progress-bar-container">
-                    <div class="progress-bar-fill ${currentScore.maturity_level}" 
+                    <div class="progress-bar-fill ${currentScore.maturity_level}"
                          style="width: ${scorePercentage}%">
                         ${scorePercentage}%
                     </div>
@@ -864,10 +855,17 @@ function updateScoreDisplay() {
                     ${maturityConfig.label}
                 </div>
             </div>
+            <div class="summary-toggle-container">
+                <button class="btn btn-light" onclick="toggleSummaryPanel()" id="summary-toggle-btn">
+                    📊 Show Detailed Analysis
+                </button>
+            </div>
         </div>
     `;
-    
-    document.getElementById('score-bar').style.display = 'block';
+
+    const scoreBar = document.getElementById('score-bar');
+    scoreBar.style.display = 'block';
+    scoreBar.classList.add('sticky-score-bar');
 }
 
 function showScoreSummary() {
@@ -883,7 +881,7 @@ function showScoreSummary() {
     const weights = currentScore.weights_used || { quick_assessment: 0.70, red_flags: 0.30, conversation_depth: 0 };
 
     const summaryHTML = `
-        <div id="score-summary-section" class="score-summary-section">
+        <div id="score-summary-section" class="score-summary-section sticky-summary-panel" style="display: none;">
             <div class="score-summary-title">
                 📊 Vulnerability Score Summary & Analysis
             </div>
@@ -977,7 +975,7 @@ function showScoreSummary() {
 function toggleScoreDetails() {
     const detailsDiv = document.getElementById('score-details-content');
     detailsDiv.classList.toggle('visible');
-    
+
     const button = event.target;
     if (detailsDiv.classList.contains('visible')) {
         button.textContent = '📉 Hide Detailed Breakdown';
@@ -986,17 +984,26 @@ function toggleScoreDetails() {
     }
 }
 
+function toggleSummaryPanel() {
+    const summaryPanel = document.getElementById('score-summary-section');
+    const toggleBtn = document.getElementById('summary-toggle-btn');
+
+    if (summaryPanel.style.display === 'none') {
+        summaryPanel.style.display = 'block';
+        toggleBtn.textContent = '📉 Hide Detailed Analysis';
+    } else {
+        summaryPanel.style.display = 'none';
+        toggleBtn.textContent = '📊 Show Detailed Analysis';
+    }
+}
+
 // Auto-calculate score when responses change (optional - real-time)
 function updateResponseWithAutoScore(id, value) {
     updateResponse(id, value);
-    
-    // Auto-calculate if enabled
+
+    // Auto-calculate IMMEDIATELY (no lag)
     if (currentData.fieldKit && currentData.fieldKit.scoring) {
-        // Debounce to avoid too many calculations
-        clearTimeout(window.autoScoreTimeout);
-        window.autoScoreTimeout = setTimeout(() => {
-            calculateIndicatorScore();
-        }, 1000); // Calculate 1 second after last change
+        calculateIndicatorScore();
     }
 }
 
