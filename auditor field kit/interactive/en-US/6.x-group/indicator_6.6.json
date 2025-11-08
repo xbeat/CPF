@@ -1,0 +1,842 @@
+{
+  "indicator": "6.6",
+  "title": "INDICATOR 6.6 FIELD KIT",
+  "subtitle": "Dependency Group Assumptions",
+  "category": "Group Dynamic Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 6.x",
+
+  "description": {
+    "short": "Measures vulnerability created when organizations unconsciously seek 'silver bullet' security solutions and over-rely on specific vendors, tools, or personnel for protection, creating dangerous single points of failure",
+    "context": "Organizations experiencing dependency group assumptions unconsciously seek omnipotent security solutions and transfer responsibility to external protective figures. This creates dangerous single points of failure where attackers can exploit the organization's blind trust in their chosen protective figures. When security responsibility is psychologically transferred to external entities, internal vigilance and critical thinking deteriorate, making organizations vulnerable to vendor impersonation attacks, fraudulent security solutions, and supply chain compromises.",
+    "impact": "Organizations with high dependency scores experience vendor impersonation attacks exploiting trusted relationships, supply chain compromises through idealized security partners, and critical failures when single-point dependencies fail. Historical incidents include the SolarWinds attack leveraging extreme vendor trust and Equifax breach demonstrating over-reliance on external security assurances while failing internal vigilance.",
+    "psychological_basis": "Bion's Group Dynamics Theory (1961) identifies dependency (baD) as one of three unconscious basic assumptions groups adopt when work group functioning is threatened by anxiety. Groups regress to infantile psychological states where they collectively abandon adult responsibility, instead seeking an idealized parent figure who will handle all threats. This creates profound vulnerability because the group's security posture becomes entirely dependent on the perceived strength of the protective figure while losing capacity for independent threat assessment."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Resilient",
+        "description": "Distributed security approach with budget spread across multiple vendors, multiple staff authorized to make routine security decisions, quarterly vendor performance reviews, internal problem-solving capacity, tested backup solutions for critical security tools.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Developing",
+        "description": "Moderate dependency indicators including single vendor receiving 30-50% of security budget, most security decisions require senior approval but multiple people can approve, annual vendor reviews conducted but limited changes result.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Critical",
+        "description": "High dependency vulnerability with single vendor receiving >50% of security budget, only 1-2 people authorized to make security decisions, vendor reviews infrequent or superficial, immediate external consultation is standard response to any security issue.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_vendor_concentration": 0.18,
+      "q2_decision_authority": 0.16,
+      "q3_vendor_questioning": 0.15,
+      "q4_internal_external_response": 0.14,
+      "q5_solution_evaluation": 0.13,
+      "q6_personnel_dependency": 0.13,
+      "q7_backup_redundancy": 0.11
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "DS(t) = w1·DI(t) + w2·ARF(t) + w3·TDI(t)",
+      "components": {
+        "dependency_index": {
+          "formula": "DI(t) = Σ Requests_authority(i,t) / Σ Decisions_independent(i,t)",
+          "description": "Ratio of authority-seeking requests to independent security decisions",
+          "threshold": {
+            "DI_critical": 3.0,
+            "DI_warning": 2.0
+          }
+        },
+        "authority_reference_frequency": {
+          "formula": "ARF(m) = count(authority_references(m)) / |m|",
+          "description": "Frequency of external authority references in security communications",
+          "variables": {
+            "m": "security communication messages",
+            "|m|": "total message count in analysis window"
+          }
+        },
+        "technology_dependency_index": {
+          "formula": "TDI(t) = Automated_Decisions(t) / Total_Security_Decisions(t)",
+          "description": "Ratio of automated security decisions to total security decisions",
+          "interpretation": "Higher values indicate over-reliance on automated tools without human oversight"
+        }
+      },
+      "default_weights": {
+        "w1_dependency": 0.4,
+        "w2_authority": 0.3,
+        "w3_technology": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_6.6(t) = α·DS(t) + (1-α)·T_6.6(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200,
+        "description": "Exponential smoothing with 2-hour time constant for dependency pattern detection"
+      }
+    },
+    "vendor_concentration_model": {
+      "formula": "VC(t) = (Budget_top_vendor / Total_security_budget) × Criticality_factor",
+      "description": "Vendor concentration risk based on budget allocation and criticality of services",
+      "interpretation": "Values >0.5 indicate dangerous single-vendor dependency"
+    },
+    "decision_autonomy_score": {
+      "formula": "DA(t) = Internal_resolutions(t) / (Internal_resolutions(t) + External_consultations(t))",
+      "description": "Organizational capacity for independent security decision-making",
+      "interpretation": "Lower values indicate unhealthy dependency on external decision support"
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "vendor_contract_analysis",
+        "security_budget_documentation",
+        "decision_authority_matrix",
+        "incident_response_logs",
+        "vendor_performance_reviews"
+      ],
+      "evidence_required": [
+        "12_months_vendor_payments_breakdown",
+        "security_decision_authorization_matrix",
+        "vendor_evaluation_documentation",
+        "incident_response_decision_logs",
+        "backup_procedure_testing_records"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "vendor_communication_logs",
+          "fields": ["vendor_contact_frequency", "escalation_patterns", "resolution_ownership", "timestamp"],
+          "retention": "180_days"
+        },
+        {
+          "source": "security_decision_logs",
+          "fields": ["decision_type", "approver", "external_consultation", "resolution_time", "timestamp"],
+          "retention": "365_days"
+        },
+        {
+          "source": "financial_systems",
+          "fields": ["vendor_id", "payment_amount", "service_category", "contract_terms"],
+          "retention": "730_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "communication_sentiment_analysis",
+          "fields": ["message_id", "authority_references", "dependency_language", "external_validation_seeking"],
+          "retention": "90_days"
+        },
+        {
+          "source": "security_tool_automation_logs",
+          "fields": ["automated_decisions", "human_override_frequency", "decision_category"],
+          "retention": "180_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "DI": {
+          "calculation": "Ratio of external authority requests to internal security decisions",
+          "query": "SELECT (COUNT(action='external_consult') / COUNT(action='internal_resolve')) FROM security_decisions WHERE time_window='24h'"
+        },
+        "ARF": {
+          "calculation": "Frequency of vendor/authority references in security communications",
+          "query": "SELECT (COUNT(contains_vendor_reference=true) / COUNT(*)) FROM security_communications WHERE timestamp > NOW() - INTERVAL '7 days'"
+        },
+        "VC": {
+          "calculation": "Vendor concentration percentage",
+          "query": "SELECT (MAX(vendor_spend) / SUM(security_spend)) FROM vendor_payments WHERE fiscal_year=current"
+        }
+      }
+    },
+    "integration_apis": {
+      "procurement_systems": "API - Vendor contracts, payment history, service categories",
+      "ticketing_systems": "JIRA/ServiceNow API - Incident escalation patterns, vendor engagement",
+      "communication_platforms": "Email/Slack API - Authority reference frequency, dependency language",
+      "decision_management": "Custom API - Authorization matrices, decision approvers"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "Cognitive depletion increases reliance on external authorities for security decisions",
+        "formula": "P(6.6|5.2) = 0.75"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.7,
+        "factor": 1.35,
+        "description": "Organizational stress activates regression to dependency on protective figures",
+        "formula": "P(6.6|7.1) = 0.7"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Time pressure increases seeking of quick external solutions",
+        "formula": "P(6.6|2.1) = 0.65"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "1.3",
+        "name": "Authority Figure Impersonation",
+        "probability": 0.8,
+        "factor": 1.5,
+        "description": "Vendor dependency creates vulnerability to vendor impersonation attacks"
+      },
+      {
+        "indicator": "6.8",
+        "name": "Pairing Hope Fantasies",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "Dependency on single vendors leads to magical thinking about vendor combinations"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["6.6", "1.3", "7.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.3,
+      "threshold_critical": 3.2,
+      "description": "Perfect storm: Vendor dependency + Authority impersonation + Stress = vendor impersonation attacks bypassing all verification",
+      "real_world_example": "SolarWinds 2020 - Organizations' extreme trust in security vendor enabled supply chain compromise affecting 18,000+ customers"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["5.2", "7.1", "2.1"],
+      "child_nodes": ["1.3", "6.8"],
+      "conditional_probability_table": {
+        "P_6.6_base": 0.20,
+        "P_6.6_given_fatigue": 0.42,
+        "P_6.6_given_stress": 0.38,
+        "P_6.6_given_urgency": 0.35,
+        "P_6.6_given_all": 0.76
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_vendor_concentration",
+          "weight": 0.18,
+          "title": "Vendor Concentration Risk",
+          "question": "What percentage of your annual cybersecurity budget goes to your top security vendor? Include all services, licenses, and support contracts from that single vendor.",
+          "options": [
+            {
+              "value": "low",
+              "score": 0,
+              "label": "Less than 30% - Security budget distributed across multiple vendors with no single vendor dominating"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "30-50% - Significant vendor concentration but not complete dependency"
+            },
+            {
+              "value": "high",
+              "score": 1,
+              "label": "Over 50% - Single vendor receives majority of security budget creating critical dependency"
+            }
+          ],
+          "evidence_required": "Last 12 months security vendor payments breakdown, vendor contract terms",
+          "soc_mapping": "VC metric from detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_decision_authority",
+          "weight": 0.16,
+          "title": "Security Decision Authority Distribution",
+          "question": "When your primary security tool alerts or fails, who makes the decision about how to respond? How often do security decisions require approval from senior leadership before action can be taken?",
+          "options": [
+            {
+              "value": "distributed",
+              "score": 0,
+              "label": "Multiple staff authorized to make routine security decisions without senior approval required"
+            },
+            {
+              "value": "concentrated",
+              "score": 0.5,
+              "label": "Most security decisions require senior approval but multiple people can approve"
+            },
+            {
+              "value": "centralized",
+              "score": 1,
+              "label": "Only 1-2 people authorized to make security decisions, creating single points of failure"
+            }
+          ],
+          "evidence_required": "Security decision authorization matrix, recent decision logs showing approvers",
+          "soc_mapping": "DA metric from detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_vendor_questioning",
+          "weight": 0.15,
+          "title": "Vendor Performance Review Frequency",
+          "question": "How frequently does your organization formally review and challenge the effectiveness of your main security vendors? Tell us about your most recent vendor performance audit and what changes resulted from it.",
+          "options": [
+            {
+              "value": "regular",
+              "score": 0,
+              "label": "Quarterly vendor performance reviews with documented improvements and measurable changes"
+            },
+            {
+              "value": "annual",
+              "score": 0.5,
+              "label": "Annual vendor reviews conducted but limited changes result from findings"
+            },
+            {
+              "value": "rare",
+              "score": 1,
+              "label": "Vendor reviews infrequent or superficial with no resulting changes to vendor relationships"
+            }
+          ],
+          "evidence_required": "Vendor performance review reports, documented improvements from reviews",
+          "soc_mapping": "Vendor review frequency from audit logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_internal_external_response",
+          "weight": 0.14,
+          "title": "Internal vs External Incident Response",
+          "question": "When a security incident occurs, what's your first response: engage internal team problem-solving or immediately contact external vendors/consultants? Give us a specific example from a recent incident.",
+          "options": [
+            {
+              "value": "internal_first",
+              "score": 0,
+              "label": "Internal team attempts problem-solving before external consultation (30-minute internal assessment minimum)"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Mixed approach with some internal problem-solving but frequent immediate external consultation"
+            },
+            {
+              "value": "external_first",
+              "score": 1,
+              "label": "Immediate external vendor/consultant contact is standard response to any security issue"
+            }
+          ],
+          "evidence_required": "Incident response logs showing first response patterns, escalation timelines",
+          "soc_mapping": "DI metric (internal vs external resolution ratio)"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_solution_evaluation",
+          "weight": 0.13,
+          "title": "Security Solution Evaluation Process",
+          "question": "Describe your process for evaluating new security tools before purchase. How many solutions do you typically compare, and what evidence do you require beyond vendor demonstrations?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Systematic evaluation comparing 3+ solutions with proof-of-concept testing and reference checks"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Limited evaluation process comparing 2-3 solutions with basic vendor demonstrations"
+            },
+            {
+              "value": "minimal",
+              "score": 1,
+              "label": "Minimal evaluation, typically accept vendor recommendations without comparison or testing"
+            }
+          ],
+          "evidence_required": "Recent security tool selection documentation, POC testing reports, vendor comparison matrices",
+          "soc_mapping": "Vendor evaluation thoroughness from procurement logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_personnel_dependency",
+          "weight": 0.13,
+          "title": "Key Personnel Dependency",
+          "question": "If your CISO or primary security contact was unavailable for two weeks, how would security decisions be made? Who has the knowledge and authority to maintain security operations?",
+          "options": [
+            {
+              "value": "resilient",
+              "score": 0,
+              "label": "Documented succession plan with cross-trained personnel who can maintain security operations"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Some cross-training exists but gaps in key knowledge areas would create challenges"
+            },
+            {
+              "value": "critical",
+              "score": 1,
+              "label": "Single point of failure in security knowledge/authority with no viable backup"
+            }
+          ],
+          "evidence_required": "Security role succession documentation, cross-training records, backup authorization matrix",
+          "soc_mapping": "Decision authority concentration from authorization logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_backup_redundancy",
+          "weight": 0.11,
+          "title": "Backup Security Solutions",
+          "question": "For your most critical security tool, what backup or alternative solution would you use if it failed completely? Tell us about the last time you tested these backup procedures.",
+          "options": [
+            {
+              "value": "tested",
+              "score": 0,
+              "label": "Tested backup solutions for critical security tools with quarterly testing and documented procedures"
+            },
+            {
+              "value": "identified",
+              "score": 0.5,
+              "label": "Backup solutions identified but rarely or never tested in practice"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No viable backup for critical security tools or completely untested alternatives"
+            }
+          ],
+          "evidence_required": "Backup procedure documentation, testing records, alternative vendor contact information",
+          "soc_mapping": "Backup system availability from configuration management database"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Vendor Relationship Assessment",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "What percentage of your annual cybersecurity budget goes to your top security vendor, and how did this concentration develop over time?",
+              "scoring_guidance": {
+                "green": "Specific budget breakdown showing <30% concentration with documented vendor diversification strategy",
+                "yellow": "30-50% concentration with awareness of risk but limited diversification plans",
+                "red": ">50% concentration with justifications like 'they're the best' or 'integration benefits' without risk mitigation"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What would happen to your security operations if this vendor relationship ended tomorrow?",
+                  "evidence_type": "business_continuity_planning"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "When was the last time you seriously evaluated alternative vendors for these services?",
+                  "evidence_type": "vendor_evaluation_cadence"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "How frequently does your organization formally review and challenge the effectiveness of your main security vendors?",
+              "scoring_guidance": {
+                "green": "Quarterly reviews with documented performance metrics and specific improvements implemented",
+                "yellow": "Annual reviews conducted but minimal changes result from findings",
+                "red": "Vendor relationships continue without formal review or 'we trust them' responses"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show me the most recent vendor performance review and what specific actions resulted from it.",
+                  "evidence_type": "review_documentation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Have you ever changed or terminated a vendor relationship based on performance review findings?",
+                  "evidence_type": "vendor_accountability"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Decision Authority and Internal Capability",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "When a security incident occurs, describe the decision-making process. Who has authority to take action, and when do you engage external help?",
+              "scoring_guidance": {
+                "green": "Internal-first approach with 30+ minute internal assessment before external escalation, multiple authorized responders",
+                "yellow": "Mixed approach with some internal capability but frequent immediate external consultation",
+                "red": "Immediate external vendor contact is standard first response, minimal internal problem-solving"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Walk me through a recent security incident and the specific decision points.",
+                  "evidence_type": "incident_response_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "If your primary security vendor was unreachable during an incident, what would your team do?",
+                  "evidence_type": "self_sufficiency_assessment"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "If your CISO or primary security decision-maker was unavailable for two weeks, how would security operations continue?",
+              "scoring_guidance": {
+                "green": "Documented succession plan with cross-trained personnel, recent example of successful coverage",
+                "yellow": "Informal backup arrangements but acknowledged gaps in critical knowledge",
+                "red": "Single point of failure with no viable backup or 'we'd have to wait for them' responses"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show me your security role succession documentation and cross-training records.",
+                  "evidence_type": "succession_planning"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "When was the last time backup personnel actually made security decisions independently?",
+                  "evidence_type": "delegation_practice"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Evaluation and Resilience",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Describe your process for evaluating new security tools before purchase. How do you ensure you're not just accepting vendor promises?",
+              "scoring_guidance": {
+                "green": "Systematic evaluation with 3+ vendor comparisons, POC testing, reference checks, documented criteria",
+                "yellow": "Basic evaluation comparing 2-3 vendors with demos but limited hands-on testing",
+                "red": "Minimal evaluation accepting vendor recommendations or single-vendor assessments without comparison"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show me the evaluation documentation from your most recent security tool purchase.",
+                  "evidence_type": "procurement_rigor"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Have you ever rejected a vendor recommendation in favor of a different solution after evaluation?",
+                  "evidence_type": "independent_judgment"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "For your most critical security tools, what backup or alternative solutions exist if they fail?",
+              "scoring_guidance": {
+                "green": "Tested backup solutions with quarterly testing and documented failover procedures",
+                "yellow": "Identified backup options but minimal or no testing of actual failover",
+                "red": "No backup solutions or 'we'd have to figure it out' responses"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "When was the last time you tested your backup security procedures?",
+                  "evidence_type": "resilience_testing"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What happened during that test and what did you learn?",
+                  "evidence_type": "continuous_improvement"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"This vendor is the industry leader, we trust them completely...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Only our CISO really understands our security architecture...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"We can't question them, they're the experts...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"When there's a problem, we just call the vendor to fix it...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"We've never tested our backup security procedures...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Everything is integrated with this vendor, so we can't really change...\"",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject simulated vendor dependency scenarios quarterly",
+      "correlation_analysis": "Compare manual audit scores with vendor concentration metrics (target correlation > 0.80)",
+      "drift_detection": "Kolmogorov-Smirnov test, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted dependency scores match observed vendor concentration patterns",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Vendor Risk Distribution Score",
+        "formula": "Percentage of security budget concentrated in top vendor",
+        "baseline": "Current vendor concentration percentage",
+        "target": "Reduce single-vendor concentration to <40% within 12 months",
+        "measurement": "Quarterly vendor payment distribution review"
+      },
+      {
+        "metric": "Decision Resilience Index",
+        "formula": "Number of authorized decision-makers for each security decision type",
+        "baseline": "Current authorization matrix breadth",
+        "target": "Increase authorized decision-makers by 50% for routine security responses within 6 months",
+        "measurement": "Monthly audit of security decision logs and authorization usage"
+      },
+      {
+        "metric": "Internal Response Capability",
+        "formula": "Percentage of incidents requiring immediate external consultation",
+        "baseline": "Current external-first response rate",
+        "target": "Reduce external-first responses by 60% within 6 months",
+        "measurement": "Incident response logs showing internal vs external first response patterns"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Vendor Portfolio Diversification",
+        "description": "Implement policy requiring no single vendor to exceed 40% of security budget",
+        "implementation": "Create formal vendor diversification plan with timeline for redistribution of services across multiple providers. Establish competitive bidding requirements for contracts over specified thresholds. Document vendor concentration risk assessments quarterly.",
+        "technical_controls": "Procurement system alerts for vendor concentration thresholds, automated vendor spend tracking, competitive bidding workflow enforcement",
+        "roi": "280% average within 18 months",
+        "effort": "medium",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Distributed Decision Authority Matrix",
+        "description": "Document authorization levels for different security decisions ensuring multiple personnel can approve routine responses",
+        "implementation": "Create clear escalation procedures that don't create single points of failure. Implement deputy/backup authorization for all critical security roles. Develop decision trees for when external help is appropriate.",
+        "technical_controls": "Authorization workflow system, decision logging with approver tracking, automated escalation routing",
+        "roi": "310% average within 12 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Quarterly Vendor Performance Reviews",
+        "description": "Establish standardized vendor assessment criteria including security effectiveness metrics and cost-benefit analysis",
+        "implementation": "Require vendors to demonstrate measurable improvements in security posture. Document specific actions taken based on review findings. Create vendor scorecard system with improvement tracking.",
+        "technical_controls": "Vendor performance management system, automated metrics collection, review schedule tracking",
+        "roi": "240% average within 18 months",
+        "effort": "low",
+        "timeline": "30-45 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Internal Security Response Protocols",
+        "description": "Develop 'internal first' incident response procedures requiring 30-minute internal assessment before external consultation",
+        "implementation": "Train staff in basic incident response to reduce external dependence. Create decision trees for when external help is appropriate. Document internal resolution capabilities and limits.",
+        "technical_controls": "Incident response playbook automation, internal capability tracking, escalation timer system",
+        "roi": "350% average within 12 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_5",
+        "title": "Security Solution Evaluation Framework",
+        "description": "Implement standardized evaluation requiring comparison of minimum 3 vendors with proof-of-concept testing",
+        "implementation": "Create evaluation criteria focused on objective security improvements rather than vendor promises. Require documented justification for single-vendor selections. Include reference checks and POC testing in all evaluations.",
+        "technical_controls": "Evaluation workflow system, POC testing environment, vendor comparison scoring matrix",
+        "roi": "290% average within 18 months",
+        "effort": "low",
+        "timeline": "30 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Backup Security Operations Plan",
+        "description": "Document alternative procedures for each critical security function if primary tools fail",
+        "implementation": "Test backup solutions quarterly with documented results. Maintain current contact lists for alternative vendors. Ensure staff know backup procedures through regular drills.",
+        "technical_controls": "Backup procedure documentation system, testing schedule automation, alternative vendor contact database",
+        "roi": "320% average within 12 months",
+        "effort": "medium",
+        "timeline": "60 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_2", "sol_4"],
+      "high_value": ["sol_1", "sol_6"],
+      "governance": ["sol_3", "sol_5"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Vendor Impersonation Attack",
+      "description": "Attacker impersonates trusted security vendor via email or phone, requesting urgent access to address critical vulnerabilities",
+      "attack_vector": "Social engineering via vendor impersonation leveraging organizational trust in primary security vendor",
+      "psychological_mechanism": "Dependency assumption makes verification feel unnecessary when trusted vendor makes requests",
+      "historical_example": "Multiple organizations compromised through fake vendor support calls exploiting vendor trust relationships",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["urgent_vendor_contact", "unusual_access_request", "no_ticket_verification", "DI > 2.0"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "False Authority Exploitation",
+      "description": "During security incidents, attackers position themselves as emergency consultants or experts offering immediate help",
+      "attack_vector": "Crisis exploitation where attackers pose as security experts during active incidents",
+      "psychological_mechanism": "Organizational anxiety and dependency activate immediate trust in apparent expert helpers",
+      "historical_example": "APT campaigns maintaining persistence by posing as incident responders offering assistance",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["incident_active", "unknown_consultant", "no_pre_authorization", "requests_broad_access"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Silver Bullet Solution Scam",
+      "description": "Fraudulent vendors target organizations seeking comprehensive security solutions, selling ineffective tools by exploiting desire for complete protection",
+      "attack_vector": "Fraudulent security product marketing targeting organizations exhibiting dependency patterns",
+      "psychological_mechanism": "Magical thinking about omnipotent security solutions bypasses normal due diligence",
+      "historical_example": "Numerous snake oil security products sold to desperate organizations seeking quick fixes",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["unrealistic_vendor_promises", "skipped_evaluation_steps", "no_competitive_bidding", "TDI > 0.7"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Supply Chain Compromise",
+      "description": "Attackers infiltrate the trusted vendor that dependency-oriented organizations rely on heavily",
+      "attack_vector": "Compromise of trusted security vendor to gain access to dependent customer organizations",
+      "psychological_mechanism": "Organizational splitting prevents questioning or monitoring of idealized protective vendors",
+      "historical_example": "SolarWinds 2020 - Organizations' trust in security software vendor enabled supply chain attack affecting 18,000+ customers",
+      "likelihood": "low",
+      "impact": "critical",
+      "detection_indicators": ["vendor_behavior_anomaly", "unusual_vendor_requests", "VC > 0.5", "minimal_vendor_scrutiny"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Bion, W. (1961). Experiences in Groups",
+      "Klein, M. (1946). Notes on Some Schizoid Mechanisms",
+      "Bowlby, J. (1969). Attachment and Loss",
+      "Menzies Lyth, I. (1960). Social Defence Systems"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}
