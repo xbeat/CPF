@@ -201,6 +201,11 @@ function renderFieldKit(data) {
             <button class="btn btn-primary" onclick="generateReport()">📊 Report</button>
         </div>
     `;
+
+    // Auto-calculate score on load if scoring is available
+    if (data.scoring) {
+        calculateIndicatorScore();
+    }
 }
 
 function renderItem(item, itemId) {
@@ -813,11 +818,10 @@ function calculateIndicatorScore() {
 
     // 6. UPDATE UI
     updateScoreDisplay();
-    showScoreSummary();
-    
+
     // Save score to currentData
     currentData.score = currentScore;
-    
+
     console.log('📊 Score Calculated:', currentScore);
 }
 
@@ -834,6 +838,8 @@ function updateScoreDisplay() {
 
     const maturityConfig = currentData.fieldKit.scoring.maturity_levels[currentScore.maturity_level];
     const scorePercentage = (currentScore.final_score * 100).toFixed(1);
+
+    const weights = currentScore.weights_used || { quick_assessment: 0.70, red_flags: 0.30, conversation_depth: 0 };
 
     document.getElementById('score-bar').innerHTML = `
         <div class="score-container">
@@ -855,37 +861,10 @@ function updateScoreDisplay() {
                     ${maturityConfig.label}
                 </div>
             </div>
-            <div class="summary-toggle-container">
-                <button class="btn btn-light" onclick="toggleSummaryPanel()" id="summary-toggle-btn">
-                    📊 Show Detailed Analysis
-                </button>
-            </div>
         </div>
-    `;
 
-    const scoreBar = document.getElementById('score-bar');
-    scoreBar.style.display = 'block';
-    scoreBar.classList.add('sticky-score-bar');
-}
-
-function showScoreSummary() {
-    const content = document.getElementById('content');
-    
-    // Remove existing summary if present
-    const existingSummary = document.getElementById('score-summary-section');
-    if (existingSummary) {
-        existingSummary.remove();
-    }
-
-    const maturityConfig = currentData.fieldKit.scoring.maturity_levels[currentScore.maturity_level];
-    const weights = currentScore.weights_used || { quick_assessment: 0.70, red_flags: 0.30, conversation_depth: 0 };
-
-    const summaryHTML = `
-        <div id="score-summary-section" class="score-summary-section sticky-summary-panel" style="display: none;">
-            <div class="score-summary-title">
-                📊 Vulnerability Score Summary & Analysis
-            </div>
-
+        <!-- DETAILED BREAKDOWN (collapsible, inside score bar) -->
+        <div id="score-detailed-breakdown" class="score-detailed-breakdown" style="display: none;">
             <div class="score-breakdown">
                 <div class="score-component">
                     <div class="component-label">Quick Assessment</div>
@@ -905,39 +884,29 @@ function showScoreSummary() {
                     </div>
                 </div>
 
-                <div class="score-component" style="border: 2px dashed #888; background: #f5f5f5;">
+                <div class="score-component" style="border: 2px dashed #ccc; background: #fafafa;">
                     <div class="component-label">Conversation Completeness</div>
                     <div class="component-value" style="color: #666;">${(currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0)}%</div>
-                    <div class="component-description" style="color: #888;">
-                        ${currentScore.details.conversation_breakdown.answered_questions}/${currentScore.details.conversation_breakdown.total_questions} questions answered
-                        <br><em>(Informational only - not included in vulnerability score)</em>
-                    </div>
-                </div>
-                
-                <div class="score-component" style="border: 3px solid ${maturityConfig.color}; background: ${maturityConfig.color}15;">
-                    <div class="component-label">FINAL SCORE</div>
-                    <div class="component-value" style="color: ${maturityConfig.color}; font-size: 42px;">
-                        ${(currentScore.final_score * 100).toFixed(1)}%
-                    </div>
-                    <div class="component-description" style="font-weight: 700; color: ${maturityConfig.color};">
-                        ${maturityConfig.label}
+                    <div class="component-description" style="color: #888; font-size: 12px;">
+                        ${currentScore.details.conversation_breakdown.answered_questions}/${currentScore.details.conversation_breakdown.total_questions} answered
+                        <br><em>(Informational only)</em>
                     </div>
                 </div>
             </div>
-            
+
             <div class="score-interpretation">
                 <div class="interpretation-title">📋 Interpretation</div>
                 <div class="interpretation-text">
-                    <strong>${maturityConfig.label}:</strong> ${maturityConfig.description}
+                    <strong style="color: ${maturityConfig.color};">${maturityConfig.label}:</strong> ${maturityConfig.description}
                 </div>
             </div>
-            
+
             <div class="score-details-toggle">
                 <button class="btn btn-light" onclick="toggleScoreDetails()">
-                    📈 Show Detailed Breakdown
+                    📈 Show Question Breakdown
                 </button>
             </div>
-            
+
             <div id="score-details-content" class="score-details-content">
                 <h4 style="margin-bottom: 15px; color: var(--primary);">Quick Assessment Breakdown</h4>
                 ${currentScore.details.quick_assessment_breakdown.map(item => `
@@ -946,7 +915,7 @@ function showScoreSummary() {
                         <span class="detail-value">${(item.weighted_score * 100).toFixed(1)}%</span>
                     </div>
                 `).join('')}
-                
+
                 ${currentScore.details.red_flags_list.length > 0 ? `
                     <h4 style="margin: 20px 0 15px; color: var(--danger);">Red Flags Detected</h4>
                     ${currentScore.details.red_flags_list.map(flag => `
@@ -956,7 +925,7 @@ function showScoreSummary() {
                         </div>
                     `).join('')}
                 ` : ''}
-                
+
                 <div class="calculation-formula">
                     <strong>Vulnerability Score Calculation:</strong><br>
                     Final Score = (Quick Assessment × ${weights.quick_assessment}) + (Red Flags × ${weights.red_flags})<br>
@@ -968,9 +937,12 @@ function showScoreSummary() {
         </div>
     `;
 
-    // Insert at the beginning of content
-    content.insertAdjacentHTML('afterbegin', summaryHTML);
+    const scoreBar = document.getElementById('score-bar');
+    scoreBar.style.display = 'block';
+    scoreBar.classList.add('sticky-score-bar');
 }
+
+// showScoreSummary() removed - detailed breakdown now integrated in score bar
 
 function toggleScoreDetails() {
     const detailsDiv = document.getElementById('score-details-content');
@@ -984,16 +956,14 @@ function toggleScoreDetails() {
     }
 }
 
-function toggleSummaryPanel() {
-    const summaryPanel = document.getElementById('score-summary-section');
-    const toggleBtn = document.getElementById('summary-toggle-btn');
+function toggleDetailedAnalysis() {
+    const breakdown = document.getElementById('score-detailed-breakdown');
+    if (!breakdown) return;
 
-    if (summaryPanel.style.display === 'none') {
-        summaryPanel.style.display = 'block';
-        toggleBtn.textContent = '📉 Hide Detailed Analysis';
+    if (breakdown.style.display === 'none') {
+        breakdown.style.display = 'block';
     } else {
-        summaryPanel.style.display = 'none';
-        toggleBtn.textContent = '📊 Show Detailed Analysis';
+        breakdown.style.display = 'none';
     }
 }
 
