@@ -4,6 +4,100 @@
 
 This prompt template is designed to generate complete, validated JSON field kits for all 100 CPF indicators. Each JSON follows a standardized schema while accommodating category-specific characteristics.
 
+**Multilingual Support:** Generates field kits in multiple languages (en-US, it-IT, es-ES, etc.) following ISO 639-1 + ISO 3166-1 language codes.
+
+---
+
+## LANGUAGE CONFIGURATION
+
+**Target Language:** `{LANGUAGE_CODE}` (e.g., `en-US`, `it-IT`, `es-ES`)
+
+**Output Path:** `/auditor field kit/interactive/{LANGUAGE_CODE}/{X}.x-{category}/indicator_{X}.{Y}.json`
+
+### Language-Specific Requirements
+
+#### English (en-US) - DEFAULT/MASTER
+- Use American spelling (e.g., "organization" not "organisation")
+- Financial amounts in USD ($)
+- Date format: MM/DD/YYYY
+- Formal but accessible tone
+- All field labels in English
+
+#### Italian (it-IT)
+- Use formal register ("Lei" form in questions)
+- Financial amounts in EUR (€)
+- Date format: DD/MM/YYYY
+- Technical terms: Use English in parentheses on first occurrence
+  - Example: "Il phishing (email fraudolenta) rappresenta..."
+- All field labels translated to Italian
+- Maintain same JSON structure as en-US
+
+#### Spanish (es-ES) - FUTURE
+- Use formal "usted" form
+- Financial amounts in EUR (€)
+- Date format: DD/MM/YYYY
+
+### Translation Guidelines
+
+**TRANSLATE:**
+- All user-facing text (questions, labels, descriptions, instructions)
+- Risk scenarios descriptions
+- Remediation solution text
+- Scoring guidance
+
+**KEEP IN ENGLISH:**
+- JSON keys/field names (`indicator`, `title`, `sections`, etc.)
+- Technical identifiers (`id`, `value` attributes)
+- Formula syntax and mathematical notation
+- Research citations
+- Technical terms where appropriate (SPF, DKIM, SIEM, API, etc.)
+
+**IMPORTANT:**
+- Preserve exact JSON structure across all languages
+- Maintain identical scoring logic and weights
+- Keep formulas and thresholds unchanged
+
+---
+
+## PRE-FLIGHT CHECK
+
+Before starting JSON generation, verify all required files are available:
+
+### Required Files Checklist
+
+```
+□ /auditor field kit/{X}.x-{category}/cpf_indicator_{X}_{Y}_foundation.md
+□ /auditor field kit/{X}.x-{category}/cpf_indicator_{X}_{Y}_operational.md
+□ /math-formalization/CPF Mathematical Formalization Series - Paper {X}_ {Category Name}.tex
+□ /auditor field kit/interactive/en-US/1.x-authority/indicator_1.3.json (REFERENCE SCHEMA)
+```
+
+### File Verification Procedure
+
+1. List all required files with their exact paths
+2. Confirm each file exists and is readable
+3. If ANY file is missing, STOP and report which file is missing
+4. Only proceed if ALL files are confirmed available
+
+**Example successful check:**
+```
+✅ Foundation: cpf_indicator_2_3_foundation.md (15.2 KB)
+✅ Operational: cpf_indicator_2_3_operational.md (8.7 KB)
+✅ Math paper: Paper 2_ Temporal Vulnerabilities.tex (42.1 KB)
+✅ Reference: en-US/1.x-authority/indicator_1.3.json (40.6 KB)
+
+All files verified. Proceeding with generation for language: it-IT
+```
+
+**Example failure:**
+```
+❌ Foundation file NOT FOUND: cpf_indicator_2_3_foundation.md
+Expected path: /auditor field kit/2.x-temporal/cpf_indicator_2_3_foundation.md
+
+STOPPING: Cannot generate JSON without foundation file.
+Please verify file path and try again.
+```
+
 ---
 
 ## INPUT FILES REQUIRED
@@ -16,8 +110,8 @@ This prompt template is designed to generate complete, validated JSON field kits
 3. `/math-formalization/CPF Mathematical Formalization Series - Paper {X}_ {Category Name}.tex`
 4. `/CPF_Implementation_Companion___Dense_Foundation_Paper.pdf` (Section Category {X})
 
-**Template:**
-5. `/auditor field kit/interactive/1.x-authority/indicator_1.3.json` (REFERENCE SCHEMA)
+**Template (Master):**
+5. `/auditor field kit/interactive/en-US/1.x-authority/indicator_1.3.json` (REFERENCE SCHEMA - use this structure exactly)
 
 ---
 
@@ -660,7 +754,7 @@ The 2016 **Ubiquiti Networks** case exemplifies this vulnerability: attackers im
 
 ### 10. METADATA
 
-**Source:** Multiple files + current date
+**Source:** Multiple files + current date + language configuration
 
 **Structure:**
 
@@ -671,6 +765,12 @@ The 2016 **Ubiquiti Networks** case exemplifies this vulnerability: attackers im
   "author": "Giuseppe Canale, CISSP",
   "cpf_version": "1.0",
   "last_updated": "2025-01-08",
+  "language": "{LANGUAGE_CODE}",
+  "language_name": "{LANGUAGE_NAME}",
+  "is_translation": true|false,
+  "translated_from": "{SOURCE_LANGUAGE_CODE}"|null,
+  "translation_date": "YYYY-MM-DD"|null,
+  "translator": "Name"|null,
   "research_basis": [
     "Primary citation from foundation.md (e.g., Milgram, 1974)",
     "Secondary citations from psychological basis section",
@@ -681,11 +781,42 @@ The 2016 **Ubiquiti Networks** case exemplifies this vulnerability: attackers im
 }
 ```
 
+**Language Metadata Rules:**
+
+**For en-US (Master/Original):**
+```json
+"language": "en-US",
+"language_name": "English (United States)",
+"is_translation": false,
+"translated_from": null,
+"translation_date": null,
+"translator": null
+```
+
+**For it-IT (Translation):**
+```json
+"language": "it-IT",
+"language_name": "Italiano (Italia)",
+"is_translation": true,
+"translated_from": "en-US",
+"translation_date": "2025-01-09",
+"translator": "Giuseppe Canale, CISSP"
+```
+
+**Language Name Mapping:**
+- `en-US` → "English (United States)"
+- `en-GB` → "English (United Kingdom)"
+- `it-IT` → "Italiano (Italia)"
+- `es-ES` → "Español (España)"
+- `fr-FR` → "Français (France)"
+- `de-DE` → "Deutsch (Deutschland)"
+
 **Extract research_basis:**
 - Scan foundation.md for `\cite{author_year}` or parenthetical citations
 - Include primary researcher (Milgram, Cialdini, etc.)
 - Add neurological studies if mentioned
 - Include organizational psychology frameworks (Hofstede, Bion)
+- Keep citations in original language (English) even for translations
 
 ---
 
