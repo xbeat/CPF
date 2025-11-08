@@ -1,0 +1,960 @@
+{
+  "indicator": "6.3",
+  "title": "INDICATOR 6.3 FIELD KIT",
+  "subtitle": "Diffusion of Responsibility",
+  "category": "Group Dynamic Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 6.x",
+
+  "description": {
+    "short": "Measures vulnerability to accountability gaps where critical security tasks fall through organizational cracks because everyone assumes others are responsible",
+    "context": "Diffusion of responsibility occurs when individual accountability decreases as group size increases, leading to the 'someone else will handle it' mindset. In cybersecurity, this creates dangerous gaps where critical security tasks fall through organizational cracks because everyone assumes others are responsible. This vulnerability is particularly dangerous during incident response, policy enforcement, and routine security monitoring where delayed or missed actions can lead to significant breaches.",
+    "impact": "Organizations with diffused security responsibilities experience delayed incident response, security tasks falling through cracks, and post-incident analysis revealing 'everyone thought someone else was responsible.' Historical incidents include the Equifax breach where multiple teams assumed others were monitoring critical vulnerabilities, and the Target breach where security alerts were ignored by multiple teams.",
+    "psychological_basis": "Darley & Latané's (1968) bystander intervention experiments demonstrating inverse relationship between group size and individual action probability. The core cognitive distortion involves the belief that 'someone else will handle it' or 'it's not specifically my job.' Neuroimaging studies show reduced activation in anterior cingulate cortex (responsible for personal accountability) and increased activation in temporoparietal junction (associated with social cognition) during group decision-making."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Strong Individual Accountability",
+        "description": "Named individuals can be identified within 15 minutes for any security responsibility. Written procedures specify individual roles, not just team roles. Regular individual reporting and sign-offs on security tasks. Clear escalation paths with named backup personnel.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Mixed Accountability Signals",
+        "description": "Some security responsibilities assigned to individuals, others to teams. Response times vary significantly depending on who is available. Occasional gaps during transitions, vacations, or busy periods. General processes exist but individual accountability is sometimes unclear.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Diffused Group Responsibility",
+        "description": "Security tasks assigned to departments or teams without individual owners. Frequent delays in security responses while someone gets assigned. Multiple people assume others are handling security tasks. Regular incidents of security tasks falling through cracks.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_incident_ownership": 0.18,
+      "q2_policy_exceptions": 0.15,
+      "q3_monitoring_review": 0.14,
+      "q4_shift_handoff": 0.13,
+      "q5_multiteam_projects": 0.12,
+      "q6_training_followup": 0.12,
+      "q7_vendor_oversight": 0.10,
+      "q8_metrics_tracking": 0.06
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_6.3(t) = w1·R_6.3(t) + w2·A_6.3(t) + w3·B_6.3(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_6.3(t) = 1 if RDC(n) > 0.5 AND STCR(n,t) < 0.7, else 0",
+          "description": "Binary detection based on Responsibility Diffusion Coefficient and Security Task Completion Rate",
+          "threshold": {
+            "RDC": 0.5,
+            "STCR": 0.7
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_6.3(t) = sqrt((x(t) - μ)ᵀ Σ⁻¹ (x(t) - μ))",
+          "description": "Mahalanobis distance for multivariate responsibility patterns",
+          "variables": {
+            "x(t)": "observation vector [response_time, task_reassignments, ownership_clarity]",
+            "μ": "baseline mean from historical team performance",
+            "Σ": "covariance matrix (exponential weighted moving average)"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_6.3(t) = P(individual_ownership|factors) = [P(factors|individual_ownership) × P(individual_ownership)] / P(factors)",
+          "factors": [
+            "team_size",
+            "task_assignment_clarity",
+            "individual_acknowledgment",
+            "response_time_variance",
+            "ownership_transfers"
+          ],
+          "priors": {
+            "P_individual_ownership": 0.70,
+            "P_diffused_responsibility": 0.30
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.3,
+        "w2_anomaly": 0.4,
+        "w3_bayesian": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_6.3(t) = α·D_6.3(t) + (1-α)·T_6.3(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 3600,
+        "description": "Exponential smoothing with 1-hour time constant"
+      }
+    },
+    "responsibility_diffusion_model": {
+      "formula": "RDC(n) = 1 - 1/√n",
+      "description": "Responsibility Diffusion Coefficient as function of team size n",
+      "interpretation": "Higher values indicate greater diffusion; increases logarithmically with team size"
+    },
+    "task_completion_model": {
+      "formula": "STCR(n,t) = C_completed(t)/C_assigned(t) · e^(-λ·RDC(n))",
+      "description": "Security Task Completion Rate adjusted for responsibility diffusion",
+      "components": {
+        "C_completed": "Count of security tasks completed by originally assigned individual",
+        "C_assigned": "Total security tasks assigned",
+        "lambda": "Diffusion impact parameter (typical value: 0.5)"
+      },
+      "interpretation": "Lower values indicate tasks falling through cracks due to diffusion"
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "security_role_documentation",
+        "incident_response_logs",
+        "task_assignment_records"
+      ],
+      "evidence_required": [
+        "individual_security_ownership_matrix",
+        "shift_handoff_procedures",
+        "incident_ownership_logs",
+        "individual_performance_metrics"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "incident_management_system",
+          "fields": ["incident_id", "assigned_individual", "response_time", "reassignment_count", "timestamp"],
+          "retention": "90_days"
+        },
+        {
+          "source": "task_tracking_system",
+          "fields": ["task_id", "assigned_to", "completion_status", "assignment_date", "completion_date"],
+          "retention": "90_days"
+        },
+        {
+          "source": "security_monitoring_logs",
+          "fields": ["alert_id", "assigned_analyst", "acknowledgment_time", "investigation_status", "escalation_path"],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "shift_handoff_logs",
+          "fields": ["shift_start", "shift_end", "handoff_completed", "outstanding_tasks", "responsible_individual"],
+          "retention": "180_days"
+        },
+        {
+          "source": "vendor_oversight_tracking",
+          "fields": ["vendor_id", "responsible_employee", "last_review_date", "compliance_status"],
+          "retention": "365_days"
+        },
+        {
+          "source": "security_exception_requests",
+          "fields": ["request_id", "decision_maker", "approval_time", "team_involvement"],
+          "retention": "365_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "RDC": {
+          "calculation": "Responsibility Diffusion Coefficient based on team size",
+          "query": "SELECT (1 - 1/SQRT(COUNT(DISTINCT assigned_team_member))) as RDC FROM security_tasks WHERE team_assignment=true AND time_window='24h'"
+        },
+        "STCR": {
+          "calculation": "Security Task Completion Rate adjusted for diffusion",
+          "query": "SELECT (COUNT(completed_by_original_assignee)/COUNT(*)) * EXP(-0.5 * RDC) as STCR FROM security_tasks WHERE timestamp > NOW() - INTERVAL '24 hours'"
+        },
+        "response_time_variance": {
+          "calculation": "Coefficient of variation in incident response times by team size",
+          "query": "SELECT STDDEV(response_time)/AVG(response_time) as variance FROM incidents GROUP BY team_size"
+        }
+      }
+    },
+    "integration_apis": {
+      "ticketing_system": "Jira/ServiceNow API - Task Assignment, Ownership Tracking",
+      "incident_response": "PagerDuty/xMatters API - Alert Assignment, Response Times",
+      "hr_system": "HR API - Team Structure, Reporting Lines, Backup Coverage",
+      "siem": "Splunk/Sentinel API - Alert Assignment, Investigation Status"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "6.1",
+        "name": "Groupthink",
+        "probability": 0.7,
+        "factor": 1.3,
+        "description": "Group cohesion masks individual responsibility awareness",
+        "formula": "P(6.3|6.1) = 0.7"
+      },
+      {
+        "indicator": "6.2",
+        "name": "Risky Shift in Group Decisions",
+        "probability": 0.65,
+        "factor": 1.25,
+        "description": "Group risk acceptance diffuses individual accountability for security decisions",
+        "formula": "P(6.3|6.2) = 0.65"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "Stress increases tendency to defer responsibility to others",
+        "formula": "P(6.3|7.1) = 0.75"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.6,
+        "factor": 1.2,
+        "description": "Cognitive depletion increases reliance on diffused responsibility",
+        "formula": "P(6.3|5.2) = 0.6"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "6.4",
+        "name": "Social Loafing in Security Tasks",
+        "probability": 0.8,
+        "factor": 1.5,
+        "description": "Diffused responsibility directly enables social loafing behaviors",
+        "formula": "P(6.4|6.3) = 0.8"
+      },
+      {
+        "indicator": "6.5",
+        "name": "Bystander Effect in Incident Response",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "Diffused responsibility creates bystander inaction during incidents",
+        "formula": "P(6.5|6.3) = 0.75"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "Unclear ownership enables urgency-based security bypasses",
+        "formula": "P(2.1|6.3) = 0.55"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["6.3", "6.4", "6.5"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 3.5,
+      "description": "Perfect storm: Diffused responsibility + Social loafing + Bystander effect = 280% increased incident response failure probability",
+      "real_world_example": "Target 2013 breach - Multiple teams received alerts but each assumed others were investigating, resulting in 17-day delay"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["6.1", "6.2", "7.1", "5.2"],
+      "child_nodes": ["6.4", "6.5", "2.1"],
+      "conditional_probability_table": {
+        "P_6.3_base": 0.30,
+        "P_6.3_given_groupthink": 0.55,
+        "P_6.3_given_stress": 0.60,
+        "P_6.3_given_fatigue": 0.48,
+        "P_6.3_given_all": 0.85
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_incident_ownership",
+          "weight": 0.18,
+          "title": "Incident Response Ownership",
+          "question": "When a security alert or potential incident occurs, how quickly can you identify the specific individual responsible for initial response?",
+          "options": [
+            {
+              "value": "rapid",
+              "score": 0,
+              "label": "Named individual can be identified within 15 minutes with clear responsibility assignment"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "General team responsibility but takes time to identify specific person"
+            },
+            {
+              "value": "slow",
+              "score": 1,
+              "label": "Frequent delays while determining who should respond"
+            }
+          ],
+          "evidence_required": "Incident response logs showing assignment times, specific recent example",
+          "soc_mapping": "response_time metric from incident_management_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_policy_exceptions",
+          "weight": 0.15,
+          "title": "Security Policy Exception Process",
+          "question": "What is your process when someone requests an exception to security policies?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "Specific individual makes final decision with documented approval process"
+            },
+            {
+              "value": "committee",
+              "score": 0.5,
+              "label": "Group decision process with unclear final decision authority"
+            },
+            {
+              "value": "unclear",
+              "score": 1,
+              "label": "No clear decision-maker or approval process"
+            }
+          ],
+          "evidence_required": "Policy exception request logs, recent approval example with named decision-maker",
+          "soc_mapping": "Exception approval tracking from security_exception_requests"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_monitoring_review",
+          "weight": 0.14,
+          "title": "Security Monitoring Accountability",
+          "question": "For your critical security systems (firewalls, antivirus, access controls), who specifically reviews alerts and how often do they report status?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "Named individuals with regular individual sign-offs and reporting"
+            },
+            {
+              "value": "team",
+              "score": 0.5,
+              "label": "Team responsibility with inconsistent individual accountability"
+            },
+            {
+              "value": "unclear",
+              "score": 1,
+              "label": "Unclear who monitors each system or provides sign-off"
+            }
+          ],
+          "evidence_required": "Security monitoring reports with individual signatures, recent example",
+          "soc_mapping": "Alert assignment clarity from security_monitoring_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_shift_handoff",
+          "weight": 0.13,
+          "title": "Shift Change and Coverage Procedures",
+          "question": "During shift changes, staff vacations, or when key security personnel are unavailable, what specific handoff procedures ensure security responsibilities continue?",
+          "options": [
+            {
+              "value": "documented",
+              "score": 0,
+              "label": "Written handoff procedures with named backup individuals and accountability"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Informal coverage arrangements without clear documentation"
+            },
+            {
+              "value": "gaps",
+              "score": 1,
+              "label": "Regular gaps in coverage during transitions"
+            }
+          ],
+          "evidence_required": "Shift handoff documentation, backup coverage schedules with names",
+          "soc_mapping": "Coverage gaps from shift_handoff_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_multiteam_projects",
+          "weight": 0.12,
+          "title": "Cross-Department Security Projects",
+          "question": "When security initiatives involve multiple departments (IT, HR, Legal, etc.), how do you assign and track individual accountability for deliverables?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "Specific individuals assigned with tracking and accountability measures"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Mix of individual and team assignments with some clarity gaps"
+            },
+            {
+              "value": "team",
+              "score": 1,
+              "label": "Departments assigned without individual accountability"
+            }
+          ],
+          "evidence_required": "Project assignment documentation with individual names, recent example",
+          "soc_mapping": "Task ownership clarity from task_tracking_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_training_followup",
+          "weight": 0.12,
+          "title": "Security Training Follow-Up",
+          "question": "After security training sessions, how do you verify that specific individuals implement required changes rather than assuming the team will handle it?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "Individual compliance verification with specific follow-up and accountability"
+            },
+            {
+              "value": "general",
+              "score": 0.5,
+              "label": "General team compliance checks without individual verification"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No individual follow-up or verification"
+            }
+          ],
+          "evidence_required": "Training completion records with individual compliance verification",
+          "soc_mapping": "Individual training completion rates"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_vendor_oversight",
+          "weight": 0.10,
+          "title": "Vendor Security Oversight",
+          "question": "For third-party vendors and contractors with system access, which specific individuals in your organization are accountable for monitoring their security compliance?",
+          "options": [
+            {
+              "value": "named",
+              "score": 0,
+              "label": "Named individuals responsible for each vendor with regular reviews"
+            },
+            {
+              "value": "shared",
+              "score": 0.5,
+              "label": "Shared team responsibility with unclear individual ownership"
+            },
+            {
+              "value": "unclear",
+              "score": 1,
+              "label": "No specific individual assigned to vendor oversight"
+            }
+          ],
+          "evidence_required": "Vendor oversight assignment matrix, recent compliance review with individual sign-off",
+          "soc_mapping": "Vendor oversight tracking from vendor_oversight_tracking"
+        },
+        {
+          "type": "radio-list",
+          "number": 8,
+          "id": "q8_metrics_tracking",
+          "weight": 0.06,
+          "title": "Individual Security Performance Metrics",
+          "question": "What individual performance metrics track security accountability (not just team metrics)?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Individual security metrics tracked and reviewed regularly"
+            },
+            {
+              "value": "limited",
+              "score": 0.5,
+              "label": "Some individual metrics but primarily team-based tracking"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Only team-level metrics, no individual accountability tracking"
+            }
+          ],
+          "evidence_required": "Individual security performance dashboard or reports",
+          "soc_mapping": "Individual performance metrics from task_tracking_system"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Opening Questions",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "When a security alert or potential incident occurs, how quickly can you identify the specific individual responsible for initial response?",
+              "scoring_guidance": {
+                "green": "Named individual identified within 15 minutes, specific recent example provided with clear ownership",
+                "yellow": "General process described but inconsistent application or delays in assignment",
+                "red": "Frequent confusion about who should respond or team assignment without individual clarity"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Tell us about your last security incident and who was designated as the primary responder within the first 30 minutes.",
+                  "evidence_type": "specific_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What happens when the primary assigned individual is unavailable - how is backup coverage handled?",
+                  "evidence_type": "process_verification"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "What is your process when someone requests an exception to security policies?",
+              "scoring_guidance": {
+                "green": "Specific individual decision-maker identified with documented approval workflow and recent example",
+                "yellow": "General committee or group decision process with unclear final authority",
+                "red": "No clear decision-maker or approval process documented"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Walk us through the last policy exception request - who made the final decision and how long did approval take?",
+                  "evidence_type": "specific_incident"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "When multiple people are involved in exception decisions, how do you ensure someone takes final accountability?",
+                  "evidence_type": "accountability_mechanism"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "For your critical security systems (firewalls, antivirus, access controls), who specifically reviews alerts and how often do they report status?",
+              "scoring_guidance": {
+                "green": "Named individuals for each system with regular sign-offs and documentation shown",
+                "yellow": "Team assignments with some individual accountability but gaps in coverage",
+                "red": "Unclear monitoring ownership or team responsibility without individual tracking"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show us last month's security monitoring reports and identify who signed off on each system.",
+                  "evidence_type": "documentation_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you verify that monitoring is actually happening versus assuming the team is handling it?",
+                  "evidence_type": "verification_process"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "During shift changes, staff vacations, or when key security personnel are unavailable, what specific handoff procedures ensure security responsibilities continue?",
+              "scoring_guidance": {
+                "green": "Written handoff procedures with named backups and recent example of smooth transition",
+                "yellow": "Informal coverage arrangements that sometimes work but have occasional gaps",
+                "red": "Regular coverage gaps or incidents during transitions and absences"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Describe what happened to security monitoring during your last major staff absence or reorganization.",
+                  "evidence_type": "stress_test_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Do you have written documentation of backup coverage assignments with specific names?",
+                  "evidence_type": "process_documentation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cross-Functional Coordination",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "When security initiatives involve multiple departments (IT, HR, Legal, etc.), how do you assign and track individual accountability for deliverables?",
+              "scoring_guidance": {
+                "green": "Specific individuals assigned from each department with tracking system and recent success example",
+                "yellow": "Department assignments with unclear individual ownership within departments",
+                "red": "Team-based assignments without individual accountability tracking"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Give us a recent cross-departmental security project and explain how you ensured each person knew their specific responsibilities.",
+                  "evidence_type": "project_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What happens when a cross-department task falls through the cracks - how do you identify why and prevent recurrence?",
+                  "evidence_type": "failure_learning"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "For third-party vendors and contractors with system access, which specific individuals in your organization are accountable for monitoring their security compliance?",
+              "scoring_guidance": {
+                "green": "Named individual for each major vendor with documented compliance reviews",
+                "yellow": "General IT or security team responsibility without specific assignments",
+                "red": "Unclear vendor oversight responsibility or assumption that vendors self-manage security"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Name the person responsible for your largest vendor's security oversight and show us their last compliance review.",
+                  "evidence_type": "vendor_accountability"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you prevent the 'IT assumes vendor is secure, procurement assumes IT monitors security' gap?",
+                  "evidence_type": "gap_prevention"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cultural & Accountability Factors",
+          "weight": 0.40,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "After security training sessions, how do you verify that specific individuals implement required changes rather than assuming the team will handle it?",
+              "scoring_guidance": {
+                "green": "Individual compliance verification with follow-up and examples of individual accountability",
+                "yellow": "General team compliance checks without individual verification",
+                "red": "No follow-up or assumption that training automatically leads to compliance"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Describe your last security training and what follow-up you did to confirm individual compliance rather than group compliance.",
+                  "evidence_type": "training_verification"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What individual performance metrics track security training implementation and accountability?",
+                  "evidence_type": "metrics_documentation"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q8",
+              "text": "What individual performance metrics track security accountability (not just team metrics)?",
+              "scoring_guidance": {
+                "green": "Comprehensive individual security metrics with regular reviews and examples provided",
+                "yellow": "Some individual metrics but primarily team-based performance tracking",
+                "red": "Only team-level metrics with no individual accountability measurement"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show us your individual security performance dashboard or recent individual performance review.",
+                  "evidence_type": "metrics_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you use individual metrics to address responsibility diffusion issues?",
+                  "evidence_type": "remediation_approach"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Security tasks are assigned to departments or teams, not specific individuals...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Everyone is responsible for security, so no one person needs to be assigned...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"We often discover that multiple people thought someone else was handling a security task...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Incident response delays are common while we figure out who should handle each alert...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"During shift changes or vacations, security monitoring sometimes has gaps...\"",
+              "severity": "medium",
+              "score_impact": 0.10,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"We use generic email addresses like security@company.com for critical communications...\"",
+              "severity": "medium",
+              "score_impact": 0.09,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Post-incident reviews frequently reveal unclear responsibility ownership...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject simulated responsibility diffusion scenarios quarterly",
+      "correlation_analysis": "Compare manual audit scores with automated RDC/STCR metrics (target correlation > 0.80)",
+      "drift_detection": "Kolmogorov-Smirnov test, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted diffusion scores match observed incident patterns",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Individual Response Time Consistency",
+        "formula": "Coefficient of variation in incident response times across staffing conditions",
+        "baseline": "Measure current variance between optimal and sub-optimal conditions",
+        "target": "Reduce variance to less than 20% within 90 days",
+        "measurement": "Weekly automated reports with monthly trend analysis"
+      },
+      {
+        "metric": "Security Task Completion Ownership Rate",
+        "formula": "% of security tasks completed by originally assigned individual",
+        "baseline": "Current rate without reassignment or delay",
+        "target": "95% individual completion rate within 90 days",
+        "measurement": "Monthly dashboard review of task assignment patterns"
+      },
+      {
+        "metric": "Individual Accountability Incident Rate",
+        "formula": "Number of incidents per quarter where unclear ownership appears in root cause",
+        "baseline": "Historical analysis of incident reports",
+        "target": "Reduce diffusion-related incidents by 75% within 90 days",
+        "measurement": "Quarterly incident review with accountability pattern analysis"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Individual Security Ownership Matrix",
+        "description": "Create detailed matrix mapping every security process to specific individuals with primary, backup, and escalation contacts",
+        "implementation": "Document all security processes in matrix format with individual names (not departments). Each person acknowledges responsibilities in writing with response timeframes. Include primary owner, backup owner, and escalation contact for each process. Update matrix quarterly and during organizational changes.",
+        "technical_controls": "RACI matrix tool, acknowledgment tracking system, automated reminders for reviews",
+        "roi": "380% average within 18 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Security Accountability Dashboard",
+        "description": "Deploy automated tracking system assigning security tasks to named individuals with timestamp tracking and escalation triggers",
+        "implementation": "Implement ticketing/task system with individual assignment requirements. Tasks cannot be assigned to teams without named individual owner. Public visibility of task status with automatic escalation after time thresholds. Individual sign-off required with evidence for task completion.",
+        "technical_controls": "ServiceNow/Jira with custom workflows, automated assignment logic, escalation rules, mobile notifications",
+        "roi": "420% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Shift-Proof Security Procedures",
+        "description": "Establish security procedures that function regardless of staffing levels with mandatory handoff protocols",
+        "implementation": "Create automated monitoring with individual notifications. Develop mandatory handoff checklists between shifts with sign-off requirements. Establish emergency contact procedures reaching specific individuals 24/7. Test backup coverage quarterly during planned absences.",
+        "technical_controls": "Automated monitoring tools, handoff checklist system, emergency contact database, mobile alert system",
+        "roi": "310% average within 18 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Individual Security Performance Metrics",
+        "description": "Create individual KPIs for security responsibilities tied to performance reviews and recognition programs",
+        "implementation": "Develop individual metrics including incident response times, policy compliance, proactive security actions. Integrate into performance review systems. Create recognition programs rewarding individual security ownership. Monthly individual reviews with specific feedback on security contributions.",
+        "technical_controls": "Performance dashboard, KPI tracking system, automated metric calculation, recognition platform",
+        "roi": "290% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days initial, ongoing"
+      },
+      {
+        "id": "sol_5",
+        "title": "Security Decision Authority Framework",
+        "description": "Establish clear decision rights for security issues with named decision-makers and time limits",
+        "implementation": "Document decision authority matrix for different security scenarios. Name specific decision-makers with time limits for decisions. Automatic escalation when decisions not made within timeframes. Include authority to act immediately in emergencies without additional approval.",
+        "technical_controls": "Decision authority database, automated escalation timers, emergency authorization system",
+        "roi": "260% average within 18 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Cross-Training with Individual Backup Assignment",
+        "description": "Cross-train multiple individuals while maintaining specific assignments and accountability",
+        "implementation": "Train backup personnel for critical security processes while keeping clear individual primary assignments. Create rotation schedules ensuring knowledge distribution without diffusing responsibility. Maintain same accountability standards for backup personnel as primary assignees. Document backup capabilities and test quarterly.",
+        "technical_controls": "Training tracking system, rotation scheduler, competency assessment platform",
+        "roi": "240% average within 24 months",
+        "effort": "medium",
+        "timeline": "60 days initial, ongoing"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_4"],
+      "high_value": ["sol_2", "sol_3"],
+      "governance": ["sol_5"],
+      "sustainability": ["sol_6"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "The Ignored Alert Attack",
+      "description": "Sophisticated attackers monitor organizational patterns and launch attacks during shift changes, vacations, or busy periods when security responsibility is most diffused. They send alerts that look routine but contain critical breach indicators, knowing these will likely be ignored as each team member assumes others are investigating.",
+      "attack_vector": "Timing attacks during high-diffusion periods with ambiguous alert patterns",
+      "psychological_mechanism": "Diffusion of responsibility - each analyst assumes others are investigating similar alerts",
+      "historical_example": "Target 2013 - Security alerts ignored by multiple teams, each assuming others would investigate, resulting in delayed breach detection",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["RDC > 0.5", "STCR < 0.7", "high_reassignment_count", "response_time_variance_spike", "shift_change_correlation"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "The Vendor Backdoor Exploitation",
+      "description": "Attackers compromise third-party vendors and exploit the diffused responsibility for vendor security oversight. They use vendor credentials to access client systems, knowing that vendor security monitoring often falls between IT (assumes vendor is secure) and procurement (assumes IT monitors security).",
+      "attack_vector": "Compromised vendor credentials exploiting organizational accountability gaps",
+      "psychological_mechanism": "Inter-departmental responsibility diffusion with assumption others are monitoring",
+      "historical_example": "SolarWinds 2020 - Supply chain compromise undetected due to distributed security oversight across organizations",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["vendor_access_anomaly", "no_assigned_oversight", "compliance_review_overdue", "cross_department_gap"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "The Policy Exception Cascade",
+      "description": "Attackers social engineer policy exceptions by exploiting unclear approval processes. They request seemingly minor exceptions knowing that approval responsibility is diffused across multiple people, causing delays that they interpret as implicit approval to proceed with increasingly risky configurations.",
+      "attack_vector": "Gradual exception escalation exploiting diffused approval authority",
+      "psychological_mechanism": "Diffused decision-making authority enabling exception creep",
+      "historical_example": "Common pattern in configuration drift leading to exploitable vulnerabilities through accumulated exceptions",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["exception_approval_delay", "multiple_approvers", "no_final_decision_maker", "exception_accumulation"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "The Emergency Response Paralysis",
+      "description": "Attackers launch coordinated attacks during organizational crises (natural disasters, major outages, personnel emergencies) when normal accountability structures break down and security response responsibility becomes diffused across emergency response teams.",
+      "attack_vector": "Multi-vector attack during organizational crisis exploiting accountability breakdown",
+      "psychological_mechanism": "Crisis-induced responsibility diffusion with emergency team coordination failure",
+      "historical_example": "Multiple incidents where attackers timed operations during organizational stress periods",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["organizational_crisis_active", "response_coordination_delay", "unclear_command_structure", "emergency_coverage_gap"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Darley, J.M. & Latané, B. (1968). Bystander intervention in emergencies: Diffusion of responsibility",
+      "Latané, B. et al. (1979). Social impact theory showing responsibility diffusion mathematical principles",
+      "Ringelmann Effect (1913). Early demonstration of individual effort decrease with group size",
+      "Karau, S.J. & Williams, K.D. (1993). Social loafing meta-analysis",
+      "Beautement et al. (2008). Security compliance decrease in larger teams"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}
