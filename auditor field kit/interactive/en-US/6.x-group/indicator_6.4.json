@@ -1,0 +1,913 @@
+{
+  "indicator": "6.4",
+  "title": "INDICATOR 6.4 FIELD KIT",
+  "subtitle": "Social Loafing in Security Tasks",
+  "category": "Group Dynamic Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 6.x",
+
+  "description": {
+    "short": "Measures the tendency for individuals to reduce security effort when working in groups, assuming others will handle critical security functions",
+    "context": "Social loafing occurs when individuals reduce their security effort when working in groups, assuming others will handle critical security functions. This creates dangerous accountability gaps where everyone thinks 'someone else is watching' - leading to undetected threats, delayed incident response, and collective security negligence. Organizations with team-based security responsibilities without individual accountability show 23% longer breach durations and significantly higher regulatory compliance failures.",
+    "impact": "Organizations vulnerable to social loafing experience reduced investigation depth when security incidents assigned to teams rather than individuals, documentation quality decreases when security compliance is team-based responsibility, and average 23% increase in breach duration when security responsibilities are team-based. Social engineering success rates increase 300% when targeting teams vs. individuals.",
+    "psychological_basis": "Ringelmann (1913) and Latané et al. (1979) identified social loafing as the tendency to exert less effort in groups compared to individual work. Three primary mechanisms: diffusion of responsibility (individual accountability diluted in teams), social facilitation reversal (complex security tasks suffer in group settings), and motivational loss (individual contributions less identifiable). fMRI studies show reduced anterior cingulate cortex activation (effort monitoring) in group contexts."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Strong Individual Accountability",
+        "description": "Clear individual security task assignments with named ownership, individual security metrics and accountability systems, documented individual response requirements for security alerts, and specific individual attribution for all security activities including shared resources.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Mixed Individual and Team Accountability",
+        "description": "Some individual security assignments but also significant team-based security responsibilities, mixed approach to security accountability with some individual tracking, or unclear individual ownership for certain types of security tasks or shared resources.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Team-Based Without Individual Accountability",
+        "description": "Primarily relies on team-based security responsibilities without clear individual accountability, lacks individual security performance metrics, assigns security tasks to groups without named individual owners, or has shared security resources without individual attribution capabilities.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_task_assignment": 0.18,
+      "q2_incident_reporting": 0.16,
+      "q3_monitoring_structure": 0.15,
+      "q4_alert_response": 0.14,
+      "q5_training_tracking": 0.13,
+      "q6_shared_accounts": 0.12,
+      "q7_documentation_ownership": 0.12
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_6.4(t) = w1·R_6.4(t) + w2·A_6.4(t) + w3·B_6.4(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_6.4(t) = 1 if LD(t) > 0.25 AND E_i(n) < 0.7·E_individual, else 0",
+          "description": "Binary detection based on Loafing Detection rate and Individual Effort degradation",
+          "threshold": {
+            "LD": 0.25,
+            "E_effort_ratio": 0.7
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_6.4(t) = sqrt((x(t) - μ)ᵀ Σ⁻¹ (x(t) - μ))",
+          "description": "Mahalanobis distance for multivariate individual effort patterns",
+          "variables": {
+            "x(t)": "observation vector [individual_effort, team_size, contribution_identifiability]",
+            "μ": "baseline mean from individual work performance",
+            "Σ": "covariance matrix (exponential weighted moving average)"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_6.4(t) = P(loafing|factors) = [P(factors|loafing) × P(loafing)] / P(factors)",
+          "factors": [
+            "team_size",
+            "contribution_visibility",
+            "individual_metrics_tracking",
+            "task_complexity",
+            "accountability_clarity"
+          ],
+          "priors": {
+            "P_individual_accountability": 0.65,
+            "P_social_loafing": 0.35
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.3,
+        "w2_anomaly": 0.4,
+        "w3_bayesian": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_6.4(t) = α·D_6.4(t) + (1-α)·T_6.4(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 3600,
+        "description": "Exponential smoothing with 1-hour time constant"
+      }
+    },
+    "individual_effort_model": {
+      "formula": "E_i(n) = E_individual · (1 - α·log(n)/n)",
+      "description": "Individual effort as function of team size n, where α represents loafing susceptibility",
+      "components": {
+        "E_individual": "Baseline individual effort when working alone",
+        "n": "Team size (number of members)",
+        "alpha": "Loafing coefficient (typical range: 0.15-0.35)"
+      },
+      "interpretation": "Effort decreases logarithmically with team size; higher α indicates greater loafing tendency"
+    },
+    "loafing_detection_model": {
+      "formula": "LD(t) = (E_expected - E_observed)/E_expected",
+      "description": "Loafing Detection rate comparing expected vs observed security effort",
+      "components": {
+        "E_expected": "Sum of individual baseline efforts: Σ E_individual_i",
+        "E_observed": "Actual measured team output/effort"
+      },
+      "interpretation": "LD > 0.25 indicates significant social loafing (>25% effort loss)"
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "individual_task_assignment_records",
+        "security_performance_reviews",
+        "team_composition_data"
+      ],
+      "evidence_required": [
+        "individual_security_task_assignments",
+        "individual_performance_metrics",
+        "security_alert_individual_ownership",
+        "shared_account_attribution_logs"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "task_management_system",
+          "fields": ["task_id", "assigned_individual", "team_assignment", "completion_time", "effort_estimate", "actual_effort"],
+          "retention": "90_days"
+        },
+        {
+          "source": "security_incident_logs",
+          "fields": ["incident_id", "team_size", "individual_reporter", "response_time", "investigation_depth"],
+          "retention": "90_days"
+        },
+        {
+          "source": "alert_tracking_system",
+          "fields": ["alert_id", "assignment_type", "individual_vs_team", "acknowledgment_time", "resolution_quality"],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "training_completion_tracking",
+          "fields": ["individual_id", "completion_rate", "team_context", "individual_score"],
+          "retention": "180_days"
+        },
+        {
+          "source": "shared_account_logs",
+          "fields": ["account_id", "individual_attribution", "action_logged", "accountability_flag"],
+          "retention": "365_days"
+        },
+        {
+          "source": "code_commit_analysis",
+          "fields": ["developer_id", "security_fix_commits", "team_size", "individual_contribution"],
+          "retention": "180_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "E_i": {
+          "calculation": "Individual effort measurement from task completion metrics",
+          "query": "SELECT individual_id, AVG(actual_effort) as E_individual, team_size, (AVG(actual_effort) * (1 - 0.25 * LOG(team_size)/team_size)) as E_i FROM tasks GROUP BY individual_id, team_size"
+        },
+        "LD": {
+          "calculation": "Loafing Detection from expected vs observed effort",
+          "query": "SELECT (SUM(expected_effort) - SUM(observed_effort))/SUM(expected_effort) as LD FROM team_tasks WHERE time_window='24h'"
+        },
+        "contribution_identifiability": {
+          "calculation": "Measure of individual contribution visibility in team tasks",
+          "query": "SELECT COUNT(individual_attribution)/COUNT(*) as identifiability FROM security_actions WHERE team_based=true"
+        }
+      }
+    },
+    "integration_apis": {
+      "project_management": "Jira/Asana API - Task Assignment, Individual Effort Tracking",
+      "incident_response": "PagerDuty/ServiceNow API - Individual vs Team Response Metrics",
+      "version_control": "GitHub/GitLab API - Individual Contribution Analysis",
+      "hr_system": "HR API - Team Composition, Individual Performance Data"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "6.3",
+        "name": "Diffusion of Responsibility",
+        "probability": 0.8,
+        "factor": 1.5,
+        "description": "Diffused responsibility directly enables social loafing behaviors",
+        "formula": "P(6.4|6.3) = 0.8"
+      },
+      {
+        "indicator": "6.1",
+        "name": "Groupthink",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Group cohesion can mask individual loafing through collective rationalization",
+        "formula": "P(6.4|6.1) = 0.65"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.7,
+        "factor": 1.35,
+        "description": "Cognitive depletion increases reliance on team and reduces individual effort",
+        "formula": "P(6.4|5.2) = 0.7"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.6,
+        "factor": 1.25,
+        "description": "Stress amplifies tendency to defer security effort to team members",
+        "formula": "P(6.4|7.1) = 0.6"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "6.5",
+        "name": "Bystander Effect in Incident Response",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "Social loafing reduces individual initiative during incident response",
+        "formula": "P(6.5|6.4) = 0.75"
+      },
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "Reduced individual investigation effort amplifies alert fatigue impact",
+        "formula": "P(5.1|6.4) = 0.55"
+      },
+      {
+        "indicator": "1.1",
+        "name": "Unquestioning Compliance",
+        "probability": 0.5,
+        "factor": 1.15,
+        "description": "Reduced individual security vigilance enables compliance vulnerabilities",
+        "formula": "P(1.1|6.4) = 0.5"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["6.3", "6.4", "6.5"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 3.2,
+      "threshold_critical": 3.8,
+      "description": "Perfect storm: Diffused responsibility + Social loafing + Bystander effect = 320% increased security incident probability",
+      "real_world_example": "Financial Services SOC with 12 analysts failed to escalate obvious indicators, each assuming others were investigating"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["6.3", "6.1", "5.2", "7.1"],
+      "child_nodes": ["6.5", "5.1", "1.1"],
+      "conditional_probability_table": {
+        "P_6.4_base": 0.35,
+        "P_6.4_given_diffusion": 0.65,
+        "P_6.4_given_groupthink": 0.58,
+        "P_6.4_given_fatigue": 0.62,
+        "P_6.4_given_all": 0.88
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_task_assignment",
+          "weight": 0.18,
+          "title": "Individual Security Task Assignment Process",
+          "question": "How does your organization assign specific security tasks to named individuals rather than teams?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "All security tasks assigned to specific named individuals with clear ownership and accountability"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Mix of individual and team assignments with some clarity gaps"
+            },
+            {
+              "value": "team",
+              "score": 1,
+              "label": "Security tasks primarily assigned to teams without individual accountability"
+            }
+          ],
+          "evidence_required": "Recent security task assignment with individual name, tracking system documentation",
+          "soc_mapping": "Individual assignment rate from task_management_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_incident_reporting",
+          "weight": 0.16,
+          "title": "Security Incident Reporting Ownership",
+          "question": "When a potential security issue is discovered, what is your procedure for ensuring individual accountability in reporting and follow-up?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "Clear individual reporting requirements with tracking and follow-up accountability"
+            },
+            {
+              "value": "general",
+              "score": 0.5,
+              "label": "General team reporting expectation without individual tracking"
+            },
+            {
+              "value": "unclear",
+              "score": 1,
+              "label": "No specific individual reporting requirements or accountability"
+            }
+          ],
+          "evidence_required": "Incident reporting procedure with individual accountability measures, recent example",
+          "soc_mapping": "Individual reporter tracking from security_incident_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_monitoring_structure",
+          "weight": 0.15,
+          "title": "Team Security Monitoring Structure",
+          "question": "How often do multiple people share responsibility for the same security monitoring task without clear individual ownership?",
+          "options": [
+            {
+              "value": "rare",
+              "score": 0,
+              "label": "Rarely - clear individual ownership with named assignees for all monitoring tasks"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.5,
+              "label": "Sometimes - some shared responsibilities with unclear ownership"
+            },
+            {
+              "value": "frequent",
+              "score": 1,
+              "label": "Frequently - most monitoring tasks shared without individual accountability"
+            }
+          ],
+          "evidence_required": "Security monitoring assignment matrix, accountability measures documentation",
+          "soc_mapping": "Shared vs individual assignment ratio from alert_tracking_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_alert_response",
+          "weight": 0.14,
+          "title": "Security Alert Response Protocol",
+          "question": "What happens when security alerts are sent to groups vs. individuals, and how do you ensure someone actually responds?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "Alerts assigned to specific individuals with acknowledgment requirements and escalation"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Mix of individual and group alerts with inconsistent response tracking"
+            },
+            {
+              "value": "group",
+              "score": 1,
+              "label": "Alerts sent to groups without individual assignment or response verification"
+            }
+          ],
+          "evidence_required": "Alert assignment configuration, recent alert response tracking with individual accountability",
+          "soc_mapping": "Alert acknowledgment and response tracking from alert_tracking_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_training_tracking",
+          "weight": 0.13,
+          "title": "Security Training and Compliance Tracking",
+          "question": "How does your organization measure and track individual (not just team) security training completion and policy compliance?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "Comprehensive individual tracking with performance metrics and compliance verification"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Basic individual completion tracking but limited compliance verification"
+            },
+            {
+              "value": "team",
+              "score": 1,
+              "label": "Only team-level metrics without individual performance measurement"
+            }
+          ],
+          "evidence_required": "Individual training records, compliance metrics, performance measurement examples",
+          "soc_mapping": "Individual completion and compliance rates from training_completion_tracking"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_shared_accounts",
+          "weight": 0.12,
+          "title": "Shared Security Account Management",
+          "question": "What is your policy for shared service accounts, and how do you ensure individual accountability for actions taken through shared credentials?",
+          "options": [
+            {
+              "value": "individual_attribution",
+              "score": 0,
+              "label": "Strong individual attribution with detailed logging and accountability for shared account actions"
+            },
+            {
+              "value": "limited",
+              "score": 0.5,
+              "label": "Limited shared accounts with some individual tracking"
+            },
+            {
+              "value": "no_attribution",
+              "score": 1,
+              "label": "Shared accounts without individual attribution or accountability"
+            }
+          ],
+          "evidence_required": "Shared account policy, attribution logs, individual accountability measures",
+          "soc_mapping": "Individual attribution rate from shared_account_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_documentation_ownership",
+          "weight": 0.12,
+          "title": "Security Documentation Ownership",
+          "question": "When security policies, procedures, or incident reports need to be created or updated, how do you assign individual ownership rather than team responsibility?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "Clear individual ownership for all security documentation with named authors and accountability"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Mix of individual and team documentation ownership"
+            },
+            {
+              "value": "team",
+              "score": 1,
+              "label": "Documentation assigned to teams without individual accountability"
+            }
+          ],
+          "evidence_required": "Recent documentation with individual author/owner, accountability tracking",
+          "soc_mapping": "Individual vs team authorship tracking"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Opening Questions",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "How does your organization assign specific security tasks to named individuals rather than teams?",
+              "scoring_guidance": {
+                "green": "Specific individual assignment process with examples and tracking system demonstrated",
+                "yellow": "General process with mix of individual and team assignments",
+                "red": "Primarily team-based assignments without individual accountability"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Tell us about a recent security task assignment and who was individually responsible.",
+                  "evidence_type": "specific_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you prevent the 'everyone's responsibility is no one's responsibility' problem?",
+                  "evidence_type": "accountability_mechanism"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "When a potential security issue is discovered, what is your procedure for ensuring individual accountability in reporting and follow-up?",
+              "scoring_guidance": {
+                "green": "Clear individual reporting requirements with tracking and recent examples of individual accountability",
+                "yellow": "General reporting expectations without consistent individual tracking",
+                "red": "Team-based reporting without individual accountability measures"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Give us an example of how individual responsibility is tracked in your incident response process.",
+                  "evidence_type": "process_documentation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What happens if a security issue goes unreported - how do you identify individual vs. team accountability gaps?",
+                  "evidence_type": "failure_analysis"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "How often do multiple people share responsibility for the same security monitoring task without clear individual ownership?",
+              "scoring_guidance": {
+                "green": "Rare occurrence with clear individual ownership demonstrated",
+                "yellow": "Some shared responsibilities with attempts at individual accountability",
+                "red": "Frequent shared monitoring without individual accountability measures"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Describe your current security monitoring assignments and individual accountability measures.",
+                  "evidence_type": "structural_assessment"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you measure whether individuals are actually contributing vs. relying on team members?",
+                  "evidence_type": "measurement_approach"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Alert and Incident Response",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "What happens when security alerts are sent to groups vs. individuals, and how do you ensure someone actually responds?",
+              "scoring_guidance": {
+                "green": "Individual alert assignment with acknowledgment tracking and escalation procedures demonstrated",
+                "yellow": "Mix of group and individual alerts with inconsistent response verification",
+                "red": "Primarily group alerts without individual response accountability"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Tell us about a recent security alert and how individual response accountability was managed.",
+                  "evidence_type": "recent_incident"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Do you track response times and investigation quality by individual vs. by team?",
+                  "evidence_type": "metrics_verification"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "How does your organization measure and track individual (not just team) security training completion and policy compliance?",
+              "scoring_guidance": {
+                "green": "Comprehensive individual metrics with performance tracking and examples provided",
+                "yellow": "Basic individual tracking with limited performance measurement",
+                "red": "Team-level metrics only without individual performance measurement"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Give us your specific example of individual security performance measurement.",
+                  "evidence_type": "metrics_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do individual performance metrics differ when someone works alone vs. in a team context?",
+                  "evidence_type": "comparative_analysis"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Accountability Mechanisms",
+          "weight": 0.40,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "What is your policy for shared service accounts, and how do you ensure individual accountability for actions taken through shared credentials?",
+              "scoring_guidance": {
+                "green": "Strong individual attribution with detailed logging and accountability examples",
+                "yellow": "Some shared accounts with limited individual tracking",
+                "red": "Shared accounts without individual attribution or accountability"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Describe your current shared account monitoring and individual attribution process.",
+                  "evidence_type": "technical_control"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Show us an example of individual attribution for a shared account action.",
+                  "evidence_type": "audit_trail"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "When security policies, procedures, or incident reports need to be created or updated, how do you assign individual ownership rather than team responsibility?",
+              "scoring_guidance": {
+                "green": "Clear individual ownership with named authors and accountability demonstrated",
+                "yellow": "Mix of individual and team documentation ownership",
+                "red": "Team-based documentation without individual accountability"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Tell us about a recent example of individual security documentation accountability.",
+                  "evidence_type": "documentation_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you prevent documentation quality degradation when assigned to teams vs. individuals?",
+                  "evidence_type": "quality_control"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Security is everyone's responsibility, so we don't need individual assignments...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Our team handles security together, we don't track individual contributions...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Security alerts go to group email addresses or team channels...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"We assume someone on the team is investigating each alert...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Individual performance metrics would undermine team collaboration...\"",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"We notice security task quality decreases when assigned to teams vs. individuals...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Larger security teams seem to be less effective per person than smaller ones...\"",
+              "severity": "medium",
+              "score_impact": 0.10,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject simulated team vs. individual performance scenarios monthly",
+      "correlation_analysis": "Compare manual audit scores with automated LD/E_i metrics (target correlation > 0.80)",
+      "drift_detection": "Kolmogorov-Smirnov test, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted loafing scores match observed team performance degradation",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Individual Security Engagement Rate",
+        "formula": "Individual completion rates for assigned security tasks and alert responses",
+        "baseline": "Current individual completion and response rates",
+        "target": "95% individual task completion within assigned timeframes",
+        "measurement": "Weekly automated reports with monthly analysis"
+      },
+      {
+        "metric": "Individual Security Performance Variance",
+        "formula": "Difference between individual security performance metrics within teams",
+        "baseline": "Current variance between team members",
+        "target": "Reduced variance indicating consistent individual engagement",
+        "measurement": "Monthly coefficient of variation analysis"
+      },
+      {
+        "metric": "Security Incident Attribution Rate",
+        "formula": "% of security incidents with clear individual accountability",
+        "baseline": "Current individual accountability rate in incident response",
+        "target": "90% of incidents with clear individual ownership",
+        "measurement": "Quarterly incident post-mortem analysis"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Individual Security Task Assignment System",
+        "description": "Implement named ownership for all security tasks using project management tools with individual assignments, deadlines, and completion tracking",
+        "implementation": "Deploy task management system requiring individual assignees (no team assignments allowed without named owner). Create security task boards where each item has single named owner with clear accountability metrics. Document all security responsibilities in individual job descriptions with specific deliverables and performance measures. Implement automated task assignment with escalation for unassigned items.",
+        "technical_controls": "Jira/ServiceNow with individual assignment enforcement, automated workflow rules, mobile notifications, escalation triggers",
+        "roi": "410% average within 18 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Personal Security Scorecard Program",
+        "description": "Develop individual security performance dashboards tracking personal metrics like threat detection, incident response times, training completion, and policy compliance",
+        "implementation": "Create individual dashboards showing personal security metrics including alert response times, investigation quality, threat detection rate, training scores. Implement monthly individual security reviews with specific feedback. Create individual security goals and development plans tied to career advancement. Establish recognition programs celebrating individual security contributions.",
+        "technical_controls": "Security metrics dashboard, individual performance tracking, goal management system, recognition platform",
+        "roi": "350% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days initial, ongoing"
+      },
+      {
+        "id": "sol_3",
+        "title": "Individual Alert Ownership Protocol",
+        "description": "Configure security systems to assign alerts to specific individuals rather than groups, with escalation timers requiring individual acknowledgment",
+        "implementation": "Implement round-robin or primary/backup assignment systems ensuring every alert has named owner. Configure SIEM/SOAR to assign alerts to individuals with acknowledgment requirements. Create individual response time metrics and accountability reporting. Establish escalation procedures when individual doesn't acknowledge within thresholds. Publish individual alert response performance metrics.",
+        "technical_controls": "SIEM/SOAR individual assignment rules, acknowledgment tracking, escalation automation, mobile push notifications",
+        "roi": "450% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Named Security Documentation Ownership",
+        "description": "Assign every security policy, procedure, and standard to specific individual owner responsible for maintenance, updates, and implementation oversight",
+        "implementation": "Create documentation ownership matrix with named individuals for each security document. Require individual signature for security documentation approval and change management. Implement personal accountability for documentation quality and currency with regular reviews. Establish individual performance metrics for documentation maintenance. Schedule quarterly ownership reviews and updates.",
+        "technical_controls": "Documentation management system with ownership tracking, approval workflows, review scheduling, quality metrics",
+        "roi": "280% average within 18 months",
+        "effort": "low",
+        "timeline": "30 days"
+      },
+      {
+        "id": "sol_5",
+        "title": "Individual Attribution for Shared Resources",
+        "description": "Implement detailed logging and monitoring for shared security accounts with individual user attribution through secondary authentication or approval workflows",
+        "implementation": "Deploy session recording and keystroke logging for shared accounts with individual attribution. Implement secondary authentication (individual MFA) before shared account access. Create individual approval requirements for shared resource access with named authorization. Establish personal accountability for actions through shared credentials with individual audit trails. Generate individual usage reports for shared accounts.",
+        "technical_controls": "Privileged Access Management (PAM), session recording, individual MFA, approval workflows, audit trail attribution",
+        "roi": "390% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Personal Security Competency Development",
+        "description": "Create individual security skill assessment and development programs with personalized learning paths and certification requirements",
+        "implementation": "Conduct individual security skill assessments identifying personal strengths and gaps. Create personalized learning paths with individual certification requirements. Implement mentorship programs pairing individuals for specific competency development. Establish individual security expertise areas with named subject matter experts. Track individual competency development over time with performance improvement metrics.",
+        "technical_controls": "Learning management system, competency assessment tools, certification tracking, mentorship platform",
+        "roi": "320% average within 24 months",
+        "effort": "medium",
+        "timeline": "60 days initial, ongoing"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_3"],
+      "high_value": ["sol_2", "sol_5"],
+      "cultural_foundation": ["sol_4", "sol_6"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Coordinated Social Engineering Attack",
+      "description": "Attackers send phishing emails to security teams knowing each member will assume others are verifying legitimacy. A sophisticated spear-phishing campaign targets the IT security team with urgent vendor requests, and each team member assumes colleagues have already verified the communication, leading to credential compromise and network infiltration.",
+      "attack_vector": "Mass phishing targeting teams with expectation of diffused responsibility",
+      "psychological_mechanism": "Social loafing - each team member reduces verification effort assuming others will handle it",
+      "historical_example": "Multiple organizations experience 300% higher phishing success rates when targeting teams vs. individuals",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["LD > 0.25", "E_i < 0.7", "team_phishing_response", "low_individual_reporting"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Critical Patch Management Failure",
+      "description": "A critical security vulnerability requires immediate patching across the organization. The security team collectively assumes others are handling different systems, resulting in several critical servers remaining unpatched for months. Attackers exploit these unpatched vulnerabilities, causing data breach and operational disruption.",
+      "attack_vector": "Vulnerability exploitation in systems with team-based patch responsibility",
+      "psychological_mechanism": "Social loafing in patch management with diffused individual accountability",
+      "historical_example": "Healthcare IT team with collective patch responsibility resulted in 3-month delay on critical updates",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["patch_delay_correlation_team_size", "no_individual_patch_owner", "team_assignment_without_tracking"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Insider Threat Exploitation",
+      "description": "A malicious insider gradually escalates policy violations, knowing that security monitoring is team-based with no individual accountability. The insider systematically accesses unauthorized data over six months, with each violation assumed to be noticed by other security team members, enabling massive data exfiltration.",
+      "attack_vector": "Gradual insider threat escalation exploiting team-based monitoring",
+      "psychological_mechanism": "Social loafing in security monitoring reduces individual vigilance",
+      "historical_example": "Manufacturing ransomware - security awareness training effectiveness declined 40% when delivered to groups vs. individuals",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["insider_activity_gradual_escalation", "team_monitoring_gaps", "low_individual_alert_investigation"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Incident Response Coordination Failure",
+      "description": "During a security incident, multiple team members assume others are handling escalation and containment. The attack spreads for hours while each responder thinks colleagues are managing critical response actions, resulting in extended breach duration and amplified business impact.",
+      "attack_vector": "Active incident exploitation during team-based response",
+      "psychological_mechanism": "Social loafing during incident response with unclear individual responsibilities",
+      "historical_example": "SOC team of 12 failed to escalate obvious indicators, each analyst assuming others were investigating",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["incident_response_delay", "team_size_correlation", "unclear_individual_ownership", "escalation_gaps"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Ringelmann (1913). Rope-pulling experiments demonstrating 18% performance decrease in groups",
+      "Latané, B. et al. (1979). Social loafing increases with group size logarithmically",
+      "Williams, K. & Karau, S.J. (1991). Meta-analysis confirming effect across cultures and tasks",
+      "Beautement et al. (2008). Security compliance budgets collectively managed",
+      "Pfleeger & Caputo (2012). Group security responsibilities as primary vulnerability factor"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}
