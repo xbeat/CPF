@@ -1,0 +1,967 @@
+{
+  "indicator": "5.10",
+  "title": "INDICATOR 5.10 FIELD KIT",
+  "subtitle": "Mental Model Confusion",
+  "category": "Cognitive Overload Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 5.x",
+
+  "description": {
+    "short": "Measures vulnerability arising from misalignment between users' mental models of security systems and actual system functioning, leading to predictable errors in security-relevant decisions",
+    "context": "Mental model confusion occurs when employees' understanding of how security systems work doesn't match how they actually function. This creates predictable vulnerabilities because people make security decisions based on incorrect assumptions about system behavior. Organizations experience this when systems change but user training doesn't update, when multiple security tools work differently, or when complex systems exceed what people can reasonably understand and remember.",
+    "impact": "Organizations with high mental model confusion experience configuration errors, monitoring blind spots, incident response delays, and security workarounds. When mental models lag behind system reality, attackers exploit gaps through interface spoofing, privilege escalation via model gaps, and social engineering via technical confusion. This vulnerability peaks during system updates when users struggle to adapt their internal representations.",
+    "psychological_basis": "Miller's Cognitive Load Theory (1956) - Working memory capacity limitations create vulnerabilities when systems exceed the 'magical number seven.' Norman's Design Psychology shows mental models are simplified representations that help predict system behavior. Kahneman's System 1/System 2 Framework demonstrates that under cognitive load, fast automatic processing relies heavily on mental models. Schema Theory (Bartlett, 1932) reveals that cognitive schemas actively reconstruct information to fit existing models, filtering contradictory security information."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Resilient",
+        "description": "Organization has documented procedures for updating mental models with all system changes, regularly tests user understanding, maintains consistent interfaces across security tools, and proactively identifies and corrects mental model gaps before they cause incidents.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Developing",
+        "description": "Organization sometimes updates training with system changes, has moderate help desk volume after changes, uses multiple security tools with some interface inconsistencies, and occasionally discovers mental model confusion during incident reviews.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Critical",
+        "description": "Organization frequently implements system changes without updating user training, experiences high help desk volume and user confusion after changes, uses many different security tools with inconsistent interfaces, and regularly discovers that incidents stem from users misunderstanding how systems work.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_change_training": 0.18,
+      "q2_help_desk_volume": 0.15,
+      "q3_interface_consistency": 0.14,
+      "q4_incident_confusion": 0.13,
+      "q5_understanding_testing": 0.12,
+      "q6_procedure_divergence": 0.12,
+      "q7_system_complexity": 0.10,
+      "q8_change_communication": 0.06
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_5.10(t) = (H_confusion(t)/H_max) + (E_prediction(t)/E_threshold)",
+      "components": {
+        "mental_model_consistency": {
+          "formula": "C_consistency(t) = 1 - (1/n) Σ[|M_i(t) - M_correct|/M_range]",
+          "description": "Measures alignment between individual mental model elements and correct system model",
+          "variables": {
+            "M_i(t)": "Individual mental model element at time t",
+            "M_correct": "Correct system model element",
+            "M_range": "Range of possible model values",
+            "n": "Number of model elements"
+          }
+        },
+        "model_conflict_detection": {
+          "formula": "M_conflict(t) = Σ[w_ij · |M_i(t) - M_j(t)| · I_related(i,j)]",
+          "description": "Detects contradictions between related mental model elements",
+          "variables": {
+            "w_ij": "Weight for element pair",
+            "I_related(i,j)": "Indicator of conceptual relationship between elements i and j"
+          }
+        },
+        "confusion_entropy": {
+          "formula": "H_confusion(t) = -Σ[p_k(t) log₂ p_k(t)]",
+          "description": "Information entropy over competing model interpretations",
+          "variables": {
+            "p_k(t)": "Probability distribution over competing model interpretations",
+            "H_max": "Maximum entropy (complete confusion)"
+          }
+        },
+        "behavioral_prediction_error": {
+          "formula": "E_prediction(t) = (1/n) Σ[|Action_predicted(i,t) - Action_actual(i,t)|]",
+          "description": "Measures gap between predicted and actual user actions based on mental models",
+          "variables": {
+            "Action_predicted": "Expected action based on mental model",
+            "Action_actual": "Observed actual user action",
+            "E_threshold": "Acceptable prediction error threshold"
+          }
+        }
+      },
+      "default_weights": {
+        "w1_consistency": 0.25,
+        "w2_conflict": 0.25,
+        "w3_entropy": 0.25,
+        "w4_prediction": 0.25
+      },
+      "temporal_decay": {
+        "formula": "T_5.10(t) = α·D_5.10(t) + (1-α)·T_5.10(t-1)·e^(-λΔt)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 3600,
+        "lambda": 0.0001,
+        "description": "Exponential smoothing with cognitive recovery decay"
+      }
+    },
+    "cognitive_load_correlation": {
+      "formula": "CL_confusion(t) = β₁·System_Complexity(t) + β₂·Change_Frequency(t) + β₃·Tool_Count(t)",
+      "description": "Mental model confusion increases with system complexity, frequent changes, and multiple inconsistent tools",
+      "thresholds": {
+        "system_complexity_max": 7,
+        "change_frequency_safe": "monthly",
+        "tool_count_optimal": 3
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_mental_model_testing",
+        "help_desk_query_patterns",
+        "system_change_documentation",
+        "incident_root_cause_analysis",
+        "configuration_drift_measurement"
+      ],
+      "evidence_required": [
+        "mental_model_update_procedures",
+        "system_change_training_materials",
+        "help_desk_ticket_analysis",
+        "recent_confusion_related_incidents",
+        "user_understanding_test_results"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "help_desk_tickets",
+          "fields": ["ticket_type", "category", "system_referenced", "timestamp", "post_change_flag"],
+          "retention": "90_days"
+        },
+        {
+          "source": "system_change_logs",
+          "fields": ["change_id", "system_affected", "change_type", "user_notification", "training_updated", "timestamp"],
+          "retention": "180_days"
+        },
+        {
+          "source": "configuration_management",
+          "fields": ["system_id", "config_baseline", "config_current", "drift_percentage", "last_audit"],
+          "retention": "365_days"
+        },
+        {
+          "source": "user_behavior_analytics",
+          "fields": ["user_id", "action_sequence", "error_rate", "inconsistent_behaviors", "timestamp"],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "training_completion_logs",
+          "fields": ["user_id", "training_module", "completion_date", "assessment_score", "system_version"],
+          "retention": "365_days"
+        },
+        {
+          "source": "incident_response_tickets",
+          "fields": ["incident_id", "root_cause_category", "mental_model_factor", "resolution_time", "timestamp"],
+          "retention": "730_days"
+        },
+        {
+          "source": "security_tool_interactions",
+          "fields": ["user_id", "tool_name", "action_attempted", "success", "retry_count", "timestamp"],
+          "retention": "90_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "H_confusion": {
+          "calculation": "Entropy over user action patterns following system changes",
+          "query": "SELECT -SUM(p * LOG2(p)) as entropy FROM (SELECT action_type, COUNT(*)/total as p FROM user_actions WHERE system_change_within_30d=true GROUP BY action_type)"
+        },
+        "E_prediction": {
+          "calculation": "Percentage of user actions that deviate from expected behavior based on documentation",
+          "query": "SELECT (COUNT(unexpected_action)/COUNT(*)) FROM user_actions WHERE system_has_procedure=true AND timestamp > NOW() - INTERVAL '24 hours'"
+        },
+        "help_desk_confusion_rate": {
+          "calculation": "How-to queries within 30 days of system changes",
+          "query": "SELECT COUNT(*) FROM help_desk WHERE category='how_to' AND (system_change_date BETWEEN NOW()-30 AND NOW())"
+        }
+      }
+    },
+    "integration_apis": {
+      "service_desk": "ServiceNow/Jira API - Ticket Analysis, Change Correlation",
+      "configuration_management": "Ansible/Puppet API - Configuration Drift Detection",
+      "training_platform": "LMS API - Completion Status, Assessment Scores",
+      "siem": "Splunk/Sentinel API - User Behavior Analytics, Error Pattern Detection"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "5.3",
+        "name": "Information Overload Paralysis",
+        "probability": 0.8,
+        "factor": 1.5,
+        "description": "Information overload prevents accurate mental model formation and maintenance",
+        "formula": "P(5.10|5.3) = 0.8",
+        "evidence": "Strong correlation (0.80) in interdependency matrix - excessive information prevents coherent model building"
+      },
+      {
+        "indicator": "5.7",
+        "name": "Working Memory Overflow",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Working memory overflow forces reliance on simplified, potentially inaccurate mental models",
+        "formula": "P(5.10|5.7) = 0.65"
+      },
+      {
+        "indicator": "5.9",
+        "name": "Complexity-Induced Errors",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "System complexity exceeds cognitive capacity for accurate mental model creation",
+        "formula": "P(5.10|5.9) = 0.65"
+      },
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue Desensitization",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "Alert fatigue leads to simplified mental models that filter security information",
+        "formula": "P(5.10|5.1) = 0.55"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue Errors",
+        "probability": 0.5,
+        "factor": 1.15,
+        "description": "Decision fatigue reduces cognitive resources available for mental model updating",
+        "formula": "P(5.10|5.2) = 0.5"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "1.3",
+        "name": "Authority Figure Impersonation Susceptibility",
+        "probability": 0.6,
+        "factor": 1.25,
+        "description": "Incorrect mental models prevent recognition of impersonation attempts",
+        "formula": "P(1.3|5.10) = 0.6"
+      },
+      {
+        "indicator": "3.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.5,
+        "factor": 1.2,
+        "description": "Confused mental models make bypasses seem reasonable under time pressure",
+        "formula": "P(3.1|5.10) = 0.5"
+      },
+      {
+        "indicator": "4.2",
+        "name": "Verification Avoidance",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "Incorrect mental models reduce perceived need for verification",
+        "formula": "P(4.2|5.10) = 0.55"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["5.10", "5.3", "5.9"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 4.0,
+      "description": "Perfect storm: Mental model confusion + Information overload + System complexity = 380% increased incident probability due to complete cognitive capacity overwhelm",
+      "real_world_example": "Cloud migration incidents where employee mental models lag behind new security architectures, leading to misapplied security controls during complex transitions"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["5.3", "5.7", "5.9", "5.1", "5.2"],
+      "child_nodes": ["1.3", "3.1", "4.2"],
+      "conditional_probability_table": {
+        "P_5.10_base": 0.20,
+        "P_5.10_given_overload": 0.55,
+        "P_5.10_given_complexity": 0.50,
+        "P_5.10_given_working_memory": 0.48,
+        "P_5.10_given_all_cognitive": 0.85
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_change_training",
+          "weight": 0.18,
+          "title": "Mental Model Update Procedures",
+          "question": "What's your standard procedure for updating user training and documentation when security systems change their behavior or interfaces?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Mandatory mental model update procedures exist for all security system changes, including before/after model comparisons and user comprehension testing"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Some training updates occur with system changes but no formal mental model assessment"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Systems frequently change without corresponding user training or mental model updates"
+            }
+          ],
+          "evidence_required": "Mental model update protocol documentation, recent change training materials",
+          "soc_mapping": "system_change_logs correlated with training_completion_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_help_desk_volume",
+          "weight": 0.15,
+          "title": "Post-Change Confusion Indicators",
+          "question": "How often do you receive help desk tickets asking 'how do I...' questions within 30 days after implementing security system changes or updates?",
+          "options": [
+            {
+              "value": "low",
+              "score": 0,
+              "label": "Minimal increase in help desk queries after system changes (less than 10% increase)"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Moderate spike in confusion-related tickets after changes (10-30% increase)"
+            },
+            {
+              "value": "high",
+              "score": 1,
+              "label": "Consistent high volume of 'how do I...' queries after system changes (>30% increase)"
+            }
+          ],
+          "evidence_required": "Help desk ticket analysis for last 3 system changes, specific volume metrics",
+          "soc_mapping": "help_desk_confusion_rate from telemetry mapping"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_interface_consistency",
+          "weight": 0.14,
+          "title": "Security Tool Interface Consistency",
+          "question": "How many different security tools do your end users interact with daily, and how consistent are the interfaces and workflows across these tools?",
+          "options": [
+            {
+              "value": "consistent",
+              "score": 0,
+              "label": "Limited number of security tools (3 or fewer) with standardized interfaces and consistent workflows"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Multiple security tools (4-6) with some interface inconsistencies requiring different procedures"
+            },
+            {
+              "value": "inconsistent",
+              "score": 1,
+              "label": "Many different security tools (7+) with inconsistent interfaces and widely varying workflows"
+            }
+          ],
+          "evidence_required": "Security tool inventory, workflow documentation for common tasks across tools",
+          "soc_mapping": "security_tool_interactions with error_rate correlation"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_incident_confusion",
+          "weight": 0.13,
+          "title": "Confusion-Related Incidents",
+          "question": "When security incidents occur, how often do you discover that the root cause involved someone misunderstanding how a security system was supposed to work?",
+          "options": [
+            {
+              "value": "rarely",
+              "score": 0,
+              "label": "Rarely - Mental model confusion is root cause in less than 10% of incidents"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.5,
+              "label": "Sometimes - Mental model confusion contributes to 10-30% of incidents"
+            },
+            {
+              "value": "frequently",
+              "score": 1,
+              "label": "Frequently - Mental model confusion is identified as root cause in over 30% of incidents"
+            }
+          ],
+          "evidence_required": "Incident post-mortem reports highlighting mental model factors, specific examples",
+          "soc_mapping": "incident_response_tickets with mental_model_factor classification"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_understanding_testing",
+          "weight": 0.12,
+          "title": "User Understanding Validation",
+          "question": "What's your process for testing whether employees understand how security systems work after training or system changes?",
+          "options": [
+            {
+              "value": "active_testing",
+              "score": 0,
+              "label": "Regular prediction exercises where users predict system behavior and receive feedback, enabling real-time mental model correction"
+            },
+            {
+              "value": "passive_assessment",
+              "score": 0.5,
+              "label": "Basic comprehension testing but no behavioral prediction or mental model accuracy measurement"
+            },
+            {
+              "value": "no_testing",
+              "score": 1,
+              "label": "No formal testing of user understanding after training or system changes"
+            }
+          ],
+          "evidence_required": "Mental model testing procedures, recent test results with accuracy metrics",
+          "soc_mapping": "training_completion_logs with assessment_score analysis"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_procedure_divergence",
+          "weight": 0.12,
+          "title": "Cross-Team Mental Model Alignment",
+          "question": "How do you handle situations where different departments or teams have developed different unofficial procedures for the same security tasks?",
+          "options": [
+            {
+              "value": "aligned",
+              "score": 0,
+              "label": "Regular cross-team alignment sessions identify and resolve procedure discrepancies, maintaining consistent mental models organization-wide"
+            },
+            {
+              "value": "aware",
+              "score": 0.5,
+              "label": "Aware of some procedure variations but no systematic alignment process"
+            },
+            {
+              "value": "divergent",
+              "score": 1,
+              "label": "Departments operate with significantly different mental models and procedures for the same security systems"
+            }
+          ],
+          "evidence_required": "Cross-team procedure documentation, alignment session notes, identified discrepancies",
+          "soc_mapping": "user_behavior_analytics showing action_sequence patterns by department"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_system_complexity",
+          "weight": 0.10,
+          "title": "System Complexity Management",
+          "question": "What steps do you take to ensure security system interactions remain within users' cognitive capacity to understand and remember?",
+          "options": [
+            {
+              "value": "simplified",
+              "score": 0,
+              "label": "Active complexity reduction through tool consolidation, workflow standardization, and cognitive load assessment"
+            },
+            {
+              "value": "documented",
+              "score": 0.5,
+              "label": "Complexity exists but comprehensive documentation is provided"
+            },
+            {
+              "value": "complex",
+              "score": 1,
+              "label": "Security system complexity frequently exceeds what users can reasonably understand without consulting documentation"
+            }
+          ],
+          "evidence_required": "System architecture documentation, cognitive complexity assessment, simplification initiatives",
+          "soc_mapping": "CL_confusion metric from cognitive load correlation"
+        },
+        {
+          "type": "radio-list",
+          "number": 8,
+          "id": "q8_change_communication",
+          "weight": 0.06,
+          "title": "Mental Model Impact Communication",
+          "question": "What's your policy for communicating the security implications when business systems or workflows change?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Mandatory mental model impact assessments for all changes with explicit communication of how user understanding needs to change"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "General change announcements but no specific mental model implications communicated"
+            },
+            {
+              "value": "minimal",
+              "score": 1,
+              "label": "Technical changes implemented with minimal communication about mental model impacts"
+            }
+          ],
+          "evidence_required": "Change management procedures, recent change communication examples",
+          "soc_mapping": "system_change_logs with user_notification analysis"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "System Change Mental Model Management",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Walk us through how you handled training updates for your last major security system modification. What specific steps did you take to update user mental models?",
+              "scoring_guidance": {
+                "green": "Detailed multi-phase approach with before/after model comparison, comprehension testing, and verification of updated understanding",
+                "yellow": "Basic training provided but no explicit mental model updating or validation",
+                "red": "System changed with minimal or no user training updates"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "How did you verify that users' understanding actually changed versus just completing a training module?",
+                  "evidence_type": "validation_methodology"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What was the help desk ticket volume before and after this system change?",
+                  "evidence_type": "confusion_metrics"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Describe your most recent system change and the help desk volume that followed. What kinds of questions did users ask?",
+              "scoring_guidance": {
+                "green": "Minimal confusion queries, mostly clarification rather than fundamental misunderstanding",
+                "yellow": "Moderate spike in 'how do I...' questions lasting 2-4 weeks",
+                "red": "Sustained high volume of confusion-related tickets indicating persistent mental model gaps"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Did the questions reveal that users were trying to apply old procedures to new systems?",
+                  "evidence_type": "mental_model_lag"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How long did it take for help desk volume to return to baseline?",
+                  "evidence_type": "adaptation_speed"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "System Complexity and Tool Consistency",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "List the security tools your typical employee uses daily and describe any workflow differences between them. How do users keep track of which procedure applies to which tool?",
+              "scoring_guidance": {
+                "green": "3 or fewer tools with standardized interfaces and consistent workflows, documented cross-tool procedures",
+                "yellow": "4-6 tools with some inconsistencies, users rely on documentation or memory",
+                "red": "7+ tools with significant workflow variations, users frequently confused about which procedure applies where"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Have you created explicit training that maps the differences and similarities between these tools?",
+                  "evidence_type": "comparative_training"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How often do you see users trying to use Tool A's procedure on Tool B?",
+                  "evidence_type": "cross_tool_errors"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "What steps have you taken to reduce the cognitive complexity of your security systems? Have you consolidated tools or standardized workflows?",
+              "scoring_guidance": {
+                "green": "Active simplification program with tool consolidation, workflow standardization, and cognitive load measurement",
+                "yellow": "Aware of complexity issues but limited simplification efforts",
+                "red": "Security architecture has grown organically with no complexity management"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Have you ever conducted a cognitive complexity assessment of your security systems?",
+                  "evidence_type": "complexity_measurement"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Can users perform common security tasks from memory, or do they need documentation?",
+                  "evidence_type": "cognitive_capacity_fit"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Incident Analysis and Mental Model Accuracy",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Describe a recent incident where user confusion about system behavior contributed to the problem. What was the gap between their mental model and reality?",
+              "scoring_guidance": {
+                "green": "Cannot recall recent mental model confusion incident, or isolated incident with immediate corrective action",
+                "yellow": "Occasional incidents reveal mental model gaps, corrective actions sometimes implemented",
+                "red": "Frequent incidents traced to users operating on incorrect assumptions about system behavior"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "After this incident, how did you update the mental models of all users to prevent recurrence?",
+                  "evidence_type": "systemic_correction"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Do you track 'mental model confusion' as a root cause category in your incident classification?",
+                  "evidence_type": "awareness_level"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "How do you test whether users' mental models accurately reflect how your security systems actually work?",
+              "scoring_guidance": {
+                "green": "Regular prediction exercises where users forecast system behavior and receive feedback, with accuracy metrics tracked over time",
+                "yellow": "Some testing through training assessments but no behavioral prediction validation",
+                "red": "No systematic testing of mental model accuracy"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What percentage of users correctly predict how the security system will respond in your test scenarios?",
+                  "evidence_type": "accuracy_metrics"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How quickly do mental models update after you provide corrective information?",
+                  "evidence_type": "update_speed"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cross-Team Alignment and Communication",
+          "weight": 0.15,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Give us a case where you discovered teams were handling the same security requirement differently. How did you discover this discrepancy and what did you do about it?",
+              "scoring_guidance": {
+                "green": "Regular cross-team alignment processes proactively identify discrepancies before incidents, systematic resolution procedures",
+                "yellow": "Discrepancies discovered reactively during incidents or audits, ad-hoc resolution",
+                "red": "Significant variations in security procedures across teams with no alignment efforts"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Do you have regular sessions where different departments share their security procedures to identify variations?",
+                  "evidence_type": "alignment_process"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you ensure new employees learn the correct mental model rather than team-specific variations?",
+                  "evidence_type": "onboarding_consistency"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Users will figure it out eventually after we deploy the changes...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"We send out release notes, so users should know what changed...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Our systems are too complex to fully train everyone on...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Different teams have their own ways of doing things, and that's okay...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"We have documentation available if users don't understand something...\"",
+              "severity": "medium",
+              "score_impact": 0.10,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Most incidents happen because users don't read the manual...\"",
+              "severity": "medium",
+              "score_impact": 0.08,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"We can't slow down changes just to wait for training updates...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "\"Power users understand the systems; everyone else just follows procedures...\"",
+              "severity": "medium",
+              "score_impact": 0.09,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Deploy prediction exercises monthly to measure mental model accuracy drift",
+      "correlation_analysis": "Compare manual assessment scores with automated confusion metrics (target correlation > 0.80)",
+      "drift_detection": "Monitor help desk query patterns and incident classifications, recalibrate if significant shift detected"
+    },
+    "calibration": {
+      "method": "organizational_baseline",
+      "description": "Establish baseline mental model accuracy for organization, calibrate thresholds to organizational cognitive capacity",
+      "baseline_period": "60_days",
+      "recalibration_trigger": "System complexity changes or major tool deployments"
+    },
+    "success_metrics": [
+      {
+        "metric": "Mental Model Accuracy Rate",
+        "formula": "% of users who correctly predict security system behavior in standardized scenarios",
+        "baseline": "initial prediction testing",
+        "target": "85% accuracy within 90 days of system changes",
+        "measurement": "monthly prediction exercises by security team"
+      },
+      {
+        "metric": "Change-Related Incident Reduction",
+        "formula": "Security incidents within 60 days of system changes attributed to user confusion",
+        "baseline": "historical incident rate",
+        "target": "70% reduction compared to baseline",
+        "measurement": "incident classification during post-mortems, quarterly review by security leadership"
+      },
+      {
+        "metric": "Help Desk Confusion Queries",
+        "formula": "'How do I...' or system behavior questions within 30 days of security changes",
+        "baseline": "previous 3 system changes average",
+        "target": "50% reduction in confusion-related tickets",
+        "measurement": "help desk categorization systems, weekly reports during change implementation"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Mental Model Update Protocol",
+        "description": "Implement mandatory mental model impact assessments for all security system changes",
+        "implementation": "Before deploying updates, document exactly how user understanding needs to change, create specific training materials addressing the differences between old and new mental models, and require demonstration of updated understanding before users regain system access",
+        "technical_controls": "Change management integration with mandatory mental model assessment checkpoints, training verification gates before system access restoration, automated mental model testing",
+        "roi": "380% average within 18 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Interface Standardization Program",
+        "description": "Standardize security tool interfaces and workflows across the organization",
+        "implementation": "Where different tools are necessary, create overlay training that explicitly maps differences and similarities, helping users build accurate mental models of when different procedures apply. Consolidate tools where possible to reduce cognitive load",
+        "technical_controls": "Security tool inventory audit, interface consistency assessment, unified security portal where possible, cross-tool procedure mapping documentation",
+        "roi": "320% average within 12 months",
+        "effort": "high",
+        "timeline": "90-120 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Active Mental Model Testing",
+        "description": "Deploy regular prediction exercises where users predict how security systems will behave in specific scenarios",
+        "implementation": "Create standardized scenarios requiring users to predict system behavior, show them actual results immediately, enabling real-time mental model correction. Track accuracy metrics over time to identify widespread confusion patterns",
+        "technical_controls": "Mental model testing platform, prediction scenario library, accuracy tracking dashboard, automated correction training triggers",
+        "roi": "290% average within 12 months",
+        "effort": "low",
+        "timeline": "30-45 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Cross-Team Model Alignment Process",
+        "description": "Establish quarterly sessions where different departments share their security procedures for common tasks",
+        "implementation": "Identify and resolve discrepancies in how teams understand the same security systems, creating organization-wide mental model consistency. Document agreed-upon procedures and update training to reflect unified understanding",
+        "technical_controls": "Procedure documentation repository, cross-team alignment meeting cadence, discrepancy tracking system, unified procedure templates",
+        "roi": "240% average within 18 months",
+        "effort": "medium",
+        "timeline": "ongoing quarterly process"
+      },
+      {
+        "id": "sol_5",
+        "title": "Confusion-Aware Change Management",
+        "description": "Modify change management procedures to include mental model confusion assessment as a standard risk factor",
+        "implementation": "Delay system changes until user training demonstrates adequate mental model updating, preventing confusion-window vulnerabilities. Measure help desk confusion queries as change success metric",
+        "technical_controls": "Change management workflow modifications, mental model risk assessment rubric, training completion verification gates, post-change confusion monitoring dashboard",
+        "roi": "350% average within 12 months",
+        "effort": "medium",
+        "timeline": "60 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Simplified System Architecture",
+        "description": "Reduce cognitive load by simplifying security system interactions where possible",
+        "implementation": "Consolidate tools where feasible, standardize workflows across remaining tools, eliminate unnecessary complexity that exceeds users' mental model capacity. Apply cognitive complexity assessment (target max 7±2 discrete elements per system)",
+        "technical_controls": "Cognitive complexity measurement tools, tool consolidation roadmap, workflow standardization templates, complexity thresholds in architecture decisions",
+        "roi": "410% average within 24 months",
+        "effort": "high",
+        "timeline": "120-180 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_3"],
+      "high_value": ["sol_2", "sol_5"],
+      "foundational": ["sol_4"],
+      "strategic": ["sol_6"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Interface Spoofing Attacks",
+      "description": "Attackers create fake login pages that exploit users' outdated mental models of legitimate interfaces. When security systems update their appearance but users aren't properly trained on changes, phishing attacks succeed because the fake interfaces match users' expectations better than the real ones.",
+      "attack_vector": "Visual spoofing of interfaces matching outdated mental models rather than current system reality",
+      "psychological_mechanism": "Users rely on established mental models for rapid authentication decisions; outdated models create exploitable gaps",
+      "historical_example": "Email security bypass incidents where users' mental models of 'internal emails = safe' persist after email systems integrate external sources",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["system_recently_changed", "phishing_reports_increase", "users_report_confusion", "authentication_to_spoofed_sites"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Privilege Escalation Through Model Gaps",
+      "description": "Attackers exploit gaps between users' understanding of permission systems and actual access controls. Social engineers guide confused users through actions that grant excessive access by using technical explanations that align with incorrect mental models of how permissions work.",
+      "attack_vector": "Social engineering leveraging misunderstandings about privilege boundaries and access control logic",
+      "psychological_mechanism": "Confused mental models of permission structures make unreasonable access requests seem legitimate",
+      "historical_example": "Cloud migration vulnerabilities where employee mental models lag behind new permission architectures, leading to misapplied security controls",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["unusual_privilege_grants", "permission_confusion_in_tickets", "access_control_misconfigurations", "cross_boundary_access_requests"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Update Window Exploitation",
+      "description": "During system updates when mental model confusion peaks, attackers time campaigns to exploit temporary vulnerabilities. Users struggling to adapt to changed security procedures become more susceptible to social engineering attacks that offer 'helpful' workarounds.",
+      "attack_vector": "Phishing campaigns timed to coincide with system changes, offering fake assistance or workarounds",
+      "psychological_mechanism": "Peak cognitive load during adaptation phase reduces verification behaviors and increases compliance with 'helpful' guidance",
+      "historical_example": "MFA deployment confusion leading to predictable workarounds as users apply old security models to new requirements",
+      "likelihood": "high",
+      "impact": "medium",
+      "detection_indicators": ["recent_system_change", "high_help_desk_volume", "increased_phishing_success", "security_workaround_requests"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Multi-System Integration Attacks",
+      "description": "Attackers exploit confusion at integration points between different security tools. When users don't understand how multiple systems interact, attackers can manipulate one system to compromise others by leveraging mental model gaps about cross-system dependencies.",
+      "attack_vector": "Exploiting misunderstandings about how integrated security systems interact and share data",
+      "psychological_mechanism": "Mental models simplify complex integrations; users miss security implications of cross-system actions",
+      "historical_example": "Organizations using multiple security vendors often lack unified mental models of tool interactions, creating confusion-based vulnerabilities at integration points",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["multiple_systems_involved", "cross_system_anomalies", "integration_point_failures", "user_confusion_about_tool_relationships"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Miller, G. A. (1956). The magical number seven, plus or minus two: Some limits on our capacity for processing information",
+      "Norman, D. (1988). The Design of Everyday Things - Mental model psychology",
+      "Kahneman, D. (1973). Attention and Effort - System 1/System 2 framework",
+      "Bartlett, F. C. (1932). Remembering: A Study in Experimental and Social Psychology - Schema theory"
+    ],
+    "validation_status": "peer_reviewed",
+    "deployment_status": "production_ready"
+  }
+}
