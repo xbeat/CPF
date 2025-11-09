@@ -8,20 +8,57 @@ This repository contains the operational assessment tools for the Cybersecurity 
 
 ```
 auditor-field-kit/
-├── 1.x-authority/
-│   ├── cpf_indicator_1_1_foundation.md
-│   ├── cpf_indicator_1_1_operational.md
-│   └── cpf_field_kit_1_1.md
-├── 2.x-temporal/
-├── 3.x-social/
-├── 4.x-affective/
-├── 5.x-cognitive/
-├── 6.x-group/
-├── 7.x-stress/
-├── 8.x-unconscious/
-├── 9.x-ai/
-└── 10.x-convergent/
+├── README.md
+│
+├── interactive/                 # Web-based interactive assessment tool
+│   ├── script.js
+│   ├── validator.js
+│   ├── styles.css
+│   ├── STARTUP_PROMPT.md
+│   ├── it-IT/                   # Italian indicators (JSON format)
+│   │   ├── 1.x-authority/
+│   │   ├── 2.x-temporal/
+│   │   └── ... (10 categories)
+│   └── en-US/                   # English indicators (JSON format)
+│       ├── 1.x-authority/
+│       ├── 2.x-temporal/
+│       └── ... (10 categories)
+│
+├── it-IT/                       # Italian assessment documents
+│   ├── README.md
+│   ├── 1.x-authority/
+│   │   ├── cpf_indicator_1_1_foundation.md
+│   │   ├── cpf_indicator_1_1_operational.md
+│   │   └── cpf_field_kit_1_1.md
+│   ├── 2.x-temporal/
+│   └── ... (10 categories)
+│
+└── en-US/                       # English assessment documents
+    ├── README.md
+    ├── 1.x-authority/
+    │   ├── cpf_indicator_1_1_foundation.md
+    │   ├── cpf_indicator_1_1_operational.md
+    │   └── cpf_field_kit_1_1.md
+    ├── 2.x-temporal/
+    └── ... (10 categories)
 ```
+
+## Interactive Assessment Tool
+
+The `interactive/` folder contains a web-based assessment interface that provides:
+- **Multi-language support** (English & Italian) with JSON-based indicator data
+- **Real-time validation** of assessment responses
+- **Automated scoring** with visual feedback (Green/Yellow/Red)
+- **Fast assessment workflow** optimized for rapid evaluations
+
+### How to Use the Interactive Tool
+1. Navigate to the `interactive/` folder
+2. Open in a web browser or integrate into your assessment platform
+3. Select your language (it-IT or en-US)
+4. Complete the indicator assessments
+5. Generate automated risk scoring and reports
+
+---
 
 ## Assessment Components
 
