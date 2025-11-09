@@ -48,7 +48,7 @@
 
 **Albero Decisionale - Iniziare Qui:**
 
-**PASSO 1**: Allerta giornaliere per analista?
+**PASSO 1**: Allerte giornaliere per analista?
 - **<50**: Continuare al Passo 2
 - **50-150**: Passare al controllo criteri Giallo
 - **>150**: Punteggio ROSSO immediatamente
