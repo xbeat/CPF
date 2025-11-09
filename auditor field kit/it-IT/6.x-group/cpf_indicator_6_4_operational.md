@@ -2,7 +2,7 @@
 
 ## CONTESTO
 
-L'ozio sociale si verifica quando gli individui riducono il loro sforzo di sicurezza quando lavorano in gruppi, presumendo che altri gestirann le funzioni critiche di sicurezza. Questo crea pericolose lacune di responsabilità dove tutti pensano "qualcun altro sta guardando" - portando a minacce non rilevate, risposta ritardata agli incidenti e negligenza collettiva della sicurezza. Le organizzazioni con responsabilità di sicurezza basate su team senza responsabilità individuale mostrano durate di violazione 23% più lunghe e fallimenti di conformità regolamentare significativamente più elevati.
+L'ozio sociale si verifica quando gli individui riducono il loro sforzo di sicurezza quando lavorano in gruppi, presumendo che altri gestiranno le funzioni critiche di sicurezza. Questo crea pericolose lacune di responsabilità dove tutti pensano "qualcun altro sta guardando" - portando a minacce non rilevate, risposta ritardata agli incidenti e negligenza collettiva della sicurezza. Le organizzazioni con responsabilità di sicurezza basate su team senza responsabilità individuale mostrano durate di violazione 23% più lunghe e fallimenti di conformità regolamentare significativamente più elevati.
 
 ## VALUTAZIONE
 
