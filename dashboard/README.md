@@ -50,10 +50,18 @@ http-server -p 8000
 - Right-click dashboard.html → "Open with Live Server"
 
 ### 3. Explore
+
+**SOC + Bayesian Dashboard** (`dashboard.html`):
 - Click any organization in sidebar
 - View overall risk, category breakdown, prioritization
 - Inspect individual indicators (100-tile grid)
 - Analyze SOC vs Human convergence chart
+
+**Auditing Progress Dashboard** (`dashboard_auditing.html`):
+- Track Field Kit assessment completion (100 indicators)
+- Visual 10×10 indicator grid (green=completed, gray=missing)
+- Category-level progress breakdown
+- Missing indicators list per organization
 
 ## 📊 Features
 
@@ -115,16 +123,23 @@ Weights:
 
 ```
 dashboard/
-├── dashboard.html          # Main UI
-├── bayesian.js             # Inference engine
-├── visualizations.js       # Charts (SOC vs Human)
-├── styles.css              # UI styling
+├── dashboard.html                         # Main UI
+├── dashboard_auditing.html                # Progress tracking dashboard
+├── bayesian.js                            # Inference engine
+├── visualizations.js                      # Charts (SOC vs Human)
+├── styles.css                             # UI styling
+├── USER_GUIDE.html                        # Human-readable documentation
+├── INTEGRATION.md                         # Technical integration guide
+├── PAPER.tex                              # Research paper (LaTeX)
 ├── data/
-│   ├── schema.json         # JSON schema definition
-│   └── organizations.json  # Generated data (6MB)
+│   ├── schema.json                        # JSON schema definition
+│   ├── organizations.json                 # Main data store (6MB)
+│   └── auditing_results.json              # Progress tracking data
 ├── scripts/
-│   └── generate_synthetic_data.js  # Data generator
-└── README.md               # This file
+│   ├── generate_synthetic_data.js         # SOC synthetic data generator
+│   ├── generate_field_kit_assessments.js  # Field Kit synthetic generator
+│   └── batch_import.js                    # Automated Field Kit importer
+└── README.md                              # This file
 ```
 
 ## 🔗 Integration with Field Kit
@@ -134,10 +149,46 @@ dashboard/
 2. Calculate score
 3. Click **"🔗 Export to Dashboard"**
 4. Enter organization ID (e.g., `org-001`)
-5. Save JSON file
+5. Save JSON file to a folder (e.g., `~/field_kit_exports/`)
 
-### Import to Dashboard
-Currently manual (drag-drop planned for v2.0):
+### Automated Batch Import (Recommended)
+**For 100 indicators per organization:**
+
+```bash
+# Step 1: Collect all Field Kit exports in one folder
+mkdir -p ~/field_kit_exports
+# Place all dashboard_export_*.json files here
+
+# Step 2: Run batch importer
+cd dashboard/scripts
+node batch_import.js ~/field_kit_exports
+
+# Output:
+# ✓ Found 100 export files
+# ✓ Organizations: 1
+#   org-001 (Acme Corp)
+#     ✓ Completed: 100/100 (100.0%)
+#     ✗ Missing: 0 indicators
+# ✓ Generated: auditing_results.json
+# ✓ Updated: organizations.json
+
+# Step 3: View progress tracking
+python3 -m http.server 8000
+# Open: http://localhost:8000/dashboard_auditing.html
+
+# Step 4: View SOC+Bayesian analysis
+# Open: http://localhost:8000/dashboard.html
+```
+
+**Features:**
+- ✅ Scans folder for all Field Kit exports
+- ✅ Groups by organization automatically
+- ✅ Calculates coverage (completed/missing indicators)
+- ✅ Merges human assessments with Bayesian recalculation
+- ✅ Generates auditing progress dashboard
+- ✅ Prevents duplicate imports (idempotent)
+
+### Manual Import (Small Scale - 1-10 assessments)
 1. Open `data/organizations.json`
 2. Find organization by ID
 3. Locate indicator (e.g., `1.3`)
@@ -249,9 +300,14 @@ Uses same color scheme as Field Kit for consistency:
 - ✅ Category prioritization
 - ✅ Trend analysis
 - ✅ Field Kit export integration
+- ✅ **Automated batch import (100 indicators)**
+- ✅ **Auditing progress dashboard**
+- ✅ **Synthetic Field Kit generator**
+- ✅ **User Guide (human-readable docs)**
+- ✅ **Technical integration docs**
+- ✅ **Research paper (LaTeX template)**
 
 ### Planned (v2.0)
-- [ ] Drag-drop import from Field Kit
 - [ ] Real-time SOC connector (API)
 - [ ] Alert system (email/Slack)
 - [ ] Historical comparison
@@ -290,8 +346,31 @@ Uses same color scheme as Field Kit for consistency:
 - Check confidence values (0-1 range)
 - Review dependency matrix in bayesian.js
 
-## 📚 Further Reading
+## 📚 Documentation
 
+### User-Facing
+- **[USER_GUIDE.html](USER_GUIDE.html)**: Complete guide for interpreting dashboard metrics, Bayesian scores, convergence analysis, and decision-making
+  - Risk score interpretation
+  - Bayesian formulas explained
+  - Category breakdown with attack examples
+  - 18 FAQ entries
+
+### Technical
+- **[INTEGRATION.md](INTEGRATION.md)**: Developer and integrator guide (38 KB)
+  - SOC integration workflow with code examples
+  - Data format specifications
+  - Bayesian engine API reference
+  - Deployment options (local/static/docker/air-gapped)
+  - Security considerations and troubleshooting
+
+### Research
+- **[PAPER.tex](PAPER.tex)**: arXiv-ready research paper (30 KB)
+  - Bayesian cross-indicator inference methodology
+  - Validation on synthetic datasets
+  - Complete bibliography
+  - LaTeX template ready for submission
+
+### Other Resources
 - **Field Kit README**: `../auditor field kit/interactive/README.md`
 - **CPF Framework**: Main repository documentation
 - **JSON Schema**: `data/schema.json` for format details
