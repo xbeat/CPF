@@ -20,12 +20,34 @@ node generate_synthetic_data.js
 This creates `data/organizations.json` with 8 sample organizations and 30 days of assessment history.
 
 ### 2. Open Dashboard
+
+**IMPORTANT**: Due to CORS policy, you need an HTTP server (file:// protocol blocked).
+
+**Option A - Quick Start Script (Easiest)**:
 ```bash
-# Simply open in browser
-firefox dashboard.html
-# or
-open dashboard.html
+cd dashboard
+./start.sh
+# Auto-generates data (if needed) + starts server + opens browser
 ```
+
+**Option B - Python Manual**:
+```bash
+cd dashboard
+python3 -m http.server 8000
+# Open browser: http://localhost:8000/dashboard.html
+```
+
+**Option B - Node.js**:
+```bash
+npm install -g http-server
+cd dashboard
+http-server -p 8000
+# Open browser: http://localhost:8000/dashboard.html
+```
+
+**Option C - VSCode Live Server**:
+- Install "Live Server" extension
+- Right-click dashboard.html → "Open with Live Server"
 
 ### 3. Explore
 - Click any organization in sidebar
@@ -246,10 +268,17 @@ Uses same color scheme as Field Kit for consistency:
 
 ## 🐛 Troubleshooting
 
+**CORS Error / "Access blocked" in console**
+- **Cause**: Opening `file://` directly in browser
+- **Fix**: Use HTTP server (see Quick Start above)
+- **Why**: Browsers block fetch() of local files for security
+- **Solution**: `python3 -m http.server 8000` or `./start.sh`
+
 **Dashboard shows "Error Loading Data"**
 - Run `node scripts/generate_synthetic_data.js` first
 - Check `data/organizations.json` exists
 - Verify JSON is valid
+- Make sure using HTTP server (not file://)
 
 **Chart not rendering**
 - Check browser console for errors
