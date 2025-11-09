@@ -1,0 +1,842 @@
+{
+  "indicator": "6.6",
+  "title": "INDICATOR 6.6 FIELD KIT",
+  "subtitle": "Assunzioni di Gruppo da Dipendenza",
+  "category": "Vulnerabilità di Dinamiche di Gruppo",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 6.x",
+
+  "description": {
+    "short": "Misura la vulnerabilità creata quando le organizzazioni cercano inconsciamente soluzioni di sicurezza 'proiettile d'argento' e si affidano eccessivamente a specifici vendor, strumenti o personale per la protezione, creando pericolosi punti singoli di fallimento",
+    "context": "Le organizzazioni che sperimentano assunzioni di gruppo da dipendenza cercano inconsciamente soluzioni di sicurezza onnipotenti e trasferiscono la responsabilità a figure protettive esterne. Questo crea pericolosi punti singoli di fallimento dove gli attaccanti possono sfruttare la fiducia cieca dell'organizzazione nelle loro figure protettive prescelte. Quando la responsabilità di sicurezza è psicologicamente trasferita a entità esterne, la vigilanza interna e il pensiero critico si deteriorano, rendendo le organizzazioni vulnerabili ad attacchi di impersonazione di vendor, soluzioni di sicurezza fraudolente e compromissioni della catena di fornitura.",
+    "impact": "Le organizzazioni con alti punteggi di dipendenza sperimentano attacchi di impersonazione di vendor sfruttando relazioni fidate, compromissioni della catena di fornitura attraverso partner di sicurezza idealizzati e fallimenti critici quando le dipendenze a punto singolo falliscono. Gli incidenti storici includono l'attacco SolarWinds sfruttando l'estrema fiducia nei vendor e la violazione Equifax dimostrando l'eccessivo affidamento su assicurazioni di sicurezza esterne mentre la vigilanza interna fallisce.",
+    "psychological_basis": "La Teoria delle Dinamiche di Gruppo di Bion (1961) identifica la dipendenza (baD) come una delle tre assunzioni di base inconsce che i gruppi adottano quando il funzionamento del gruppo di lavoro è minacciato dall'ansia. I gruppi regrediscono a stati psicologici infantili dove abbandonano collettivamente la responsabilità adulta, cercando invece una figura genitoriale idealizzata che gestirà tutte le minacce. Questo crea una profonda vulnerabilità perché la postura di sicurezza del gruppo diventa interamente dipendente dalla forza percepita della figura protettiva mentre perde la capacità di valutazione indipendente delle minacce."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Approccio di sicurezza distribuito con budget distribuito tra più vendor, più personale autorizzato a prendere decisioni di sicurezza di routine, revisioni trimestrali delle prestazioni dei vendor, capacità di problem-solving interno, soluzioni di backup testate per strumenti di sicurezza critici.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Indicatori di dipendenza moderati incluso singolo vendor che riceve il 30-50% del budget di sicurezza, la maggior parte delle decisioni di sicurezza richiede approvazione senior ma più persone possono approvare, revisioni annuali dei vendor condotte ma risultano cambiamenti limitati.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Alta vulnerabilità da dipendenza con singolo vendor che riceve >50% del budget di sicurezza, solo 1-2 persone autorizzate a prendere decisioni di sicurezza, revisioni dei vendor infrequenti o superficiali, la consultazione esterna immediata è la risposta standard a qualsiasi problema di sicurezza.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_vendor_concentration": 0.18,
+      "q2_decision_authority": 0.16,
+      "q3_vendor_questioning": 0.15,
+      "q4_internal_external_response": 0.14,
+      "q5_solution_evaluation": 0.13,
+      "q6_personnel_dependency": 0.13,
+      "q7_backup_redundancy": 0.11
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "DS(t) = w1·DI(t) + w2·ARF(t) + w3·TDI(t)",
+      "components": {
+        "dependency_index": {
+          "formula": "DI(t) = Σ Requests_authority(i,t) / Σ Decisions_independent(i,t)",
+          "description": "Rapporto di richieste di ricerca di autorità rispetto a decisioni di sicurezza indipendenti",
+          "threshold": {
+            "DI_critical": 3.0,
+            "DI_warning": 2.0
+          }
+        },
+        "authority_reference_frequency": {
+          "formula": "ARF(m) = count(authority_references(m)) / |m|",
+          "description": "Frequenza di riferimenti ad autorità esterne nelle comunicazioni di sicurezza",
+          "variables": {
+            "m": "messaggi di comunicazione di sicurezza",
+            "|m|": "conteggio totale messaggi nella finestra di analisi"
+          }
+        },
+        "technology_dependency_index": {
+          "formula": "TDI(t) = Automated_Decisions(t) / Total_Security_Decisions(t)",
+          "description": "Rapporto di decisioni di sicurezza automatizzate rispetto a decisioni di sicurezza totali",
+          "interpretation": "Valori più alti indicano eccessivo affidamento su strumenti automatizzati senza supervisione umana"
+        }
+      },
+      "default_weights": {
+        "w1_dependency": 0.4,
+        "w2_authority": 0.3,
+        "w3_technology": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_6.6(t) = α·DS(t) + (1-α)·T_6.6(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200,
+        "description": "Smussamento esponenziale con costante temporale di 2 ore per rilevamento pattern di dipendenza"
+      }
+    },
+    "vendor_concentration_model": {
+      "formula": "VC(t) = (Budget_top_vendor / Total_security_budget) × Criticality_factor",
+      "description": "Rischio di concentrazione vendor basato su allocazione di budget e criticità dei servizi",
+      "interpretation": "Valori >0.5 indicano pericolosa dipendenza da singolo vendor"
+    },
+    "decision_autonomy_score": {
+      "formula": "DA(t) = Internal_resolutions(t) / (Internal_resolutions(t) + External_consultations(t))",
+      "description": "Capacità organizzativa per decisioni di sicurezza indipendenti",
+      "interpretation": "Valori più bassi indicano dipendenza malsana da supporto decisionale esterno"
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "vendor_contract_analysis",
+        "security_budget_documentation",
+        "decision_authority_matrix",
+        "incident_response_logs",
+        "vendor_performance_reviews"
+      ],
+      "evidence_required": [
+        "12_months_vendor_payments_breakdown",
+        "security_decision_authorization_matrix",
+        "vendor_evaluation_documentation",
+        "incident_response_decision_logs",
+        "backup_procedure_testing_records"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "vendor_communication_logs",
+          "fields": ["vendor_contact_frequency", "escalation_patterns", "resolution_ownership", "timestamp"],
+          "retention": "180_days"
+        },
+        {
+          "source": "security_decision_logs",
+          "fields": ["decision_type", "approver", "external_consultation", "resolution_time", "timestamp"],
+          "retention": "365_days"
+        },
+        {
+          "source": "financial_systems",
+          "fields": ["vendor_id", "payment_amount", "service_category", "contract_terms"],
+          "retention": "730_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "communication_sentiment_analysis",
+          "fields": ["message_id", "authority_references", "dependency_language", "external_validation_seeking"],
+          "retention": "90_days"
+        },
+        {
+          "source": "security_tool_automation_logs",
+          "fields": ["automated_decisions", "human_override_frequency", "decision_category"],
+          "retention": "180_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "DI": {
+          "calculation": "Rapporto di richieste di autorità esterna rispetto a decisioni di sicurezza interne",
+          "query": "SELECT (COUNT(action='external_consult') / COUNT(action='internal_resolve')) FROM security_decisions WHERE time_window='24h'"
+        },
+        "ARF": {
+          "calculation": "Frequenza di riferimenti a vendor/autorità nelle comunicazioni di sicurezza",
+          "query": "SELECT (COUNT(contains_vendor_reference=true) / COUNT(*)) FROM security_communications WHERE timestamp > NOW() - INTERVAL '7 days'"
+        },
+        "VC": {
+          "calculation": "Percentuale di concentrazione vendor",
+          "query": "SELECT (MAX(vendor_spend) / SUM(security_spend)) FROM vendor_payments WHERE fiscal_year=current"
+        }
+      }
+    },
+    "integration_apis": {
+      "procurement_systems": "API - Contratti vendor, storico pagamenti, categorie di servizio",
+      "ticketing_systems": "JIRA/ServiceNow API - Pattern di escalation incidenti, coinvolgimento vendor",
+      "communication_platforms": "Email/Slack API - Frequenza riferimenti autorità, linguaggio di dipendenza",
+      "decision_management": "API personalizzata - Matrici di autorizzazione, approvatori decisioni"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "L'esaurimento cognitivo aumenta l'affidamento su autorità esterne per decisioni di sicurezza",
+        "formula": "P(6.6|5.2) = 0.75"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.7,
+        "factor": 1.35,
+        "description": "Lo stress organizzativo attiva la regressione alla dipendenza da figure protettive",
+        "formula": "P(6.6|7.1) = 0.7"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "La pressione temporale aumenta la ricerca di soluzioni esterne rapide",
+        "formula": "P(6.6|2.1) = 0.65"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "1.3",
+        "name": "Authority Figure Impersonation",
+        "probability": 0.8,
+        "factor": 1.5,
+        "description": "La dipendenza da vendor crea vulnerabilità ad attacchi di impersonazione vendor"
+      },
+      {
+        "indicator": "6.8",
+        "name": "Pairing Hope Fantasies",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "La dipendenza da singoli vendor porta al pensiero magico sulle combinazioni di vendor"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["6.6", "1.3", "7.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.3,
+      "threshold_critical": 3.2,
+      "description": "Tempesta perfetta: Dipendenza da vendor + Impersonazione autorità + Stress = attacchi di impersonazione vendor che bypassano tutte le verifiche",
+      "real_world_example": "SolarWinds 2020 - L'estrema fiducia delle organizzazioni nel vendor di sicurezza ha abilitato la compromissione della catena di fornitura che ha colpito oltre 18.000 clienti"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["5.2", "7.1", "2.1"],
+      "child_nodes": ["1.3", "6.8"],
+      "conditional_probability_table": {
+        "P_6.6_base": 0.20,
+        "P_6.6_given_fatigue": 0.42,
+        "P_6.6_given_stress": 0.38,
+        "P_6.6_given_urgency": 0.35,
+        "P_6.6_given_all": 0.76
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_vendor_concentration",
+          "weight": 0.18,
+          "title": "Rischio di Concentrazione Vendor",
+          "question": "Quale percentuale del Suo budget annuale di cybersecurity va al Suo principale vendor di sicurezza? Includa tutti i servizi, licenze e contratti di supporto da quel singolo vendor.",
+          "options": [
+            {
+              "value": "low",
+              "score": 0,
+              "label": "Meno del 30% - Budget di sicurezza distribuito tra più vendor senza che un singolo vendor domini"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "30-50% - Concentrazione vendor significativa ma non dipendenza completa"
+            },
+            {
+              "value": "high",
+              "score": 1,
+              "label": "Oltre il 50% - Un singolo vendor riceve la maggioranza del budget di sicurezza creando dipendenza critica"
+            }
+          ],
+          "evidence_required": "Ripartizione pagamenti vendor di sicurezza degli ultimi 12 mesi, termini contratti vendor",
+          "soc_mapping": "Metrica VC da detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_decision_authority",
+          "weight": 0.16,
+          "title": "Distribuzione Autorità Decisionale di Sicurezza",
+          "question": "Quando il Suo principale strumento di sicurezza genera avvisi o fallisce, chi prende la decisione su come rispondere? Quanto spesso le decisioni di sicurezza richiedono approvazione dalla leadership senior prima che l'azione possa essere intrapresa?",
+          "options": [
+            {
+              "value": "distributed",
+              "score": 0,
+              "label": "Più personale autorizzato a prendere decisioni di sicurezza di routine senza approvazione senior richiesta"
+            },
+            {
+              "value": "concentrated",
+              "score": 0.5,
+              "label": "La maggior parte delle decisioni di sicurezza richiede approvazione senior ma più persone possono approvare"
+            },
+            {
+              "value": "centralized",
+              "score": 1,
+              "label": "Solo 1-2 persone autorizzate a prendere decisioni di sicurezza, creando punti singoli di fallimento"
+            }
+          ],
+          "evidence_required": "Matrice di autorizzazione decisionale di sicurezza, log decisionali recenti che mostrano approvatori",
+          "soc_mapping": "Metrica DA da detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_vendor_questioning",
+          "weight": 0.15,
+          "title": "Frequenza Revisione Prestazioni Vendor",
+          "question": "Con quale frequenza la Sua organizzazione rivede formalmente e sfida l'efficacia dei Suoi principali vendor di sicurezza? Ci racconti del Suo audit delle prestazioni vendor più recente e quali cambiamenti ne sono risultati.",
+          "options": [
+            {
+              "value": "regular",
+              "score": 0,
+              "label": "Revisioni trimestrali delle prestazioni vendor con miglioramenti documentati e cambiamenti misurabili"
+            },
+            {
+              "value": "annual",
+              "score": 0.5,
+              "label": "Revisioni annuali dei vendor condotte ma risultano cambiamenti limitati dai risultati"
+            },
+            {
+              "value": "rare",
+              "score": 1,
+              "label": "Revisioni dei vendor infrequenti o superficiali senza cambiamenti risultanti alle relazioni vendor"
+            }
+          ],
+          "evidence_required": "Report di revisione prestazioni vendor, miglioramenti documentati da revisioni",
+          "soc_mapping": "Frequenza revisione vendor da log di audit"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_internal_external_response",
+          "weight": 0.14,
+          "title": "Risposta agli Incidenti Interna vs Esterna",
+          "question": "Quando si verifica un incidente di sicurezza, quale è la Sua prima risposta: coinvolgere il problem-solving del team interno o contattare immediatamente vendor/consulenti esterni? Ci dia un esempio specifico da un incidente recente.",
+          "options": [
+            {
+              "value": "internal_first",
+              "score": 0,
+              "label": "Il team interno tenta il problem-solving prima della consultazione esterna (minimo 30 minuti di valutazione interna)"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Approccio misto con qualche problem-solving interno ma frequente consultazione esterna immediata"
+            },
+            {
+              "value": "external_first",
+              "score": 1,
+              "label": "Il contatto immediato con vendor/consulenti esterni è la risposta standard a qualsiasi problema di sicurezza"
+            }
+          ],
+          "evidence_required": "Log di risposta agli incidenti che mostrano pattern di prima risposta, timeline di escalation",
+          "soc_mapping": "Metrica DI (rapporto risoluzione interna vs esterna)"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_solution_evaluation",
+          "weight": 0.13,
+          "title": "Processo di Valutazione Soluzioni di Sicurezza",
+          "question": "Descriva il Suo processo per valutare nuovi strumenti di sicurezza prima dell'acquisto. Quante soluzioni confronta tipicamente, e quali evidenze richiede oltre le dimostrazioni dei vendor?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Valutazione sistematica confrontando 3+ soluzioni con test proof-of-concept e verifiche di referenze"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Processo di valutazione limitato confrontando 2-3 soluzioni con dimostrazioni vendor di base"
+            },
+            {
+              "value": "minimal",
+              "score": 1,
+              "label": "Valutazione minima, tipicamente accetta raccomandazioni vendor senza confronto o test"
+            }
+          ],
+          "evidence_required": "Documentazione recente di selezione strumento di sicurezza, report di test POC, matrici di confronto vendor",
+          "soc_mapping": "Accuratezza valutazione vendor da log di approvvigionamento"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_personnel_dependency",
+          "weight": 0.13,
+          "title": "Dipendenza da Personale Chiave",
+          "question": "Se il Suo CISO o contatto di sicurezza principale fosse non disponibile per due settimane, come verrebbero prese le decisioni di sicurezza? Chi ha la conoscenza e l'autorità per mantenere le operazioni di sicurezza?",
+          "options": [
+            {
+              "value": "resilient",
+              "score": 0,
+              "label": "Piano di successione documentato con personale cross-addestrato che può mantenere le operazioni di sicurezza"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Esiste qualche cross-training ma ci sono lacune in aree di conoscenza chiave che creerebbero sfide"
+            },
+            {
+              "value": "critical",
+              "score": 1,
+              "label": "Punto singolo di fallimento nella conoscenza/autorità di sicurezza senza backup praticabile"
+            }
+          ],
+          "evidence_required": "Documentazione di successione ruolo di sicurezza, record di cross-training, matrice di autorizzazione di backup",
+          "soc_mapping": "Concentrazione autorità decisionale da log di autorizzazione"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_backup_redundancy",
+          "weight": 0.11,
+          "title": "Soluzioni di Sicurezza di Backup",
+          "question": "Per il Suo strumento di sicurezza più critico, quale soluzione di backup o alternativa utilizzerebbe se fallisse completamente? Ci racconti dell'ultima volta che ha testato queste procedure di backup.",
+          "options": [
+            {
+              "value": "tested",
+              "score": 0,
+              "label": "Soluzioni di backup testate per strumenti di sicurezza critici con test trimestrali e procedure documentate"
+            },
+            {
+              "value": "identified",
+              "score": 0.5,
+              "label": "Soluzioni di backup identificate ma raramente o mai testate in pratica"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun backup praticabile per strumenti di sicurezza critici o alternative completamente non testate"
+            }
+          ],
+          "evidence_required": "Documentazione procedure di backup, record di test, informazioni di contatto vendor alternativi",
+          "soc_mapping": "Disponibilità sistema di backup da database di gestione configurazione"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UNA opzione per ogni domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze devono essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Valutazione Relazione Vendor",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Quale percentuale del Suo budget annuale di cybersecurity va al Suo principale vendor di sicurezza, e come si è sviluppata questa concentrazione nel tempo?",
+              "scoring_guidance": {
+                "green": "Ripartizione di budget specifica che mostra concentrazione <30% con strategia di diversificazione vendor documentata",
+                "yellow": "Concentrazione 30-50% con consapevolezza del rischio ma piani di diversificazione limitati",
+                "red": "Concentrazione >50% con giustificazioni come 'sono i migliori' o 'benefici di integrazione' senza mitigazione del rischio"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succederebbe alle Sue operazioni di sicurezza se questa relazione vendor terminasse domani?",
+                  "evidence_type": "business_continuity_planning"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quando è stata l'ultima volta che ha valutato seriamente vendor alternativi per questi servizi?",
+                  "evidence_type": "vendor_evaluation_cadence"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Con quale frequenza la Sua organizzazione rivede formalmente e sfida l'efficacia dei Suoi principali vendor di sicurezza?",
+              "scoring_guidance": {
+                "green": "Revisioni trimestrali con metriche di prestazione documentate e miglioramenti specifici implementati",
+                "yellow": "Revisioni annuali condotte ma cambiamenti minimi risultano dai risultati",
+                "red": "Le relazioni vendor continuano senza revisione formale o risposte 'ci fidiamo di loro'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri la revisione prestazioni vendor più recente e quali azioni specifiche ne sono risultate.",
+                  "evidence_type": "review_documentation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ha mai cambiato o terminato una relazione vendor basandosi sui risultati della revisione prestazioni?",
+                  "evidence_type": "vendor_accountability"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Autorità Decisionale e Capacità Interna",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Quando si verifica un incidente di sicurezza, descriva il processo decisionale. Chi ha l'autorità di intraprendere azioni, e quando coinvolge l'aiuto esterno?",
+              "scoring_guidance": {
+                "green": "Approccio interno-prima con valutazione interna di 30+ minuti prima dell'escalation esterna, più soccorritori autorizzati",
+                "yellow": "Approccio misto con qualche capacità interna ma frequente consultazione esterna immediata",
+                "red": "Il contatto immediato con vendor esterno è la prima risposta standard, problem-solving interno minimo"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi illustri un incidente di sicurezza recente e i punti decisionali specifici.",
+                  "evidence_type": "incident_response_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Se il Suo vendor di sicurezza principale fosse irraggiungibile durante un incidente, cosa farebbe il Suo team?",
+                  "evidence_type": "self_sufficiency_assessment"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Se il Suo CISO o decisore di sicurezza principale fosse non disponibile per due settimane, come continuerebbero le operazioni di sicurezza?",
+              "scoring_guidance": {
+                "green": "Piano di successione documentato con personale cross-addestrato, esempio recente di copertura di successo",
+                "yellow": "Accordi di backup informali ma lacune riconosciute in conoscenza critica",
+                "red": "Punto singolo di fallimento senza backup praticabile o risposte 'dovremmo aspettare loro'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri la Sua documentazione di successione ruolo di sicurezza e record di cross-training.",
+                  "evidence_type": "succession_planning"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quando è stata l'ultima volta che il personale di backup ha effettivamente preso decisioni di sicurezza in modo indipendente?",
+                  "evidence_type": "delegation_practice"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Valutazione e Resilienza",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Descriva il Suo processo per valutare nuovi strumenti di sicurezza prima dell'acquisto. Come assicura di non accettare semplicemente le promesse dei vendor?",
+              "scoring_guidance": {
+                "green": "Valutazione sistematica con confronti 3+ vendor, test POC, verifiche referenze, criteri documentati",
+                "yellow": "Valutazione di base confrontando 2-3 vendor con demo ma test hands-on limitato",
+                "red": "Valutazione minima accettando raccomandazioni vendor o valutazioni singolo-vendor senza confronto"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri la documentazione di valutazione dal Suo acquisto di strumento di sicurezza più recente.",
+                  "evidence_type": "procurement_rigor"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ha mai rifiutato una raccomandazione vendor a favore di una soluzione diversa dopo la valutazione?",
+                  "evidence_type": "independent_judgment"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Per i Suoi strumenti di sicurezza più critici, quali soluzioni di backup o alternative esistono se falliscono?",
+              "scoring_guidance": {
+                "green": "Soluzioni di backup testate con test trimestrali e procedure di failover documentate",
+                "yellow": "Opzioni di backup identificate ma test minimo o nullo di failover effettivo",
+                "red": "Nessuna soluzione di backup o risposte 'dovremmo capirlo'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quando è stata l'ultima volta che ha testato le Sue procedure di sicurezza di backup?",
+                  "evidence_type": "resilience_testing"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa è successo durante quel test e cosa ha imparato?",
+                  "evidence_type": "continuous_improvement"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Indagine per Segnali di Allerta",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle policy dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Questo vendor è il leader del settore, ci fidiamo di loro completamente...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Solo il nostro CISO comprende davvero la nostra architettura di sicurezza...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Non possiamo metterli in discussione, sono gli esperti...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Quando c'è un problema, chiamiamo semplicemente il vendor per risolverlo...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Non abbiamo mai testato le nostre procedure di sicurezza di backup...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Tutto è integrato con questo vendor, quindi non possiamo davvero cambiare...\"",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare scenari simulati di dipendenza vendor trimestralmente",
+      "correlation_analysis": "Confrontare punteggi di audit manuale con metriche di concentrazione vendor (correlazione target > 0.80)",
+      "drift_detection": "Test di Kolmogorov-Smirnov, ricalibrare se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicurare che i punteggi previsti di dipendenza corrispondano ai pattern di concentrazione vendor osservati",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift rilevato o punteggio di validazione < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Punteggio Distribuzione Rischio Vendor",
+        "formula": "Percentuale di budget di sicurezza concentrata nel vendor principale",
+        "baseline": "Percentuale attuale di concentrazione vendor",
+        "target": "Ridurre la concentrazione singolo-vendor a <40% entro 12 mesi",
+        "measurement": "Revisione trimestrale distribuzione pagamenti vendor"
+      },
+      {
+        "metric": "Indice di Resilienza Decisionale",
+        "formula": "Numero di decisori autorizzati per ogni tipo di decisione di sicurezza",
+        "baseline": "Ampiezza matrice di autorizzazione attuale",
+        "target": "Aumentare decisori autorizzati del 50% per risposte di sicurezza di routine entro 6 mesi",
+        "measurement": "Audit mensile dei log decisionali di sicurezza e utilizzo autorizzazioni"
+      },
+      {
+        "metric": "Capacità di Risposta Interna",
+        "formula": "Percentuale di incidenti che richiedono consultazione esterna immediata",
+        "baseline": "Tasso attuale di risposta esterna-prima",
+        "target": "Ridurre risposte esterne-prima del 60% entro 6 mesi",
+        "measurement": "Log di risposta agli incidenti che mostrano pattern di prima risposta interna vs esterna"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Diversificazione Portfolio Vendor",
+        "description": "Implementare policy che richiede che nessun singolo vendor superi il 40% del budget di sicurezza",
+        "implementation": "Creare piano formale di diversificazione vendor con timeline per ridistribuzione dei servizi tra più fornitori. Stabilire requisiti di gara competitiva per contratti oltre soglie specificate. Documentare valutazioni di rischio di concentrazione vendor trimestralmente.",
+        "technical_controls": "Avvisi sistema di approvvigionamento per soglie di concentrazione vendor, tracciamento automatizzato spesa vendor, applicazione workflow gara competitiva",
+        "roi": "280% medio entro 18 mesi",
+        "effort": "medium",
+        "timeline": "60-90 giorni"
+      },
+      {
+        "id": "sol_2",
+        "title": "Matrice di Autorità Decisionale Distribuita",
+        "description": "Documentare livelli di autorizzazione per diverse decisioni di sicurezza assicurando che più personale possa approvare risposte di routine",
+        "implementation": "Creare chiare procedure di escalation che non creano punti singoli di fallimento. Implementare autorizzazione vice/backup per tutti i ruoli di sicurezza critici. Sviluppare alberi decisionali per quando l'aiuto esterno è appropriato.",
+        "technical_controls": "Sistema di workflow di autorizzazione, log delle decisioni con tracciamento approvatori, routing di escalation automatizzato",
+        "roi": "310% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_3",
+        "title": "Revisioni Trimestrali Prestazioni Vendor",
+        "description": "Stabilire criteri di valutazione vendor standardizzati incluse metriche di efficacia della sicurezza e analisi costi-benefici",
+        "implementation": "Richiedere ai vendor di dimostrare miglioramenti misurabili nella postura di sicurezza. Documentare azioni specifiche intraprese basate sui risultati della revisione. Creare sistema scorecard vendor con tracciamento miglioramento.",
+        "technical_controls": "Sistema di gestione prestazioni vendor, raccolta metriche automatizzata, tracciamento programma di revisione",
+        "roi": "240% medio entro 18 mesi",
+        "effort": "low",
+        "timeline": "30-45 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Protocolli di Risposta Sicurezza Interna",
+        "description": "Sviluppare procedure di risposta agli incidenti 'interno prima' richiedendo valutazione interna di 30 minuti prima della consultazione esterna",
+        "implementation": "Formare il personale nella risposta agli incidenti di base per ridurre la dipendenza esterna. Creare alberi decisionali per quando l'aiuto esterno è appropriato. Documentare capacità e limiti di risoluzione interna.",
+        "technical_controls": "Automazione playbook risposta incidenti, tracciamento capacità interna, sistema timer di escalation",
+        "roi": "350% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_5",
+        "title": "Framework di Valutazione Soluzioni di Sicurezza",
+        "description": "Implementare valutazione standardizzata richiedendo confronto di minimo 3 vendor con test proof-of-concept",
+        "implementation": "Creare criteri di valutazione focalizzati su miglioramenti di sicurezza oggettivi piuttosto che promesse vendor. Richiedere giustificazione documentata per selezioni singolo-vendor. Includere verifiche referenze e test POC in tutte le valutazioni.",
+        "technical_controls": "Sistema di workflow valutazione, ambiente di test POC, matrice di scoring confronto vendor",
+        "roi": "290% medio entro 18 mesi",
+        "effort": "low",
+        "timeline": "30 giorni"
+      },
+      {
+        "id": "sol_6",
+        "title": "Piano di Operazioni di Sicurezza di Backup",
+        "description": "Documentare procedure alternative per ogni funzione di sicurezza critica se gli strumenti primari falliscono",
+        "implementation": "Testare soluzioni di backup trimestralmente con risultati documentati. Mantenere liste di contatto aggiornate per vendor alternativi. Assicurare che il personale conosca le procedure di backup attraverso esercitazioni regolari.",
+        "technical_controls": "Sistema di documentazione procedure di backup, automazione programma di test, database di contatto vendor alternativi",
+        "roi": "320% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "60 giorni"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_2", "sol_4"],
+      "high_value": ["sol_1", "sol_6"],
+      "governance": ["sol_3", "sol_5"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Attacco di Impersonazione Vendor",
+      "description": "L'attaccante impersona un vendor di sicurezza fidato via email o telefono, richiedendo accesso urgente per affrontare vulnerabilità critiche",
+      "attack_vector": "Ingegneria sociale via impersonazione vendor sfruttando la fiducia organizzativa nel vendor di sicurezza principale",
+      "psychological_mechanism": "L'assunzione di dipendenza rende la verifica non necessaria quando il vendor fidato fa richieste",
+      "historical_example": "Organizzazioni multiple compromesse attraverso false chiamate di supporto vendor sfruttando relazioni di fiducia vendor",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["urgent_vendor_contact", "unusual_access_request", "no_ticket_verification", "DI > 2.0"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Sfruttamento Falsa Autorità",
+      "description": "Durante incidenti di sicurezza, gli attaccanti si posizionano come consulenti o esperti di emergenza offrendo aiuto immediato",
+      "attack_vector": "Sfruttamento della crisi dove gli attaccanti si spacciano per esperti di sicurezza durante incidenti attivi",
+      "psychological_mechanism": "L'ansia organizzativa e la dipendenza attivano fiducia immediata in apparenti helper esperti",
+      "historical_example": "Campagne APT mantenendo persistenza spacciandosi per soccorritori di incidenti offrendo assistenza",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["incident_active", "unknown_consultant", "no_pre_authorization", "requests_broad_access"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Truffa Soluzione Proiettile d'Argento",
+      "description": "Vendor fraudolenti prendono di mira organizzazioni che cercano soluzioni di sicurezza complete, vendendo strumenti inefficaci sfruttando il desiderio di protezione completa",
+      "attack_vector": "Marketing fraudolento di prodotti di sicurezza prendendo di mira organizzazioni che mostrano pattern di dipendenza",
+      "psychological_mechanism": "Pensiero magico su soluzioni di sicurezza onnipotenti bypassando la normale due diligence",
+      "historical_example": "Numerosi prodotti di sicurezza ciarlatani venduti a organizzazioni disperate che cercano soluzioni rapide",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["unrealistic_vendor_promises", "skipped_evaluation_steps", "no_competitive_bidding", "TDI > 0.7"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Compromissione Catena di Fornitura",
+      "description": "Gli attaccanti infiltrano il vendor fidato su cui le organizzazioni orientate alla dipendenza si affidano pesantemente",
+      "attack_vector": "Compromissione di vendor di sicurezza fidato per ottenere accesso alle organizzazioni clienti dipendenti",
+      "psychological_mechanism": "La scissione organizzativa previene il questionamento o monitoraggio dei vendor protettivi idealizzati",
+      "historical_example": "SolarWinds 2020 - La fiducia delle organizzazioni nel vendor di software di sicurezza ha abilitato l'attacco alla catena di fornitura che ha colpito oltre 18.000 clienti",
+      "likelihood": "low",
+      "impact": "critical",
+      "detection_indicators": ["vendor_behavior_anomaly", "unusual_vendor_requests", "VC > 0.5", "minimal_vendor_scrutiny"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-09",
+    "translator": "Claude AI",
+    "research_basis": [
+      "Bion, W. (1961). Experiences in Groups",
+      "Klein, M. (1946). Notes on Some Schizoid Mechanisms",
+      "Bowlby, J. (1969). Attachment and Loss",
+      "Menzies Lyth, I. (1960). Social Defence Systems"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}
