@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPF Auditing Progress Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Additional styles for auditing dashboard */
+        .progress-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .org-progress {
+            margin-bottom: 30px;
+        }
+
+        .org-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .org-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .org-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-light);
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .progress-bar-large {
+            width: 100%;
+            height: 40px;
+            background: var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill-large {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), #27ae60);
+            transition: width 0.6s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .category-progress-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .category-progress-item {
+            padding: 15px;
+            background: var(--light);
+            border-radius: 8px;
+        }
+
+        .category-name-small {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .category-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .category-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), #27ae60);
+            transition: width 0.4s ease;
+        }
+
+        .category-stat {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 5px;
+        }
+
+        .indicator-completion-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 6px;
+            margin-top: 15px;
+        }
+
+        .indicator-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .indicator-cell.completed {
+            background: var(--success);
+            color: white;
+        }
+
+        .indicator-cell.missing {
+            background: #e0e0e0;
+            color: #999;
+        }
+
+        .indicator-cell:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .missing-list {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .missing-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .missing-indicators {
+            font-size: 12px;
+            color: #856404;
+            line-height: 1.8;
+        }
+
+        .overall-summary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <h1>📋 CPF Auditing Progress</h1>
+            <p class="subtitle">Field Kit Assessment Coverage Tracking</p>
+        </header>
+
+        <!-- Main Content -->
+        <div style="padding: 30px;">
+            <!-- Loading State -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading auditing results...</p>
+            </div>
+
+            <!-- Content -->
+            <div id="content" style="display: none;">
+                <!-- Overall Summary -->
+                <div class="overall-summary">
+                    <h2 style="margin-bottom: 20px; font-weight: 300;">Overall Progress</h2>
+                    <div class="summary-grid" id="overall-summary">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Organizations Progress -->
+                <div id="organizations-container">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let auditingData = null;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadAuditingResults();
+        });
+
+        async function loadAuditingResults() {
+            try {
+                const response = await fetch('data/auditing_results.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: File not found`);
+                }
+
+                auditingData = await response.json();
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+                renderOverallSummary();
+                renderOrganizations();
+
+            } catch (error) {
+                document.getElementById('loading').innerHTML = `
+                    <h2>⚠️ No Auditing Data Found</h2>
+                    <p>Run the batch import to generate auditing results:</p>
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+node scripts/batch_import.js path/to/field_kit_exports/</pre>
+                    <p>Or generate synthetic assessments first:</p>
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+node scripts/generate_field_kit_assessments.js</pre>
+                    <p style="color: var(--text-light); font-size: 14px; margin-top: 20px;">Error: ${error.message}</p>
+                `;
+            }
+        }
+
+        function renderOverallSummary() {
+            const orgs = Object.values(auditingData.organizations);
+
+            const totalOrgs = orgs.length;
+            const totalIndicators = orgs.reduce((sum, org) => sum + org.coverage.completed, 0);
+            const totalPossible = orgs.length * 100;
+            const avgCompletion = (totalIndicators / totalPossible * 100).toFixed(1);
+            const avgRisk = (orgs.reduce((sum, org) => sum + org.average_risk, 0) / orgs.length * 100).toFixed(1);
+
+            const container = document.getElementById('overall-summary');
+            container.innerHTML = `
+                <div class="summary-item">
+                    <div class="summary-value">${totalOrgs}</div>
+                    <div class="summary-label">Organizations</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${totalIndicators}</div>
+                    <div class="summary-label">Indicators Completed</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${avgCompletion}%</div>
+                    <div class="summary-label">Average Coverage</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${avgRisk}%</div>
+                    <div class="summary-label">Average Risk</div>
+                </div>
+            `;
+        }
+
+        function renderOrganizations() {
+            const container = document.getElementById('organizations-container');
+
+            for (const [orgId, org] of Object.entries(auditingData.organizations)) {
+                const orgDiv = document.createElement('div');
+                orgDiv.className = 'progress-container';
+
+                const coverage = org.coverage;
+                const percentage = coverage.percentage;
+
+                // Category progress
+                let categoryHTML = '';
+                for (const [catName, catCov] of Object.entries(coverage.byCategory)) {
+                    categoryHTML += `
+                        <div class="category-progress-item">
+                            <div class="category-name-small">${catName}</div>
+                            <div class="category-bar">
+                                <div class="category-bar-fill" style="width: ${catCov.percentage}%"></div>
+                            </div>
+                            <div class="category-stat">${catCov.completed}/${catCov.total} (${catCov.percentage}%)</div>
+                        </div>
+                    `;
+                }
+
+                // Indicator grid
+                let gridHTML = '';
+                for (let cat = 1; cat <= 10; cat++) {
+                    for (let ind = 1; ind <= 10; ind++) {
+                        const indicatorId = `${cat}.${ind}`;
+                        const isCompleted = coverage.completedList.includes(indicatorId);
+                        const cellClass = isCompleted ? 'completed' : 'missing';
+
+                        gridHTML += `<div class="indicator-cell ${cellClass}" title="Indicator ${indicatorId}">${indicatorId}</div>`;
+                    }
+                }
+
+                // Missing indicators list
+                const missingHTML = coverage.missing > 0 ? `
+                    <div class="missing-list">
+                        <div class="missing-title">⚠️ Missing Indicators (${coverage.missing})</div>
+                        <div class="missing-indicators">${coverage.missingList.join(', ')}</div>
+                    </div>
+                ` : '<div style="background: #d4edda; border: 1px solid #28a745; border-radius: 8px; padding: 15px; margin-top: 15px; color: #155724; font-weight: 600;">✅ All indicators completed!</div>';
+
+                orgDiv.innerHTML = `
+                    <div class="org-progress">
+                        <div class="org-header">
+                            <div class="org-title">${org.name}</div>
+                            <div class="org-stats">
+                                <div class="stat">
+                                    <span class="stat-label">Completed</span>
+                                    <span class="stat-value">${coverage.completed}/${coverage.total}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Risk</span>
+                                    <span class="stat-value" style="color: ${org.average_risk > 0.66 ? 'var(--danger)' : org.average_risk > 0.33 ? 'var(--warning)' : 'var(--success)'}">${(org.average_risk * 100).toFixed(0)}%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="progress-bar-large">
+                            <div class="progress-fill-large" style="width: ${percentage}%">
+                                ${percentage}%
+                            </div>
+                        </div>
+
+                        <h4 style="margin: 20px 0 10px 0; font-size: 14px; color: var(--text-light);">Category Progress</h4>
+                        <div class="category-progress-grid">
+                            ${categoryHTML}
+                        </div>
+
+                        <h4 style="margin: 20px 0 10px 0; font-size: 14px; color: var(--text-light);">Indicator Completion Grid (100 total)</h4>
+                        <div class="indicator-completion-grid">
+                            ${gridHTML}
+                        </div>
+
+                        ${missingHTML}
+                    </div>
+                `;
+
+                container.appendChild(orgDiv);
+            }
+        }
+    </script>
+</body>
+</html>
