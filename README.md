@@ -23,6 +23,7 @@
 - **Ternary scoring**: Green/Yellow/Red risk assessment
 - **Attack vector mapping** to known exploit patterns
 - **Privacy-preserving** aggregate analysis
+- **Interactive assessment tool** with multi-language support (English & Italian)
 
 ## Community
 Join our Discord server for discussions, collaboration, and pilot studies: CPF3 Community [https://discord.gg/xNRkTPeQ](https://discord.gg/xNRkTPeQ)
@@ -43,7 +44,12 @@ openssl sha256 CPF_Preprint.pdf
 CPF (Public)/
 │
 ├── auditor-field-kit/
-│   └── [Auditor assessment tools and checklist]
+│   ├── interactive/                 # Web-based interactive assessment tool
+│   │   ├── it-IT/                   # Italian indicators (JSON)
+│   │   └── en-US/                   # English indicators (JSON)
+│   ├── it-IT/                       # Italian assessment documents
+│   ├── en-US/                       # English assessment documents
+│   └── [Assessment protocols and scoring methodology]
 │
 ├── languages/
 │   └── [Multilingual resources and translations]
