@@ -1,0 +1,940 @@
+{
+  "indicator": "1.4",
+  "title": "INDICATOR 1.4 FIELD KIT",
+  "subtitle": "Bypass della Sicurezza per Convenienza dei Superiori",
+  "category": "Vulnerabilità Basate sull'Autorità",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 1.x",
+
+  "description": {
+    "short": "Misura la vulnerabilità organizzativa ai bypass della sicurezza basati sull'autorità, dove i dipendenti violano i protocolli di sicurezza quando richiesto da superiori o da chi rivendica autorità",
+    "context": "Questo indicatore misura la vulnerabilità organizzativa ai bypass della sicurezza basati sull'autorità, dove i dipendenti violano i protocolli di sicurezza quando richiesto da superiori o da chi rivendica autorità. Il meccanismo psicologico sfrutta i modelli di obbedienza gerarchica, dove la conformità immediata all'autorità prevale sul ragionamento di sicurezza. Questo crea un'esposizione critica alla cybersicurezza attraverso frodi CEO, attacchi di impersonificazione dirigenziale e ingegneria sociale basata sull'autorità che può bypassare completamente i controlli tecnici.",
+    "impact": "Le organizzazioni con alta vulnerabilità sperimentano compromissioni di email aziendali riuscite, trasferimenti bancari fraudolenti e accessi non autorizzati tramite ingegneria sociale. Gli incidenti storici includono la frode da 46,7M$ a Ubiquiti Networks, la compromissione accesso interno dello scam Bitcoin di Twitter, la violazione Target tramite bypass credenziali fornitore HVAC e la violazione Anthem tramite ingegneria sociale help desk. Il meccanismo psicologico opera attraverso effetti di gradiente d'autorità dove la prossimità al potere riduce il pensiero critico, ridistribuzione del carico cognitivo che default verso il compiacimento delle figure d'autorità e preservazione dell'identità sociale che prioritizza la posizione gerarchica rispetto alle preoccupazioni astratte di sicurezza.",
+    "psychological_basis": "Questa vulnerabilità deriva dal conflitto fondamentale tra obbedienza gerarchica e protocolli di sicurezza, radicato nella ricerca seminale di Milgram sulla conformità all'autorità (tasso di conformità del 65% con autorità percepita). Il meccanismo psicologico opera attraverso la Teoria del Gradiente d'Autorità dove il differenziale di potere gerarchico crea un gradiente d'autorità che riduce il pensiero critico, Ridistribuzione del Carico Cognitivo dove le doppie richieste causano default verso il percorso di minore resistenza psicologica e Preservazione dell'Identità Sociale dove i dipendenti prioritizzano inconsciamente il mantenimento della posizione gerarchica organizzativa rispetto alle preoccupazioni astratte di sicurezza. Neurologicamente, la percezione di autorità attiva la corteccia cingolata anteriore riducendo l'attività della corteccia prefrontale, diminuendo le capacità di pensiero critico e valutazione del rischio."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "L'organizzazione ha protocolli di verifica obbligatori per tutte le richieste di sicurezza basate sull'autorità, con procedure di richiamata documentate, personale formato a proprio agio nel mettere in discussione l'autorità appropriatamente e tempi di elaborazione coerenti indipendentemente dall'urgenza dichiarata.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Esistono alcune procedure di verifica ma applicate in modo incoerente, specialmente sotto pressione temporale o quando le richieste provengono da leadership senior; il personale mostra esitazione nel mettere in discussione richieste basate sull'autorità.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Nessuna verifica sistematica delle richieste di sicurezza basate sull'autorità, approvazione rapida di eccezioni dirigenziali senza validazione, evidenza di dipendenti pressati o puniti per aver messo in discussione bypass di sicurezza basati sull'autorità.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_exception_frequency": 0.18,
+      "q2_verification_procedure": 0.16,
+      "q3_executive_bypass": 0.15,
+      "q4_request_verification": 0.14,
+      "q5_employee_consequences": 0.13,
+      "q6_approval_velocity": 0.12,
+      "q7_authority_training": 0.12
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_1.4(t) = CBR(t) × W(hour(t)) × U(urgency(t))",
+      "components": {
+        "convenience_bypass_ratio": {
+          "formula": "CBR(t) = [E_executive(t) / E_standard(t)] × [T_standard / T_executive(t)]",
+          "description": "Rapporto di concessioni di eccezione durante richieste dirigenziali vs standard, ponderato per periodi temporali",
+          "variables": {
+            "E_executive": "Conteggio eccezioni di sicurezza concesse per richieste dirigenziali/autorità",
+            "E_standard": "Conteggio eccezioni di sicurezza concesse per richieste standard",
+            "T_executive": "Periodo temporale per richieste dirigenziali",
+            "T_standard": "Periodo temporale per richieste standard"
+          },
+          "interpretation": "Valori > 2.0 indicano che le richieste dirigenziali bypassano la sicurezza al doppio del tasso delle richieste standard"
+        },
+        "temporal_weighting": {
+          "formula": "W(h) = 1.5 if h ∈ [8,18]; 2.0 if h ∈ [18,22]; 1.0 otherwise",
+          "description": "Moltiplicatore orario per vulnerabilità richieste d'autorità",
+          "time_periods": {
+            "business_hours": {
+              "range": [8, 18],
+              "weight": 1.5,
+              "description": "Orario lavorativo standard con presenza autorità normale"
+            },
+            "evening_executive": {
+              "range": [18, 22],
+              "weight": 2.0,
+              "description": "Richieste dirigenziali fuori orario mostrano i tassi di bypass più alti"
+            },
+            "off_hours": {
+              "range": [22, 8],
+              "weight": 1.0,
+              "description": "Ore notturne con attività ridotta"
+            }
+          }
+        },
+        "urgency_multiplier": {
+          "formula": "U(urgency) = 0.5 + 1.5 × urgency_markers_detected",
+          "description": "Il linguaggio di urgenza amplifica la probabilità di bypass",
+          "range": [0.5, 2.0],
+          "urgency_markers": [
+            "urgent",
+            "immediately",
+            "critical",
+            "emergency",
+            "must",
+            "cannot wait",
+            "asap",
+            "deadline",
+            "time-sensitive"
+          ]
+        }
+      },
+      "detection_threshold": {
+        "warning": 1.5,
+        "critical": 3.0,
+        "description": "D_1.4(t) > 3.0 indica stato critico di vulnerabilità bypass autorità"
+      }
+    },
+    "behavioral_model": {
+      "verification_rate": {
+        "formula": "V_rate(t) = verified_requests(t) / total_authority_requests(t)",
+        "threshold": {
+          "healthy": "> 0.90",
+          "concerning": "0.70 - 0.90",
+          "critical": "< 0.70"
+        }
+      },
+      "processing_time_ratio": {
+        "formula": "PTR = avg_time_executive_requests / avg_time_standard_requests",
+        "interpretation": "PTR < 0.5 indica richieste dirigenziali accelerate senza verifica adeguata",
+        "threshold": 0.8
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "policy_documentation_review",
+        "exception_request_logs",
+        "training_records",
+        "authority_verification_procedures"
+      ],
+      "evidence_required": [
+        "written_verification_procedures",
+        "executive_exception_request_logs_6_months",
+        "authority_questioning_training_materials",
+        "recent_authority_request_examples",
+        "employee_protection_policies"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "exception_request_logs",
+          "fields": ["request_timestamp", "requester_role", "requester_authority_level", "exception_type", "approval_timestamp", "verification_performed", "urgency_flags"],
+          "retention": "180_days"
+        },
+        {
+          "source": "email_gateway_logs",
+          "fields": ["sender_domain", "sender_claimed_role", "recipient", "urgency_markers", "action_requested", "verification_attempt", "timestamp"],
+          "retention": "90_days"
+        },
+        {
+          "source": "approval_workflow_logs",
+          "fields": ["request_id", "request_source", "authority_level", "approval_chain", "time_to_approval", "verification_steps_completed"],
+          "retention": "180_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "privilege_access_management",
+          "fields": ["elevated_access_grants", "requester", "approver", "business_justification", "emergency_flag"],
+          "retention": "365_days"
+        },
+        {
+          "source": "incident_response_tickets",
+          "fields": ["ticket_id", "authority_involved", "verification_bypassed", "outcome", "post_incident_review"],
+          "retention": "365_days"
+        },
+        {
+          "source": "training_completion_logs",
+          "fields": ["employee_id", "training_module", "completion_date", "assessment_score"],
+          "retention": "730_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "CBR": {
+          "calculation": "Rapporto Bypass Convenienza dai log richieste eccezione",
+          "query": "SELECT (COUNT(CASE WHEN requester_authority_level > 7 THEN 1 END) / COUNT(CASE WHEN requester_authority_level <= 7 THEN 1 END)) × (AVG(approval_time_standard) / AVG(approval_time_executive)) FROM exception_logs WHERE timestamp > NOW() - INTERVAL '7 days'"
+        },
+        "V_rate": {
+          "calculation": "Tasso verifica per richieste autorità",
+          "query": "SELECT COUNT(verification_performed=true) / COUNT(*) FROM exception_logs WHERE requester_authority_level > 6 AND timestamp > NOW() - INTERVAL '30 days'"
+        },
+        "PTR": {
+          "calculation": "Rapporto tempo elaborazione dirigenziali vs standard",
+          "query": "SELECT AVG(CASE WHEN authority_level > 7 THEN approval_time END) / AVG(CASE WHEN authority_level <= 7 THEN approval_time END) FROM approval_workflow_logs WHERE timestamp > NOW() - INTERVAL '30 days'"
+        }
+      }
+    },
+    "integration_apis": {
+      "exchange_online": "Microsoft Graph API - Message Tracking, Authority Claims Detection",
+      "active_directory": "LDAP - User Hierarchy, Reporting Structure, Authority Levels",
+      "pam_system": "CyberArk/BeyondTrust API - Exception Requests, Emergency Access",
+      "siem": "Splunk/Sentinel API - Authority Request Correlation, Time-Based Patterns",
+      "ticketing_system": "ServiceNow/Jira API - Exception Request Workflow, Approval Chains"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "1.1",
+        "name": "Conformità Acritica",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "I modelli di conformità generalizzati rendono più probabile il bypass basato sull'autorità",
+        "formula": "P(1.4|1.1) = 0.75"
+      },
+      {
+        "indicator": "1.2",
+        "name": "Diffusione della Responsabilità",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Quando la responsabilità è diffusa, i dipendenti deferiscono più facilmente all'autorità apparente",
+        "formula": "P(1.4|1.2) = 0.65"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Bypass Indotto da Urgenza",
+        "probability": 0.85,
+        "factor": 1.6,
+        "description": "La pressione temporale combinata con l'autorità crea la tempesta perfetta per il bypass (aumento 340%)",
+        "formula": "P(1.4|2.1) = 0.85",
+        "evidence": "I contesti di emergenza aumentano la probabilità di bypass del 340% secondo ricerca fondamentale"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Risposta da Stress Acuto",
+        "probability": 0.70,
+        "factor": 1.4,
+        "description": "Lo stress riduce l'attività corteccia prefrontale, aumentando conformità automatica all'autorità",
+        "formula": "P(1.4|7.1) = 0.70"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Fatica Decisionale",
+        "probability": 0.60,
+        "factor": 1.25,
+        "description": "L'esaurimento cognitivo riduce la capacità di verificare richieste d'autorità",
+        "formula": "P(1.4|5.2) = 0.60"
+      },
+      {
+        "indicator": "6.6",
+        "name": "Assunzioni Dipendenza di Gruppo",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "L'assunzione base di dipendenza di Bion amplifica la conformità all'autorità",
+        "formula": "P(1.4|6.6) = 0.55"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "1.3",
+        "name": "Suscettibilità Impersonificazione Figure Autorità",
+        "probability": 0.70,
+        "factor": 1.4,
+        "description": "La cultura del bypass per convenienza rende gli attacchi di impersonificazione più riusciti"
+      },
+      {
+        "indicator": "1.8",
+        "name": "Normalizzazione Eccezioni Dirigenziali",
+        "probability": 0.80,
+        "factor": 1.5,
+        "description": "Il frequente bypass per convenienza normalizza le richieste di eccezione dirigenziali"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["1.4", "2.1", "7.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 3.2,
+      "threshold_critical": 4.0,
+      "description": "Tempesta perfetta: Bypass convenienza + Pressione urgenza + Stress acuto = aumento 420% probabilità violazione. Richieste autorità durante situazioni urgenti ad alto stress con cultura bypass stabilita creano massima vulnerabilità.",
+      "real_world_example": "Scam Bitcoin Twitter (2020) - Dipendenti interni bypassarono protocolli sicurezza sotto pressione da apparenti dirigenti durante scenario crisi"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["1.1", "1.2", "2.1", "7.1", "5.2", "6.6"],
+      "child_nodes": ["1.3", "1.8"],
+      "conditional_probability_table": {
+        "P_1.4_base": 0.18,
+        "P_1.4_given_urgency": 0.62,
+        "P_1.4_given_stress": 0.48,
+        "P_1.4_given_compliance": 0.55,
+        "P_1.4_given_urgency_and_stress": 0.85,
+        "P_1.4_given_all": 0.92
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_exception_frequency",
+          "weight": 0.18,
+          "title": "Frequenza Richieste Eccezione Sicurezza da Dirigenti",
+          "question": "Negli ultimi 6 mesi, con quale frequenza i dipendenti hanno richiesto eccezioni di sicurezza (condivisione password, accesso sistema, override policy) affermando di essere diretti da dirigenti o management?",
+          "options": [
+            {
+              "value": "rarely",
+              "score": 0,
+              "label": "Raramente/Mai - Meno di una volta per trimestre con giustificazione documentata e revisione post-incidente"
+            },
+            {
+              "value": "occasionally",
+              "score": 0.5,
+              "label": "Occasionalmente - Richieste mensili con qualche documentazione ma revisione incoerente"
+            },
+            {
+              "value": "frequently",
+              "score": 1,
+              "label": "Frequentemente - Settimanalmente o più spesso, normalizzato come pratica aziendale standard"
+            }
+          ],
+          "evidence_required": "Log richieste eccezione ultimi 6 mesi, esempio recente specifico con dettagli gestione",
+          "soc_mapping": "Metrica CBR da exception_request_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_verification_procedure",
+          "weight": 0.16,
+          "title": "Procedura Standard di Verifica per Rivendicazioni Autorità",
+          "question": "Qual è la Sua procedura standard quando qualcuno afferma che un dirigente ha bisogno di accesso immediato a sistemi, dati o strutture al di fuori dei protocolli normali?",
+          "options": [
+            {
+              "value": "documented",
+              "score": 0,
+              "label": "Procedure scritte che richiedono verifica multi-canale (richiamata, di persona, comunicazione separata) con passaggi di verifica documentati"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Esistono procedure informali ma non costantemente documentate o seguite"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna procedura formale - il personale è tenuto a conformarsi con richieste d'autorità apparenti"
+            }
+          ],
+          "evidence_required": "Diagramma flusso di lavoro verifica scritto, esempio recente di applicazione procedura",
+          "soc_mapping": "Metrica conformità verifica V_rate"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_executive_bypass",
+          "weight": 0.15,
+          "title": "Processo di Verifica Bypass Sicurezza Dirigenziale",
+          "question": "Quando il Suo CEO, CTO o altro dirigente C-level chiede direttamente a un dipendente di bypassare una procedura di sicurezza per urgenza aziendale, quale processo di verifica esiste?",
+          "options": [
+            {
+              "value": "mandatory",
+              "score": 0,
+              "label": "Verifica obbligatoria richiesta anche per dirigenti C-level con procedure di richiamata documentate e doppia autorizzazione"
+            },
+            {
+              "value": "discretionary",
+              "score": 0.5,
+              "label": "Verifica incoraggiata ma lasciata alla discrezione dipendente, applicata in modo incoerente"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna verifica richiesta per richieste C-level - conformità immediata prevista"
+            }
+          ],
+          "evidence_required": "Documento policy eccezioni dirigenziali, esempio recente richiesta C-level con dettagli verifica",
+          "soc_mapping": "Frequenza eccezioni dirigenziali dai log PAM"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_request_verification",
+          "weight": 0.14,
+          "title": "Metodi Autenticazione Richieste Dirigenziali",
+          "question": "Come verificano i Suoi dipendenti che le richieste che affermano di provenire da dirigenti (via email, telefono o di persona) siano effettivamente legittime?",
+          "options": [
+            {
+              "value": "multi_channel",
+              "score": 0,
+              "label": "Verifica multi-canale richiesta (richiamata a numeri conosciuti, conferma di persona, codici autenticazione dirigenziali)"
+            },
+            {
+              "value": "single_channel",
+              "score": 0.5,
+              "label": "Verifica single-channel (risposta a email o singola richiamata) a volte eseguita"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun processo di autenticazione specifico - richieste da indirizzi email dirigenziali o che rivendicano autorità dirigenziale sono considerate affidabili"
+            }
+          ],
+          "evidence_required": "Documento procedura autenticazione, directory contatti dirigenziali verificati, esempio recente verifica",
+          "soc_mapping": "verification_attempts da approval_workflow_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_employee_consequences",
+          "weight": 0.13,
+          "title": "Conseguenze per Mettere in Discussione Richieste Autorità",
+          "question": "Cosa succede ai dipendenti che rifiutano o ritardano richieste dirigenziali per seguire i protocolli di sicurezza?",
+          "options": [
+            {
+              "value": "protected",
+              "score": 0,
+              "label": "I dipendenti sono esplicitamente protetti e premiati per seguire le procedure di verifica sicurezza indipendentemente dalla fonte richiesta"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Esiti misti - dipende dalla risposta dirigenziale e supporto management"
+            },
+            {
+              "value": "punished",
+              "score": 1,
+              "label": "I dipendenti affrontano conseguenze negative (rimproveri, impatto carriera) per aver ritardato o messo in discussione richieste autorità"
+            }
+          ],
+          "evidence_required": "Policy protezione dipendenti, esempio specifico di dipendente che mette in discussione richiesta autorità ed esito",
+          "soc_mapping": "Valutazione culturale via revisione incidenti e feedback dipendenti"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_approval_velocity",
+          "weight": 0.12,
+          "title": "Confronto Tempi Elaborazione per Richieste Autorità",
+          "question": "Quanto velocemente vengono tipicamente approvate le richieste urgenti dirigenziali per eccezioni di sicurezza rispetto alle richieste di sicurezza normali?",
+          "options": [
+            {
+              "value": "consistent",
+              "score": 0,
+              "label": "Tempi elaborazione coerenti (entro 20% differenza) - tutte le richieste subiscono stessa verifica indipendentemente dall'urgenza dichiarata"
+            },
+            {
+              "value": "faster",
+              "score": 0.5,
+              "label": "Richieste dirigenziali elaborate 2-5x più velocemente delle richieste standard"
+            },
+            {
+              "value": "immediate",
+              "score": 1,
+              "label": "Richieste urgenti dirigenziali approvate immediatamente o quasi-immediatamente senza ritardi verifica"
+            }
+          ],
+          "evidence_required": "Analisi tempi elaborazione ultimi 90 giorni confrontando richieste eccezione sicurezza dirigenziali vs standard",
+          "soc_mapping": "Metrica rapporto tempo elaborazione PTR"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_authority_training",
+          "weight": 0.12,
+          "title": "Programmi Formazione Verifica Autorità",
+          "question": "Quale formazione ha fornito ai dipendenti su come mettere in discussione o verificare appropriatamente richieste da superiori che coinvolgono eccezioni di sicurezza?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Formazione regolare con scenari gioco di ruolo, script di verifica specifici e pratica nel mettere in discussione l'autorità appropriatamente"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Formazione sensibilizzazione sicurezza base menziona verifica ma manca di scenari specifici mettere-in-discussione-autorità"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna formazione sulla verifica richieste autorità - formazione enfatizza essere utili e reattivi alla leadership"
+            }
+          ],
+          "evidence_required": "Materiali formativi con scenari autorità, registri completamento, risultati valutazione",
+          "soc_mapping": "Tassi completamento formazione da training_completion_logs"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezionare UNA opzione per ciascuna domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Domande Apertura - Modelli Eccezione",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Mi racconti dell'ultima volta che un dipendente ha richiesto un'eccezione di sicurezza affermando di essere stato diretto da un dirigente. Cosa è successo esattamente e come è stata gestita?",
+              "scoring_guidance": {
+                "green": "Esempio specifico con passaggi dettagliati di verifica, processo approvazione documentato e revisione post-incidente",
+                "yellow": "Esempio generale con qualche verifica ma processo incoerente o documentazione incompleta",
+                "red": "Nessun esempio specifico ricordato, o esempi che mostrano conformità immediata senza verifica"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quali passaggi di verifica ha effettuato il dipendente prima di concedere l'eccezione?",
+                  "evidence_type": "specific_procedure"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quanto tempo è trascorso dalla richiesta all'approvazione, ed era tipico per la Sua organizzazione?",
+                  "evidence_type": "processing_time_data"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Mi illustri esattamente quali passaggi il personale è tenuto a seguire quando qualcuno afferma che un dirigente ha bisogno di accesso immediato al di fuori dei protocolli normali.",
+              "scoring_guidance": {
+                "green": "Procedura multi-step documentata con requisiti di verifica specifici, numeri richiamata, doppia autorizzazione",
+                "yellow": "Procedura generale descritta ma vaga sui dettagli o passaggi verifica",
+                "red": "Nessuna procedura definita o procedura è 'concedi accesso se sembra legittimo'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Questa procedura è scritta da qualche parte? Può mostrarmela?",
+                  "evidence_type": "documentation_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succede se il dipendente non riesce a raggiungere nessuno per verificare la richiesta - può procedere comunque?",
+                  "evidence_type": "edge_case_handling"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Meccanismi Verifica",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Mi faccia un esempio di quando un dirigente C-level ha chiesto direttamente a un dipendente di bypassare procedure di sicurezza. La verifica è effettivamente avvenuta?",
+              "scoring_guidance": {
+                "green": "Esempio mostra che la verifica è avvenuta anche per C-level, con richiamata specifica o conferma di persona",
+                "yellow": "Misto - a volte verificato, a volte no a seconda della relazione o urgenza",
+                "red": "Richieste C-level mai verificate o la verifica sarebbe considerata irrispettosa"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Se un dipendente insistesse sulla verifica per una richiesta CEO, cosa succederebbe a quel dipendente?",
+                  "evidence_type": "cultural_consequence"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ha dirigenti che hanno esplicitamente dichiarato di voler essere verificati per richieste di sicurezza?",
+                  "evidence_type": "leadership_commitment"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Mi mostri il Suo processo specifico di autenticazione per richieste livello dirigenziale. In cosa differisce dalle richieste standard?",
+              "scoring_guidance": {
+                "green": "Sistema autenticazione documentato con database contatti dirigenziali, verifica multi-canale, codici autenticazione",
+                "yellow": "Esiste processo base ma uguale alle richieste standard, nessuna considerazione specifica dirigenziali",
+                "red": "Nessun processo autenticazione o richieste dirigenziali esplicitamente esentate da verifica"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mantiene una lista contatti verificata per dirigenti con numeri telefono e canali comunicazione?",
+                  "evidence_type": "technical_control"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Con quale frequenza viene aggiornata e verificata quella lista contatti?",
+                  "evidence_type": "maintenance_procedure"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Fattori Culturali e Psicologici",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Mi racconti di una volta in cui qualcuno ha messo in discussione una richiesta basata sull'autorità. Quali sono state le conseguenze per quella persona?",
+              "scoring_guidance": {
+                "green": "Esempi di dipendenti riconosciuti o premiati per verifica sicurezza appropriata, esiti positivi",
+                "yellow": "Esiti misti - qualche supporto, alcune reazioni negative a seconda del dirigente coinvolto",
+                "red": "Nessun esempio di mettere in discussione l'autorità, o esempi che risultano in conseguenze negative carriera"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Esistono policy scritte che proteggono i dipendenti che seguono le procedure di verifica?",
+                  "evidence_type": "policy_protection"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Qualche dipendente è stato formalmente riconosciuto per aver verificato appropriatamente richieste autorità?",
+                  "evidence_type": "cultural_reinforcement"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Mi fornisca tempi specifici sia per richieste urgenti dirigenziali che per richieste di sicurezza normali nella Sua organizzazione. Come si confrontano?",
+              "scoring_guidance": {
+                "green": "Risposta basata su dati che mostra tempi simili (entro 20%), verifica coerente indipendentemente dall'urgenza",
+                "yellow": "Tempi approssimativi che mostrano richieste dirigenziali 2-3x più veloci, qualche verifica saltata per urgenza",
+                "red": "Richieste dirigenziali immediate, richieste standard richiedono giorni/settimane, o nessun tracking dei tempi"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può recuperare i dati effettivi tempo elaborazione degli ultimi 90 giorni?",
+                  "evidence_type": "quantitative_data"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quale percentuale di richieste dirigenziali è segnalata come 'urgente' versus richieste standard?",
+                  "evidence_type": "urgency_pattern"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Mi mostri i materiali formativi sul mettere in discussione l'autorità. Quando il personale ha ricevuto l'ultima volta questa formazione e cosa ha coperto?",
+              "scoring_guidance": {
+                "green": "Formazione recente (entro 12 mesi) con scenari gioco di ruolo specifici, script verifica rispettosi, messaggistica sicurezza psicologica",
+                "yellow": "Formazione sicurezza generica menziona verifica ma nessuna pratica specifica mettere-in-discussione-autorità",
+                "red": "Nessuna formazione rilevante, o formazione enfatizza conformità ed essere utili alla leadership"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "I dipendenti praticano cosa dire quando devono verificare una richiesta dirigenziale?",
+                  "evidence_type": "training_methodology"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come misura se la formazione ha effettivamente cambiato il comportamento?",
+                  "evidence_type": "effectiveness_measurement"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Sondaggio per Segnali d'Allarme",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle policy dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"I nostri dirigenti devono muoversi velocemente - non possiamo rallentarli con verifica sicurezza...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Sarebbe irrispettoso o limitante per la carriera mettere in discussione la richiesta di un dirigente C-level...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Ci fidiamo del nostro team di leadership, quindi la verifica non è necessaria per richieste dirigenziali...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"In situazioni urgenti, le procedure di sicurezza non si applicano ai dirigenti...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Gli assistenti dirigenziali gestiscono tutta la verifica per richieste C-level...\" (singolo punto di fallimento)",
+              "severity": "high",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Non abbiamo mai avuto problemi con richieste dirigenziali false, quindi non ce ne preoccupiamo...\"",
+              "severity": "medium",
+              "score_impact": 0.08,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "Evidenza di dipendenti rimproverati per aver seguito procedure sicurezza quando in conflitto con convenienza dirigenziale",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "\"Formazione verifica autorità creerebbe cultura conflittuale...\"",
+              "severity": "medium",
+              "score_impact": 0.06,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Richieste simulate mensili bypass autorità per testare conformità verifica",
+      "correlation_analysis": "Confrontare punteggi audit manuale con rilevamento automatico CBR (correlazione obiettivo > 0.85)",
+      "drift_detection": "Test Kolmogorov-Smirnov su distribuzione tasso verifica, ricalibrare se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicurare che i punteggi previsti bypass convenienza corrispondano alle frequenze osservate",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift rilevato o MCC validazione < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Tasso Verifica Autorità",
+        "formula": "% di richieste sicurezza basate autorità che subiscono verifica indipendente tramite canali alternativi",
+        "baseline": "audit log richieste eccezione recenti 90 giorni",
+        "target": ">95% tasso verifica entro 90 giorni",
+        "measurement": "logging automatizzato da flussi approvazione + audit spot trimestrali"
+      },
+      {
+        "metric": "Coerenza Tempo Elaborazione Eccezioni Sicurezza",
+        "formula": "Rapporto tempo elaborazione: richieste dirigenziali / richieste standard",
+        "baseline": "PTR attuale da analisi flusso lavoro",
+        "target": "PTR > 0.80 (meno del 20% differenza) entro 90 giorni",
+        "measurement": "analisi automatizzata mensile flusso lavoro"
+      },
+      {
+        "metric": "Comfort Dipendenti nel Mettere in Discussione Autorità",
+        "formula": "% di dipendenti che riportano comfort nel seguire procedure verifica sicurezza indipendentemente dalla fonte richiesta",
+        "baseline": "sondaggio anonimo iniziale",
+        "target": ">80% livello comfort entro 180 giorni",
+        "measurement": "sondaggio anonimo trimestrale con tracking trend"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Protocollo Verifica Autorità",
+        "description": "Implementare verifica richiamata obbligatoria per qualsiasi richiesta relativa sicurezza che rivendica autorità dirigenziale",
+        "implementation": "Creare directory contatti dirigenziali sicura con numeri telefono e canali comunicazione verificati. Richiedere tutte le eccezioni sicurezza siano confermate tramite canali comunicazione indipendenti (se email → richiamata a numero noto, se telefono → conferma email). Stabilire codici autenticazione dirigenziali che cambiano regolarmente per richieste alto rischio.",
+        "technical_controls": "Database contatti dirigenziali con numeri verificati, sistema promemoria verifica automatizzato, MFA per approvazioni eccezione, audit logging tutti tentativi verifica",
+        "roi": "420% media entro 18 mesi",
+        "effort": "medium",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_2",
+        "title": "Sistema Doppia Autorizzazione",
+        "description": "Richiedere approvazione due persone per qualsiasi eccezione sicurezza basata autorità",
+        "implementation": "Implementare flusso lavoro dove entrambi individui devono verificare indipendentemente richiesta tramite canali separati. Nessun approvatore può essere subalterno diretto richiedente. Sistema applica doppia autorizzazione e previene bypass singolo punto. Crea responsabilità e distribuisce pressione psicologica mantenendo efficienza operativa per richieste legittime.",
+        "technical_controls": "Sistema automazione flusso lavoro, applicazione doppia autorizzazione, tracking verifica indipendente, log audit catena approvazione",
+        "roi": "380% media entro 12 mesi",
+        "effort": "high",
+        "timeline": "60-90 giorni"
+      },
+      {
+        "id": "sol_3",
+        "title": "Controlli Sicurezza Ritardo Temporale",
+        "description": "Costruire periodi raffreddamento obbligatori per tutti gli override sicurezza basati autorità",
+        "implementation": "Implementare ritardo minimo 2-4 ore per eccezioni sicurezza basate autorità, con procedure emergenza che richiedono passaggi verifica aggiuntivi e approvazione livello dirigenziale. Implementare sistemi automatizzati che segnalano e ritardano elaborazione richieste contenenti parole chiave autorità o linguaggio urgenza. Fornisce spazio psicologico per pensiero razionale Sistema 2 per attivarsi.",
+        "technical_controls": "Sistema applicazione ritardo automatizzato, rilevamento parole chiave urgenza (NLP), flusso lavoro override emergenza con approvazione elevata, traccia audit timestamp",
+        "roi": "310% media entro 18 mesi",
+        "effort": "medium",
+        "timeline": "45 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Programma Formazione Mettere-in-Discussione-Autorità",
+        "description": "Sviluppare scenari gioco di ruolo dove dipendenti praticano verifica rispettosa richieste dirigenziali",
+        "implementation": "Creare moduli formativi con script specifici per pushback educato (es. 'Ho bisogno verificare questo tramite nostro processo sicurezza standard per proteggere entrambi'). Includere scenari pratica con figure autorità, simulare situazioni alta pressione e fornire messaggistica sicurezza psicologica. Stabilire programma riconoscimento organizzativo per diligenza sicurezza appropriata indipendentemente dalla fonte richiesta.",
+        "technical_controls": "Sistema gestione apprendimento con simulazioni scenario, tracking completamento, punteggio valutazione, misurazione cambio comportamento",
+        "roi": "290% media entro 12 mesi",
+        "effort": "low",
+        "timeline": "30 giorni iniziali, refresher trimestrali continuativi"
+      },
+      {
+        "id": "sol_5",
+        "title": "Sistema Rilevamento Impersonificazione Dirigenziale",
+        "description": "Implementare strumenti sicurezza email che segnalano messaggi rivendicanti autorità dirigenziale",
+        "implementation": "Implementare filtri gateway email che rilevano rivendicazioni nome/titolo dirigenziale, combinazioni linguaggio urgenza e richieste eccezione sicurezza. Visualizzare avvisi prominenti su email da indirizzi esterni rivendicanti essere dirigenti interni o loro staff. Integrare con SIEM per correlazione con altri indicatori attacco basato autorità.",
+        "technical_controls": "Gateway email avanzato con rilevamento impersonificazione dirigenziale, alert mancata corrispondenza nome visualizzazione vs mittente, rilevamento NLP parole chiave urgenza+autorità, integrazione SIEM",
+        "roi": "350% media entro 12 mesi",
+        "effort": "medium",
+        "timeline": "30-45 giorni"
+      },
+      {
+        "id": "sol_6",
+        "title": "Policy Sicurezza Psicologica",
+        "description": "Stabilire chiara policy organizzativa che protegge dipendenti che seguono procedure verifica sicurezza",
+        "implementation": "Creare policy scritta che protegge esplicitamente dipendenti che verificano richieste autorità, anche quando mettono in discussione richieste dirigenziali legittime. Includere linguaggio diligenza sicurezza in template revisione performance. Pubblicare esempi di dipendenti riconosciuti per verifica autorità appropriata. Formare leader a modellare e incoraggiare verifica piuttosto che vederla come insubordinazione.",
+        "technical_controls": "Sistema documentazione policy, integrazione template revisione performance, piattaforma riconoscimento dipendenti, template comunicazione leadership",
+        "roi": "250% media entro 18 mesi",
+        "effort": "low",
+        "timeline": "programma culturale continuativo, policy iniziale entro 30 giorni"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_4"],
+      "high_value": ["sol_2", "sol_5"],
+      "cultural_foundation": ["sol_6"],
+      "technical_controls": ["sol_3", "sol_5"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Bonifici Frode CEO",
+      "description": "Attaccanti impersonano dirigenti via email richiedendo bonifici urgenti che bypassano controlli finanziari normali. Il contesto autorità causa personale finanza ad accelerare bonifici senza verifica adeguata.",
+      "attack_vector": "Compromissione Email Aziendale (BEC) con email dirigenziale contraffatta o account compromesso richiedente bonifico urgente",
+      "psychological_mechanism": "Il gradiente autorità fa sembrare verifica insubordinata; pressione temporale previene valutazione sicurezza razionale",
+      "historical_example": "Ubiquiti Networks 2015 - bonifici fraudolenti da 46,7 milioni di dollari via impersonificazione dirigenziale. Personale finanza conformato con richieste email rivendicanti essere da dirigenti senza verifica richiamata.",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["CBR > 3.0", "urgent_financial_request", "W(hour) = 2.0 (after hours)", "verification_performed = false", "new_payee_destination"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Impersonificazione Dirigenziale per Accesso Sistema",
+      "description": "Ingegneri sociali rivendicanti essere dirigenti C-level o loro assistenti richiedono personale IT creare account, resettare password o fornire accesso sistema per esigenze aziendali urgenti",
+      "attack_vector": "Chiamata telefonica o email a help desk rivendicando autorità dirigenziale ed esigenza aziendale urgente",
+      "psychological_mechanism": "Inquadramento autorità bypassa normale verifica identità; orientamento servizio help desk prioritizza reattività",
+      "historical_example": "Anthem 2015 - Attacchi spear-phishing riusciti impersonando leadership IT richiedendo verifica credenziali da personale help desk, portando a violazione 78,8 milioni record",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["unusual_access_request", "urgency_markers_detected", "requester_not_in_directory", "verification_skipped", "elevated_privileges_requested"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Bypass Autorità Sicurezza Fisica",
+      "description": "Attaccanti impersonano assistenti dirigenziali o affermano essere contractor lavoranti per leadership per ottenere accesso fisico a strutture sicure",
+      "attack_vector": "Impersonificazione di persona rivendicando sponsorizzazione dirigenziale o esigenza dirigenziale urgente",
+      "psychological_mechanism": "Prossimità fisica amplifica conformità autorità (tasso bypass 73% più alto); ansia preservazione relazione previene sfida",
+      "historical_example": "Target 2013 - Compromissione iniziale quando dipendenti fornitore HVAC bypassarono segmentazione rete dopo ricevere richieste ritenute da management Target",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["badge_override_request", "escort_bypass_claimed", "executive_sponsorship_unverified", "after_hours_access", "unfamiliar_individual"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Harvesting Credenziali via Pressione Autorità",
+      "description": "Attacchi phishing rivendicanti dirigenti necessitano dipendenti verifichino credenziali, condividano password o approvino richieste MFA per manutenzione sistema o audit sicurezza",
+      "attack_vector": "Email o chiamata phishing rivendicante audit sicurezza mandato dirigenziale richiedente verifica credenziali",
+      "psychological_mechanism": "Contesto autorità aumenta drammaticamente tassi successo; paura non-conformità prevale formazione sicurezza",
+      "historical_example": "Scam Bitcoin Twitter 2020 - Dipendenti interni bypassarono protocolli sicurezza dopo ricevere richieste ritenute provenire da dirigenti Twitter, concedendo attaccanti accesso ad account alto profilo",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["credential_request_from_unusual_source", "executive_authority_claimed", "urgency_and_authority_combined", "MFA_approval_requested", "U(urgency) > 1.5"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-09",
+    "translator": "Claude (Anthropic)",
+    "research_basis": [
+      "Milgram, S. (1974). Obedience to Authority - 65% compliance with perceived authority",
+      "Hofstede, G. (1980). Power Distance Theory - 40% higher security violation rates in high power distance cultures",
+      "Miller, G. A. (1956). Cognitive Load Theory - The magical number seven plus or minus two",
+      "Jost, J. T., & Banaji, M. R. (1994). System Justification Theory",
+      "Berns et al. (2005). Neurological basis of authority compliance - anterior cingulate cortex activation"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}
