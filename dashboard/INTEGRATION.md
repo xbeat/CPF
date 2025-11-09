@@ -27,41 +27,41 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     CPF ECOSYSTEM                            │
+│                     CPF ECOSYSTEM                           │
 ├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌──────────────┐         ┌──────────────┐                 │
-│  │  SOC Systems │         │  Field Kit   │                 │
-│  │  (SIEM, EDR) │         │  (Human)     │                 │
-│  └──────┬───────┘         └──────┬───────┘                 │
+│                                                             │
+│  ┌──────────────┐         ┌──────────────┐                  │
+│  │  SOC Systems │         │  Field Kit   │                  │
+│  │  (SIEM, EDR) │         │  (Human)     │                  │
+│  └──────┬───────┘         └──────┬───────┘                  │
 │         │                        │                          │
 │         │ JSON Export            │ JSON Export              │
 │         ▼                        ▼                          │
-│  ┌─────────────────────────────────────────┐               │
-│  │   organizations.json (Unified Store)    │               │
-│  │   - 100 indicators per org              │               │
-│  │   - SOC + Human values                  │               │
-│  │   - Bayesian merged scores              │               │
-│  └─────────────┬───────────────────────────┘               │
+│  ┌─────────────────────────────────────────┐                │
+│  │   organizations.json (Unified Store)    │                │
+│  │   - 100 indicators per org              │                │
+│  │   - SOC + Human values                  │                │
+│  │   - Bayesian merged scores              │                │
+│  └─────────────┬───────────────────────────┘                │
 │                │                                            │
 │                │ Fetch (HTTP)                               │
 │                ▼                                            │
-│  ┌─────────────────────────────────────────┐               │
-│  │       Dashboard (Client-Side)           │               │
-│  │  ┌───────────────────────────────────┐  │               │
-│  │  │ Bayesian Engine (bayesian.js)     │  │               │
-│  │  │ - Indicator merge                 │  │               │
-│  │  │ - Cross-category dependencies     │  │               │
-│  │  │ - Overall risk aggregation        │  │               │
-│  │  └───────────────────────────────────┘  │               │
-│  │  ┌───────────────────────────────────┐  │               │
-│  │  │ Visualization (Canvas + HTML5)    │  │               │
-│  │  │ - Multi-org grid                  │  │               │
-│  │  │ - Convergence charts              │  │               │
-│  │  │ - Prioritization matrix           │  │               │
-│  │  └───────────────────────────────────┘  │               │
-│  └─────────────────────────────────────────┘               │
-│                                                              │
+│  ┌─────────────────────────────────────────┐                │
+│  │       Dashboard (Client-Side)           │                │
+│  │  ┌───────────────────────────────────┐  │                │
+│  │  │ Bayesian Engine (bayesian.js)     │  │                │
+│  │  │ - Indicator merge                 │  │                │
+│  │  │ - Cross-category dependencies     │  │                │
+│  │  │ - Overall risk aggregation        │  │                │
+│  │  └───────────────────────────────────┘  │                │
+│  │  ┌───────────────────────────────────┐  │                │
+│  │  │ Visualization (Canvas + HTML5)    │  │                │
+│  │  │ - Multi-org grid                  │  │                │
+│  │  │ - Convergence charts              │  │                │
+│  │  │ - Prioritization matrix           │  │                │
+│  │  └───────────────────────────────────┘  │                │
+│  └─────────────────────────────────────────┘                │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
