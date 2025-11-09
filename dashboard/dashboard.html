@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPF Dashboard - SOC + Bayesian Analysis</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <h1>🛡️ CPF Dashboard</h1>
+            <p class="subtitle">SOC Integration + Bayesian Cross-Indicator Analysis</p>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="dashboard-main">
+            <!-- Sidebar: Organizations List -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2>Organizations</h2>
+                    <span id="org-count" class="badge">0</span>
+                </div>
+                <div id="org-list" class="org-list">
+                    <!-- Populated by JS -->
+                </div>
+            </aside>
+
+            <!-- Content Area -->
+            <main class="content">
+                <!-- Loading State -->
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading organizations data...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <h2>👋 Welcome to CPF Dashboard</h2>
+                    <p>Select an organization from the sidebar to view analysis</p>
+                </div>
+
+                <!-- Organization Detail View -->
+                <div id="org-detail" class="org-detail" style="display: none;">
+                    <!-- Overall Risk Card -->
+                    <div class="risk-card">
+                        <div class="risk-score-section">
+                            <div class="risk-label">Overall Organizational Risk</div>
+                            <div class="risk-value" id="overall-risk-value">0%</div>
+                            <div class="risk-bar-container">
+                                <div class="risk-bar-fill" id="overall-risk-bar"></div>
+                            </div>
+                        </div>
+                        <div class="risk-metadata">
+                            <div class="meta-item">
+                                <span class="meta-label">Confidence</span>
+                                <span class="meta-value" id="confidence-value">0%</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Trend</span>
+                                <span class="meta-value trend" id="trend-value">-</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Last Updated</span>
+                                <span class="meta-value" id="last-updated">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category Heatmap -->
+                    <section class="section">
+                        <h3 class="section-title">📊 Risk by Category</h3>
+                        <div id="category-heatmap" class="category-heatmap">
+                            <!-- Populated by JS -->
+                        </div>
+                    </section>
+
+                    <!-- Prioritization Table -->
+                    <section class="section">
+                        <h3 class="section-title">🎯 Prioritization Matrix</h3>
+                        <p class="section-desc">Categories ordered by priority for remediation (risk × weight + downstream impact)</p>
+                        <div class="table-container">
+                            <table id="prioritization-table" class="prioritization-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Category</th>
+                                        <th>Risk</th>
+                                        <th>Confidence</th>
+                                        <th>Priority Score</th>
+                                        <th>Downstream Impact</th>
+                                        <th>Recommendation</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- SOC vs Human Convergence -->
+                    <section class="section">
+                        <h3 class="section-title">🔗 SOC vs Human Convergence</h3>
+                        <p class="section-desc">Comparison of machine (SOC) and human (auditor) assessments</p>
+                        <div id="convergence-chart" class="convergence-chart">
+                            <canvas id="convergence-canvas"></canvas>
+                        </div>
+                    </section>
+
+                    <!-- Indicator Grid (100 tiles) -->
+                    <section class="section">
+                        <h3 class="section-title">🔍 Indicator Matrix (100 Indicators)</h3>
+                        <p class="section-desc">Click any indicator for detailed breakdown</p>
+                        <div id="indicator-grid" class="indicator-grid">
+                            <!-- Populated by JS: 10x10 grid -->
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Indicator Detail Modal -->
+    <div id="indicator-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeIndicatorModal()">&times;</span>
+            <h2 id="modal-indicator-title">Indicator X.Y</h2>
+            <div id="modal-indicator-body">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="bayesian.js"></script>
+    <script src="visualizations.js"></script>
+    <script>
+        // Global state
+        let organizationsData = null;
+        let currentOrgId = null;
+
+        // Load data on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadOrganizationsData();
+        });
+
+        async function loadOrganizationsData() {
+            try {
+                const response = await fetch('data/organizations.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                organizationsData = data;
+
+                document.getElementById('loading').style.display = 'none';
+                renderOrganizationsList(data);
+                document.getElementById('empty-state').style.display = 'block';
+
+            } catch (error) {
+                document.getElementById('loading').innerHTML = `
+                    <h2>⚠️ Error Loading Data</h2>
+                    <p>${error.message}</p>
+                    <p>Make sure organizations.json exists in data/ directory</p>
+                `;
+            }
+        }
+
+        function renderOrganizationsList(data) {
+            const orgList = document.getElementById('org-list');
+            const orgCount = document.getElementById('org-count');
+
+            orgCount.textContent = data.metadata.total_organizations;
+
+            const orgs = Object.entries(data.organizations);
+            orgs.forEach(([orgId, org]) => {
+                const item = document.createElement('div');
+                item.className = 'org-item';
+                item.onclick = () => selectOrganization(orgId);
+
+                const riskClass = org.aggregates.overall_risk > 0.66 ? 'high' :
+                    org.aggregates.overall_risk > 0.33 ? 'medium' : 'low';
+
+                item.innerHTML = `
+                    <div class="org-name">${org.name}</div>
+                    <div class="org-meta">
+                        <span class="org-industry">${org.industry}</span>
+                        <span class="org-risk ${riskClass}">${(org.aggregates.overall_risk * 100).toFixed(0)}%</span>
+                    </div>
+                `;
+
+                orgList.appendChild(item);
+            });
+        }
+
+        function selectOrganization(orgId) {
+            currentOrgId = orgId;
+
+            // Update active state
+            document.querySelectorAll('.org-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget?.classList.add('active');
+
+            // Hide empty state, show detail
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('org-detail').style.display = 'block';
+
+            // Render organization analysis
+            renderOrganizationDetail(orgId);
+        }
+
+        function renderOrganizationDetail(orgId) {
+            const org = organizationsData.organizations[orgId];
+
+            // Run Bayesian analysis
+            const analysis = BAYESIAN.analyzeOrganization(org);
+
+            // Update overall risk card
+            const riskPct = (analysis.overall_risk * 100).toFixed(1);
+            document.getElementById('overall-risk-value').textContent = riskPct + '%';
+            document.getElementById('overall-risk-bar').style.width = riskPct + '%';
+
+            const riskClass = analysis.overall_risk > 0.66 ? 'high' :
+                analysis.overall_risk > 0.33 ? 'medium' : 'low';
+            document.getElementById('overall-risk-bar').className = `risk-bar-fill ${riskClass}`;
+
+            document.getElementById('confidence-value').textContent = (analysis.confidence * 100).toFixed(0) + '%';
+
+            const trendEl = document.getElementById('trend-value');
+            trendEl.textContent = analysis.trend;
+            trendEl.className = `meta-value trend ${analysis.trend}`;
+
+            const lastUpdated = new Date(analysis.last_calculated);
+            document.getElementById('last-updated').textContent = lastUpdated.toLocaleString();
+
+            // Render category heatmap
+            renderCategoryHeatmap(analysis.by_category);
+
+            // Render prioritization table
+            renderPrioritizationTable(analysis.prioritization);
+
+            // Render convergence chart
+            renderConvergenceChart(org);
+
+            // Render indicator grid
+            renderIndicatorGrid(org.indicators);
+        }
+
+        function renderCategoryHeatmap(categories) {
+            const container = document.getElementById('category-heatmap');
+            container.innerHTML = '';
+
+            const CATEGORY_NAMES = {
+                authority: 'Authority',
+                temporal: 'Temporal',
+                social: 'Social',
+                affective: 'Affective',
+                cognitive: 'Cognitive',
+                group: 'Group',
+                stress: 'Stress',
+                unconscious: 'Unconscious',
+                ai: 'AI',
+                convergent: 'Convergent'
+            };
+
+            Object.entries(categories).forEach(([name, data]) => {
+                const tile = document.createElement('div');
+                const risk = data.value;
+                const riskPct = (risk * 100).toFixed(0);
+
+                const riskClass = risk > 0.66 ? 'high' : risk > 0.33 ? 'medium' : 'low';
+
+                tile.className = `category-tile ${riskClass}`;
+                tile.innerHTML = `
+                    <div class="category-name">${CATEGORY_NAMES[name]}</div>
+                    <div class="category-risk">${riskPct}%</div>
+                    <div class="category-conf">conf: ${(data.confidence * 100).toFixed(0)}%</div>
+                `;
+
+                container.appendChild(tile);
+            });
+        }
+
+        function renderPrioritizationTable(priorities) {
+            const tbody = document.querySelector('#prioritization-table tbody');
+            tbody.innerHTML = '';
+
+            priorities.forEach((item, idx) => {
+                const row = document.createElement('tr');
+
+                const recClass = item.recommendation === 'critical' ? 'critical' :
+                    item.recommendation === 'review' ? 'review' : 'monitor';
+
+                row.innerHTML = `
+                    <td>${idx + 1}</td>
+                    <td><strong>${item.category.charAt(0).toUpperCase() + item.category.slice(1)}</strong></td>
+                    <td>${(item.risk * 100).toFixed(0)}%</td>
+                    <td>${(item.confidence * 100).toFixed(0)}%</td>
+                    <td><strong>${item.priority_score.toFixed(2)}</strong></td>
+                    <td>${item.downstream_impact.toFixed(2)}</td>
+                    <td><span class="recommendation ${recClass}">${item.recommendation}</span></td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderIndicatorGrid(indicators) {
+            const container = document.getElementById('indicator-grid');
+            container.innerHTML = '';
+
+            for (let cat = 1; cat <= 10; cat++) {
+                for (let ind = 1; ind <= 10; ind++) {
+                    const id = `${cat}.${ind}`;
+                    const indicator = indicators[id];
+
+                    if (indicator) {
+                        const tile = document.createElement('div');
+                        const risk = indicator.current_bayesian;
+                        const riskClass = risk > 0.66 ? 'high' : risk > 0.33 ? 'medium' : 'low';
+
+                        tile.className = `indicator-tile ${riskClass}`;
+                        tile.textContent = id;
+                        tile.title = `Indicator ${id}: ${(risk * 100).toFixed(0)}%`;
+                        tile.onclick = () => showIndicatorDetail(id, indicator);
+
+                        container.appendChild(tile);
+                    }
+                }
+            }
+        }
+
+        function showIndicatorDetail(id, indicator) {
+            const modal = document.getElementById('indicator-modal');
+            document.getElementById('modal-indicator-title').textContent = `Indicator ${id} Detail`;
+
+            const socLatest = indicator.soc_values[indicator.soc_values.length - 1];
+            const humanLatest = indicator.human_values[indicator.human_values.length - 1];
+
+            const body = document.getElementById('modal-indicator-body');
+            body.innerHTML = `
+                <div class="indicator-detail">
+                    <div class="detail-row">
+                        <strong>Bayesian Merged Value:</strong> ${(indicator.current_bayesian * 100).toFixed(1)}%
+                    </div>
+                    <div class="detail-row">
+                        <strong>SOC Assessments:</strong> ${indicator.soc_values.length} data points
+                        ${socLatest ? `<br>Latest: ${(socLatest.value * 100).toFixed(1)}% (${new Date(socLatest.timestamp).toLocaleString()})` : ''}
+                    </div>
+                    <div class="detail-row">
+                        <strong>Human Assessments:</strong> ${indicator.human_values.length} audits
+                        ${humanLatest ? `<br>Latest: ${(humanLatest.value * 100).toFixed(1)}% by ${humanLatest.assessor} (${new Date(humanLatest.timestamp).toLocaleString()})` : ''}
+                    </div>
+                    <div class="detail-row">
+                        <strong>Last Updated:</strong> ${new Date(indicator.last_updated).toLocaleString()}
+                    </div>
+                </div>
+            `;
+
+            modal.style.display = 'block';
+        }
+
+        function closeIndicatorModal() {
+            document.getElementById('indicator-modal').style.display = 'none';
+        }
+
+        // Close modal on outside click
+        window.onclick = function (event) {
+            const modal = document.getElementById('indicator-modal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>
