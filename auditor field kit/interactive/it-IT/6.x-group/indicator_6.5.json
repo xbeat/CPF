@@ -1,0 +1,908 @@
+{
+  "indicator": "6.5",
+  "title": "INDICATOR 6.5 FIELD KIT",
+  "subtitle": "Effetto Spettatore nella Risposta agli Incidenti",
+  "category": "Vulnerabilità di Dinamiche di Gruppo",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 6.x",
+
+  "description": {
+    "short": "Misura la vulnerabilità ai ritardi nella risposta agli incidenti quando più potenziali soccorritori assumono che 'qualcun altro' gestirà la minaccia di cybersecurity",
+    "context": "L'effetto spettatore nella risposta agli incidenti si verifica quando sono disponibili più potenziali soccorritori, ma ognuno assume che 'qualcun altro' gestirà la minaccia di cybersecurity, creando pericolosi ritardi. Questo fenomeno psicologico sfrutta la diffusione di responsabilità - più persone potrebbero agire, meno è probabile che un individuo intraprenda un'azione. Le organizzazioni con team di sicurezza più grandi, strutture di gestione a matrice o responsabilità di sicurezza distribuite sono particolarmente vulnerabili agli attacchi che si basano su tempi di risposta ritardati.",
+    "impact": "Le organizzazioni vulnerabili agli effetti spettatore sperimentano ritardi nel contenimento degli incidenti, eventi di sicurezza critici che non vengono segnalati a causa dell'assunzione che altri abbiano escalato, e tempi di risposta ridotti quando più persone sono disponibili a rispondere. La violazione di Target del 2013 esemplifica questo con più membri del team di sicurezza che ricevono avvisi ma ognuno assume che altri stiano indagando, risultando in un ritardo di 17 giorni. Le organizzazioni mostrano ritardi significativi tra il rilevamento degli avvisi e l'inizio della risposta umana durante le ore lavorative quando più personale è disponibile.",
+    "psychological_basis": "Gli esperimenti fondamentali di Darley e Latané (1968) dimostrano che gli individui sono meno propensi ad aiutare in emergenze quando altri sono presenti. Tre percorsi primari: diffusione di responsabilità (la responsabilità individuale diminuisce all'aumentare della dimensione del gruppo), inibizione del pubblico (la paura del fallimento pubblico previene l'azione) e influenza sociale (guardare agli altri per segnali di risposta portando all'inazione collettiva). La ricerca neuroscientifica mostra che le situazioni di spettatore attivano percorsi neurali diversi con ridotta attivazione della corteccia cingolata anteriore (responsabilità personale) e aumentata attivazione del solco temporale superiore (cognizione sociale)."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Bassa Vulnerabilità - Chiara Responsabilità Individuale",
+        "description": "Individui nominati assegnati come soccorritori primari per specifici tipi di incidenti. L'assegnazione della risposta avviene entro 15 minuti dal rilevamento dell'avviso. Le procedure scritte specificano esattamente chi assume la proprietà in scenari multi-team. Gli esercizi regolari dimostrano un'assegnazione rapida e chiara della responsabilità. Le metriche mostrano tempi di risposta coerenti indipendentemente dalla dimensione del team o dall'ora del giorno.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Vulnerabilità Moderata - Responsabilità Mista o Poco Chiara",
+        "description": "Responsabilità generale del team ma assegnazione individuale poco chiara per incidenti specifici. I tempi di risposta variano significativamente in base al numero di personale disponibile. Alcune procedure esistono ma ci sono lacune nella copertura per incidenti cross-team o con vendor. Evidenza di ritardi occasionali dovuti all'assunzione che altri stiano rispondendo.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "Alta Vulnerabilità - Pattern di Responsabilità Diffusa",
+        "description": "Nessuna chiara assegnazione individuale per i ruoli di risposta agli incidenti. Ritardi regolari tra il rilevamento degli avvisi e l'inizio della risposta umana. Esempi multipli di incidenti in cui diverse persone avrebbero potuto rispondere ma nessuno lo ha fatto inizialmente. I tempi di risposta sono più lenti quando più persone sono disponibili a rispondere. L'analisi post-incidente rivela frequentemente assunzioni che 'qualcun altro lo stava gestendo'.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_incident_assignment": 0.18,
+      "q2_reporting_expectations": 0.16,
+      "q3_cross_team_coordination": 0.15,
+      "q4_offhours_response": 0.14,
+      "q5_escalation_authority": 0.13,
+      "q6_alert_fatigue": 0.12,
+      "q7_vendor_incidents": 0.12
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_6.5(t) = w1·R_6.5(t) + w2·A_6.5(t) + w3·B_6.5(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_6.5(t) = 1 if P_response(i,n) < 0.3 AND RT_expected(n) > 2·RT_base, else 0",
+          "description": "Rilevamento binario basato su Probabilità di Risposta Individuale e Tempo di Risposta Atteso",
+          "threshold": {
+            "P_response": 0.3,
+            "RT_ratio": 2.0
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_6.5(t) = sqrt((x(t) - μ)ᵀ Σ⁻¹ (x(t) - μ))",
+          "description": "Distanza di Mahalanobis per pattern multivariati di spettatore",
+          "variables": {
+            "x(t)": "vettore di osservazione [response_delay, available_responders, initiative_taken]",
+            "μ": "media di riferimento da incidenti di piccoli team",
+            "Σ": "matrice di covarianza (media mobile ponderata esponenziale)"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_6.5(t) = P(bystander_effect|factors) = [P(factors|bystander_effect) × P(bystander_effect)] / P(factors)",
+          "factors": [
+            "team_size",
+            "individual_assignment_clarity",
+            "response_ambiguity",
+            "available_responder_count",
+            "time_to_assignment"
+          ],
+          "priors": {
+            "P_individual_response": 0.70,
+            "P_bystander_effect": 0.30
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.3,
+        "w2_anomaly": 0.4,
+        "w3_bayesian": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_6.5(t) = α·D_6.5(t) + (1-α)·T_6.5(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 3600,
+        "description": "Smussamento esponenziale con costante temporale di 1 ora"
+      }
+    },
+    "response_probability_model": {
+      "formula": "P_response(i,n) = P_base · (1/√n) · Responsibility_i",
+      "description": "Probabilità di risposta individuale come funzione della dimensione del team n e della percezione di responsabilità individuale",
+      "components": {
+        "P_base": "Probabilità di risposta di base per soccorritore individuale (tipico: 0.85)",
+        "n": "Numero di soccorritori disponibili che potrebbero gestire l'incidente",
+        "Responsibility_i": "Responsabilità percepita dell'individuo (scala 0-1)"
+      },
+      "interpretation": "La probabilità di risposta diminuisce con la radice quadrata della dimensione del team; diminuisce ulteriormente con responsabilità poco chiara"
+    },
+    "response_time_model": {
+      "formula": "RT_expected(n) = RT_base · √n · (1 + Ambiguity/Clarity)",
+      "description": "Tempo di risposta atteso come funzione della dimensione del team e della chiarezza del ruolo",
+      "components": {
+        "RT_base": "Tempo di risposta di base per singolo soccorritore assegnato (minuti)",
+        "n": "Numero di potenziali soccorritori disponibili",
+        "Ambiguity": "Misura di proprietà poco chiara (scala 0-1)",
+        "Clarity": "Misura di procedure di assegnazione chiare (scala 0-1)"
+      },
+      "interpretation": "Il tempo di risposta aumenta con la radice quadrata della dimensione del team, amplificato dall'ambiguità del ruolo"
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "incident_response_logs",
+        "escalation_procedures",
+        "team_structure_documentation"
+      ],
+      "evidence_required": [
+        "incident_assignment_procedures",
+        "response_time_metrics",
+        "multi_team_coordination_examples",
+        "individual_response_authority_documentation"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "incident_response_system",
+          "fields": ["incident_id", "alert_timestamp", "response_timestamp", "available_responders", "assigned_individual", "team_size"],
+          "retention": "90_days"
+        },
+        {
+          "source": "alert_management_system",
+          "fields": ["alert_id", "generation_time", "first_acknowledgment_time", "responder_count", "assignment_clarity"],
+          "retention": "90_days"
+        },
+        {
+          "source": "escalation_tracking",
+          "fields": ["incident_id", "escalation_required", "escalation_time", "decision_maker", "delay_reason"],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "shift_coverage_logs",
+          "fields": ["shift_id", "on_call_personnel", "incident_count", "response_times"],
+          "retention": "180_days"
+        },
+        {
+          "source": "cross_team_incidents",
+          "fields": ["incident_id", "teams_involved", "coordination_time", "command_assignment"],
+          "retention": "365_days"
+        },
+        {
+          "source": "simulation_exercises",
+          "fields": ["exercise_id", "participants", "response_patterns", "individual_initiative"],
+          "retention": "365_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "P_response": {
+          "calculation": "Probabilità di risposta individuale dai dati storici degli incidenti",
+          "query": "SELECT (COUNT(individual_responded)/COUNT(*)) * (1/SQRT(available_responders)) as P_response FROM incidents WHERE responsibility_clear=true GROUP BY available_responders"
+        },
+        "RT_expected": {
+          "calculation": "Tempo di risposta atteso basato sulla dimensione del team e chiarezza",
+          "query": "SELECT AVG(response_timestamp - alert_timestamp) * SQRT(available_responders) * (1 + ambiguity_score) as RT_expected FROM incidents GROUP BY available_responders"
+        },
+        "response_delay": {
+          "calculation": "Tempo tra avviso e prima risposta umana",
+          "query": "SELECT (first_acknowledgment_time - generation_time) as response_delay FROM alerts WHERE time_window='24h'"
+        }
+      }
+    },
+    "integration_apis": {
+      "incident_response": "PagerDuty/xMatters API - Assegnazione Avvisi, Tracciamento Risposta",
+      "siem": "Splunk/Sentinel API - Generazione Avvisi, Tempi di Riconoscimento",
+      "ticketing_system": "ServiceNow/Jira API - Assegnazione Incidenti, Coordinamento Team",
+      "collaboration_tools": "Slack/Teams API - Pattern di Comunicazione Risposta"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "6.3",
+        "name": "Diffusion of Responsibility",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "La responsabilità diffusa crea inazione da spettatore durante gli incidenti",
+        "formula": "P(6.5|6.3) = 0.75"
+      },
+      {
+        "indicator": "6.4",
+        "name": "Social Loafing in Security Tasks",
+        "probability": 0.7,
+        "factor": 1.35,
+        "description": "Il social loafing riduce l'iniziativa individuale durante la risposta agli incidenti",
+        "formula": "P(6.5|6.4) = 0.7"
+      },
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "La fatica da avvisi aumenta l'assunzione che altri indagheranno",
+        "formula": "P(6.5|5.1) = 0.65"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.6,
+        "factor": 1.25,
+        "description": "Lo stress durante gli incidenti aumenta l'effetto spettatore attraverso il restringimento cognitivo",
+        "formula": "P(6.5|7.1) = 0.6"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "La risposta agli incidenti ritardata consente agli attaccanti di creare scenari di bypass basati sull'urgenza",
+        "formula": "P(2.1|6.5) = 0.55"
+      },
+      {
+        "indicator": "8.3",
+        "name": "Denial Defense Mechanism",
+        "probability": 0.5,
+        "factor": 1.15,
+        "description": "L'inazione da spettatore rinforzata dalla negazione psicologica della gravità dell'incidente",
+        "formula": "P(8.3|6.5) = 0.5"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["6.3", "6.4", "6.5"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 3.5,
+      "threshold_critical": 4.0,
+      "description": "Tempesta perfetta: Responsabilità diffusa + Social loafing + Effetto spettatore = aumento del 350% della probabilità di fallimento della risposta agli incidenti",
+      "real_world_example": "Target 2013 - Più team hanno ricevuto avvisi FireEye ma ognuno ha assunto che altri stessero indagando, risultando in un ritardo di risposta di 17 giorni"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["6.3", "6.4", "5.1", "7.1"],
+      "child_nodes": ["2.1", "8.3"],
+      "conditional_probability_table": {
+        "P_6.5_base": 0.30,
+        "P_6.5_given_diffusion": 0.60,
+        "P_6.5_given_loafing": 0.55,
+        "P_6.5_given_fatigue": 0.52,
+        "P_6.5_given_all": 0.87
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_incident_assignment",
+          "weight": 0.18,
+          "title": "Assegnazione Risposta agli Incidenti",
+          "question": "Durante un avviso di sicurezza (come traffico di rete sospetto o potenziale rilevamento di malware), come determina quale persona specifica è responsabile dell'indagine iniziale?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "Individuo nominato identificato entro 15 minuti con chiara assegnazione automatizzata"
+            },
+            {
+              "value": "delayed",
+              "score": 0.5,
+              "label": "Notifica generale del team con assegnazione individuale ritardata"
+            },
+            {
+              "value": "unclear",
+              "score": 1,
+              "label": "Nessun processo chiaro, confusione frequente su chi dovrebbe rispondere"
+            }
+          ],
+          "evidence_required": "Ultimo incidente di sicurezza con timestamp di assegnazione, procedura di assegnazione incidenti",
+          "soc_mapping": "Tempo di assegnazione risposta da incident_response_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_reporting_expectations",
+          "weight": 0.16,
+          "title": "Aspettative di Segnalazione",
+          "question": "Quando un dipendente nota qualcosa di sospetto (email insolita, comportamento strano del sistema, violazione della policy), quale è la Sua policy su chi dovrebbe segnalarlo e a chi?",
+          "options": [
+            {
+              "value": "clear",
+              "score": 0,
+              "label": "Chiari requisiti di segnalazione individuale con contatto specifico e procedure di follow-up"
+            },
+            {
+              "value": "general",
+              "score": 0.5,
+              "label": "Guida generale 'segnala alla sicurezza' senza procedure specifiche"
+            },
+            {
+              "value": "unclear",
+              "score": 1,
+              "label": "Aspettative di segnalazione poco chiare o assunzione che qualcun altro segnalerà"
+            }
+          ],
+          "evidence_required": "Documentazione policy di segnalazione, esempio recente di segnalazione di attività sospetta",
+          "soc_mapping": "Tasso di segnalazione individuale da security_incident_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_cross_team_coordination",
+          "weight": 0.15,
+          "title": "Coordinamento Incidenti Cross-Team",
+          "question": "Quando un potenziale incidente di sicurezza colpisce più dipartimenti (IT, sicurezza, compliance, unità aziendali), quale è la Sua procedura per assicurare che qualcuno assuma la proprietà della risposta complessiva?",
+          "options": [
+            {
+              "value": "clear_command",
+              "score": 0,
+              "label": "Chiara assegnazione del comandante dell'incidente con autorità e procedure definite"
+            },
+            {
+              "value": "coordination_attempts",
+              "score": 0.5,
+              "label": "Tentativi di coordinamento ma autorità di comando complessivo poco chiara"
+            },
+            {
+              "value": "fragmented",
+              "score": 1,
+              "label": "Risposta frammentata senza chiara proprietà complessiva"
+            }
+          ],
+          "evidence_required": "Esempio di incidente multi-team con documentazione della struttura di comando",
+          "soc_mapping": "Tempo di coordinamento da cross_team_incidents"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_offhours_response",
+          "weight": 0.14,
+          "title": "Risposta Fuori Orario e Weekend",
+          "question": "Fuori dal normale orario lavorativo, come assicura che gli avvisi di sicurezza non rimangano senza risposta perché i membri del team presumono che altri stiano monitorando?",
+          "options": [
+            {
+              "value": "individual_oncall",
+              "score": 0,
+              "label": "Individuo specifico di guardia con chiari requisiti di escalation e riconoscimento"
+            },
+            {
+              "value": "team_oncall",
+              "score": 0.5,
+              "label": "Rotazione di team di guardia con alcune lacune di responsabilità individuale"
+            },
+            {
+              "value": "unclear_coverage",
+              "score": 1,
+              "label": "Copertura fuori orario poco chiara o assunzione che il team gestirà"
+            }
+          ],
+          "evidence_required": "Programma di guardia, esempio recente di risposta a incidente fuori orario",
+          "soc_mapping": "Tempi di risposta fuori orario da shift_coverage_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_escalation_authority",
+          "weight": 0.13,
+          "title": "Autorità per le Decisioni di Escalation",
+          "question": "Quando il personale di sicurezza è incerto se un incidente richiede escalation, quale è la Sua policy su chi prende quella decisione e quanto rapidamente?",
+          "options": [
+            {
+              "value": "clear_authority",
+              "score": 0,
+              "label": "Chiara autorità decisionale con limiti temporali e bias di escalation verso l'over-reporting"
+            },
+            {
+              "value": "delayed_decisions",
+              "score": 0.5,
+              "label": "Il processo decisionale esiste ma spesso è ritardato o poco chiaro"
+            },
+            {
+              "value": "paralysis",
+              "score": 1,
+              "label": "Paralisi decisionale comune, l'incertezza porta all'inazione"
+            }
+          ],
+          "evidence_required": "Framework decisionale di escalation, esempio recente di decisione di escalation",
+          "soc_mapping": "Tempo di decisione di escalation da escalation_tracking"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_alert_fatigue",
+          "weight": 0.12,
+          "title": "Gestione della Fatica da Avvisi",
+          "question": "Con più avvisi di sicurezza che si verificano quotidianamente, come previene situazioni in cui tutti presumono che qualcun altro stia indagando avvisi importanti?",
+          "options": [
+            {
+              "value": "individual_assignment",
+              "score": 0,
+              "label": "Assegnazione individuale degli avvisi con tracciamento del riconoscimento ed escalation"
+            },
+            {
+              "value": "partial_tracking",
+              "score": 0.5,
+              "label": "Qualche tracciamento ma lacune nella responsabilità individuale"
+            },
+            {
+              "value": "group_notification",
+              "score": 1,
+              "label": "Notifiche di gruppo senza assegnazione individuale o tracciamento"
+            }
+          ],
+          "evidence_required": "Configurazione assegnazione avvisi, esempio recente di gestione avviso ad alta priorità",
+          "soc_mapping": "Tassi di riconoscimento avvisi da alert_management_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_vendor_incidents",
+          "weight": 0.12,
+          "title": "Incidenti con Terze Parti e Vendor",
+          "question": "Quando i problemi di sicurezza coinvolgono vendor esterni o appaltatori, quale è la Sua procedura per assicurare un'assegnazione chiara di responsabilità?",
+          "options": [
+            {
+              "value": "clear_ownership",
+              "score": 0,
+              "label": "Chiara proprietà individuale interna per il coordinamento degli incidenti con vendor"
+            },
+            {
+              "value": "coordination_gaps",
+              "score": 0.5,
+              "label": "Tentativi di coordinamento ma proprietà interna poco chiara"
+            },
+            {
+              "value": "fragmented_responsibility",
+              "score": 1,
+              "label": "Responsabilità frammentata tra IT, approvvigionamento e sicurezza"
+            }
+          ],
+          "evidence_required": "Procedura incidenti vendor, esempio recente di problema di sicurezza vendor",
+          "soc_mapping": "Coordinamento incidenti vendor da cross_team_incidents"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UNA opzione per ogni domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze devono essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Domande di Apertura",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Durante un avviso di sicurezza (come traffico di rete sospetto o potenziale rilevamento di malware), come determina quale persona specifica è responsabile dell'indagine iniziale?",
+              "scoring_guidance": {
+                "green": "Individuo specifico identificato entro 15 minuti, assegnazione automatizzata dimostrata con esempio recente",
+                "yellow": "Processo generale di notifica del team con eventuale assegnazione ma ritardi",
+                "red": "Confusione frequente o ritardi nel determinare chi dovrebbe rispondere"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Ci racconti cosa è successo l'ultima volta che ha avuto più persone che avrebbero potuto rispondere allo stesso avviso di sicurezza.",
+                  "evidence_type": "specific_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come traccia se gli avvisi vengono gestiti rispetto a tutti che presumono che qualcun altro stia indagando?",
+                  "evidence_type": "tracking_mechanism"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Quando un dipendente nota qualcosa di sospetto (email insolita, comportamento strano del sistema, violazione della policy), quale è la Sua policy su chi dovrebbe segnalarlo e a chi?",
+              "scoring_guidance": {
+                "green": "Chiari requisiti di segnalazione con procedure specifiche ed esempi recenti di segnalazione di successo",
+                "yellow": "Guida generale a segnalare ma procedure specifiche o destinatari poco chiari",
+                "red": "Aspettative poco chiare o dipendenti presumono che altri segnaleranno"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Ci dia un caso recente in cui un dipendente ha notato qualcosa di sospetto - cosa ha fatto e perché?",
+                  "evidence_type": "behavioral_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come misura la segnalazione individuale rispetto all'affidarsi ad altri per segnalare?",
+                  "evidence_type": "metrics_verification"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Quando un potenziale incidente di sicurezza colpisce più dipartimenti (IT, sicurezza, compliance, unità aziendali), quale è la Sua procedura per assicurare che qualcuno assuma la proprietà della risposta complessiva?",
+              "scoring_guidance": {
+                "green": "Chiara designazione del comandante dell'incidente con autorità ed esempio recente multi-team",
+                "yellow": "Tentativi di coordinamento ma struttura di comando poco chiara o lacune di autorità",
+                "red": "Risposta frammentata senza chiara proprietà complessiva"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Descriva un incidente recente che ha coinvolto più team - come è stata assegnata e coordinata la responsabilità?",
+                  "evidence_type": "coordination_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Utilizza un modello di comandante dell'incidente, e se sì, come viene designata quella persona durante gli incidenti effettivi?",
+                  "evidence_type": "process_documentation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Copertura e Tempi di Risposta",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Fuori dal normale orario lavorativo, come assicura che gli avvisi di sicurezza non rimangano senza risposta perché i membri del team presumono che altri stiano monitorando?",
+              "scoring_guidance": {
+                "green": "Individuo specifico di guardia con requisiti di riconoscimento ed esempio recente",
+                "yellow": "Copertura del team con alcune lacune o responsabilità individuale poco chiara",
+                "red": "Copertura fuori orario poco chiara o lacune regolari"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa è successo durante il Suo avviso di sicurezza più recente fuori orario - chi ha risposto e quanto rapidamente?",
+                  "evidence_type": "timing_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ci mostri il Suo programma di guardia e come viene tracciato il riconoscimento individuale.",
+                  "evidence_type": "schedule_documentation"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Quando il personale di sicurezza è incerto se un incidente richiede escalation, quale è la Sua policy su chi prende quella decisione e quanto rapidamente?",
+              "scoring_guidance": {
+                "green": "Chiara autorità decisionale con limiti temporali e bias verso l'escalation dimostrato",
+                "yellow": "Il processo decisionale esiste ma spesso ritardato o coinvolge più persone",
+                "red": "Paralisi decisionale comune o lunghi ritardi nelle decisioni di escalation"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Descriva una situazione in cui il Suo team era incerto se eseguire l'escalation di un incidente - cosa è successo e quanto tempo ha richiesto la decisione?",
+                  "evidence_type": "decision_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ha una matrice o framework decisionale di escalation documentato?",
+                  "evidence_type": "framework_documentation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Gestione Avvisi e Coordinamento",
+          "weight": 0.40,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Con più avvisi di sicurezza che si verificano quotidianamente, come previene situazioni in cui tutti presumono che qualcun altro stia indagando avvisi importanti?",
+              "scoring_guidance": {
+                "green": "Assegnazione individuale con tracciamento e requisiti di riconoscimento dimostrati",
+                "yellow": "Qualche tracciamento ma lacune nella responsabilità individuale o verifica",
+                "red": "Notifiche di gruppo senza assegnazione o avvisi mancati frequenti"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Ci racconti di un momento in cui un avviso importante è stato ritardato o mancato - cosa ha causato il ritardo?",
+                  "evidence_type": "failure_analysis"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ci mostri la Sua configurazione di assegnazione avvisi e il sistema di tracciamento del riconoscimento.",
+                  "evidence_type": "technical_configuration"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Quando i problemi di sicurezza coinvolgono vendor esterni o appaltatori, quale è la Sua procedura per assicurare un'assegnazione chiara di responsabilità?",
+              "scoring_guidance": {
+                "green": "Chiara proprietà individuale interna per il coordinamento vendor con esempio recente",
+                "yellow": "Tentativi di coordinamento ma proprietà interna poco chiara o inconsistente",
+                "red": "Responsabilità frammentata o assunzione che il vendor gestirà"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Descriva il Suo problema di sicurezza più recente relativo a un vendor - chi ha assunto la proprietà e come è stato coordinato?",
+                  "evidence_type": "vendor_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come previene la lacuna in cui IT presume che il vendor gestisca la sicurezza e l'approvvigionamento presume che IT monitori la sicurezza del vendor?",
+                  "evidence_type": "gap_prevention"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Indagine per Segnali di Allerta",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle policy dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Con la dimensione del nostro team, qualcuno sta sempre guardando, quindi non abbiamo bisogno di assegnazioni specifiche...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"I tempi di risposta sono effettivamente più lenti quando più persone sono disponibili a rispondere...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Abbiamo avuto incidenti in cui più persone hanno visto avvisi ma ognuno pensava che altri stessero indagando...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Durante le ore lavorative con pieno personale, a volte abbiamo risposta più lenta che fuori orario...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"I dipendenti esitano a segnalare perché presumono che altri abbiano già segnalato...\"",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Gli incidenti multi-team hanno spesso ritardi di coordinamento mentre capiscono chi è al comando...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"L'analisi post-incidente rivela frequentemente 'tutti pensavano che qualcun altro lo stesse gestendo'...\"",
+              "severity": "critical",
+              "score_impact": 0.15,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare scenari di incidenti simulati con più soccorritori trimestralmente",
+      "correlation_analysis": "Confrontare i punteggi di audit manuale con le metriche automatizzate P_response/RT_expected (correlazione target > 0.80)",
+      "drift_detection": "Test di Kolmogorov-Smirnov, ricalibrare se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicurare che i punteggi previsti di spettatore corrispondano ai pattern di ritardo di risposta osservati",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift rilevato o punteggio di validazione < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Coerenza Tempo di Risposta",
+        "formula": "Coefficiente di variazione nei tempi di risposta agli incidenti tra diverse dimensioni di team e configurazioni",
+        "baseline": "Varianza attuale tra risposte di piccoli team e grandi team",
+        "target": "Ridurre la variazione a meno del 20% entro 90 giorni",
+        "measurement": "Analisi settimanale del tempo di risposta per configurazione del team"
+      },
+      {
+        "metric": "Tasso di Iniziativa Individuale",
+        "formula": "% di avvisi di sicurezza in cui l'individuo assegnato intraprende azioni definitive entro i tempi designati",
+        "baseline": "Tasso di azione individuale attuale senza sollecitazione aggiuntiva",
+        "target": "80% di iniziativa individuale appropriata entro 90 giorni",
+        "measurement": "Analisi mensile del workflow con tendenza trimestrale"
+      },
+      {
+        "metric": "Efficacia Coordinamento Cross-Team",
+        "formula": "Tempo dalla dichiarazione dell'incidente all'istituzione di una chiara struttura di comando",
+        "baseline": "Tempo di coordinamento multi-team attuale",
+        "target": "Assegnazione del comando entro 30 minuti per il 95% degli incidenti",
+        "measurement": "Analisi trimestrale dei log di comando degli incidenti"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Sistema di Assegnazione Individuale degli Incidenti",
+        "description": "Implementare l'assegnazione automatizzata degli avvisi di sicurezza a specifici individui nominati basata su programmi di rotazione, aree di competenza e disponibilità",
+        "implementation": "Implementare sistema di ticketing/SOAR che assegna ogni avviso a un proprietario unico entro 5 minuti. Includere notifiche mobili ed escalation automatica se nessun riconoscimento entro 15 minuti. Implementare round-robin o assegnazione intelligente basata su competenza e carico di lavoro. Mantenere chiare procedure di assegnazione di backup per indisponibilità. Tracciare metriche di tempi di risposta individuali e qualità dell'indagine.",
+        "technical_controls": "ServiceNow/Jira con workflow di assegnazione automatizzati, PagerDuty/xMatters per notifiche mobili, piattaforma SOAR per routing intelligente",
+        "roi": "450% medio entro 12 mesi",
+        "effort": "high",
+        "timeline": "60-90 giorni"
+      },
+      {
+        "id": "sol_2",
+        "title": "Matrice Strutturata di Decisione per Escalation",
+        "description": "Creare alberi decisionali specificando esattamente quando e come le decisioni di escalation dovrebbero essere prese, rimuovendo l'ambiguità sull'autorità individuale",
+        "implementation": "Documentare i criteri decisionali nei playbook di risposta agli incidenti con soglie chiare e livelli di autorità. Fornire schede decisionali laminate per gli analisti con flowchart di escalation. Implementare finestre decisionali massime di 30 minuti durante le ore lavorative. Includere formazione sul bias di escalation incoraggiando l'over-reporting piuttosto che l'under-reporting. Creare promemoria automatici di escalation basati su timer.",
+        "technical_controls": "Sistema di supporto decisionale integrato con piattaforma IR, timer di escalation automatizzati, automazione dei playbook",
+        "roi": "340% medio entro 18 mesi",
+        "effort": "medium",
+        "timeline": "45 giorni"
+      },
+      {
+        "id": "sol_3",
+        "title": "Protocollo Comandante Incidente Cross-Funzionale",
+        "description": "Designare ruoli rotativi di Comandante Incidente fornendo chiari punti singoli di responsabilità per incidenti multi-team",
+        "implementation": "Adattare i principi dell'Incident Command System (ICS) dalla gestione delle emergenze. Formare i comandanti in coordinamento e delega, non solo competenza tecnica. Stabilire chiara autorità legale per i comandanti di assegnare compiti e richiedere risorse da qualsiasi unità organizzativa durante incidenti dichiarati. Creare programma di rotazione assicurando copertura 24/7. Condurre esercizi e simulazioni mensili di IC.",
+        "technical_controls": "Piattaforma di comando incidenti, documentazione autorità, pianificatore rotazione, strumenti di simulazione esercizi",
+        "roi": "380% medio entro 18 mesi",
+        "effort": "medium",
+        "timeline": "60 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Programma di Riconoscimento Spettatore Positivo",
+        "description": "Implementare sistemi di ricompensa riconoscendo specificamente i dipendenti che segnalano attività sospette o prendono iniziativa durante situazioni ambigue",
+        "implementation": "Creare newsletter di consapevolezza della sicurezza evidenziando esempi positivi di segnalazione. Tracciare metriche di buone segnalazioni con riconoscimento individuale. Assicurare che le segnalazioni di falsi positivi siano celebrate piuttosto che penalizzate per incoraggiare vigilanza continua. Integrare il riconoscimento nei sistemi di valutazione delle prestazioni. Stabilire premi trimestrali Security Hero con ricompense tangibili.",
+        "technical_controls": "Piattaforma di riconoscimento, dashboard metriche, sistema di comunicazione, tracciamento premi",
+        "roi": "290% medio entro 24 mesi",
+        "effort": "low",
+        "timeline": "30 giorni iniziali, continuativo"
+      },
+      {
+        "id": "sol_5",
+        "title": "Dashboard di Coordinamento in Tempo Reale",
+        "description": "Implementare strumenti di visibilità condivisa mostrando a tutti i membri del team chi sta attivamente indagando ogni avviso di sicurezza",
+        "implementation": "Implementare piattaforma SOAR con dashboard condivisa mostrando stato di indagine in tempo reale. Includere note di indagine e aggiornamenti di stato visibili a tutti i membri del team. Creare chiari indicatori di quando gli avvisi necessitano attenzione aggiuntiva. Abilitare collaborazione in tempo reale senza diffondere la responsabilità individuale. Integrare con piattaforme di comunicazione per coordinamento.",
+        "technical_controls": "Piattaforma SOAR (Phantom/Demisto/Swimlane), dashboard condivisa, strumenti di collaborazione in tempo reale, accesso mobile",
+        "roi": "420% medio entro 12 mesi",
+        "effort": "high",
+        "timeline": "60-90 giorni"
+      },
+      {
+        "id": "sol_6",
+        "title": "Programma di Formazione Micro-Simulazione",
+        "description": "Condurre esercizi tabletop mensili di 15 minuti focalizzati specificamente sull'assegnazione di responsabilità e iniziativa individuale durante incidenti ambigui",
+        "implementation": "Sviluppare libreria di scenari coprendo diverse composizioni di team e tipi di incidente. Pianificare blocchi di calendario ricorrenti per esercizi. Ruotare attraverso diversi vincoli temporali e livelli di ambiguità. Includere debriefing immediati focalizzati sulla velocità decisionale e chiarezza. Mantenere database di metriche degli esercizi tracciando miglioramento individuale e di team. Utilizzare strumenti come SimSpace o esercizi tabletop personalizzati.",
+        "technical_controls": "Piattaforma di simulazione scenari, sistema di pianificazione, database di tracciamento metriche, strumenti di documentazione debriefing",
+        "roi": "310% medio entro 18 mesi",
+        "effort": "medium",
+        "timeline": "45 giorni iniziali, mensile continuativo"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_3"],
+      "high_value": ["sol_2", "sol_5"],
+      "cultural_foundation": ["sol_4"],
+      "capability_building": ["sol_6"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Sfruttamento Advanced Persistent Threat (APT)",
+      "description": "Gli attaccanti conducono ricognizione su diverse settimane usando attività sospette a basso livello attraverso più sistemi. Ogni analista di sicurezza nota anomalie ma presume che altri stiano indagando indicatori simili. L'attaccante sfrutta questo ritardo di 3 settimane per stabilire accesso persistente ed esfiltrare dati sensibili prima che qualcuno colleghi gli indicatori distribuiti in un pattern di attacco coordinato.",
+      "attack_vector": "Ricognizione lenta e bassa sfruttando lacune di assunzione multi-analista",
+      "psychological_mechanism": "Effetto spettatore - ogni analista presume che altri stiano indagando anomalie simili",
+      "historical_example": "Pattern APT comune dove indicatori distribuiti non vengono indagati a causa del monitoraggio basato su team",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["P_response < 0.3", "RT_expected > 2xRT_base", "distributed_indicators", "team_size_large", "no_individual_assignment"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Escalation Campagna di Phishing di Massa",
+      "description": "Una campagna di phishing sofisticata prende di mira l'organizzazione con email personalizzate. Più dipendenti ricevono messaggi sospetti ma ognuno presume 'IT deve essere consapevole dato che probabilmente altri hanno ricevuto questo'. La segnalazione ritardata consente agli attaccanti di compromettere diversi account prima che i team di sicurezza realizzino la portata della campagna, portando a movimento laterale e compromissione dell'accesso privilegiato.",
+      "attack_vector": "Phishing di massa con assunzione di consapevolezza collettiva",
+      "psychological_mechanism": "Ignoranza pluralistica - assunzione che l'inazione degli altri indichi non-minaccia",
+      "historical_example": "Pattern comune dove i ritardi di segnalazione dei dipendenti abilitano la compromissione delle credenziali",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["delayed_employee_reporting", "multiple_similar_incidents", "assumption_others_reported", "response_time_variance"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Sfruttamento Vulnerabilità Critica",
+      "description": "Viene annunciata una vulnerabilità di sicurezza critica che colpisce i sistemi chiave dell'organizzazione. Il team di sicurezza, le operazioni IT e i team di sviluppo presumono ciascuno che un altro team sia responsabile per l'implementazione della patch. Gli attaccanti sfruttano questa lacuna di coordinamento durante il ritardo di 10 giorni, ottenendo accesso iniziale che si escalata a privilegi di amministratore di dominio e backup crittografati.",
+      "attack_vector": "Sfruttamento di vulnerabilità durante lacuna di coordinamento cross-team",
+      "psychological_mechanism": "Diffusione tra confini funzionali con proprietà poco chiara",
+      "historical_example": "Equifax 2017 - Più team hanno presunto che altri stessero gestendo il patching della vulnerabilità Apache Struts",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["cross_team_incident", "coordination_delay", "unclear_patch_ownership", "exploitation_during_delay"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Fallimento Rilevamento Minaccia Interna",
+      "description": "Più dipendenti notano un collega che accede a file insoliti e lavora in orari strani, ma ognuno presume che altri abbiano segnalato il comportamento sospetto alla sicurezza. L'insider sfrutta questa mancanza di segnalazione per esfiltrare dati dei clienti su diversi mesi, causando violazioni normative e requisiti di notifica ai clienti che avrebbero potuto essere prevenuti con segnalazione tempestiva.",
+      "attack_vector": "Minaccia interna abilitata dall'effetto spettatore nella segnalazione dei dipendenti",
+      "psychological_mechanism": "Assunzione che se il comportamento fosse davvero preoccupante, qualcuno lo avrebbe segnalato",
+      "historical_example": "Casi multipli di minaccia interna in cui le osservazioni dei dipendenti non sono state segnalate",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["employee_observation_unreported", "gradual_insider_escalation", "multiple_potential_reporters", "delayed_detection"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-09",
+    "translator": "Claude AI",
+    "research_basis": [
+      "Darley, J.M. & Latané, B. (1968). Bystander intervention in emergencies demonstrating group size reduces individual action",
+      "Latané, B. & Nida, S. (1981). Bystander effect strengthens with group size following power law relationship",
+      "Karau, S.J. & Williams, K.D. (1993). Social loafing increases when individual contributions less identifiable",
+      "Balconi, M. & Vanutelli, M.E. (2017). Neurological basis of bystander effect using fEMG and EEG",
+      "Bion, W.R. (1961). Group dynamics - dependency basic assumption in organizational contexts"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}
