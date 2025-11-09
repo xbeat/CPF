@@ -364,7 +364,7 @@ Uses same color scheme as Field Kit for consistency:
   - Security considerations and troubleshooting
 
 ### Research
-- **[PAPER.tex](PAPER.tex)**: arXiv-ready research paper (30 KB)
+- **[PAPER.tex](Bayesian_Cross_Indicator_Inference_for_Cybersecurity_Psychology_Assessment__Integrating_SOC_Machine_Data_with_Human_Auditing)**: arXiv-ready research paper (30 KB)
   - Bayesian cross-indicator inference methodology
   - Validation on synthetic datasets
   - Complete bibliography
