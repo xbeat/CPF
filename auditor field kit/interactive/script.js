@@ -1026,6 +1026,61 @@ function updateResponseWithAutoScore(id, value) {
     }
 }
 
+// Export assessment to Dashboard format
+function exportToDashboard() {
+    if (!currentData.fieldKit || !currentScore) {
+        alert('Please complete an assessment and calculate the score first');
+        return;
+    }
+
+    const orgId = prompt('Enter organization ID (e.g., org-001):', 'org-001');
+    if (!orgId) return;
+
+    const orgName = prompt('Enter organization name:', currentData.metadata.client || 'Organization');
+    if (!orgName) return;
+
+    // Convert Field Kit assessment to dashboard format
+    const indicator = currentData.fieldKit.indicator;
+    const timestamp = new Date().toISOString();
+
+    // Create indicator entry
+    const indicatorEntry = {
+        soc_values: [], // No SOC data from Field Kit
+        human_values: [{
+            timestamp: timestamp,
+            value: currentScore.final_score,
+            assessor: currentData.metadata.auditor || 'Unknown',
+            assessment_id: `fk-${Date.now()}`
+        }],
+        current_bayesian: currentScore.final_score,
+        last_updated: timestamp
+    };
+
+    // Create minimal organization structure for dashboard import
+    const dashboardExport = {
+        organization_id: orgId,
+        organization_name: orgName,
+        indicator_id: indicator,
+        indicator_data: indicatorEntry,
+        metadata: {
+            exported_from: 'field_kit',
+            export_timestamp: timestamp,
+            field_kit_version: '1.0'
+        }
+    };
+
+    // Download as JSON
+    const blob = new Blob([JSON.stringify(dashboardExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dashboard_export_${orgId}_${indicator}_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    alert(`✅ Assessment exported!\n\nFile: dashboard_export_${orgId}_${indicator}.json\n\nImport this file into the dashboard to merge with SOC data.`);
+}
+
 // Funzione:
 function validateCurrentJSON() {
     if (!currentData.fieldKit) {
