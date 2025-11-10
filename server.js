@@ -110,6 +110,63 @@ app.get('/api/list-exports', (req, res) => {
 });
 
 /**
+ * GET /api/get-export/:org_id/:indicator_id
+ * Retrieves a specific export file for an organization and indicator
+ */
+app.get('/api/get-export/:org_id/:indicator_id', (req, res) => {
+  try {
+    const { org_id, indicator_id } = req.params;
+    const exportsPath = path.join(__dirname, 'field_kit_exports');
+
+    if (!fs.existsSync(exportsPath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Export folder not found'
+      });
+    }
+
+    // Find export file matching org_id and indicator_id
+    // Filename pattern: dashboard_export_{org_id}_{indicator_id}_{timestamp}.json
+    const files = fs.readdirSync(exportsPath)
+      .filter(f => {
+        return f.startsWith(`dashboard_export_${org_id}_${indicator_id}_`) &&
+               f.endsWith('.json');
+      })
+      .sort((a, b) => {
+        // Sort by timestamp (most recent first)
+        const timeA = parseInt(a.split('_').pop().replace('.json', ''));
+        const timeB = parseInt(b.split('_').pop().replace('.json', ''));
+        return timeB - timeA;
+      });
+
+    if (files.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Export not found',
+        org_id,
+        indicator_id
+      });
+    }
+
+    // Read most recent export
+    const filePath = path.join(exportsPath, files[0]);
+    const exportData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+    res.json({
+      success: true,
+      filename: files[0],
+      data: exportData
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * POST /api/batch-import
  * Executes batch import of Field Kit exports
  * Body: { folderPath: string } (optional, defaults to ../field_kit_exports)
