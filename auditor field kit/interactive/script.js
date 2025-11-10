@@ -63,20 +63,29 @@ const LANGUAGES = [
 ];
 
 async function loadJSON() {
-    // Check if dropdowns exist, otherwise use prompt (backward compatibility)
+    // Priority order: manual input field > dropdowns > prompt
+    const manualInput = document.getElementById('indicator-input');
     const langSelect = document.getElementById('lang-select');
     const categorySelect = document.getElementById('category-select');
     const indicatorSelect = document.getElementById('indicator-select');
 
     let input;
-    if (langSelect && categorySelect && indicatorSelect) {
-        // Use dropdown values
+
+    // 1. Check manual input field first (highest priority)
+    if (manualInput && manualInput.value.trim()) {
+        input = manualInput.value.trim();
+        // Clear the input field after use
+        manualInput.value = '';
+    }
+    // 2. Use dropdown values if manual input is empty
+    else if (langSelect && categorySelect && indicatorSelect) {
         const lang = langSelect.value;
         const category = categorySelect.value;
         const indicator = indicatorSelect.value;
         input = `${category}.${indicator}-${lang}`;
-    } else {
-        // Fallback to prompt
+    }
+    // 3. Fallback to prompt (backward compatibility)
+    else {
         input = prompt('Enter indicator (format: X.Y-LANG or X.Y for en-US)\nExamples: 1.3-IT, 2.1-EN, 1.3');
         if (!input) return;
     }
