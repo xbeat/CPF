@@ -1,0 +1,993 @@
+{
+  "indicator": "3.5",
+  "title": "INDICATORE 3.5 FIELD KIT",
+  "subtitle": "Decisioni Guidate dalla Scarsità",
+  "category": "Vulnerabilità Basate sulla Scarsità",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Categoria 3.x",
+
+  "description": {
+    "short": "Misura la vulnerabilità agli errori decisionali innescati da scarsità artificiale, offerte a tempo limitato e pressione sulle risorse che bypassano il giudizio di sicurezza razionale",
+    "context": "Quando gli esseri umani percepiscono scarsità—sia di tempo, risorse o opportunità—la capacità cognitiva diminuisce dell'equivalente di 13 punti di QI (Mani et al., 2013). Questo effetto tunnel fa sì che gli individui si concentrino in modo ristretto sulla risorsa scarsa trascurando le considerazioni di sicurezza, creando vulnerabilità pre-cognitive sfruttabili attraverso phishing a tempo limitato, truffe di false opportunità e richieste di bypass guidate da scadenze.",
+    "impact": "Le organizzazioni con elevata suscettibilità alla scarsità subiscono attacchi di social engineering basati su pressione di scadenze, frodi su offerte limitate e attacchi di competizione per risorse. I dipendenti sotto scarsità percepita prendono decisioni impulsive, saltano le procedure di verifica e si conformano a richieste urgenti senza valutazione della sicurezza. L'avversione alle perdite amplifica l'impatto di 2,5 volte—le persone lavorano più duramente per evitare perdite che per acquisire guadagni equivalenti.",
+    "psychological_basis": "Principio della Scarsità di Cialdini (2007): Gli oggetti diventano più attraenti quando la disponibilità diminuisce. Shah & Shafir (2012): La scarsità crea tunnel attentivo e riduce la funzione esecutiva. Mani et al. (2013): La scarsità finanziaria riduce la capacità cognitiva di 13-14 punti di QI. Kahneman & Tversky (1979): L'avversione alle perdite fa sì che le perdite vengano ponderate 2,5 volte più dei guadagni equivalenti. Neurologicamente, la scarsità attiva la corteccia cingolata anteriore (rilevamento errori/urgenza), riduce l'attività della corteccia prefrontale (pianificazione razionale) e innesca l'attivazione dell'amigdala (risposte di lotta o fuga)."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Punteggio_Finale = (w1 × Valutazione_Rapida + w2 × Profondità_Conversazione + w3 × Segnali_Allerta) × Moltiplicatore_Interdipendenza",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Periodi di riflessione obbligatori applicati per richieste urgenti. Tracciamento degli accessi di emergenza con revisione automatizzata. La formazione basata sulla pressione insegna il riconoscimento delle tattiche di scarsità artificiale. Le mitigazioni dello sconto temporale prevengono bypass guidati da scadenze.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Esistono alcune protezioni contro le scadenze ma applicate in modo incoerente. Consapevolezza di base delle tattiche di scarsità ma nessuna pausa obbligatoria. Tracciamento limitato delle decisioni guidate dall'urgenza.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Nessuna protezione contro la pressione di scadenze o scarsità artificiale. La cultura dà priorità alla velocità rispetto alla sicurezza. I dipendenti bypassano regolarmente le procedure sotto pressione temporale. Nessun tracciamento delle decisioni di sicurezza guidate dall'urgenza.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_cooling_off": 0.16,
+      "q2_deadline_bypass": 0.15,
+      "q3_limited_time_response": 0.14,
+      "q4_scarcity_training": 0.13,
+      "q5_urgency_tracking": 0.12,
+      "q6_loss_framing": 0.11,
+      "q7_opportunity_verification": 0.10,
+      "q8_temporal_pressure": 0.09
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_3.5(t) = w1·R_3.5(t) + w2·A_3.5(t) + w3·B_3.5(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_3.5(t) = 1 se U_score(t) > 0.7 E T_window < 24h E conteggio_bypass > 3, altrimenti 0",
+          "description": "Rilevamento binario basato su linguaggio di urgenza correlato con conformità rapida e bypass di sicurezza",
+          "threshold": {
+            "U_score": 0.7,
+            "T_window": "24 ore",
+            "bypass_count": 3
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_3.5(t) = sqrt((x(t) - μ)ᵀ Σ⁻¹ (x(t) - μ))",
+          "description": "Distanza di Mahalanobis per pattern decisionali multivariati guidati dalla scarsità",
+          "variables": {
+            "x(t)": "vettore di osservazione [velocità_decisione, verifica_saltata, marcatori_urgenza, pressione_temporale]",
+            "μ": "media di base dalle decisioni normali storiche",
+            "Σ": "matrice di covarianza (media mobile ponderata esponenziale)"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_3.5(t) = P(sfruttamento_scarsità|fattori) = [P(fattori|sfruttamento_scarsità) × P(sfruttamento_scarsità)] / P(fattori)",
+          "factors": [
+            "densità_linguaggio_urgenza",
+            "prossimità_scadenza_temporale",
+            "presenza_framing_perdita",
+            "dichiarazioni_disponibilità_limitata",
+            "velocità_decisione"
+          ],
+          "priors": {
+            "P_legitimate_urgency": 0.25,
+            "P_artificial_scarcity": 0.75
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.35,
+        "w2_anomaly": 0.35,
+        "w3_bayesian": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_3.5(t) = α·D_3.5(t) + (1-α)·T_3.5(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 1800,
+        "description": "Smoothing esponenziale con costante di tempo di 30 minuti che riflette le decisioni rapide di scarsità"
+      }
+    },
+    "scarcity_urgency_model": {
+      "formula": "U(t) = U_max · (1 - e^(-λ·(T_scadenza - t))) · L_moltiplicatore",
+      "description": "Funzione di urgenza da scarsità che modella l'aumento della pressione all'avvicinarsi della scadenza",
+      "components": {
+        "U_max": "Soglia massima di urgenza (scala 0-1)",
+        "λ": "Tasso di escalation dell'urgenza (parametro di sensibilità temporale)",
+        "T_scadenza": "Timestamp della scadenza percepita",
+        "L_moltiplicatore": "Moltiplicatore di avversione alle perdite (2,5x per messaggi con framing di perdita)"
+      },
+      "interpretation": "Valori più alti indicano una pressione di scarsità più forte che riduce la valutazione razionale della sicurezza"
+    },
+    "temporal_discounting_model": {
+      "formula": "V(t) = V_0 / (1 + k·Δt)^γ",
+      "description": "Modello di sconto iperbolico per il valore della sicurezza nel tempo",
+      "components": {
+        "V_0": "Valore di sicurezza immediato (importanza di verifica di base)",
+        "k": "Tasso di sconto (più alto = svalutazione più ripida)",
+        "Δt": "Ritardo temporale al beneficio di sicurezza",
+        "γ": "Esponente di sconto (iperbolico quando γ ≈ 1)"
+      },
+      "interpretation": "Le procedure di sicurezza che richiedono ritardo temporale perdono valore percepito sotto pressione di scarsità"
+    },
+    "cognitive_tunneling": {
+      "formula": "T_focus(s) = 1 - (1/(1 + β·s^2))",
+      "description": "Effetto tunnel attentivo dalla scarsità percepita",
+      "components": {
+        "s": "Intensità di scarsità (scala 0-1)",
+        "β": "Parametro di sensibilità al tunnel"
+      },
+      "interpretation": "Con l'aumento della scarsità, l'attenzione si restringe alla risorsa scarsa trascurando la sicurezza"
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "interviste_dipendenti_scenari_scarsità",
+        "documentazione_politiche_scadenze",
+        "cronologia_incidenti_urgenza",
+        "registri_formazione_risposta_pressione"
+      ],
+      "evidence_required": [
+        "politiche_periodo_riflessione",
+        "log_accessi_emergenza",
+        "materiali_formazione_consapevolezza_scarsità",
+        "documentazione_bypass_scadenze"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "analisi_contenuto_email",
+          "fields": ["marcatori_urgenza", "linguaggio_scarsità", "menzioni_scadenze", "framing_perdita", "dichiarazioni_offerta_limitata"],
+          "retention": "90_giorni"
+        },
+        {
+          "source": "log_velocità_decisione",
+          "fields": ["user_id", "richiesta_ricevuta", "azione_intrapresa", "delta_tempo", "verifica_tentata"],
+          "retention": "90_giorni"
+        },
+        {
+          "source": "eventi_bypass_sicurezza",
+          "fields": ["user_id", "motivo_bypass", "urgenza_dichiarata", "catena_approvazione_saltata", "timestamp"],
+          "retention": "180_giorni"
+        }
+      ],
+      "optional": [
+        {
+          "source": "scoring_urgenza_nlp",
+          "fields": ["id_messaggio", "punteggio_urgenza", "indicatori_scarsità", "punteggio_pressione_temporale"],
+          "retention": "60_giorni"
+        },
+        {
+          "source": "monitoraggio_velocità_transazioni",
+          "fields": ["id_transazione", "velocità_approvazione", "baseline_normale", "punteggio_deviazione"],
+          "retention": "90_giorni"
+        },
+        {
+          "source": "indicatori_carico_cognitivo",
+          "fields": ["user_id", "richieste_concorrenti", "proxy_qualità_decisione", "contesto_pressione_temporale"],
+          "retention": "30_giorni"
+        }
+      ],
+      "telemetry_mapping": {
+        "U_score": {
+          "calculation": "Scoring di urgenza basato su NLP dal contenuto del messaggio",
+          "query": "SELECT AVG(punteggio_urgenza) FROM analisi_email WHERE indicatori_scarsità > 2 AND finestra_tempo='1h'"
+        },
+        "decision_velocity": {
+          "calculation": "Tempo dalla richiesta all'azione rispetto alla baseline",
+          "query": "SELECT AVG(azione_intrapresa - richiesta_ricevuta) FROM decisioni WHERE urgenza_dichiarata=true AND timestamp > NOW() - INTERVAL '24 hours'"
+        },
+        "bypass_rate": {
+          "calculation": "Frequenza dei bypass delle procedure di sicurezza sotto dichiarazioni di urgenza",
+          "query": "SELECT (COUNT(motivo_bypass LIKE '%urgente%')/COUNT(*)) FROM eventi_sicurezza WHERE finestra_tempo='7g'"
+        }
+      }
+    },
+    "integration_apis": {
+      "nlp_platform": "API di Natural Language Processing - Rilevamento Urgenza, Analisi Linguaggio Scarsità",
+      "workflow_systems": "API Workflow di Approvazione - Velocità Decisione, Tracciamento Bypass",
+      "dlp_systems": "API Data Loss Prevention - Tentativi di Esfiltrazione Taggati con Urgenza",
+      "behavioral_analytics": "Piattaforma UEBA - Deviazione dalla Baseline Sotto Pressione"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "7.1",
+        "name": "Risposta allo Stress Acuto",
+        "probability": 0.85,
+        "factor": 1.6,
+        "description": "Lo stress amplifica gli effetti della scarsità, riducendo ulteriormente la capacità cognitiva e aumentando la conformità all'urgenza",
+        "formula": "P(3.5|7.1) = 0.85",
+        "evidence": "Shah & Shafir (2012) - Stress e scarsità creano carico cognitivo moltiplicativo"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Bypass Indotto da Urgenza",
+        "probability": 0.9,
+        "factor": 1.8,
+        "description": "La pressione temporale è il meccanismo centrale dello sfruttamento della scarsità, creando amplificazione diretta",
+        "formula": "P(3.5|2.1) = 0.9"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Affaticamento Decisionale",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "L'esaurimento cognitivo riduce la resistenza alle tattiche di pressione di scarsità",
+        "formula": "P(3.5|5.2) = 0.75"
+      },
+      {
+        "indicator": "4.3",
+        "name": "Suscettibilità FOMO",
+        "probability": 0.7,
+        "factor": 1.5,
+        "description": "La paura di perdere opportunità amplifica il costo percepito del non agire immediatamente",
+        "formula": "P(3.5|4.3) = 0.7"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "3.2",
+        "name": "Pattern di Azione Impulsiva",
+        "probability": 0.65,
+        "factor": 1.35,
+        "description": "Le decisioni guidate dalla scarsità normalizzano i pattern di comportamento impulsivo"
+      },
+      {
+        "indicator": "2.3",
+        "name": "Giustificazione del Bypass",
+        "probability": 0.6,
+        "factor": 1.3,
+        "description": "La pressione di scadenza crea giustificazione mentale per i bypass di sicurezza"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["3.5", "7.1", "2.1", "4.3"],
+      "convergence_formula": "CI = ∏(1 + v_i) dove v_i = punteggio di vulnerabilità normalizzato",
+      "convergence_multiplier": 3.2,
+      "threshold_critical": 4.0,
+      "description": "Tempesta perfetta: Pressione di scarsità + Stress + Urgenza temporale + FOMO = 420% di probabilità di sfruttamento aumentata",
+      "real_world_example": "Truffe della stagione fiscale che sfruttano la scarsità della scadenza di presentazione combinata con la paura dell'audit IRS e avvisi di penalità a tempo limitato"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["7.1", "2.1", "5.2", "4.3"],
+      "child_nodes": ["3.2", "2.3"],
+      "conditional_probability_table": {
+        "P_3.5_base": 0.20,
+        "P_3.5_dato_stress": 0.52,
+        "P_3.5_dato_urgenza": 0.58,
+        "P_3.5_dato_fomo": 0.48,
+        "P_3.5_dato_tutti": 0.88
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_cooling_off",
+          "weight": 1.0,
+          "title": "Periodi di Riflessione Obbligatori",
+          "question": "Quando i dipendenti ricevono richieste urgenti che richiedono bypass di sicurezza o azioni ad alto rischio, vengono applicati periodi di attesa obbligatori prima dell'approvazione?",
+          "options": [
+            {
+              "value": "yes",
+              "score": 0,
+              "label": "Periodi di riflessione obbligatori (minimo 2-24 ore a seconda del rischio) richiesti per richieste urgenti ad alto rischio, con applicazione automatizzata"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Esistono periodi di attesa suggeriti ma possono essere ignorati per 'emergenze'"
+            },
+            {
+              "value": "no",
+              "score": 1,
+              "label": "Nessun periodo di attesa - le richieste urgenti vengono elaborate immediatamente indipendentemente dal livello di rischio"
+            }
+          ],
+          "evidence_required": "Politica del periodo di riflessione, esempi recenti di applicazione, log di override",
+          "soc_mapping": "velocità_decisione dall'analisi temporale"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_deadline_bypass",
+          "weight": 1.0,
+          "title": "Bypass di Sicurezza Guidati da Scadenze",
+          "question": "Con quale frequenza i dipendenti bypassano le procedure di sicurezza a causa dell'avvicinarsi delle scadenze o della pressione temporale?",
+          "options": [
+            {
+              "value": "never",
+              "score": 0,
+              "label": "Mai/Raramente - Le procedure di sicurezza vengono mantenute indipendentemente dalle scadenze (meno di una volta al trimestre)"
+            },
+            {
+              "value": "occasionally",
+              "score": 0.5,
+              "label": "Occasionalmente - Bypass guidati da scadenze mensili con giustificazione post-hoc"
+            },
+            {
+              "value": "frequently",
+              "score": 1,
+              "label": "Frequentemente - Bypass guidati da scadenze settimanali o più frequenti, considerati procedura operativa normale"
+            }
+          ],
+          "evidence_required": "Log di incidenti di bypass con timestamp e giustificazioni di scadenze",
+          "soc_mapping": "tasso_bypass filtrato per dichiarazioni di urgenza"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_limited_time_response",
+          "weight": 1.0,
+          "title": "Protocollo di Risposta a Offerte a Tempo Limitato",
+          "question": "Quali procedure esistono per verificare 'opportunità a tempo limitato' o 'offerte esclusive urgenti' presentate ai dipendenti?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Protocollo di verifica formale che richiede revisione di sicurezza prima della risposta a qualsiasi opportunità commerciale a tempo limitato"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Le linee guida informali suggeriscono la verifica ma non c'è processo obbligatorio"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun requisito di verifica - i dipendenti rispondono alle opportunità in base al valore percepito e all'urgenza"
+            }
+          ],
+          "evidence_required": "Documentazione della procedura di verifica delle opportunità, esempi recenti",
+          "soc_mapping": "tasso di rilevamento indicatore_scarsità dall'analisi NLP"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_scarcity_training",
+          "weight": 1.0,
+          "title": "Formazione sulla Consapevolezza delle Tattiche di Scarsità",
+          "question": "Quale formazione specifica ricevono i dipendenti sul riconoscimento e la resistenza alle tattiche di scarsità artificiale (pressione a tempo limitato, framing di perdita, manipolazione delle scadenze)?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "La formazione regolare include psicologia della scarsità, riconoscimento del tunnel cognitivo e tecniche di resistenza alla pressione con scenari pratici"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "La formazione di consapevolezza generica menziona le tattiche di urgenza ma nessuna formazione specifica sulla scarsità o resistenza alla pressione"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna formazione sulle tattiche di scarsità o riconoscimento della pressione psicologica"
+            }
+          ],
+          "evidence_required": "Curriculum di formazione che copre la psicologia della scarsità, registri di completamento, risultati delle valutazioni",
+          "soc_mapping": "Risultati di simulazione di phishing (scenari di scarsità)"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_urgency_tracking",
+          "weight": 1.0,
+          "title": "Tracciamento e Revisione degli Accessi di Emergenza",
+          "question": "Le concessioni di accesso di emergenza e le eccezioni di sicurezza giustificate dall'urgenza vengono sistematicamente tracciate e riviste?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Tutte le eccezioni basate sull'urgenza registrate con revisione automatizzata per pattern, analisi mensile delle decisioni guidate dalla scarsità"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Accesso di emergenza registrato ma revisione irregolare, nessuna analisi dei pattern"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun tracciamento delle giustificazioni di urgenza o pattern di accesso di emergenza"
+            }
+          ],
+          "evidence_required": "Log degli accessi di emergenza, rapporti di revisione, documentazione dell'analisi dei pattern",
+          "soc_mapping": "Tracciamento delle eccezioni da eventi_bypass_sicurezza"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_loss_framing",
+          "weight": 1.0,
+          "title": "Protocolli per Richieste con Framing di Perdita",
+          "question": "Come gestisce la Sua organizzazione le richieste inquadrate come prevenzione di perdite rispetto all'acquisizione di opportunità (ad esempio, 'Agisca ora o perda l'accesso' vs. 'Agisca ora per ottenere l'accesso')?",
+          "options": [
+            {
+              "value": "aware",
+              "score": 0,
+              "label": "I dipendenti sono formati per riconoscere lo sfruttamento dell'avversione alle perdite, verifica aggiuntiva richiesta per richieste urgenti con framing di perdita"
+            },
+            {
+              "value": "unaware",
+              "score": 0.5,
+              "label": "Nessuna differenziazione - tutte le richieste urgenti vengono trattate allo stesso modo"
+            },
+            {
+              "value": "vulnerable",
+              "score": 1,
+              "label": "Le richieste con framing di perdita ricevono risposta prioritaria senza ulteriore controllo a causa del rischio percepito di inazione"
+            }
+          ],
+          "evidence_required": "Documentazione sulla consapevolezza dell'avversione alle perdite, procedure di gestione delle richieste",
+          "soc_mapping": "rilevamento framing_perdita dall'analisi del contenuto NLP"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_opportunity_verification",
+          "weight": 1.0,
+          "title": "Verifica delle Opportunità Competitive/Esclusive",
+          "question": "Quando i dipendenti ricevono 'opportunità esclusive' o 'offerte di vantaggio competitivo' che richiedono azione immediata o condivisione di informazioni, quale verifica avviene?",
+          "options": [
+            {
+              "value": "strict",
+              "score": 0,
+              "label": "Verifica commerciale obbligatoria attraverso canali stabiliti prima di rispondere a qualsiasi dichiarazione di opportunità esclusiva o competitiva"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "I dipendenti sono incoraggiati a verificare ma basato sul giudizio, nessun processo obbligatorio"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun protocollo di verifica - le opportunità vengono valutate individualmente in base al valore competitivo percepito"
+            }
+          ],
+          "evidence_required": "Procedura di verifica delle opportunità, esempi recenti di offerte competitive",
+          "soc_mapping": "rilevamento dichiarazioni_offerta_limitata e pattern di risposta"
+        },
+        {
+          "type": "radio-list",
+          "number": 8,
+          "id": "q8_temporal_pressure",
+          "weight": 1.0,
+          "title": "Qualità Decisionale Sotto Pressione Temporale",
+          "question": "Come cambia la qualità decisionale (completezza, verifica, considerazione della sicurezza) quando i dipendenti affrontano pressione temporale o scadenze imminenti?",
+          "options": [
+            {
+              "value": "maintained",
+              "score": 0,
+              "label": "Le metriche di qualità decisionale vengono mantenute sotto pressione temporale attraverso protocolli strutturati e salvaguardie automatizzate"
+            },
+            {
+              "value": "degraded",
+              "score": 0.5,
+              "label": "Osservato un certo degrado ma entro intervalli accettabili, gestione informale della pressione"
+            },
+            {
+              "value": "severely_degraded",
+              "score": 1,
+              "label": "Degrado significativo della qualità sotto pressione temporale - verifica saltata, scorciatoie di sicurezza normalizzate"
+            }
+          ],
+          "evidence_required": "Analisi della qualità decisionale confrontando condizioni normali vs. pressione temporale",
+          "soc_mapping": "correlazione verifica_saltata con punteggio_pressione_temporale"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UNA opzione per ogni domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze devono essere documentate per il percorso di audit.",
+      "calculation": "Punteggio_Rapido = Σ(punteggio_domanda × peso_domanda) / Σ(peso_domanda)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Pattern di Risposta alla Scarsità",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Mi racconti dell'ultima volta che qualcuno nella Sua organizzazione ha ricevuto una richiesta urgente con una scadenza ravvicinata che richiedeva di bypassare le normali procedure di sicurezza. Cosa è successo esattamente?",
+              "scoring_guidance": {
+                "green": "Esempio specifico in cui il periodo di riflessione è stato applicato nonostante l'urgenza, verifica completata, o richiesta rifiutata in attesa di revisione appropriata",
+                "yellow": "L'esempio mostra qualche tentativo di verifica ma processo accelerato a causa della pressione di scadenza",
+                "red": "L'esempio mostra conformità immediata con la richiesta di scadenza urgente senza verifica"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quanto tempo è trascorso dalla ricezione della richiesta urgente all'azione intrapresa? Quali fasi di verifica sono state eseguite?",
+                  "evidence_type": "analisi_velocità_decisione"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "La dichiarazione di urgenza è stata successivamente validata come legittima? Come tracciate l'accuratezza delle dichiarazioni di urgenza?",
+                  "evidence_type": "tracciamento_verifica_urgenza"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Quando i dipendenti ricevono messaggi come 'Agisca ora o perda l'accesso', 'Offerta a tempo limitato' o 'Scade tra 24 ore', come rispondono tipicamente?",
+              "scoring_guidance": {
+                "green": "Dipendenti formati per riconoscere le tattiche di scarsità, verifica obbligatoria prima della risposta, esempi di resistenza all'urgenza artificiale",
+                "yellow": "Risposte miste - alcuni dipendenti verificano, altri rispondono immediatamente in base alla credibilità del messaggio",
+                "red": "Risposta immediata per evitare di perdere l'opportunità, la scarsità crea conformità all'urgenza"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può mostrarmi esempi di richieste a tempo limitato recenti che i Suoi dipendenti hanno ricevuto e come hanno risposto?",
+                  "evidence_type": "esempi_risposta_scarsità"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "I dipendenti ricevono formazione sulla distinzione tra urgenza legittima e tattiche di scarsità artificiale?",
+                  "evidence_type": "specificità_formazione"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Come gestisce la Sua organizzazione le situazioni in cui le scadenze aziendali (fine trimestre, scadenze di progetto, dichiarazioni normative) entrano in conflitto con i tempi di verifica della sicurezza?",
+              "scoring_guidance": {
+                "green": "Politiche scritte che danno priorità alla sicurezza indipendentemente dalle scadenze aziendali, esempi di protocolli mantenuti sotto pressione",
+                "yellow": "Aspettativa informale di mantenere la sicurezza ma flessibilità per scadenze 'critiche'",
+                "red": "Le scadenze aziendali prevalgono sulle procedure di sicurezza, atteggiamento 'non possiamo permettere che la sicurezza ci rallenti'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Descriva cosa è successo durante l'ultima grande scadenza aziendale (fine trimestre, consegna di un progetto importante). Sono state modificate o bypassate procedure di sicurezza?",
+                  "evidence_type": "esempio_pressione_scadenza"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succederebbe a un dipendente che insistesse nel completare la verifica di sicurezza anche se ciò significasse mancare una scadenza aziendale?",
+                  "evidence_type": "indicatore_priorità_culturale"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Avversione alle Perdite e Sconto Iperbolico",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Quando le richieste sono inquadrate come prevenzione di una perdita rispetto all'acquisizione di qualcosa (ad esempio, 'Resetti la password ora o il Suo account verrà bloccato' vs. 'Resetti la password per migliorare la sicurezza'), nota pattern di risposta diversi nei dipendenti?",
+              "scoring_guidance": {
+                "green": "L'organizzazione riconosce lo sfruttamento dell'avversione alle perdite, controllo aggiuntivo per richieste urgenti con framing di perdita, formazione dei dipendenti su questo bias",
+                "yellow": "Consapevolezza che le richieste con framing di perdita ricevono più attenzione ma nessuna contromisura specifica",
+                "red": "Le richieste con framing di perdita ricevono trattamento prioritario senza verifica aggiuntiva a causa della paura di conseguenze negative"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può mostrarmi esempi di messaggi che i dipendenti hanno ricevuto che minacciavano perdite (blocco account, rimozione accesso, opportunità mancata)? Come sono stati gestiti?",
+                  "evidence_type": "esempi_framing_perdita"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "I dipendenti comprendono che prevenire una perdita di €1000 sembra 2,5 volte più urgente che guadagnare €1000, e come gli attaccanti sfruttano questo?",
+                  "evidence_type": "consapevolezza_avversione_perdite"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Esistono periodi di attesa obbligatori prima di approvare azioni ad alto rischio, anche quando la richiesta dichiara urgenza?",
+              "scoring_guidance": {
+                "green": "Periodi di riflessione formali applicati con controlli tecnici, requisiti di tempo specifici basati sul livello di rischio, processo di override documentato",
+                "yellow": "Periodi di attesa suggeriti ma possono essere derogati per 'emergenze legittime'",
+                "red": "Nessun periodo di attesa - la velocità è valorizzata rispetto al tempo di riflessione sulla sicurezza"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Qual è il periodo di attesa minimo per azioni come: bonifici bancari, concessioni di accesso privilegiato, rilasci di dati sensibili? Possono essere ignorati?",
+                  "evidence_type": "dettagli_politica_riflessione"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri i Suoi log delle richieste di override di emergenza - con quale frequenza i periodi di riflessione vengono bypassati e quali giustificazioni vengono utilizzate?",
+                  "evidence_type": "analisi_frequenza_override"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Tunnel Cognitivo e Competizione per Risorse",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Quando i dipendenti sono sotto pressione di risorse (vincoli di budget, scarsità di tempo, priorità concorrenti), come cambia il loro comportamento di sicurezza?",
+              "scoring_guidance": {
+                "green": "Nessun degrado di sicurezza osservabile sotto pressione di risorse, protocolli strutturati mantengono la qualità, pressione esplicitamente affrontata nella formazione",
+                "yellow": "Osservate alcune scorciatoie di sicurezza sotto pressione ma entro intervallo accettabile",
+                "red": "Degrado significativo della sicurezza sotto pressione - verifica saltata, scorciatoie normalizzate, mentalità 'siamo troppo occupati per la sicurezza'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Durante i Suoi periodi più impegnativi (stagione fiscale, fine trimestre, lanci di prodotto), tracciate i cambiamenti nei tassi di incidenti di sicurezza o frequenze di bypass?",
+                  "evidence_type": "dati_correlazione_pressione"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Descriva una situazione in cui qualcuno stava affrontando più richieste urgenti. Come ha gestito una decisione di sicurezza in quel contesto?",
+                  "evidence_type": "esempio_carico_cognitivo"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Come traccia e rivede la Sua organizzazione le decisioni di sicurezza prese sotto urgenza o pressione di scadenze?",
+              "scoring_guidance": {
+                "green": "Tracciamento sistematico delle decisioni giustificate dall'urgenza, analisi regolare dei pattern, ciclo di feedback per identificare attacchi di scarsità artificiale",
+                "yellow": "Esiste un logging di base ma revisione o analisi dei pattern limitata",
+                "red": "Nessun tracciamento del contesto di urgenza o qualità decisionale sotto pressione"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri la Sua analisi degli ultimi 90 giorni di richieste di accesso di emergenza. Quante erano legittimamente urgenti rispetto a pressione artificiale?",
+                  "evidence_type": "dati_validazione_urgenza"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Misurate la velocità decisionale (tempo dalla richiesta all'approvazione) e la correlate con i risultati di sicurezza?",
+                  "evidence_type": "correlazione_velocità_qualità"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Ricerca di Segnali di Allerta",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle politiche dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Qui ci muoviamo velocemente - non possiamo permettere che la sicurezza ci rallenti...\"",
+              "severity": "critical",
+              "score_impact": 0.20,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Se qualcuno dice che è urgente, ci fidiamo e agiamo immediatamente...\"",
+              "severity": "high",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Non possiamo permetterci di perdere opportunità aspettando di verificare...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Durante i periodi di fine trimestre/scadenza, le normali regole di sicurezza vengono allentate...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Se non agiamo immediatamente sulle offerte a tempo limitato, perdiamo il vantaggio competitivo...\"",
+              "severity": "medium",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"I dipendenti sono formati per essere reattivi e disponibili, non per rallentare le cose con la verifica...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Non abbiamo mai tracciato se le dichiarazioni di urgenza siano effettivamente legittime...\"",
+              "severity": "medium",
+              "score_impact": 0.10,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "\"Quando qualcuno minaccia il blocco dell'account o la perdita dell'accesso, la nostra gente agisce immediatamente...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Punteggio_Conversazione = Media_Ponderata(punteggi_sottosezione) + Σ(impatti_segnali_allerta)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare scenari di scarsità simulati (phishing a tempo limitato, pressione di scadenze) mensilmente",
+      "correlation_analysis": "Confrontare i punteggi di vulnerabilità alla scarsità manuali con i punteggi di rilevamento dell'urgenza automatizzati (correlazione target > 0.80)",
+      "drift_detection": "Test di Kolmogorov-Smirnov sulle distribuzioni di velocità decisionale, ricalibrazione se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Garantire che la vulnerabilità alla scarsità prevista corrisponda ai tassi di sfruttamento dell'urgenza osservati",
+      "baseline_period": "60_giorni",
+      "recalibration_trigger": "Drift rilevato o punteggio di validazione < 0.70"
+    },
+    "success_metrics": [
+      {
+        "metric": "Conformità al Periodo di Riflessione",
+        "formula": "% di richieste urgenti ad alto rischio in cui il periodo di attesa obbligatorio è stato applicato",
+        "baseline": "audit degli ultimi 90 giorni",
+        "target": "90% di conformità entro 90 giorni",
+        "measurement": "logging automatizzato + audit mensile"
+      },
+      {
+        "metric": "Tasso di Riconoscimento delle Tattiche di Scarsità",
+        "formula": "% di dipendenti che identificano e resistono correttamente agli attacchi di scarsità simulati",
+        "baseline": "simulazione di phishing iniziale con tattiche di scarsità",
+        "target": "ridurre lo sfruttamento di scarsità riuscito del 70% entro 90 giorni",
+        "measurement": "test di simulazione trimestrale"
+      },
+      {
+        "metric": "Riduzione dei Bypass Guidati da Scadenze",
+        "formula": "Conteggio delle procedure di sicurezza bypassate a causa della pressione temporale al mese",
+        "baseline": "media dei 6 mesi precedenti",
+        "target": "ridurre del 60% entro 90 giorni",
+        "measurement": "revisione settimanale dei log di bypass con classificazione dell'urgenza"
+      },
+      {
+        "metric": "Velocità Decisionale Sotto Pressione",
+        "formula": "Tempo medio dalla richiesta urgente all'approvazione (dovrebbe aumentare man mano che viene applicata la verifica)",
+        "baseline": "tempo medio di decisione attuale per richieste urgenti",
+        "target": "aumentare fino a corrispondere alla velocità decisionale normale entro 120 giorni",
+        "measurement": "monitoraggio continuo dei timestamp delle decisioni"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Sistema di Periodo di Riflessione Obbligatorio",
+        "description": "Implementare controlli tecnici che applicano periodi di attesa per decisioni ad alto rischio indipendentemente dall'urgenza dichiarata",
+        "implementation": "Ritardi automatizzati del flusso di lavoro: 2 ore per escalation di privilegi, 24 ore per bonifici >€10.000, 4 ore per accesso a dati sensibili. L'override richiede doppia approvazione con giustificazione commerciale documentata e revisione di sicurezza.",
+        "technical_controls": "Automazione del flusso di lavoro con applicazione del ritardo temporale, logging e alerting degli override, requisiti di escalation",
+        "roi": "480% medio entro 12 mesi",
+        "effort": "medio",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_2",
+        "title": "Formazione sul Riconoscimento delle Tattiche di Scarsità",
+        "description": "Programma di formazione completo sullo sfruttamento psicologico della scarsità e sul tunnel cognitivo",
+        "implementation": "Insegnare ai dipendenti a riconoscere: marcatori di urgenza artificiale, linguaggio di framing di perdita, dichiarazioni di disponibilità limitata, manipolazione delle scadenze. Scenari di pratica con pressione di scarsità. Spiegare la scienza cognitiva: effetto di -13 punti di QI, avversione alle perdite di 2,5x, sconto iperbolico.",
+        "technical_controls": "Piattaforma di formazione con simulazioni di scenari di scarsità, valutazioni di conoscenza, test di competenza comportamentale",
+        "roi": "390% medio entro 12 mesi",
+        "effort": "basso",
+        "timeline": "30 giorni iniziale, aggiornamenti trimestrali"
+      },
+      {
+        "id": "sol_3",
+        "title": "Protocollo di Verifica dell'Urgenza",
+        "description": "Processo strutturato per validare le dichiarazioni di urgenza prima dell'elaborazione accelerata",
+        "implementation": "Tutte le richieste urgenti devono rispondere a: (1) Quale danno specifico si verifica se l'azione viene ritardata di 24 ore? (2) Chi può verificare indipendentemente questa urgenza? (3) L'urgenza è stata validata attraverso un canale separato? Documentare e tracciare l'accuratezza della validazione dell'urgenza.",
+        "technical_controls": "Questionario di urgenza nei flussi di lavoro delle richieste, database di tracciamento della validazione, reporting dell'accuratezza",
+        "roi": "340% medio entro 12 mesi",
+        "effort": "medio",
+        "timeline": "45 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Tracciamento e Analisi degli Accessi di Emergenza",
+        "description": "Logging completo e analisi dei pattern delle decisioni di sicurezza giustificate dall'urgenza",
+        "implementation": "Registrare tutte le dichiarazioni di urgenza con: scadenza dichiarata, giustificazione commerciale, approvatore, risultato effettivo. Analisi mensile: accuratezza delle dichiarazioni di urgenza, rilevamento dei pattern per scarsità artificiale, ciclo di feedback per identificare attacchi basati sulla scarsità.",
+        "technical_controls": "Logging centralizzato dell'urgenza, analisi NLP per pattern di scarsità, dashboard con metriche e trend di urgenza",
+        "roi": "280% medio entro 18 mesi",
+        "effort": "medio",
+        "timeline": "60 giorni"
+      },
+      {
+        "id": "sol_5",
+        "title": "Rilevamento e Contromisure del Framing di Perdita",
+        "description": "Protocolli specializzati per richieste che utilizzano tattiche di avversione alle perdite",
+        "implementation": "Gateway email e analisi delle comunicazioni che segnalano messaggi urgenti con framing di perdita ('o perderà', 'l'account verrà bloccato', 'l'accesso scade'). I messaggi segnalati ricevono requisiti di verifica aggiuntivi. Formazione dei dipendenti sul moltiplicatore di avversione alle perdite di 2,5x.",
+        "technical_controls": "Rilevamento del framing di perdita basato su NLP, segnalazione automatica dei messaggi, applicazione dei requisiti di verifica",
+        "roi": "320% medio entro 12 mesi",
+        "effort": "alto",
+        "timeline": "60-90 giorni"
+      },
+      {
+        "id": "sol_6",
+        "title": "Salvaguardie della Qualità Decisionale Sotto Pressione di Scadenze",
+        "description": "Mantenere la qualità delle decisioni di sicurezza durante i periodi ad alta pressione",
+        "implementation": "Pre-identificare i periodi ad alta pressione (fine trimestre, scadenze fiscali, lanci di prodotto). Implementare supporto di sicurezza aggiuntivo durante questi periodi. Promemoria automatizzati dei requisiti di sicurezza. Monitoraggio migliorato per bypass guidati da scadenze.",
+        "technical_controls": "Tracciamento dei periodi di pressione basato su calendario, promemoria di sicurezza automatizzati, monitoraggio migliorato durante i periodi ad alto rischio",
+        "roi": "260% medio entro 18 mesi",
+        "effort": "medio",
+        "timeline": "60 giorni"
+      },
+      {
+        "id": "sol_7",
+        "title": "Mitigazione dello Sconto Iperbolico",
+        "description": "Contrastare la tendenza a svalutare i benefici di sicurezza ritardati",
+        "implementation": "Riformulare la verifica di sicurezza come protezione immediata piuttosto che beneficio futuro. Rendere il processo di verifica visibile e gratificante (gamification, riconoscimento). Ridurre l'attrito nei flussi di lavoro di verifica in modo che il ritardo sia minimo.",
+        "technical_controls": "UX di verifica semplificata, sistemi di feedback immediato, programmi di riconoscimento per la diligenza nella sicurezza",
+        "roi": "230% medio entro 18 mesi",
+        "effort": "basso",
+        "timeline": "30-45 giorni iniziale, cultura continua"
+      },
+      {
+        "id": "sol_8",
+        "title": "Sistema di Verifica delle Opportunità Competitive",
+        "description": "Processo di valutazione strutturato per opportunità commerciali 'esclusive' o 'a tempo limitato'",
+        "implementation": "Tutte le dichiarazioni di opportunità competitive che richiedono azione immediata/condivisione di informazioni devono essere sottoposte a: (1) Verifica della fonte attraverso contatti noti, (2) Valutazione del valore commerciale da parte degli stakeholder, (3) Revisione di sicurezza per le richieste di informazioni. Tracciare i risultati della verifica delle opportunità.",
+        "technical_controls": "Flusso di lavoro di verifica delle opportunità, database di validazione della fonte, tracciamento dei risultati",
+        "roi": "310% medio entro 12 mesi",
+        "effort": "medio",
+        "timeline": "45 giorni"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_2"],
+      "high_value": ["sol_3", "sol_5"],
+      "supporting_infrastructure": ["sol_4", "sol_6"],
+      "cultural_foundation": ["sol_7", "sol_8"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Phishing a Tempo Limitato con Framing di Perdita",
+      "description": "Gli attaccanti inviano email che dichiarano 'Il Suo account verrà bloccato entro 24 ore a meno che non verifichi le credenziali' o 'Azione immediata richiesta o perderà l'accesso ai sistemi critici'",
+      "attack_vector": "Email con timer per il conto alla rovescia, linguaggio urgente con framing di perdita, link di raccolta credenziali",
+      "psychological_mechanism": "Avversione alle perdite (ponderazione 2,5x) + scadenza artificiale crea tunnel cognitivo, bypassando la valutazione razionale della sicurezza",
+      "historical_example": "Campagne di phishing delle credenziali Office 365 con 'L'account scade tra 24 ore' che raggiungono tassi di clic del 34%",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["U_score > 0.7", "presenza_framing_perdita", "scadenza_temporale < 48h", "richiesta_credenziali", "nessun_tentativo_verifica"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Frode di Bonifico Bancario di Fine Trimestre",
+      "description": "Gli attaccanti sfruttano la pressione di fine trimestre per richiedere bonifici urgenti per 'affari critici' che verranno 'persi' se non completati immediatamente",
+      "attack_vector": "Impersonificazione di dirigenti durante periodi aziendali ad alta pressione richiedendo transazioni finanziarie urgenti",
+      "psychological_mechanism": "Carico cognitivo indotto dalla scarsità (-13 punti di QI) + pressione di scadenze aziendali + avversione alle perdite crea tempesta perfetta",
+      "historical_example": "Incidenti BEC ripetuti che prendono di mira i dipartimenti finanziari durante la fine del trimestre quando la resistenza alla verifica è più bassa",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["prossimità_fine_trimestre", "impersonificazione_dirigente", "urgenza_finanziaria", "bypass_richiesto", "linguaggio_perdita"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Falsa Opportunità di Investimento/Partnership",
+      "description": "Gli attaccanti presentano 'opportunità di investimento esclusive a tempo limitato' o 'partnership di vantaggio competitivo' che richiedono condivisione immediata di informazioni o impegno finanziario",
+      "attack_vector": "Truffe di opportunità commerciali utilizzando scarsità artificiale e pressione competitiva",
+      "psychological_mechanism": "FOMO + scarsità competitiva + sconto iperbolico (opportunità immediata vs. due diligence ritardata)",
+      "historical_example": "Truffe di investimento in criptovalute utilizzando scarsità artificiale di 'pre-vendita esclusiva' per estrarre milioni",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["dichiarazione_esclusività", "disponibilità_limitata", "framing_competitivo", "azione_immediata_richiesta", "richiesta_informazioni_o_pagamento"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Sfruttamento di Scadenze Normative",
+      "description": "Gli attaccanti impersonano enti normativi dichiarando scadenze di conformità urgenti che richiedono invio immediato di dati o accesso al sistema",
+      "attack_vector": "Avvisi di conformità falsi che sfruttano scadenze normative (dichiarazioni fiscali, risposte ad audit, requisiti di reporting)",
+      "psychological_mechanism": "Paura normativa + pressione di scadenza + tunnel indotto dalla scarsità sul compito di conformità",
+      "historical_example": "Truffe di phishing dell'IRS durante la stagione fiscale che sfruttano l'ansia da scadenza di dichiarazione",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["impersonificazione_normativa", "scadenza_conformità", "minacce_penalità", "richiesta_invio_urgente", "nessuna_verifica"]
+    },
+    {
+      "id": "scenario_5",
+      "title": "Truffa di Scadenza Contratto/Servizio Fornitore",
+      "description": "Gli attaccanti affermano di essere fornitori che avvertono di imminente scadenza del servizio a meno che non avvenga pagamento immediato o aggiornamento delle credenziali",
+      "attack_vector": "Comunicazioni false da fornitori su servizi, contratti o abbonamenti in scadenza",
+      "psychological_mechanism": "Avversione alle perdite (paura di interruzione del servizio) + preoccupazione per scarsità operativa + pressione di urgenza",
+      "historical_example": "Truffe di registrazione domini che dichiarano 'il dominio scade tra 48 ore' prendendo di mira proprietari di aziende",
+      "likelihood": "high",
+      "impact": "medium",
+      "detection_indicators": ["impersonificazione_fornitore", "avviso_scadenza", "minaccia_interruzione_servizio", "pagamento_o_credenziali_immediati", "nessuna_verifica_contratto"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-10",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-10",
+    "translator": "Claude (Anthropic)",
+    "research_basis": [
+      "Cialdini, R. (2007). Influence: The Psychology of Persuasion - Principio della Scarsità",
+      "Mani, A., Mullainathan, S., Shafir, E., & Zhao, J. (2013). Poverty Impedes Cognitive Function (Science) - La scarsità riduce la capacità cognitiva di 13-14 punti di QI",
+      "Shah, A. K., & Shafir, E. (2012). Scarcity Frames Value (Psychological Science) - Effetto tunnel e focus attentivo",
+      "Kahneman, D., & Tversky, A. (1979). Prospect Theory: Loss Aversion - Perdite ponderate 2,5x più dei guadagni",
+      "Mullainathan, S., & Shafir, E. (2013). Scarcity: Why Having Too Little Means So Much",
+      "Frederick, S., Loewenstein, G., & O'Donoghue, T. (2002). Time Discounting and Time Preference (Journal of Economic Literature) - Modelli di sconto iperbolico"
+    ],
+    "validation_status": "peer_reviewed",
+    "deployment_status": "production_ready"
+  }
+}
