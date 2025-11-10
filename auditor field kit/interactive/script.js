@@ -1366,7 +1366,7 @@ async function batchImportAndViewDashboard() {
             console.log('✅ Batch import completed:', result);
 
             // Open auditing dashboard in new tab
-            window.open('/dashboard_auditing.html', '_blank');
+            window.open('/dashboard/dashboard_auditing.html', '_blank');
 
         } else {
             throw new Error(result.error || 'Batch import failed');

@@ -17,7 +17,7 @@ Unified Node.js server for the CPF (Cognitive Persuasion Framework) Dashboard sy
 ### 1. Install Dependencies
 
 ```bash
-cd dashboard
+cd /path/to/CPF
 npm install
 ```
 
@@ -43,8 +43,8 @@ Server will start on **http://localhost:3000**
 
 | URL | Description |
 |-----|-------------|
-| `http://localhost:3000/dashboard.html` | SOC + Bayesian Analysis Dashboard |
-| `http://localhost:3000/dashboard_auditing.html` | Auditing Progress + Risk Analysis Dashboard |
+| `http://localhost:3000/dashboard/dashboard.html` | SOC + Bayesian Analysis Dashboard |
+| `http://localhost:3000/dashboard/dashboard_auditing.html` | Auditing Progress + Risk Analysis Dashboard |
 | `http://localhost:3000/client/cpf_client_json.html` | Field Kit Assessment Client |
 
 ### API Endpoints
@@ -80,8 +80,8 @@ Server will start on **http://localhost:3000**
    ```
 
 4. **View results:**
-   - Open `http://localhost:3000/dashboard_auditing.html`
-   - Or `http://localhost:3000/dashboard.html`
+   - Open `http://localhost:3000/dashboard/dashboard_auditing.html`
+   - Or `http://localhost:3000/dashboard/dashboard.html`
 
 ### Option B: Using Field Kit Client (Recommended)
 
