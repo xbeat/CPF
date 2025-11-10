@@ -1728,8 +1728,8 @@ async function loadExistingExport(indicatorId, orgId) {
     try {
         console.log(`📥 Loading existing export for ${orgId}/${indicatorId}...`);
 
-        // Fetch export from server
-        const response = await fetch(`/api/get-export/${orgId}/${indicatorId}`);
+        // Fetch export from server (using query parameters to handle dots in indicator_id)
+        const response = await fetch(`/api/get-export?org_id=${encodeURIComponent(orgId)}&indicator_id=${encodeURIComponent(indicatorId)}`);
 
         if (!response.ok) {
             if (response.status === 404) {
