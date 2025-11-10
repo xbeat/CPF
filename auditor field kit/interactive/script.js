@@ -1095,11 +1095,15 @@ async function exportToDashboard() {
         return;
     }
 
+    // Get organization name from metadata.client
+    const orgName = currentData.metadata.client;
+    if (!orgName || orgName.trim() === '') {
+        alert('❌ Error: Organization name (Client) is not set.\n\nPlease fill in the Client field in the metadata section before exporting.');
+        return;
+    }
+
     const orgId = prompt('Enter organization ID (e.g., org-001):', 'org-001');
     if (!orgId) return;
-
-    const orgName = prompt('Enter organization name:', currentData.metadata.client || 'Organization');
-    if (!orgName) return;
 
     // Convert Field Kit assessment to dashboard format
     const indicator = currentData.fieldKit.indicator;
@@ -1462,6 +1466,153 @@ async function generateSyntheticData() {
     } catch (error) {
         alert(`❌ Failed to generate synthetic data:\n\n${error.message}`);
     }
+}
+
+// ============================================
+// INDICATOR DETAILS MODAL
+// ============================================
+
+/**
+ * Show detailed information about the current indicator
+ */
+function showIndicatorDetails() {
+    if (!currentData.fieldKit) {
+        alert('❌ No indicator loaded.\n\nPlease load an indicator first before viewing details.');
+        return;
+    }
+
+    const fieldKit = currentData.fieldKit;
+    const modal = document.getElementById('indicator-details-modal');
+    const title = document.getElementById('indicator-details-title');
+    const content = document.getElementById('indicator-details-content');
+
+    title.textContent = `📄 Indicator ${fieldKit.indicator} - Details`;
+
+    // Render detailed information
+    let html = `
+        <div class="indicator-detail" style="max-width: 900px; margin: 0 auto;">
+            <!-- Title & Category -->
+            <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #e0e0e0;">
+                <h3 style="margin: 0 0 10px 0; font-size: 24px; color: #1a1a2e;">${fieldKit.title || 'N/A'}</h3>
+                <p style="font-size: 16px; color: #7f8c8d; margin-bottom: 15px;">${fieldKit.subtitle || ''}</p>
+                <div style="background: #f8f9fa; padding: 10px 15px; border-radius: 6px; display: inline-block;">
+                    <strong>Category:</strong> ${fieldKit.category || 'N/A'}
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div style="margin-bottom: 25px;">
+                <h4 style="color: #1a1a2e; margin-bottom: 10px; font-size: 18px;">📝 Description</h4>
+                <p style="line-height: 1.7; color: #2c3e50;">${fieldKit.description?.short || 'No description available'}</p>
+            </div>
+
+            ${fieldKit.description?.context ? `
+            <div style="margin-bottom: 25px;">
+                <h4 style="color: #1a1a2e; margin-bottom: 10px; font-size: 18px;">🌍 Context</h4>
+                <p style="line-height: 1.7; color: #2c3e50;">${fieldKit.description.context}</p>
+            </div>
+            ` : ''}
+
+            ${fieldKit.description?.impact ? `
+            <div style="margin-bottom: 25px;">
+                <h4 style="color: #1a1a2e; margin-bottom: 10px; font-size: 18px;">⚠️ Impact</h4>
+                <p style="line-height: 1.7; color: #2c3e50;">${fieldKit.description.impact}</p>
+            </div>
+            ` : ''}
+
+            ${fieldKit.description?.psychological_basis ? `
+            <div style="margin-bottom: 25px;">
+                <h4 style="color: #1a1a2e; margin-bottom: 10px; font-size: 18px;">🧠 Psychological Basis</h4>
+                <p style="line-height: 1.7; color: #2c3e50;">${fieldKit.description.psychological_basis}</p>
+            </div>
+            ` : ''}
+
+            ${fieldKit.risk_scenarios && fieldKit.risk_scenarios.length > 0 ? `
+            <div style="margin-bottom: 25px;">
+                <h4 style="color: #1a1a2e; margin-bottom: 15px; font-size: 18px;">🔥 Risk Scenarios</h4>
+                ${fieldKit.risk_scenarios.map((scenario, idx) => `
+                    <div style="background: #fff3cd; padding: 20px; border-left: 4px solid #f39c12; margin-bottom: 15px; border-radius: 6px;">
+                        <h5 style="margin: 0 0 10px 0; color: #856404; font-size: 16px;">
+                            ${scenario.title || 'Scenario ' + (idx + 1)}
+                        </h5>
+                        <p style="margin: 0 0 10px 0; line-height: 1.6; color: #856404;">
+                            ${scenario.description || ''}
+                        </p>
+                        ${scenario.likelihood ? `<p style="margin: 0; font-size: 14px;"><strong>Likelihood:</strong> ${scenario.likelihood}</p>` : ''}
+                        ${scenario.impact ? `<p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Impact:</strong> ${scenario.impact}</p>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+            ` : ''}
+
+            ${fieldKit.scoring && fieldKit.scoring.maturity_levels ? `
+            <div style="margin-bottom: 25px;">
+                <h4 style="color: #1a1a2e; margin-bottom: 15px; font-size: 18px;">📊 Maturity Levels</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                    ${Object.entries(fieldKit.scoring.maturity_levels).map(([level, data]) => {
+                        const bgColor = level === 'green' ? '#d4edda' : level === 'yellow' ? '#fff3cd' : '#f8d7da';
+                        const textColor = level === 'green' ? '#155724' : level === 'yellow' ? '#856404' : '#721c24';
+                        return `
+                            <div style="background: ${bgColor}; padding: 15px; border-radius: 8px;">
+                                <h5 style="margin: 0 0 10px 0; color: ${textColor}; text-transform: capitalize;">
+                                    ${level} (${data.score_range ? data.score_range.join(' - ') : 'N/A'})
+                                </h5>
+                                <p style="margin: 0; font-size: 14px; color: ${textColor}; line-height: 1.5;">
+                                    ${data.description || 'No description'}
+                                </p>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+            ` : ''}
+
+            ${fieldKit.remediation && fieldKit.remediation.actions ? `
+            <div style="margin-bottom: 25px;">
+                <h4 style="color: #1a1a2e; margin-bottom: 15px; font-size: 18px;">🛠️ Remediation Actions</h4>
+                <ul style="line-height: 1.8; color: #2c3e50; padding-left: 20px;">
+                    ${fieldKit.remediation.actions.map(action => `
+                        <li style="margin-bottom: 10px;">${action}</li>
+                    `).join('')}
+                </ul>
+            </div>
+            ` : ''}
+
+            <!-- Metadata -->
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                <h4 style="color: #1a1a2e; margin-bottom: 10px; font-size: 18px;">ℹ️ Metadata</h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div>
+                        <strong>Version:</strong> ${fieldKit.version || 'N/A'}
+                    </div>
+                    <div>
+                        <strong>Indicator:</strong> ${fieldKit.indicator}
+                    </div>
+                    ${fieldKit.metadata?.difficulty ? `
+                    <div>
+                        <strong>Difficulty:</strong> ${fieldKit.metadata.difficulty}
+                    </div>
+                    ` : ''}
+                    ${fieldKit.metadata?.time_to_assess ? `
+                    <div>
+                        <strong>Time to Assess:</strong> ${fieldKit.metadata.time_to_assess}
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+
+    content.innerHTML = html;
+    modal.style.display = 'flex';
+}
+
+/**
+ * Close indicator details modal
+ */
+function closeIndicatorDetails() {
+    const modal = document.getElementById('indicator-details-modal');
+    modal.style.display = 'none';
 }
 
 window.addEventListener('DOMContentLoaded', () => {
