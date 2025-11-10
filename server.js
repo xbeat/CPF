@@ -25,10 +25,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from dashboard folder
-app.use(express.static(path.join(__dirname)));
+app.use('/dashboard', express.static(path.join(__dirname, 'dashboard')));
 
 // Serve static files from auditor field kit
-app.use('/client', express.static(path.join(__dirname, '../auditor field kit/interactive')));
+app.use('/client', express.static(path.join(__dirname, 'auditor field kit/interactive')));
 
 // ============================================
 // API ENDPOINTS
@@ -40,7 +40,7 @@ app.use('/client', express.static(path.join(__dirname, '../auditor field kit/int
  */
 app.get('/api/organizations', (req, res) => {
   try {
-    const dataPath = path.join(__dirname, 'data/organizations.json');
+    const dataPath = path.join(__dirname, 'dashboard/data/organizations.json');
 
     if (!fs.existsSync(dataPath)) {
       return res.status(404).json({
@@ -62,7 +62,7 @@ app.get('/api/organizations', (req, res) => {
  */
 app.get('/api/auditing-results', (req, res) => {
   try {
-    const dataPath = path.join(__dirname, 'data/auditing_results.json');
+    const dataPath = path.join(__dirname, 'dashboard/data/auditing_results.json');
 
     if (!fs.existsSync(dataPath)) {
       return res.status(404).json({
@@ -84,7 +84,7 @@ app.get('/api/auditing-results', (req, res) => {
  */
 app.get('/api/list-exports', (req, res) => {
   try {
-    const exportsPath = path.join(__dirname, '../field_kit_exports');
+    const exportsPath = path.join(__dirname, 'field_kit_exports');
 
     if (!fs.existsSync(exportsPath)) {
       return res.json({ files: [], count: 0 });
@@ -116,7 +116,7 @@ app.get('/api/list-exports', (req, res) => {
  */
 app.post('/api/batch-import', (req, res) => {
   try {
-    const folderPath = req.body.folderPath || path.join(__dirname, '../field_kit_exports');
+    const folderPath = req.body.folderPath || path.join(__dirname, 'field_kit_exports');
 
     console.log(`\n🔧 [API] Batch import requested for: ${folderPath}`);
 
@@ -146,14 +146,14 @@ app.post('/api/batch-import', (req, res) => {
     console.log(`   Found ${files.length} export files`);
 
     // Execute batch import script
-    const scriptPath = path.join(__dirname, 'scripts/batch_import.js');
+    const scriptPath = path.join(__dirname, 'dashboard/scripts/batch_import.js');
     const command = `node "${scriptPath}" "${folderPath}"`;
 
     console.log(`   Executing: ${command}`);
 
     const output = execSync(command, {
       encoding: 'utf8',
-      cwd: __dirname
+      cwd: path.join(__dirname, 'dashboard')
     });
 
     console.log(`   ✅ Import completed successfully\n`);
@@ -188,7 +188,7 @@ app.post('/api/generate-synthetic', (req, res) => {
   try {
     console.log('\n🔧 [API] Generating synthetic Field Kit assessments...');
 
-    const scriptPath = path.join(__dirname, 'scripts/generate_field_kit_assessments.js');
+    const scriptPath = path.join(__dirname, 'dashboard/scripts/generate_field_kit_assessments.js');
 
     // Execute generator script
     const output = execSync(`node "${scriptPath}"`, {
@@ -226,9 +226,9 @@ app.listen(PORT, () => {
   console.log(`📡 Server listening on: http://localhost:${PORT}\n`);
   console.log('📂 Available endpoints:\n');
   console.log('   🌐 Dashboards:');
-  console.log(`      → http://localhost:${PORT}/dashboard.html`);
+  console.log(`      → http://localhost:${PORT}/dashboard/dashboard.html`);
   console.log(`        (SOC + Bayesian Analysis Dashboard)`);
-  console.log(`      → http://localhost:${PORT}/dashboard_auditing.html`);
+  console.log(`      → http://localhost:${PORT}/dashboard/dashboard_auditing.html`);
   console.log(`        (Auditing Progress + Risk Analysis Dashboard)`);
   console.log(`      → http://localhost:${PORT}/client/cpf_client_json.html`);
   console.log(`        (Field Kit Assessment Client)\n`);
