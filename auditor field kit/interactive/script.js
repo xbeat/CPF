@@ -1721,7 +1721,141 @@ function closeIndicatorDetails() {
     modal.style.display = 'none';
 }
 
+/**
+ * Load existing export from server (edit mode)
+ */
+async function loadExistingExport(indicatorId, orgId) {
+    try {
+        console.log(`📥 Loading existing export for ${orgId}/${indicatorId}...`);
+
+        // Fetch export from server
+        const response = await fetch(`/api/get-export/${orgId}/${indicatorId}`);
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                alert(`⚠️ Export not found for ${orgId}/${indicatorId}. Loading empty form.`);
+                loadIndicatorFromReference(indicatorId);
+                return;
+            }
+            throw new Error(`Failed to load export: ${response.status}`);
+        }
+
+        const result = await response.json();
+        const exportData = result.data;
+
+        console.log('✅ Export loaded:', exportData);
+
+        // First, load the Field Kit JSON from GitHub
+        const [categoryNum, indicatorNum] = indicatorId.split('.');
+        const categoryName = getCategoryName(categoryNum);
+        const langSelect = document.getElementById('lang-select');
+        const lang = langSelect ? langSelect.value : 'EN';
+        const langCode = lang === 'IT' ? 'it-IT' : 'en-US';
+
+        const url = `en-US/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
+
+        const fieldKitResponse = await fetch(url);
+        if (!fieldKitResponse.ok) {
+            throw new Error(`Failed to load Field Kit JSON: ${fieldKitResponse.status}`);
+        }
+
+        const fieldKit = await fieldKitResponse.json();
+
+        // Render Field Kit UI
+        renderFieldKit(fieldKit);
+
+        // Now populate with existing data from export
+        currentData.metadata = exportData.indicator_data.metadata || currentData.metadata;
+        currentData.fieldKit = fieldKit;
+
+        // Populate maturity scores
+        if (exportData.indicator_data.maturity_scores) {
+            currentData.scores = exportData.indicator_data.maturity_scores;
+        }
+
+        // Populate risk assessments
+        if (exportData.indicator_data.risk_assessments) {
+            currentData.assessments = exportData.indicator_data.risk_assessments;
+        }
+
+        // Populate notes
+        if (exportData.indicator_data.notes) {
+            const notesTextarea = document.getElementById('notes');
+            if (notesTextarea) {
+                notesTextarea.value = exportData.indicator_data.notes;
+            }
+        }
+
+        // Re-render to show loaded data
+        renderFieldKit(fieldKit);
+
+        // Save to localStorage
+        localStorage.setItem('cpf_current', JSON.stringify(currentData));
+
+        alert(`✅ Loaded existing assessment for ${exportData.organization_name}`);
+
+    } catch (error) {
+        console.error('Error loading existing export:', error);
+        alert(`❌ Error loading existing assessment: ${error.message}\n\nLoading empty form instead.`);
+        loadIndicatorFromReference(indicatorId);
+    }
+}
+
+/**
+ * Get category name from category number
+ */
+function getCategoryName(categoryNum) {
+    const categoryMap = {
+        '1': 'authority',
+        '2': 'temporal',
+        '3': 'social',
+        '4': 'affective',
+        '5': 'cognitive',
+        '6': 'group',
+        '7': 'stress',
+        '8': 'unconscious',
+        '9': 'ai',
+        '10': 'convergent'
+    };
+    return categoryMap[categoryNum] || 'unknown';
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+    // Check for URL parameters (e.g., from dashboard link)
+    const urlParams = new URLSearchParams(window.location.search);
+    const indicatorParam = urlParams.get('indicator');
+    const langParam = urlParams.get('lang');
+    const modeParam = urlParams.get('mode'); // 'edit' or 'new'
+    const orgIdParam = urlParams.get('org_id');
+
+    // Set language if provided in URL
+    if (langParam) {
+        const langSelect = document.getElementById('lang-select');
+        if (langSelect) {
+            // Convert ISO code (en-US) to uppercase short form (EN)
+            const shortLang = langParam.split('-')[0].toUpperCase();
+            langSelect.value = shortLang;
+        }
+    }
+
+    // Load specific indicator if provided in URL
+    if (indicatorParam) {
+        console.log(`🔗 Loading indicator ${indicatorParam} from URL (mode: ${modeParam || 'new'})`);
+
+        // Use setTimeout to ensure DOM is fully ready
+        setTimeout(async () => {
+            if (modeParam === 'edit' && orgIdParam) {
+                // Edit mode: load existing export from server
+                await loadExistingExport(indicatorParam, orgIdParam);
+            } else {
+                // New mode: load from GitHub as usual
+                loadIndicatorFromReference(indicatorParam);
+            }
+        }, 100);
+        return; // Skip localStorage loading
+    }
+
+    // Otherwise, restore from localStorage
     const saved = localStorage.getItem('cpf_current');
     if (saved) {
         currentData = JSON.parse(saved);
