@@ -110,12 +110,21 @@ app.get('/api/list-exports', (req, res) => {
 });
 
 /**
- * GET /api/get-export/:org_id/:indicator_id
+ * GET /api/get-export
  * Retrieves a specific export file for an organization and indicator
+ * Query params: org_id, indicator_id
  */
-app.get('/api/get-export/:org_id/:indicator_id', (req, res) => {
+app.get('/api/get-export', (req, res) => {
   try {
-    const { org_id, indicator_id } = req.params;
+    const { org_id, indicator_id } = req.query;
+
+    if (!org_id || !indicator_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required query parameters: org_id, indicator_id'
+      });
+    }
+
     const exportsPath = path.join(__dirname, 'field_kit_exports');
 
     if (!fs.existsSync(exportsPath)) {
@@ -125,12 +134,18 @@ app.get('/api/get-export/:org_id/:indicator_id', (req, res) => {
       });
     }
 
+    console.log(`\n🔍 [API] Looking for export: org_id=${org_id}, indicator_id=${indicator_id}`);
+
     // Find export file matching org_id and indicator_id
     // Filename pattern: dashboard_export_{org_id}_{indicator_id}_{timestamp}.json
     const files = fs.readdirSync(exportsPath)
       .filter(f => {
-        return f.startsWith(`dashboard_export_${org_id}_${indicator_id}_`) &&
+        const matches = f.startsWith(`dashboard_export_${org_id}_${indicator_id}_`) &&
                f.endsWith('.json');
+        if (matches) {
+          console.log(`   ✅ Found: ${f}`);
+        }
+        return matches;
       })
       .sort((a, b) => {
         // Sort by timestamp (most recent first)
@@ -140,6 +155,11 @@ app.get('/api/get-export/:org_id/:indicator_id', (req, res) => {
       });
 
     if (files.length === 0) {
+      console.log(`   ❌ No export found`);
+      console.log(`   Available files in directory:`);
+      const allFiles = fs.readdirSync(exportsPath).filter(f => f.endsWith('.json'));
+      allFiles.slice(0, 5).forEach(f => console.log(`      - ${f}`));
+
       return res.status(404).json({
         success: false,
         error: 'Export not found',
@@ -152,6 +172,8 @@ app.get('/api/get-export/:org_id/:indicator_id', (req, res) => {
     const filePath = path.join(exportsPath, files[0]);
     const exportData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
+    console.log(`   ✅ Loaded: ${files[0]}\n`);
+
     res.json({
       success: true,
       filename: files[0],
@@ -159,6 +181,7 @@ app.get('/api/get-export/:org_id/:indicator_id', (req, res) => {
     });
 
   } catch (error) {
+    console.error(`   ❌ Error: ${error.message}\n`);
     res.status(500).json({
       success: false,
       error: error.message
