@@ -707,34 +707,170 @@
             }
         }
 
-        function showIndicatorDetail(id, indicator) {
+        // Category mapping for GitHub URLs
+        const CATEGORY_MAP = {
+            '1': 'authority',
+            '2': 'temporal',
+            '3': 'social',
+            '4': 'affective',
+            '5': 'cognitive',
+            '6': 'group',
+            '7': 'stress',
+            '8': 'unconscious',
+            '9': 'ai',
+            '10': 'convergent'
+        };
+
+        async function showIndicatorDetail(id, indicator) {
             const modal = document.getElementById('indicator-modal');
-            document.getElementById('modal-indicator-title').textContent = `Indicator ${id} Detail`;
+            document.getElementById('modal-indicator-title').textContent = `Indicator ${id} - Quick Reference`;
 
             const socLatest = indicator.soc_values[indicator.soc_values.length - 1];
             const humanLatest = indicator.human_values[indicator.human_values.length - 1];
 
             const body = document.getElementById('modal-indicator-body');
+
+            // Show loading state
             body.innerHTML = `
-                <div class="indicator-detail">
-                    <div class="detail-row">
-                        <strong>Bayesian Merged Value:</strong> ${(indicator.current_bayesian * 100).toFixed(1)}%
-                    </div>
-                    <div class="detail-row">
-                        <strong>SOC Assessments:</strong> ${indicator.soc_values.length} data points
-                        ${socLatest ? `<br>Latest: ${(socLatest.value * 100).toFixed(1)}% (${new Date(socLatest.timestamp).toLocaleString()})` : ''}
-                    </div>
-                    <div class="detail-row">
-                        <strong>Human Assessments:</strong> ${indicator.human_values.length} audits
-                        ${humanLatest ? `<br>Latest: ${(humanLatest.value * 100).toFixed(1)}% by ${humanLatest.assessor} (${new Date(humanLatest.timestamp).toLocaleString()})` : ''}
-                    </div>
-                    <div class="detail-row">
-                        <strong>Last Updated:</strong> ${new Date(indicator.last_updated).toLocaleString()}
-                    </div>
+                <div style="text-align: center; padding: 40px;">
+                    <div class="spinner" style="margin: 0 auto 20px;"></div>
+                    <p>Loading Quick Reference from GitHub...</p>
                 </div>
             `;
 
             modal.style.display = 'block';
+
+            try {
+                // Construct GitHub URL
+                const [categoryNum, indicatorNum] = id.split('.');
+                const categoryName = CATEGORY_MAP[categoryNum];
+                const url = `https://raw.githubusercontent.com/xbeat/CPF/main/auditor%20field%20kit/interactive/en-US/${categoryNum}.x-${categoryName}/indicator_${id}.json`;
+
+                console.log('Fetching Quick Reference from:', url);
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Quick Reference not found`);
+                }
+
+                const fieldKit = await response.json();
+
+                // Render Quick Reference + Bayesian Data
+                body.innerHTML = `
+                    <div class="indicator-detail">
+                        <!-- Bayesian Stats -->
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <h3 style="margin: 0 0 15px 0; color: var(--primary);">📊 Bayesian Analysis</h3>
+                            <div class="detail-row">
+                                <strong>Merged Risk Value:</strong>
+                                <span style="font-size: 24px; color: ${indicator.current_bayesian > 0.66 ? 'var(--danger)' : indicator.current_bayesian > 0.33 ? 'var(--warning)' : 'var(--success)'}">
+                                    ${(indicator.current_bayesian * 100).toFixed(1)}%
+                                </span>
+                            </div>
+                            <div class="detail-row">
+                                <strong>SOC Assessments:</strong> ${indicator.soc_values.length} data points
+                                ${socLatest ? `<br><small>Latest: ${(socLatest.value * 100).toFixed(1)}% (${new Date(socLatest.timestamp).toLocaleString()})</small>` : ''}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Human Assessments:</strong> ${indicator.human_values.length} audits
+                                ${humanLatest ? `<br><small>Latest: ${(humanLatest.value * 100).toFixed(1)}% by ${humanLatest.assessor} (${new Date(humanLatest.timestamp).toLocaleString()})</small>` : ''}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Last Updated:</strong> ${new Date(indicator.last_updated).toLocaleString()}
+                            </div>
+                        </div>
+
+                        <!-- Quick Reference -->
+                        <div>
+                            <h3 style="margin: 0 0 15px 0; color: var(--primary);">📚 Quick Reference</h3>
+
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: var(--secondary); margin-bottom: 10px;">Title</h4>
+                                <p style="font-size: 18px; font-weight: 600;">${fieldKit.title || 'N/A'}</p>
+                                <p style="color: var(--text-light);">${fieldKit.subtitle || ''}</p>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: var(--secondary); margin-bottom: 10px;">Category</h4>
+                                <p>${fieldKit.category || 'N/A'}</p>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: var(--secondary); margin-bottom: 10px;">Description</h4>
+                                <p style="line-height: 1.6;">${fieldKit.description?.short || 'No description available'}</p>
+                            </div>
+
+                            ${fieldKit.description?.context ? `
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: var(--secondary); margin-bottom: 10px;">Context</h4>
+                                <p style="line-height: 1.6;">${fieldKit.description.context}</p>
+                            </div>
+                            ` : ''}
+
+                            ${fieldKit.description?.impact ? `
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: var(--secondary); margin-bottom: 10px;">Impact</h4>
+                                <p style="line-height: 1.6;">${fieldKit.description.impact}</p>
+                            </div>
+                            ` : ''}
+
+                            ${fieldKit.risk_scenarios && fieldKit.risk_scenarios.length > 0 ? `
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: var(--secondary); margin-bottom: 10px;">Risk Scenarios</h4>
+                                ${fieldKit.risk_scenarios.slice(0, 3).map((scenario, idx) => `
+                                    <div style="background: #fff3cd; padding: 15px; border-left: 4px solid var(--warning); margin-bottom: 10px;">
+                                        <strong>${scenario.title || 'Scenario ' + (idx + 1)}</strong>
+                                        <p style="margin-top: 5px;">${scenario.description || ''}</p>
+                                        ${scenario.likelihood ? `<small>Likelihood: ${scenario.likelihood}</small>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            ` : ''}
+
+                            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
+                                <a href="${url}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                                    📄 View Full Field Kit JSON on GitHub →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Error loading Quick Reference:', error);
+
+                // Fallback to basic info
+                body.innerHTML = `
+                    <div class="indicator-detail">
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <h3 style="margin: 0 0 15px 0; color: var(--primary);">📊 Bayesian Analysis</h3>
+                            <div class="detail-row">
+                                <strong>Merged Risk Value:</strong>
+                                <span style="font-size: 24px; color: ${indicator.current_bayesian > 0.66 ? 'var(--danger)' : indicator.current_bayesian > 0.33 ? 'var(--warning)' : 'var(--success)'}">
+                                    ${(indicator.current_bayesian * 100).toFixed(1)}%
+                                </span>
+                            </div>
+                            <div class="detail-row">
+                                <strong>SOC Assessments:</strong> ${indicator.soc_values.length} data points
+                                ${socLatest ? `<br><small>Latest: ${(socLatest.value * 100).toFixed(1)}% (${new Date(socLatest.timestamp).toLocaleString()})</small>` : ''}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Human Assessments:</strong> ${indicator.human_values.length} audits
+                                ${humanLatest ? `<br><small>Latest: ${(humanLatest.value * 100).toFixed(1)}% by ${humanLatest.assessor} (${new Date(humanLatest.timestamp).toLocaleString()})</small>` : ''}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Last Updated:</strong> ${new Date(indicator.last_updated).toLocaleString()}
+                            </div>
+                        </div>
+
+                        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
+                            <strong>⚠️ Quick Reference Not Available</strong>
+                            <p style="margin-top: 10px;">Could not load Quick Reference from GitHub: ${error.message}</p>
+                            <p style="margin-top: 10px;">The Field Kit JSON might not exist yet for this indicator.</p>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         function closeIndicatorModal() {
