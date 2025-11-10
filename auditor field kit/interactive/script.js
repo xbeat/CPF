@@ -1089,7 +1089,7 @@ function updateResponseWithAutoScore(id, value) {
 }
 
 // Export assessment to Dashboard format
-function exportToDashboard() {
+async function exportToDashboard() {
     if (!currentData.fieldKit || !currentScore) {
         alert('Please complete an assessment and calculate the score first');
         return;
@@ -1131,16 +1131,59 @@ function exportToDashboard() {
         }
     };
 
-    // Download as JSON
-    const blob = new Blob([JSON.stringify(dashboardExport, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `dashboard_export_${orgId}_${indicator}_${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+        // Save directly to server via API
+        console.log('💾 Saving export to server...');
 
-    alert(`✅ Assessment exported!\n\nFile: dashboard_export_${orgId}_${indicator}.json\n\nImport this file into the dashboard to merge with SOC data.`);
+        const response = await fetch('/api/save-export', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                exportData: dashboardExport
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert(
+                `✅ Assessment Saved Successfully!\n\n` +
+                `Organization: ${result.organization}\n` +
+                `Indicator: ${result.indicator}\n` +
+                `File: ${result.filename}\n\n` +
+                `The assessment has been saved to field_kit_exports/ and is ready for batch import.`
+            );
+            console.log('✅ Export saved:', result);
+        } else {
+            throw new Error(result.error || 'Save failed');
+        }
+
+    } catch (error) {
+        console.error('❌ Export error:', error);
+
+        // Fallback to browser download if server save fails
+        const fallback = confirm(
+            `❌ Server Save Failed\n\n` +
+            `Error: ${error.message}\n\n` +
+            `Would you like to download the file instead?\n` +
+            `(You'll need to manually move it to field_kit_exports/)`
+        );
+
+        if (fallback) {
+            // Download as JSON (fallback)
+            const blob = new Blob([JSON.stringify(dashboardExport, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dashboard_export_${orgId}_${indicator}_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            alert(`⚠️ File downloaded to your Downloads folder.\n\nPlease move it to field_kit_exports/ manually.`);
+        }
+    }
 }
 
 // Funzione:
