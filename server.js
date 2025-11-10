@@ -180,6 +180,68 @@ app.post('/api/batch-import', (req, res) => {
 });
 
 /**
+ * POST /api/save-export
+ * Saves Field Kit export directly to field_kit_exports folder
+ * Body: { exportData: object } - The complete export JSON
+ */
+app.post('/api/save-export', (req, res) => {
+  try {
+    const exportData = req.body.exportData;
+
+    if (!exportData) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing exportData in request body'
+      });
+    }
+
+    // Validate required fields
+    if (!exportData.organization_id || !exportData.indicator_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Export data must include organization_id and indicator_id'
+      });
+    }
+
+    // Create field_kit_exports folder if it doesn't exist
+    const exportsPath = path.join(__dirname, 'field_kit_exports');
+    if (!fs.existsSync(exportsPath)) {
+      fs.mkdirSync(exportsPath, { recursive: true });
+      console.log(`✅ Created field_kit_exports directory`);
+    }
+
+    // Generate filename
+    const timestamp = Date.now();
+    const filename = `dashboard_export_${exportData.organization_id}_${exportData.indicator_id}_${timestamp}.json`;
+    const filePath = path.join(exportsPath, filename);
+
+    // Save file
+    fs.writeFileSync(filePath, JSON.stringify(exportData, null, 2), 'utf8');
+
+    console.log(`\n📥 [API] Saved export: ${filename}`);
+    console.log(`   Organization: ${exportData.organization_name || exportData.organization_id}`);
+    console.log(`   Indicator: ${exportData.indicator_id}\n`);
+
+    res.json({
+      success: true,
+      message: 'Export saved successfully',
+      filename: filename,
+      path: filePath,
+      organization: exportData.organization_name || exportData.organization_id,
+      indicator: exportData.indicator_id
+    });
+
+  } catch (error) {
+    console.error(`   ❌ Save failed: ${error.message}\n`);
+
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * POST /api/generate-synthetic
  * Generates synthetic Field Kit export files
  * Body: { orgId, orgName, industry, size, auditor } (all optional)
@@ -236,6 +298,7 @@ app.listen(PORT, () => {
   console.log(`      GET  /api/organizations`);
   console.log(`      GET  /api/auditing-results`);
   console.log(`      GET  /api/list-exports`);
+  console.log(`      POST /api/save-export`);
   console.log(`      POST /api/batch-import`);
   console.log(`      POST /api/generate-synthetic\n`);
   console.log('⚙️  Press CTRL+C to stop the server\n');
