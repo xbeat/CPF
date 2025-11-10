@@ -556,21 +556,46 @@
 
                     const cell = document.createElement('div');
                     cell.className = `indicator-cell ${cellClass}`;
-                    cell.textContent = indicatorId;
-                    cell.title = `Indicator ${indicatorId} - Click for Quick Reference`;
 
-                    // Add onclick to show Quick Reference (works for both completed and missing indicators)
-                    if (organizationsData && organizationsData.organizations[currentOrgId]) {
-                        const indicator = organizationsData.organizations[currentOrgId].indicators[indicatorId];
-                        if (indicator) {
-                            // Completed indicator - edit mode
-                            cell.onclick = () => showIndicatorDetail(indicatorId, indicator, currentOrgId, 'edit');
-                        } else {
-                            // Missing indicator - new mode
-                            cell.title = `Indicator ${indicatorId} - Click to compile`;
-                            cell.style.opacity = '0.6';
-                            cell.onclick = () => showIndicatorDetail(indicatorId, null, currentOrgId, 'new');
-                        }
+                    // Number (large)
+                    const number = document.createElement('div');
+                    number.className = 'indicator-cell-number';
+                    number.textContent = indicatorId;
+
+                    // Actions (two buttons)
+                    const actions = document.createElement('div');
+                    actions.className = 'indicator-cell-actions';
+
+                    // Button 1: Info (Quick Reference)
+                    const infoBtn = document.createElement('button');
+                    infoBtn.className = 'indicator-cell-btn';
+                    infoBtn.textContent = 'ℹ️';
+                    infoBtn.title = 'Quick Reference';
+                    infoBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        const indicator = organizationsData?.organizations[currentOrgId]?.indicators[indicatorId];
+                        showIndicatorDetail(indicatorId, indicator, currentOrgId, isCompleted ? 'edit' : 'new');
+                    };
+
+                    // Button 2: Direct to Client
+                    const clientBtn = document.createElement('button');
+                    clientBtn.className = 'indicator-cell-btn';
+                    clientBtn.textContent = isCompleted ? '✏️' : '📝';
+                    clientBtn.title = isCompleted ? 'Modifica Scheda' : 'Compila Scheda';
+                    clientBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        const mode = isCompleted ? 'edit' : 'new';
+                        window.open(`/client/cpf_client_json.html?indicator=${indicatorId}&lang=en-US&mode=${mode}&org_id=${currentOrgId}`, '_blank');
+                    };
+
+                    actions.appendChild(infoBtn);
+                    actions.appendChild(clientBtn);
+
+                    cell.appendChild(number);
+                    cell.appendChild(actions);
+
+                    if (!isCompleted) {
+                        cell.style.opacity = '0.6';
                     }
 
                     grid.appendChild(cell);
