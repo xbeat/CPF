@@ -39,9 +39,56 @@ const CATEGORY_MAP = {
     '10': 'convergent'
 };
 
+// Category details for dropdown
+const CATEGORIES = [
+    { num: 1, name: 'authority', label: 'Authority-Based Vulnerabilities' },
+    { num: 2, name: 'temporal', label: 'Temporal Vulnerabilities' },
+    { num: 3, name: 'social', label: 'Social Influence Vulnerabilities' },
+    { num: 4, name: 'affective', label: 'Affective Vulnerabilities' },
+    { num: 5, name: 'cognitive', label: 'Cognitive Overload Vulnerabilities' },
+    { num: 6, name: 'group', label: 'Group Dynamic Vulnerabilities' },
+    { num: 7, name: 'stress', label: 'Stress Response Vulnerabilities' },
+    { num: 8, name: 'unconscious', label: 'Unconscious Process Vulnerabilities' },
+    { num: 9, name: 'ai', label: 'AI-Specific Bias Vulnerabilities' },
+    { num: 10, name: 'convergent', label: 'Critical Convergent States' }
+];
+
+// Language options
+const LANGUAGES = [
+    { code: 'EN', iso: 'en-US', label: 'English' },
+    { code: 'IT', iso: 'it-IT', label: 'Italiano' },
+    { code: 'ES', iso: 'es-ES', label: 'Español' },
+    { code: 'FR', iso: 'fr-FR', label: 'Français' },
+    { code: 'DE', iso: 'de-DE', label: 'Deutsch' }
+];
+
 async function loadJSON() {
-    const input = prompt('Enter indicator (format: X.Y-LANG or X.Y for en-US)\nExamples: 1.3-IT, 2.1-EN, 1.3');
-    if (!input) return;
+    // Priority order: manual input field > dropdowns > prompt
+    const manualInput = document.getElementById('indicator-input');
+    const langSelect = document.getElementById('lang-select');
+    const categorySelect = document.getElementById('category-select');
+    const indicatorSelect = document.getElementById('indicator-select');
+
+    let input;
+
+    // 1. Check manual input field first (highest priority)
+    if (manualInput && manualInput.value.trim()) {
+        input = manualInput.value.trim();
+        // Clear the input field after use
+        manualInput.value = '';
+    }
+    // 2. Use dropdown values if manual input is empty
+    else if (langSelect && categorySelect && indicatorSelect) {
+        const lang = langSelect.value;
+        const category = categorySelect.value;
+        const indicator = indicatorSelect.value;
+        input = `${category}.${indicator}-${lang}`;
+    }
+    // 3. Fallback to prompt (backward compatibility)
+    else {
+        input = prompt('Enter indicator (format: X.Y-LANG or X.Y for en-US)\nExamples: 1.3-IT, 2.1-EN, 1.3');
+        if (!input) return;
+    }
 
     try {
         let fetchUrl = input;
@@ -354,6 +401,8 @@ function renderItem(item, itemId) {
 
 function updateMeta(field, value) {
     currentData.metadata[field] = value;
+    // Auto-save immediately
+    autoSave();
 }
 
 function updateResponse(id, value) {
@@ -367,7 +416,7 @@ function updateResponse(id, value) {
             item.classList.remove('checked');
         }
     }
-    
+
     // Aggiorna anche le radio list con grafica checkbox
     const radioContainer = document.querySelector(`[data-item-id="${id}"]`);
     if (radioContainer) {
@@ -375,17 +424,27 @@ function updateResponse(id, value) {
         allOptions.forEach(item => {
             item.classList.remove('checked');
         });
-        
+
         const selectedOption = radioContainer.querySelector(`[data-value="${value}"]`);
         if (selectedOption) {
             selectedOption.classList.add('checked');
         }
     }
+
+    // Auto-save immediately
+    autoSave();
 }
 
 function saveData() {
     localStorage.setItem('cpf_current', JSON.stringify(currentData));
     alert('✅ Assessment saved to browser storage!');
+}
+
+function autoSave() {
+    if (currentData.fieldKit) {
+        localStorage.setItem('cpf_current', JSON.stringify(currentData));
+        console.log('✅ Auto-saved at', new Date().toLocaleTimeString());
+    }
 }
 
 function exportData() {
@@ -586,6 +645,9 @@ function selectRadioOption(itemId, value) {
             }
         }
     }
+
+    // Auto-save immediately
+    autoSave();
 
     // Trigger auto-calculation IMMEDIATELY (no lag)
     if (currentData.fieldKit && currentData.fieldKit.scoring) {
