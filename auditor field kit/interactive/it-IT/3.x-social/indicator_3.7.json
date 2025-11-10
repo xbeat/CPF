@@ -1,0 +1,998 @@
+{
+  "indicator": "3.7",
+  "title": "INDICATORE 3.7 FIELD KIT",
+  "subtitle": "Conformità alla Pressione dei Pari",
+  "category": "Vulnerabilità di Influenza Sociale",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Categoria 3.x",
+
+  "description": {
+    "short": "Misura la vulnerabilità alla pressione di conformità sociale in cui i dipendenti compromettono la sicurezza per allinearsi al comportamento dei pari o evitare il rifiuto del gruppo",
+    "context": "Quando i dipendenti osservano colleghi che bypassano i controlli di sicurezza o ricevono pressione dai pari per conformarsi a richieste discutibili, spesso si conformano al comportamento del gruppo anche quando viola la politica di sicurezza. Gli esperimenti di conformità di Asch dimostrano che il 75% dei soggetti si conforma almeno una volta al consenso di gruppo ovviamente errato, creando una vulnerabilità pre-cognitiva che gli attaccanti sfruttano attraverso social engineering amplificato dai pari.",
+    "impact": "Le organizzazioni con elevata suscettibilità alla pressione dei pari subiscono violazioni di sicurezza a cascata in cui un dipendente compromesso influenza altri a partecipare alla condivisione di credenziali, violazioni di politiche o minacce interne. Gli incidenti storici includono Target 2013 (pressione alla condivisione di credenziali tra appaltatori), Sony 2014 (pressione di scadenze normalizzò il bypass di sicurezza) e Anthem 2015 (conformità di non segnalazione abilitò compromissione persistente).",
+    "psychological_basis": "Studi di conformità di Asch (1951) - il 75% si conforma almeno una volta al consenso di gruppo errato. Teoria dell'Identità Sociale (Tajfel, 1979) - l'appartenenza al gruppo guida il comportamento rispetto al giudizio individuale. La neuroscienza rivela che il rifiuto sociale attiva la corteccia cingolata anteriore dorsale e l'insula anteriore - le stesse regioni che elaborano il dolore fisico (Eisenberger, 2003), rendendo il rifiuto dei pari neurologicamente equivalente alla minaccia fisica."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Punteggio_Finale = (w1 × Valutazione_Rapida + w2 × Profondità_Conversazione + w3 × Segnali_Allerta) × Moltiplicatore_Interdipendenza",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Esiste una forte cultura contro-normativa in cui la conformità alla sicurezza è il default sociale. I sistemi di segnalazione anonima prevengono la paura del rifiuto. Il processo decisionale individuale è esplicitamente protetto indipendentemente dal comportamento dei pari. La formazione regolare include il riconoscimento della pressione dei pari.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Qualche consapevolezza delle dinamiche di pressione dei pari ma protezioni incoerenti. Esistono sistemi di segnalazione ma potrebbero non sembrare veramente anonimi. Segnali misti su se sia valorizzato il giudizio individuale o la conformità di gruppo.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Forte cultura di conformità in cui 'integrarsi' è valorizzato rispetto al giudizio di sicurezza individuale. Nessun meccanismo di segnalazione anonima. La pressione dei pari per bypassare la sicurezza è normalizzata. I nuovi dipendenti vengono rapidamente socializzati in norme di non conformità.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_group_bypass": 0.16,
+      "q2_credential_sharing": 0.14,
+      "q3_new_employee": 0.12,
+      "q4_anonymous_reporting": 0.13,
+      "q5_peer_justification": 0.11,
+      "q6_social_consequences": 0.12,
+      "q7_counter_norm": 0.11,
+      "q8_ambiguous_situations": 0.11
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_3.7(t) = w1·R_3.7(t) + w2·A_3.7(t) + w3·B_3.7(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_3.7(t) = 1 se C_gruppo(t) > 0.4 E N_cascata > 3, altrimenti 0",
+          "description": "Rilevamento binario basato su violazioni di sicurezza a cascata all'interno di gruppi di pari",
+          "threshold": {
+            "C_group": 0.4,
+            "N_cascade": 3
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_3.7(t) = sqrt((x(t) - μ)ᵀ Σ⁻¹ (x(t) - μ))",
+          "description": "Distanza di Mahalanobis per pattern multivariati di influenza dei pari",
+          "variables": {
+            "x(t)": "vettore di osservazione [tasso_conformità_gruppo, clustering_temporale, prossimità_pari]",
+            "μ": "media di base dai dati storici del comportamento dei pari",
+            "Σ": "matrice di covarianza (media mobile ponderata esponenziale)"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_3.7(t) = P(influenzato_pari|fattori) = [P(fattori|influenzato_pari) × P(influenzato_pari)] / P(fattori)",
+          "factors": [
+            "clustering_temporale",
+            "appartenenza_team_condivisa",
+            "similarità_violazione",
+            "prossimità_rete_sociale",
+            "dimensione_gruppo"
+          ],
+          "priors": {
+            "P_independent": 0.70,
+            "P_peer_influenced": 0.30
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.3,
+        "w2_anomaly": 0.4,
+        "w3_bayesian": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_3.7(t) = α·D_3.7(t) + (1-α)·T_3.7(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200,
+        "description": "Smoothing esponenziale con costante di tempo di 2 ore per la propagazione dell'influenza dei pari"
+      }
+    },
+    "conformity_pressure_model": {
+      "formula": "P_conformità(n,u,r) = 1 / (1 + e^(-(α·n + β·u + γ·r)))",
+      "description": "Funzione logistica di conformità che modella la probabilità che l'individuo si conformi alla pressione dei pari",
+      "components": {
+        "n": "Numero di pari che mostrano comportamento non conforme (effetto dimensione gruppo Asch)",
+        "u": "Urgenza/ambiguità della situazione (influenza normativa vs informazionale)",
+        "r": "Punteggio di sensibilità al rifiuto (paura dell'individuo dell'esclusione sociale)",
+        "α": "Coefficiente dimensione gruppo (0.35)",
+        "β": "Coefficiente ambiguità situazionale (0.28)",
+        "γ": "Coefficiente sensibilità rifiuto (0.42)"
+      },
+      "interpretation": "La probabilità di conformità si avvicina al 75% con n≥3 pari e ambiguità moderata, corrispondendo ai risultati di Asch"
+    },
+    "peer_influence_propagation": {
+      "formula": "dI(t)/dt = β·S(t)·I(t)/N - γ·I(t)",
+      "description": "Modello epidemico SIS adattato per la diffusione di violazioni di sicurezza attraverso reti sociali",
+      "components": {
+        "S(t)": "Dipendenti suscettibili (conformi alla politica di sicurezza)",
+        "I(t)": "Dipendenti influenzati (impegnati in violazioni sotto pressione dei pari)",
+        "N": "Dimensione totale della popolazione",
+        "β": "Tasso di trasmissione (forza di influenza dei pari)",
+        "γ": "Tasso di recupero (ritorno alla conformità attraverso intervento)"
+      },
+      "steady_state": "I* = N(1 - γ/β) se β > γ, altrimenti I* = 0",
+      "interpretation": "Le violazioni a cascata raggiungono l'equilibrio endemico a meno che il tasso di intervento non superi il tasso di influenza"
+    },
+    "social_network_centrality": {
+      "formula": "C_influenza(i) = Σ(a_ij · v_j) / λ",
+      "description": "Centralità autovettoriale che identifica nodi ad alta influenza nella rete organizzativa",
+      "components": {
+        "a_ij": "Matrice di adiacenza (1 se i dipendenti i,j interagiscono regolarmente, 0 altrimenti)",
+        "v_j": "Punteggio di centralità del dipendente j",
+        "λ": "Autovalore più grande della matrice di adiacenza"
+      },
+      "interpretation": "I dipendenti con punteggi C_influenza elevati sono nodi di amplificazione della pressione dei pari"
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "interviste_dipendenti_comportamento_pari",
+        "osservazione_cultura_team",
+        "analisi_pattern_incidenti",
+        "revisione_onboarding_nuovi_dipendenti"
+      ],
+      "evidence_required": [
+        "documentazione_sistema_segnalazione_anonima",
+        "materiali_formazione_pressione_pari",
+        "registri_incidenti_condivisione_credenziali",
+        "artefatti_instaurazione_norme_team"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "log_autenticazione",
+          "fields": ["user_id", "timestamp", "metodo_accesso", "team_id", "posizione"],
+          "retention": "90_giorni"
+        },
+        {
+          "source": "log_violazioni_politiche",
+          "fields": ["user_id", "tipo_violazione", "timestamp", "team_id", "pari_presenti"],
+          "retention": "180_giorni"
+        },
+        {
+          "source": "log_piattaforma_collaborazione",
+          "fields": ["user_id", "partner_interazione", "timestamp", "tipo_comunicazione"],
+          "retention": "60_giorni"
+        }
+      ],
+      "optional": [
+        {
+          "source": "sistema_segnalazione_anonima",
+          "fields": ["id_segnalazione", "tipo_segnalazione", "timestamp", "dipartimento", "risoluzione"],
+          "retention": "365_giorni"
+        },
+        {
+          "source": "registri_completamento_formazione",
+          "fields": ["user_id", "tipo_formazione", "data_completamento", "punteggio_valutazione"],
+          "retention": "730_giorni"
+        },
+        {
+          "source": "organigramma",
+          "fields": ["user_id", "team_id", "manager_id", "relazioni_pari"],
+          "retention": "stato_corrente"
+        }
+      ],
+      "telemetry_mapping": {
+        "C_group": {
+          "calculation": "Tasso di conformità del gruppo - proporzione del team che mostra lo stesso comportamento di sicurezza",
+          "query": "SELECT (COUNT(DISTINCT user_id WHERE comportamento='non_conforme')/COUNT(DISTINCT user_id)) as C_gruppo FROM comportamenti WHERE team_id=? AND timestamp > NOW() - INTERVAL '4 ore' GROUP BY team_id"
+        },
+        "N_cascade": {
+          "calculation": "Conteggio di violazioni sequenziali all'interno della rete di pari nella finestra temporale",
+          "query": "SELECT COUNT(*) FROM violazioni v1 JOIN violazioni v2 ON v1.team_id=v2.team_id WHERE v2.timestamp > v1.timestamp AND v2.timestamp < v1.timestamp + INTERVAL '2 ore' AND v1.tipo_violazione = v2.tipo_violazione"
+        },
+        "temporal_clustering": {
+          "calculation": "Coefficiente di variazione per il timing delle violazioni all'interno dei team",
+          "query": "SELECT STDDEV(timestamp)/AVG(timestamp) FROM violazioni WHERE team_id=? AND timestamp > NOW() - INTERVAL '24 ore'"
+        }
+      }
+    },
+    "integration_apis": {
+      "active_directory": "LDAP - Appartenenza Team, Struttura Organizzativa, Relazioni Pari",
+      "collaboration_platforms": "API Slack/Teams - Pattern di Comunicazione, Interazioni Pari",
+      "incident_management": "API ServiceNow/Jira - Clustering Violazioni Sicurezza, Pattern Basati su Team",
+      "siem": "API Splunk/Sentinel - Correlazione Temporale, Analisi Rete Pari"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "2.1",
+        "name": "Bypass Indotto da Urgenza",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "La pressione temporale con presenza di gruppo massimizza la conformità (variazioni autorità Milgram)",
+        "formula": "P(3.7|2.1) = 0.75",
+        "evidence": "Le variazioni di Milgram mostrano che la pressione dei pari combinata con l'urgenza temporale aumenta la conformità al 92%"
+      },
+      {
+        "indicator": "3.1",
+        "name": "Pensiero di Gruppo",
+        "probability": 0.85,
+        "factor": 1.6,
+        "description": "I gruppi coesi amplificano la pressione di conformità e sopprimono il dissenso",
+        "formula": "P(3.7|3.1) = 0.85"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Risposta allo Stress Acuto",
+        "probability": 0.70,
+        "factor": 1.4,
+        "description": "Lo stress aumenta l'affidamento sulla prova sociale e sul comportamento dei pari",
+        "formula": "P(3.7|7.1) = 0.70"
+      },
+      {
+        "indicator": "6.2",
+        "name": "Pressione di Integrazione Nuovo Dipendente",
+        "probability": 0.80,
+        "factor": 1.5,
+        "description": "I nuovi membri sono particolarmente vulnerabili alla conformità dei pari per stabilire l'appartenenza al gruppo",
+        "formula": "P(3.7|nuovo_arrivato) = 0.80"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "3.2",
+        "name": "Sfruttamento della Prova Sociale",
+        "probability": 0.70,
+        "factor": 1.4,
+        "description": "La conformità dei pari crea falsa prova sociale per target successivi"
+      },
+      {
+        "indicator": "4.1",
+        "name": "Rischio Minaccia Interna",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "La pressione dei pari fa salire la partecipazione interna ad attività malevole"
+      },
+      {
+        "indicator": "1.3",
+        "name": "Suscettibilità all'Impersonificazione di Autorità",
+        "probability": 0.60,
+        "factor": 1.25,
+        "description": "La validazione dei pari rafforza la conformità con figure di autorità false"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["3.7", "3.1", "2.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) dove v_i = punteggio di vulnerabilità normalizzato",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 4.0,
+      "description": "Tempesta perfetta: Pressione dei pari + Pensiero di gruppo + Urgenza temporale = 400% di probabilità di violazione aumentata attraverso conformità a cascata",
+      "real_world_example": "Sony Pictures 2014 - La pressione di scadenza ha creato conformità dei pari attorno al bypass di sicurezza, abilitando movimento laterale"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["2.1", "3.1", "7.1", "6.2"],
+      "child_nodes": ["3.2", "4.1", "1.3"],
+      "conditional_probability_table": {
+        "P_3.7_base": 0.22,
+        "P_3.7_dato_urgenza": 0.48,
+        "P_3.7_dato_pensiero_gruppo": 0.55,
+        "P_3.7_dato_stress": 0.42,
+        "P_3.7_dato_tutti": 0.87
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_group_bypass",
+          "weight": 0.16,
+          "title": "Pattern di Bypass di Sicurezza di Gruppo",
+          "question": "Quando più membri del team vengono osservati bypassare i controlli di sicurezza (condividere credenziali, disabilitare protezioni, saltare procedure), cosa succede tipicamente?",
+          "options": [
+            {
+              "value": "intervention",
+              "score": 0,
+              "label": "L'organizzazione ha meccanismi per rilevare e intervenire nelle violazioni di sicurezza di gruppo prima che si propaghino ad altri dipendenti"
+            },
+            {
+              "value": "spreads",
+              "score": 1,
+              "label": "Le violazioni si diffondono ad altri membri del team che adottano gli stessi comportamenti non conformi"
+            }
+          ],
+          "evidence_required": "Esempi di incidenti recenti, protocolli di intervento, tracciamento influenza pari",
+          "soc_mapping": "metrica N_cascata dalla formula_rilevamento"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_credential_sharing",
+          "weight": 0.14,
+          "title": "Norme Sociali sulla Condivisione delle Credenziali",
+          "question": "Qual è la cultura organizzativa riguardo alla condivisione di credenziali o al prestito di account tra colleghi?",
+          "options": [
+            {
+              "value": "never",
+              "score": 0,
+              "label": "Mai accettata - Forte norma sociale contro la condivisione di credenziali rafforzata dai pari"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.5,
+              "label": "A volte tollerata - Messaggi contrastanti su se la condivisione di credenziali sia accettabile"
+            },
+            {
+              "value": "common",
+              "score": 1,
+              "label": "Comunemente praticata - Esiste pressione dei pari per condividere credenziali per 'efficienza del team'"
+            }
+          ],
+          "evidence_required": "Log di autenticazione che mostrano pattern di account condivisi, dati interviste dipendenti, documenti di politica",
+          "soc_mapping": "Pattern di utilizzo credenziali condivise dai log di autenticazione"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_new_employee",
+          "weight": 0.12,
+          "title": "Socializzazione alla Sicurezza dei Nuovi Dipendenti",
+          "question": "Quando i nuovi dipendenti si uniscono ai team, come apprendono le pratiche di sicurezza effettive (rispetto alle politiche scritte)?",
+          "options": [
+            {
+              "value": "formal",
+              "score": 0,
+              "label": "Onboarding formale con mentorship sulla sicurezza assicura che i nuovi dipendenti apprendano comportamenti conformi"
+            },
+            {
+              "value": "observe",
+              "score": 0.5,
+              "label": "I nuovi dipendenti osservano principalmente e imitano i comportamenti dei pari senza guida esplicita"
+            },
+            {
+              "value": "pressure",
+              "score": 1,
+              "label": "I pari fanno pressione esplicitamente sui nuovi dipendenti per bypassare i controlli di sicurezza per 'integrarsi' o 'lavorare efficientemente'"
+            }
+          ],
+          "evidence_required": "Documentazione onboarding, interviste nuovi dipendenti, pattern incidenti sicurezza primi 90 giorni",
+          "soc_mapping": "Correlazione tasso violazioni nuovi dipendenti con assegnazione team"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_anonymous_reporting",
+          "weight": 0.13,
+          "title": "Efficacia della Segnalazione Anonima",
+          "question": "I dipendenti possono segnalare anonimamente quando si sentono pressati dai pari a violare le politiche di sicurezza?",
+          "options": [
+            {
+              "value": "yes_effective",
+              "score": 0,
+              "label": "Sì - Esiste un sistema di segnalazione anonima, è fidato e ha esempi documentati di utilizzo senza ritorsioni"
+            },
+            {
+              "value": "exists_unused",
+              "score": 0.5,
+              "label": "Il sistema esiste ma i dipendenti non si fidano dell'anonimato o temono conseguenze sociali"
+            },
+            {
+              "value": "no",
+              "score": 1,
+              "label": "Nessun meccanismo di segnalazione anonima o i dipendenti non sono consapevoli che tale segnalazione sia possibile"
+            }
+          ],
+          "evidence_required": "Documentazione sistema segnalazione anonima, statistiche di utilizzo, esempi di risoluzione",
+          "soc_mapping": "Tasso di invio segnalazioni anonime e tracciamento risoluzione"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_peer_justification",
+          "weight": 0.11,
+          "title": "Giustificazione dei Pari per Violazioni di Sicurezza",
+          "question": "Quando vengono indagate le violazioni di sicurezza, con quale frequenza i dipendenti giustificano le loro azioni citando il comportamento dei pari?",
+          "options": [
+            {
+              "value": "never",
+              "score": 0,
+              "label": "Raramente/Mai - I dipendenti si assumono la responsabilità individuale per le decisioni di sicurezza"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.5,
+              "label": "A volte - Il comportamento dei pari viene menzionato come giustificazione parziale"
+            },
+            {
+              "value": "frequently",
+              "score": 1,
+              "label": "Frequentemente - 'Tutti gli altri lo fanno' è una giustificazione comune per le violazioni"
+            }
+          ],
+          "evidence_required": "Registri di indagini incidenti, pattern di giustificazione dipendenti, trascrizioni interviste",
+          "soc_mapping": "Analisi testuale dei report incidenti per linguaggio di giustificazione dei pari"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_social_consequences",
+          "weight": 0.12,
+          "title": "Conseguenze Sociali della Conformità alla Sicurezza",
+          "question": "Quali conseguenze sociali affrontano i dipendenti quando rifiutano di partecipare a violazioni di sicurezza sotto pressione dei pari?",
+          "options": [
+            {
+              "value": "positive",
+              "score": 0,
+              "label": "Rinforzo positivo - La conformità alla sicurezza è socialmente valorizzata e la non conformità non è tollerata dai pari"
+            },
+            {
+              "value": "neutral",
+              "score": 0.5,
+              "label": "Neutrale - Nessuna conseguenza sociale chiara in nessuna direzione"
+            },
+            {
+              "value": "negative",
+              "score": 1,
+              "label": "Conseguenze negative - I dipendenti segnalano rifiuto sociale, essere etichettati 'difficili' o attrito di team quando mantengono la conformità alla sicurezza"
+            }
+          ],
+          "evidence_required": "Risultati sondaggi dipendenti, dati interviste di uscita, documentazione valutazione culturale",
+          "soc_mapping": "Analisi sentiment dipendenti dalle piattaforme di collaborazione"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_counter_norm",
+          "weight": 0.11,
+          "title": "Instaurazione di Contro-Norme",
+          "question": "L'organizzazione ha stabilito contro-norme esplicite contro le violazioni di sicurezza sotto pressione dei pari?",
+          "options": [
+            {
+              "value": "yes",
+              "score": 0,
+              "label": "Sì - Politiche esplicite e formazione stabiliscono che il giudizio di sicurezza individuale prevale sulla pressione dei pari"
+            },
+            {
+              "value": "no",
+              "score": 1,
+              "label": "No - L'organizzazione si basa su politiche di sicurezza generali senza affrontare le dinamiche di pressione dei pari"
+            }
+          ],
+          "evidence_required": "Documentazione di politica che affronta esplicitamente la pressione dei pari, materiali di formazione sulla resistenza alla conformità",
+          "soc_mapping": "Tassi di completamento formazione per moduli di resistenza pressione pari"
+        },
+        {
+          "type": "radio-list",
+          "number": 8,
+          "id": "q8_ambiguous_situations",
+          "weight": 0.11,
+          "title": "Autorità Decisionale in Situazioni Ambigue",
+          "question": "In situazioni di sicurezza ambigue in cui l'azione corretta non è chiara, i dipendenti sono incoraggiati a fare giudizi individuali o a deferire al consenso di gruppo?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "Giudizio individuale incoraggiato - I dipendenti sono autorizzati a escalare o cercare guida autorevole piuttosto che seguire il consenso dei pari"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Segnali misti - A volte il giudizio individuale è valorizzato, a volte è atteso il consenso di gruppo"
+            },
+            {
+              "value": "consensus",
+              "score": 1,
+              "label": "Consenso di gruppo atteso - La cultura 'vai d'accordo con il team' domina le decisioni di sicurezza ambigue"
+            }
+          ],
+          "evidence_required": "Documentazione framework decisionale, esempi di gestione scenari ambigui, valutazione culturale",
+          "soc_mapping": "Tasso di escalation durante eventi di sicurezza ambigui vs tasso di risoluzione consenso-pari"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UNA opzione per ogni domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze devono essere documentate per il percorso di audit.",
+      "calculation": "Punteggio_Rapido = Σ(punteggio_domanda × peso_domanda) / Σ(peso_domanda)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Domande di Apertura",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Quando osserva più membri del team bypassare lo stesso controllo di sicurezza o condividere credenziali, cosa succede tipicamente? Questo comportamento si diffonde ad altri dipendenti?",
+              "scoring_guidance": {
+                "green": "Protocolli di intervento chiari attivati, esempi specifici di violazioni a cascata che vengono fermate",
+                "yellow": "Consapevole che le violazioni si diffondono ma nessun meccanismo di intervento sistematico",
+                "red": "Le violazioni di sicurezza si propagano regolarmente attraverso i team senza intervento"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può descrivere un incidente recente specifico in cui le violazioni di sicurezza si sono diffuse attraverso un team - qual era la violazione e quante persone l'hanno adottata?",
+                  "evidence_type": "esempio_specifico"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come rileva quando una violazione di sicurezza si sta diffondendo attraverso l'influenza dei pari rispetto a decisioni individuali indipendenti?",
+                  "evidence_type": "meccanismo_rilevamento"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Cosa succede quando i nuovi dipendenti si uniscono ai Suoi team? Come apprendono le pratiche di sicurezza effettive rispetto alle politiche scritte?",
+              "scoring_guidance": {
+                "green": "Mentorship di sicurezza strutturata con formazione esplicita contro-normativa, nuovi dipendenti protetti dalla pressione dei pari",
+                "yellow": "I nuovi dipendenti apprendono per osservazione senza guida esplicita sulla resistenza alla pressione dei pari",
+                "red": "I nuovi dipendenti sono esplicitamente pressati per adottare scorciatoie di sicurezza del team per 'integrarsi'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Ha osservato differenze nella conformità alla sicurezza tra dipendenti appena inseriti e i loro compagni di squadra esperti?",
+                  "evidence_type": "pattern_onboarding"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succederebbe se un nuovo dipendente rifiutasse di adottare scorciatoie di sicurezza che i suoi pari usano regolarmente?",
+                  "evidence_type": "conseguenza_sociale"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Ha meccanismi per consentire ai dipendenti di segnalare anonimamente quando si sentono pressati dai colleghi a violare le politiche di sicurezza?",
+              "scoring_guidance": {
+                "green": "Sistema di segnalazione anonima con utilizzo documentato, fidato dai dipendenti, nessuna storia di ritorsioni",
+                "yellow": "Il sistema esiste ma basso utilizzo dovuto a preoccupazioni sull'anonimato o paure sociali",
+                "red": "Nessuna segnalazione anonima o sistema non fidato dai dipendenti"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può mostrarci esempi di segnalazioni di pressione dei pari inviate e risolte senza identificare il segnalatore?",
+                  "evidence_type": "efficacia_sistema"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come fanno i dipendenti a sapere che possono segnalare la pressione dei pari senza conseguenze sociali?",
+                  "evidence_type": "comunicazione_fiducia"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Quando indaga sulle violazioni di sicurezza, con quale frequenza i dipendenti giustificano le loro azioni dicendo 'tutti gli altri lo fanno' o citando il comportamento dei pari?",
+              "scoring_guidance": {
+                "green": "Raro - i dipendenti si assumono la responsabilità individuale, la giustificazione dei pari è esplicitamente rifiutata",
+                "yellow": "Occasionale - il comportamento dei pari viene menzionato ma non accettato come scusa valida",
+                "red": "Frequente - 'tutti lo fanno' è una giustificazione comune e parzialmente accettata"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Ci mostri i registri di indagine in cui il comportamento dei pari è stato citato come giustificazione - come ha risposto?",
+                  "evidence_type": "artefatto_indagine"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Le Sue politiche affrontano esplicitamente se il comportamento dei pari costituisce giustificazione valida per le violazioni di sicurezza?",
+                  "evidence_type": "chiarezza_politica"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Dinamiche Culturali e Sociali",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Quali conseguenze sociali affrontano i dipendenti quando rifiutano di partecipare a scorciatoie o violazioni di sicurezza sotto pressione dei pari?",
+              "scoring_guidance": {
+                "green": "Rinforzo positivo per la conformità alla sicurezza, la resistenza alla pressione dei pari viene celebrata",
+                "yellow": "Neutrale - nessuna conseguenza chiara, la conformità né premiata né punita socialmente",
+                "red": "Conseguenze negative - rifiuto sociale, etichettati 'difficili', attrito di team per mantenere la conformità alla sicurezza"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Qualcuno nella Sua organizzazione ha mai segnalato di sentirsi socialmente isolato o rifiutato per aver rifiutato di partecipare a scorciatoie di sicurezza?",
+                  "evidence_type": "indicatore_culturale"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come riconosce e premia la Sua organizzazione i dipendenti che mantengono la conformità alla sicurezza nonostante la pressione dei pari?",
+                  "evidence_type": "sistema_riconoscimento"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Qual è la norma culturale effettiva nella Sua organizzazione riguardo alla condivisione di credenziali o al prestito di account tra colleghi?",
+              "scoring_guidance": {
+                "green": "Forte norma sociale contro la condivisione, i pari scoraggiano attivamente la condivisione di credenziali",
+                "yellow": "Misto - ufficialmente scoraggiato ma a volte tollerato informalmente",
+                "red": "Pratica normalizzata con pressione dei pari per condividere credenziali per 'efficienza'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Descriva l'ultima volta che qualcuno ha chiesto a un collega di condividere le credenziali - cosa è successo esattamente?",
+                  "evidence_type": "esempio_comportamentale"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "I log di autenticazione mostrano pattern di utilizzo di account condivisi? Come affronta questo?",
+                  "evidence_type": "evidenza_tecnica"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Formazione e Contro-Norme",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Quale formazione specifica ricevono i dipendenti sul riconoscimento e la resistenza alla pressione dei pari per violare le politiche di sicurezza?",
+              "scoring_guidance": {
+                "green": "Formazione dedicata alla resistenza alla pressione dei pari con educazione sull'esperimento di Asch, riconoscimento della conformità, script per rifiutare la pressione dei pari",
+                "yellow": "La consapevolezza generale della sicurezza menziona la pressione dei pari ma nessuna tecnica di resistenza specifica",
+                "red": "Nessuna formazione sulle dinamiche di pressione dei pari o vulnerabilità di conformità"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "I Suoi materiali di formazione fanno riferimento agli esperimenti di conformità di Asch o alla neuroscienza del rifiuto sociale?",
+                  "evidence_type": "profondità_formazione"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "I dipendenti possono praticare il rifiuto della pressione dei pari attraverso giochi di ruolo o simulazioni?",
+                  "evidence_type": "metodologia_formazione"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q8",
+              "text": "La Sua organizzazione ha stabilito contro-norme esplicite secondo cui il giudizio di sicurezza individuale prevale sul consenso dei pari?",
+              "scoring_guidance": {
+                "green": "Politiche esplicite e messaggistica visibile della leadership che stabilisce contro-norme contro la conformità alla pressione dei pari",
+                "yellow": "Esistono politiche generali ma non affrontano specificamente le dinamiche di pressione dei pari",
+                "red": "Nessuna contro-norma, o la cultura valorizza esplicitamente il consenso di gruppo rispetto al giudizio di sicurezza individuale"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Ci mostri il linguaggio delle politiche o le comunicazioni della leadership che affrontano esplicitamente la resistenza alla pressione dei pari.",
+                  "evidence_type": "artefatto_contro_norma"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "In situazioni di sicurezza ambigue, i dipendenti sono incoraggiati a fare giudizi individuali o a deferire al consenso di gruppo?",
+                  "evidence_type": "framework_decisionale"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Ricerca di Segnali di Allerta",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle politiche dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Tutti condividono le credenziali in questo team, è così che facciamo il lavoro...\"",
+              "severity": "critical",
+              "score_impact": 0.20,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"I nuovi dipendenti devono imparare le nostre pratiche effettive, non solo le politiche scritte...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Non vogliamo che i dipendenti si sentano isolati o esclusi dal team essendo troppo rigidi sulla sicurezza...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Se i compagni di squadra di qualcuno lo stanno facendo tutti, probabilmente c'è una buona ragione...\"",
+              "severity": "high",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Valorizziamo la coesione del team e la cooperazione rispetto alle preoccupazioni di sicurezza individuali...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Segnalare la pressione dei pari danneggerebbe le relazioni di team, quindi non lo incoraggiamo...\"",
+              "severity": "critical",
+              "score_impact": 0.17,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Durante la pressione di scadenze, l'intero team lavora insieme per aggirare gli ostacoli di sicurezza...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Punteggio_Conversazione = Media_Ponderata(punteggi_sottosezione) + Σ(impatti_segnali_allerta)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare scenari simulati di pressione dei pari trimestralmente per testare rilevamento e intervento",
+      "correlation_analysis": "Confrontare i punteggi di audit manuale con il rilevamento dell'influenza dei pari SOC (correlazione target > 0.80)",
+      "drift_detection": "Test di Kolmogorov-Smirnov sui pattern di clustering delle violazioni, ricalibrazione se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Garantire che le probabilità di influenza dei pari previste corrispondano alle frequenze di violazioni a cascata osservate",
+      "baseline_period": "60_giorni",
+      "recalibration_trigger": "Drift rilevato o punteggio di validazione < 0.70"
+    },
+    "success_metrics": [
+      {
+        "metric": "Tasso di Intervento su Violazioni a Cascata",
+        "formula": "% di violazioni influenzate dai pari rilevate in cui l'intervento ha prevenuto la diffusione ad altri dipendenti",
+        "baseline": "audit degli ultimi 90 giorni",
+        "target": "85% di tasso di intervento entro 90 giorni",
+        "measurement": "analisi automatizzata rete pari + revisione trimestrale"
+      },
+      {
+        "metric": "Socializzazione alla Sicurezza dei Nuovi Dipendenti",
+        "formula": "% di nuovi dipendenti che mantengono la conformità alla sicurezza nonostante la non conformità dei pari nei primi 90 giorni",
+        "baseline": "analisi iniziale coorte nuove assunzioni",
+        "target": "90% mantengono la conformità nella prima coorte",
+        "measurement": "tracciamento violazioni nuove assunzioni per primi 90 giorni"
+      },
+      {
+        "metric": "Utilizzo della Segnalazione Anonima",
+        "formula": "Numero di segnalazioni di pressione dei pari inviate anonimamente per trimestre",
+        "baseline": "media dei 4 trimestri precedenti",
+        "target": "aumento del 100% entro 2 trimestri (indica fiducia nel sistema)",
+        "measurement": "revisione trimestrale sistema segnalazione anonima"
+      },
+      {
+        "metric": "Tasso di Rifiuto della Giustificazione dei Pari",
+        "formula": "% di violazioni di sicurezza in cui la giustificazione 'tutti lo fanno' viene esplicitamente rifiutata nell'indagine",
+        "baseline": "revisione delle indagini sugli incidenti degli ultimi 6 mesi",
+        "target": "100% di tasso di rifiuto entro 60 giorni",
+        "measurement": "audit mensile delle indagini sugli incidenti"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Formazione sul Riconoscimento della Pressione dei Pari",
+        "description": "Educare i dipendenti sulle dinamiche di conformità di Asch, neuroscienza del rifiuto sociale e tecniche specifiche per resistere alla pressione dei pari mantenendo le relazioni",
+        "implementation": "Moduli di formazione che coprono: (1) Esperimento di Asch e tasso di conformità del 75%, (2) Neuroscienza del dolore sociale, (3) Script di rifiuto rispettoso, (4) Riconoscimento dell'influenza informazionale vs normativa, (5) Validazione del giudizio individuale",
+        "technical_controls": "Piattaforma di formazione con simulazioni di giochi di ruolo, pratica scenari pressione pari, tracciamento valutazione",
+        "roi": "380% medio entro 12 mesi",
+        "effort": "basso",
+        "timeline": "30 giorni iniziale, aggiornamenti trimestrali"
+      },
+      {
+        "id": "sol_2",
+        "title": "Sistema di Segnalazione Anonima",
+        "description": "Distribuire meccanismo di segnalazione anonima fidato specificamente per incidenti di pressione dei pari con politiche garantite di non ritorsione",
+        "implementation": "Hotline o piattaforma di segnalazione anonima di terze parti, categoria esplicita di segnalazione pressione pari, protocollo di risposta rapida, comunicazione regolare che rafforza le garanzie di anonimato",
+        "technical_controls": "Piattaforma di segnalazione anonima (ad es. EthicsPoint, Navex), tracciamento invii, documentazione risoluzione senza identificazione segnalatore",
+        "roi": "290% medio entro 18 mesi",
+        "effort": "medio",
+        "timeline": "45 giorni di distribuzione + comunicazione continua"
+      },
+      {
+        "id": "sol_3",
+        "title": "Instaurazione di Contro-Norme",
+        "description": "Creare norme organizzative esplicite secondo cui il giudizio di sicurezza individuale prevale sul consenso dei pari, con modellazione visibile della leadership",
+        "implementation": "Politica che dichiara esplicitamente che il comportamento dei pari non giustifica violazioni, messaggistica della leadership che celebra la resistenza alla pressione dei pari, riconoscimento visibile per dipendenti che mantengono la conformità nonostante la pressione di gruppo",
+        "technical_controls": "Aggiornamenti documentazione politiche, template comunicazione leadership, tracciamento programma riconoscimento",
+        "roi": "340% medio entro 18 mesi",
+        "effort": "basso",
+        "timeline": "30 giorni aggiornamenti politiche + rinforzo culturale continuo"
+      },
+      {
+        "id": "sol_4",
+        "title": "Rilevamento di Violazioni a Cascata",
+        "description": "Implementare rilevamento automatizzato di violazioni di sicurezza che si diffondono attraverso reti di pari con intervento precoce",
+        "implementation": "Regole SIEM che rilevano clustering temporale e di team di violazioni simili, alert automatizzati quando 2+ membri del team mostrano la stessa violazione entro finestra temporale, protocollo di intervento rapido prima che la cascata si diffonda",
+        "technical_controls": "Regole di correlazione SIEM utilizzando modello propagazione_influenza_pari, integrazione organigramma per appartenenza team, workflow intervento automatizzato",
+        "roi": "420% medio entro 12 mesi",
+        "effort": "alto",
+        "timeline": "60-90 giorni per integrazione SIEM"
+      },
+      {
+        "id": "sol_5",
+        "title": "Mentorship di Sicurezza per Nuovi Dipendenti",
+        "description": "Assegnare mentori di sicurezza ai nuovi dipendenti per contrastare la pressione dei pari durante il periodo vulnerabile di onboarding",
+        "implementation": "Accoppiare nuovi dipendenti con mentori consapevoli della sicurezza per i primi 90 giorni, modulo di onboarding esplicito sulla resistenza alla pressione dei pari, canale protetto per segnalare la pressione di conformità senza conseguenze sociali",
+        "technical_controls": "Tracciamento programma mentorship, monitoraggio violazioni nuovi dipendenti, check-in sicurezza a 30/60/90 giorni",
+        "roi": "310% medio entro 12 mesi",
+        "effort": "medio",
+        "timeline": "45 giorni progettazione programma + esecuzione continua"
+      },
+      {
+        "id": "sol_6",
+        "title": "Prevenzione Tecnica della Condivisione di Credenziali",
+        "description": "Distribuire controlli tecnici che prevengono la condivisione di credenziali a livello di infrastruttura",
+        "implementation": "Applicare l'utilizzo di account individuali attraverso MFA legato a dispositivi personali, rilevamento automatizzato di pattern di password condivise, monitoraggio viaggio impossibile e sessioni concorrenti, gestione accessi privilegiati per account di sistema condivisi",
+        "technical_controls": "Applicazione MFA, politica password che previene la condivisione (randomizzate, non memorizzabili), terminazione sessione concorrente, PAM per esigenze di accesso condiviso legittime",
+        "roi": "450% medio entro 12 mesi",
+        "effort": "alto",
+        "timeline": "60-90 giorni distribuzione infrastruttura"
+      },
+      {
+        "id": "sol_7",
+        "title": "Protocollo di Escalation per Situazioni Ambigue",
+        "description": "Stabilire percorsi di escalation chiari per decisioni di sicurezza ambigue per prevenire il default al consenso dei pari",
+        "implementation": "Hotline di guida alla sicurezza 24/7, alberi decisionali per scenari ambigui comuni, politica esplicita che l'escalation è preferita al consenso dei pari in situazioni poco chiare, SLA di risposta rapida per richieste di escalation",
+        "technical_controls": "Infrastruttura hotline sicurezza, chatbot di supporto decisionale, sistema di tracciamento escalation, monitoraggio tempo di risposta",
+        "roi": "270% medio entro 18 mesi",
+        "effort": "medio",
+        "timeline": "45-60 giorni"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_4"],
+      "high_value": ["sol_3", "sol_6"],
+      "cultural_foundation": ["sol_2", "sol_5"],
+      "support_systems": ["sol_7"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Cascata di Condivisione Credenziali",
+      "description": "Un dipendente condivide le credenziali per velocizzare il lavoro, creando pressione dei pari affinché altri facciano lo stesso. Il pattern si diffonde attraverso il team, normalizzando la condivisione di credenziali come pratica di team.",
+      "attack_vector": "Scorciatoia di sicurezza iniziale adottata da membro influente del team si diffonde attraverso prova sociale e pressione di conformità",
+      "psychological_mechanism": "Conformità di Asch (75% si conforma almeno una volta) + influenza normativa (desiderio di accettazione di gruppo)",
+      "historical_example": "Target 2013 - La condivisione di credenziali dell'appaltatore normalizzata all'interno dei team dei fornitori, abilitando movimento laterale dopo compromissione iniziale",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["pattern_credenziali_condivise", "clustering_temporale_stesso_team", "C_gruppo > 0.4", "N_cascata > 3"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Amplificazione Social Engineering",
+      "description": "L'attaccante compromette un dipendente, poi sfrutta la pressione dei pari facendo in modo che il dipendente compromesso incoraggi i colleghi a cliccare link malevoli o condividere informazioni",
+      "attack_vector": "Email di phishing inoltrata da collega fidato con messaggio 'Ho già fatto questo, dovresti farlo anche tu'",
+      "psychological_mechanism": "Prova sociale da pari fidato riduce la valutazione critica, pressione di conformità per corrispondere al comportamento dei pari",
+      "historical_example": "Sony Pictures 2014 - Successo iniziale di phishing amplificato attraverso inoltro dei pari e pressione di 'urgenza' dei pari durante la scadenza",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["phishing_inoltrato_pari", "clustering_temporale_clic", "pattern_compromissione_stesso_team"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Escalation Minaccia Interna",
+      "description": "L'insider malevolo recluta colleghi attraverso pressione dei pari, obbligo sociale o paura del rifiuto per partecipare a furto di dati o sabotaggio",
+      "attack_vector": "L'insider usa l'influenza sociale per espandere la cospirazione, sfruttando la sensibilità al rifiuto e la lealtà di gruppo",
+      "psychological_mechanism": "Attivazione del rifiuto sociale dei circuiti del dolore (Eisenberger 2003), lealtà intra-gruppo dalla Teoria dell'Identità Sociale",
+      "historical_example": "Anthem 2015 - Violazione prolungata abilitata in parte dalla conformità di non segnalazione quando i dipendenti osservavano attività sospette ma non segnalavano per evitare di apparire paranoici",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["accesso_sospetto_coordinato", "esfiltrazione_dati_rete_pari", "violazioni_politiche_gruppo"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Sfruttamento dell'Integrazione di Nuovi Dipendenti",
+      "description": "Gli attaccanti targetizzano nuovi dipendenti durante il periodo vulnerabile di onboarding, sfruttando l'aumento della pressione di conformità per stabilire l'appartenenza al gruppo",
+      "attack_vector": "Social engineering che targetizza nuove assunzioni con messaggistica 'questo è come facciamo le cose qui' da apparenti colleghi",
+      "psychological_mechanism": "I nuovi membri del gruppo mostrano un tasso di conformità dell'80% (più alto della baseline del 75%) dovuto alla pressione di integrazione e all'influenza informazionale",
+      "historical_example": "Molteplici campagne BEC che targetizzano specificamente dipendenti nei primi 90 giorni quando la pressione di conformità raggiunge il picco",
+      "likelihood": "high",
+      "impact": "medium",
+      "detection_indicators": ["nuovo_dipendente_targetizzato", "violazioni_periodo_onboarding", "compromissioni_primi_90_giorni"]
+    },
+    {
+      "id": "scenario_5",
+      "title": "Pressione dei Pari di Coordinazione in Crisi",
+      "description": "Durante incidenti di sicurezza o crisi aziendali, la pressione dei pari per 'muoversi velocemente' e 'lavorare tutti insieme' crea bypass di sicurezza a cascata",
+      "attack_vector": "Gli attaccanti sfruttano o creano situazioni di crisi sapendo che la pressione dei pari amplifica durante la pressione temporale e l'ambiguità",
+      "psychological_mechanism": "Pressione temporale (Indicatore 2.1) + presenza dei pari massimizza la conformità (variazioni autorità Milgram che mostrano 92% di conformità con pressione dei pari sotto urgenza)",
+      "historical_example": "Molteplici incidenti ransomware in cui la compromissione iniziale si è diffusa rapidamente a causa del bypass di sicurezza sotto pressione dei pari durante la risposta alla crisi",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["periodo_crisi_attivo", "bypass_sicurezza_coordinato", "clustering_temporale_durante_incidente"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-10",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-10",
+    "translator": "Claude (Anthropic)",
+    "research_basis": [
+      "Asch, S. E. (1951). Effects of group pressure upon the modification and distortion of judgments",
+      "Tajfel, H., & Turner, J. C. (1979). An integrative theory of intergroup conflict (Teoria dell'Identità Sociale)",
+      "Eisenberger, N. I., Lieberman, M. D., & Williams, K. D. (2003). Does rejection hurt? An fMRI study of social exclusion",
+      "Milgram, S. (1974). Obedience to Authority - Variazioni che mostrano effetti di influenza dei pari",
+      "Cialdini, R. B. (2007). Influence: The Psychology of Persuasion - Principio della Prova Sociale",
+      "Bond, R., & Smith, P. B. (1996). Culture and conformity: A meta-analysis of studies using Asch's line judgment task"
+    ],
+    "validation_status": "peer_reviewed",
+    "deployment_status": "production_ready"
+  }
+}
