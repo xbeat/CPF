@@ -1164,6 +1164,7 @@ function validateCurrentJSON() {
 // ============================================
 
 let referenceData = null;
+let loadedLanguage = null;
 
 async function showQuickReference() {
     const modal = document.getElementById('reference-modal');
@@ -1172,16 +1173,16 @@ async function showQuickReference() {
     // Show modal immediately
     modal.style.display = 'flex';
 
-    // If data is already loaded, just display it
-    if (referenceData) {
-        renderReferenceContent(content, referenceData);
-        return;
-    }
-
     // Load reference guide based on selected language
     const langSelect = document.getElementById('lang-select');
     const lang = langSelect ? langSelect.value : 'EN';
     const isoLang = LANG_MAP[lang] || 'en-US';
+
+    // If data is already loaded AND language hasn't changed, just display it
+    if (referenceData && loadedLanguage === isoLang) {
+        renderReferenceContent(content, referenceData);
+        return;
+    }
 
     try {
         content.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">Loading reference guide...</p>';
@@ -1192,6 +1193,7 @@ async function showQuickReference() {
         }
 
         referenceData = await response.json();
+        loadedLanguage = isoLang; // Save which language was loaded
         renderReferenceContent(content, referenceData);
     } catch (error) {
         console.error('Error loading reference guide:', error);
