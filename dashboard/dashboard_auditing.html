@@ -559,14 +559,17 @@
                     cell.textContent = indicatorId;
                     cell.title = `Indicator ${indicatorId} - Click for Quick Reference`;
 
-                    // Add onclick to show Quick Reference (only if indicator exists in organizationsData)
+                    // Add onclick to show Quick Reference (works for both completed and missing indicators)
                     if (organizationsData && organizationsData.organizations[currentOrgId]) {
                         const indicator = organizationsData.organizations[currentOrgId].indicators[indicatorId];
                         if (indicator) {
-                            cell.onclick = () => showIndicatorDetail(indicatorId, indicator);
+                            // Completed indicator - edit mode
+                            cell.onclick = () => showIndicatorDetail(indicatorId, indicator, currentOrgId, 'edit');
                         } else {
-                            cell.title = `Indicator ${indicatorId} - No data available yet`;
+                            // Missing indicator - new mode
+                            cell.title = `Indicator ${indicatorId} - Click to compile`;
                             cell.style.opacity = '0.6';
+                            cell.onclick = () => showIndicatorDetail(indicatorId, null, currentOrgId, 'new');
                         }
                     }
 
@@ -732,12 +735,13 @@
             '10': 'convergent'
         };
 
-        async function showIndicatorDetail(id, indicator) {
+        async function showIndicatorDetail(id, indicator, orgId, mode) {
             const modal = document.getElementById('indicator-modal');
-            document.getElementById('modal-indicator-title').textContent = `Indicator ${id} - Quick Reference`;
+            const titlePrefix = mode === 'edit' ? '✏️ Edit' : '📝 New';
+            document.getElementById('modal-indicator-title').textContent = `${titlePrefix} Indicator ${id} - Quick Reference`;
 
-            const socLatest = indicator.soc_values[indicator.soc_values.length - 1];
-            const humanLatest = indicator.human_values[indicator.human_values.length - 1];
+            const socLatest = indicator ? indicator.soc_values[indicator.soc_values.length - 1] : null;
+            const humanLatest = indicator ? indicator.human_values[indicator.human_values.length - 1] : null;
 
             const body = document.getElementById('modal-indicator-body');
 
@@ -766,9 +770,10 @@
 
                 const fieldKit = await response.json();
 
-                // Render Quick Reference + Bayesian Data
+                // Render Quick Reference + Bayesian Data (if available)
                 body.innerHTML = `
                     <div class="indicator-detail">
+                        ${indicator ? `
                         <!-- Bayesian Stats -->
                         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                             <h3 style="margin: 0 0 15px 0; color: var(--primary);">📊 Bayesian Analysis</h3>
@@ -790,6 +795,13 @@
                                 <strong>Last Updated:</strong> ${new Date(indicator.last_updated).toLocaleString()}
                             </div>
                         </div>
+                        ` : `
+                        <!-- Missing Indicator Notice -->
+                        <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--warning);">
+                            <h3 style="margin: 0 0 10px 0; color: var(--warning);">⚠️ Indicator Not Yet Compiled</h3>
+                            <p style="margin: 0;">This indicator has not been assessed yet. Click the button below to compile a new assessment.</p>
+                        </div>
+                        `}
 
                         <!-- Quick Reference -->
                         <div>
@@ -839,6 +851,11 @@
                             ` : ''}
 
                             <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
+                                <a href="/client/cpf_client_json.html?indicator=${id}&lang=en-US&mode=${mode}&org_id=${orgId}"
+                                   target="_blank"
+                                   style="display: inline-block; background: var(--primary); color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; margin-right: 15px;">
+                                    ${mode === 'edit' ? '✏️ Modifica Scheda' : '📝 Compila Nuova Scheda'}
+                                </a>
                                 <a href="${url}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">
                                     📄 View Full Field Kit JSON on GitHub →
                                 </a>
@@ -853,6 +870,7 @@
                 // Fallback to basic info
                 body.innerHTML = `
                     <div class="indicator-detail">
+                        ${indicator ? `
                         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                             <h3 style="margin: 0 0 15px 0; color: var(--primary);">📊 Bayesian Analysis</h3>
                             <div class="detail-row">
@@ -873,11 +891,25 @@
                                 <strong>Last Updated:</strong> ${new Date(indicator.last_updated).toLocaleString()}
                             </div>
                         </div>
+                        ` : `
+                        <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--warning);">
+                            <h3 style="margin: 0 0 10px 0; color: var(--warning);">⚠️ Indicator Not Yet Compiled</h3>
+                            <p style="margin: 0;">This indicator has not been assessed yet. Click the button below to compile a new assessment.</p>
+                        </div>
+                        `}
 
                         <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
                             <strong>⚠️ Quick Reference Not Available</strong>
                             <p style="margin-top: 10px;">Could not load Quick Reference from GitHub: ${error.message}</p>
                             <p style="margin-top: 10px;">The Field Kit JSON might not exist yet for this indicator.</p>
+                        </div>
+
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
+                            <a href="/client/cpf_client_json.html?indicator=${id}&lang=en-US&mode=${mode}&org_id=${orgId}"
+                               target="_blank"
+                               style="display: inline-block; background: var(--primary); color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
+                                ${mode === 'edit' ? '✏️ Modifica Scheda' : '📝 Compila Nuova Scheda'}
+                            </a>
                         </div>
                     </div>
                 `;
