@@ -1159,6 +1159,146 @@ function validateCurrentJSON() {
     }
 }
 
+// ============================================
+// QUICK REFERENCE GUIDE SYSTEM
+// ============================================
+
+let referenceData = null;
+
+async function showQuickReference() {
+    const modal = document.getElementById('reference-modal');
+    const content = document.getElementById('reference-content');
+
+    // Show modal immediately
+    modal.style.display = 'flex';
+
+    // If data is already loaded, just display it
+    if (referenceData) {
+        renderReferenceContent(content, referenceData);
+        return;
+    }
+
+    // Load reference guide based on selected language
+    const langSelect = document.getElementById('lang-select');
+    const lang = langSelect ? langSelect.value : 'EN';
+    const isoLang = LANG_MAP[lang] || 'en-US';
+
+    try {
+        content.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">Loading reference guide...</p>';
+
+        const response = await fetch(`reference_guide_${isoLang}.json`);
+        if (!response.ok) {
+            throw new Error(`Failed to load reference guide: ${response.status}`);
+        }
+
+        referenceData = await response.json();
+        renderReferenceContent(content, referenceData);
+    } catch (error) {
+        console.error('Error loading reference guide:', error);
+        content.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <p style="color: var(--danger); font-size: 18px; margin-bottom: 15px;">⚠️ Error Loading Reference Guide</p>
+                <p style="color: var(--text-light);">${error.message}</p>
+                <p style="color: var(--text-light); font-size: 14px; margin-top: 10px;">Please make sure the reference guide file exists.</p>
+            </div>
+        `;
+    }
+}
+
+function renderReferenceContent(container, data) {
+    let html = `
+        <div style="margin-bottom: 25px;">
+            <p style="font-size: 14px; color: var(--text-light); line-height: 1.6;">
+                ${data.description}
+            </p>
+        </div>
+    `;
+
+    data.categories.forEach(category => {
+        html += `
+            <div class="category-accordion">
+                <div class="category-header" onclick="toggleCategory(${category.id})">
+                    <div class="category-title">
+                        <span class="category-badge">${category.id}.x</span>
+                        <div style="flex: 1;">
+                            <div>${category.name}</div>
+                            <div class="category-description">${category.description}</div>
+                        </div>
+                    </div>
+                    <span class="category-arrow">▶</span>
+                </div>
+                <div class="category-body" id="category-${category.id}">
+                    <div class="indicator-list">
+                        ${category.indicators.map(indicator => `
+                            <div class="indicator-item" onclick="loadIndicatorFromReference('${indicator.id}')" title="Click to load this indicator">
+                                <span class="indicator-code">${indicator.id}</span>
+                                <span class="indicator-title">${indicator.title}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `
+        <div class="reference-footer">
+            <strong>${data.title}</strong> | Version ${data.version} | Language: ${data.language}<br>
+            <em style="font-size: 11px;">Click on any indicator to load it directly</em>
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
+
+function toggleCategory(categoryId) {
+    const header = event.currentTarget;
+    const body = document.getElementById(`category-${categoryId}`);
+
+    // Toggle active state
+    header.classList.toggle('active');
+    body.classList.toggle('active');
+}
+
+function loadIndicatorFromReference(indicatorId) {
+    // Parse indicator ID (e.g., "1.3" -> category=1, indicator=3)
+    const parts = indicatorId.split('.');
+    const category = parts[0];
+    const indicator = parts[1];
+
+    // Get current language
+    const langSelect = document.getElementById('lang-select');
+    const lang = langSelect ? langSelect.value : 'EN';
+
+    // Update UI controls
+    const categorySelect = document.getElementById('category-select');
+    const indicatorSelect = document.getElementById('indicator-select');
+
+    if (categorySelect) categorySelect.value = category;
+    if (indicatorSelect) indicatorSelect.value = indicator;
+
+    // Close modal
+    closeQuickReference();
+
+    // Load the indicator
+    loadJSON();
+}
+
+function closeQuickReference() {
+    const modal = document.getElementById('reference-modal');
+    modal.style.display = 'none';
+}
+
+// Close modal with ESC key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('reference-modal');
+        if (modal && modal.style.display === 'flex') {
+            closeQuickReference();
+        }
+    }
+});
+
 window.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('cpf_current');
     if (saved) {
