@@ -3,10 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPF Auditing Progress Dashboard</title>
+    <title>CPF Auditing Dashboard - Progress & Risk Analysis</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Additional styles for auditing dashboard */
+        /* Enhanced auditing dashboard styles */
+        .dashboard-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         .progress-container {
             background: white;
             border-radius: 12px;
@@ -209,185 +245,531 @@
     <div class="dashboard-container">
         <!-- Header -->
         <header class="dashboard-header">
-            <h1>📋 CPF Auditing Progress</h1>
-            <p class="subtitle">Field Kit Assessment Coverage Tracking</p>
+            <h1>📋 CPF Auditing Dashboard</h1>
+            <p class="subtitle">Field Kit Progress Tracking + Bayesian Risk Analysis</p>
         </header>
 
         <!-- Main Content -->
-        <div style="padding: 30px;">
-            <!-- Loading State -->
-            <div id="loading" class="loading">
-                <div class="spinner"></div>
-                <p>Loading auditing results...</p>
-            </div>
-
-            <!-- Content -->
-            <div id="content" style="display: none;">
-                <!-- Overall Summary -->
-                <div class="overall-summary">
-                    <h2 style="margin-bottom: 20px; font-weight: 300;">Overall Progress</h2>
-                    <div class="summary-grid" id="overall-summary">
-                        <!-- Populated by JS -->
-                    </div>
+        <div class="dashboard-main">
+            <!-- Sidebar: Organizations List -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2>Organizations</h2>
+                    <span id="org-count" class="badge">0</span>
                 </div>
-
-                <!-- Organizations Progress -->
-                <div id="organizations-container">
+                <div id="org-list" class="org-list">
                     <!-- Populated by JS -->
                 </div>
+            </aside>
+
+            <!-- Content Area -->
+            <main class="content">
+                <!-- Loading State -->
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading auditing data...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <h2>👋 Welcome to CPF Auditing Dashboard</h2>
+                    <p>Select an organization from the sidebar to view progress and risk analysis</p>
+                </div>
+
+                <!-- Organization Detail View -->
+                <div id="org-detail" class="org-detail" style="display: none;">
+                    <!-- Tabs -->
+                    <div class="dashboard-tabs">
+                        <button class="tab active" onclick="switchTab('progress')">📊 Progress Tracking</button>
+                        <button class="tab" onclick="switchTab('analysis')">🔬 Risk Analysis</button>
+                    </div>
+
+                    <!-- TAB 1: Progress Tracking -->
+                    <div id="tab-progress" class="tab-content active">
+                        <div class="progress-container">
+                            <div class="org-progress">
+                                <div class="org-header">
+                                    <div class="org-title" id="progress-org-name">Organization</div>
+                                    <div class="org-stats">
+                                        <div class="stat">
+                                            <span class="stat-label">Completed</span>
+                                            <span class="stat-value" id="progress-completed">0/100</span>
+                                        </div>
+                                        <div class="stat">
+                                            <span class="stat-label">Coverage</span>
+                                            <span class="stat-value" id="progress-percentage">0%</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="progress-bar-large">
+                                    <div class="progress-fill-large" id="progress-bar" style="width: 0%">0%</div>
+                                </div>
+
+                                <h4 style="margin: 20px 0 10px 0; font-size: 14px; color: var(--text-light);">Category Progress</h4>
+                                <div class="category-progress-grid" id="category-progress-grid">
+                                    <!-- Populated by JS -->
+                                </div>
+
+                                <h4 style="margin: 20px 0 10px 0; font-size: 14px; color: var(--text-light);">Indicator Completion Grid (100 total)</h4>
+                                <div class="indicator-completion-grid" id="indicator-completion-grid">
+                                    <!-- Populated by JS -->
+                                </div>
+
+                                <div id="missing-indicators-container">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Risk Analysis (Bayesian) -->
+                    <div id="tab-analysis" class="tab-content">
+                        <!-- Overall Risk Card -->
+                        <div class="risk-card">
+                            <div class="risk-score-section">
+                                <div class="risk-label">Overall Organizational Risk</div>
+                                <div class="risk-value" id="overall-risk-value">0%</div>
+                                <div class="risk-bar-container">
+                                    <div class="risk-bar-fill" id="overall-risk-bar"></div>
+                                </div>
+                            </div>
+                            <div class="risk-metadata">
+                                <div class="meta-item">
+                                    <span class="meta-label">Confidence</span>
+                                    <span class="meta-value" id="confidence-value">0%</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Trend</span>
+                                    <span class="meta-value trend" id="trend-value">-</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Last Updated</span>
+                                    <span class="meta-value" id="last-updated">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category Heatmap -->
+                        <section class="section">
+                            <h3 class="section-title">📊 Risk by Category</h3>
+                            <div id="category-heatmap" class="category-heatmap">
+                                <!-- Populated by JS -->
+                            </div>
+                        </section>
+
+                        <!-- Prioritization Table -->
+                        <section class="section">
+                            <h3 class="section-title">🎯 Prioritization Matrix</h3>
+                            <p class="section-desc">Categories ordered by priority for remediation (risk × weight + downstream impact)</p>
+                            <div class="table-container">
+                                <table id="prioritization-table" class="prioritization-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Category</th>
+                                            <th>Risk</th>
+                                            <th>Confidence</th>
+                                            <th>Priority Score</th>
+                                            <th>Downstream Impact</th>
+                                            <th>Recommendation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- SOC vs Human Convergence -->
+                        <section class="section">
+                            <h3 class="section-title">🔗 SOC vs Human Convergence</h3>
+                            <p class="section-desc">Comparison of machine (SOC) and human (auditor) assessments</p>
+                            <div id="convergence-chart" class="convergence-chart">
+                                <canvas id="convergence-canvas"></canvas>
+                            </div>
+                        </section>
+
+                        <!-- Indicator Grid (100 tiles) -->
+                        <section class="section">
+                            <h3 class="section-title">🔍 Indicator Matrix (100 Indicators)</h3>
+                            <p class="section-desc">Click any indicator for detailed breakdown</p>
+                            <div id="indicator-grid" class="indicator-grid">
+                                <!-- Populated by JS: 10x10 grid -->
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Indicator Detail Modal -->
+    <div id="indicator-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeIndicatorModal()">&times;</span>
+            <h2 id="modal-indicator-title">Indicator X.Y</h2>
+            <div id="modal-indicator-body">
+                <!-- Populated by JS -->
             </div>
         </div>
     </div>
 
+    <!-- Scripts -->
+    <script src="bayesian.js"></script>
+    <script src="visualizations.js"></script>
     <script>
+        // Global state
         let auditingData = null;
+        let organizationsData = null;
+        let currentOrgId = null;
 
+        // Load data on page load
         window.addEventListener('DOMContentLoaded', async () => {
-            await loadAuditingResults();
+            await loadAllData();
         });
 
-        async function loadAuditingResults() {
+        async function loadAllData() {
             try {
-                const response = await fetch('data/auditing_results.json');
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: File not found`);
+                // Load both auditing results and organizations data
+                const [auditingResp, orgsResp] = await Promise.all([
+                    fetch('/api/auditing-results'),
+                    fetch('/api/organizations')
+                ]);
+
+                if (!auditingResp.ok || !orgsResp.ok) {
+                    throw new Error('Failed to load data. Run batch import first.');
                 }
 
-                auditingData = await response.json();
+                auditingData = await auditingResp.json();
+                organizationsData = await orgsResp.json();
 
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('content').style.display = 'block';
-
-                renderOverallSummary();
-                renderOrganizations();
+                renderOrganizationsList();
+                document.getElementById('empty-state').style.display = 'block';
 
             } catch (error) {
                 document.getElementById('loading').innerHTML = `
                     <h2>⚠️ No Auditing Data Found</h2>
-                    <p>Run the batch import to generate auditing results:</p>
-                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-node scripts/batch_import.js path/to/field_kit_exports/</pre>
-                    <p>Or generate synthetic assessments first:</p>
-                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-node scripts/generate_field_kit_assessments.js</pre>
-                    <p style="color: var(--text-light); font-size: 14px; margin-top: 20px;">Error: ${error.message}</p>
+                    <p>${error.message}</p>
+                    <p>To generate data:</p>
+                    <ol style="text-align: left; margin: 20px auto; max-width: 600px;">
+                        <li>Generate synthetic Field Kit exports:<br>
+                            <code style="background: #f5f5f5; padding: 5px;">POST /api/generate-synthetic</code>
+                        </li>
+                        <li>Run batch import:<br>
+                            <code style="background: #f5f5f5; padding: 5px;">POST /api/batch-import</code>
+                        </li>
+                        <li>Or use the Field Kit Client to create assessments</li>
+                    </ol>
                 `;
             }
         }
 
-        function renderOverallSummary() {
-            const orgs = Object.values(auditingData.organizations);
+        function renderOrganizationsList() {
+            const orgList = document.getElementById('org-list');
+            const orgCount = document.getElementById('org-count');
 
-            const totalOrgs = orgs.length;
-            const totalIndicators = orgs.reduce((sum, org) => sum + org.coverage.completed, 0);
-            const totalPossible = orgs.length * 100;
-            const avgCompletion = (totalIndicators / totalPossible * 100).toFixed(1);
-            const avgRisk = (orgs.reduce((sum, org) => sum + org.average_risk, 0) / orgs.length * 100).toFixed(1);
+            const orgs = Object.entries(auditingData.organizations);
+            orgCount.textContent = orgs.length;
 
-            const container = document.getElementById('overall-summary');
-            container.innerHTML = `
-                <div class="summary-item">
-                    <div class="summary-value">${totalOrgs}</div>
-                    <div class="summary-label">Organizations</div>
-                </div>
-                <div class="summary-item">
-                    <div class="summary-value">${totalIndicators}</div>
-                    <div class="summary-label">Indicators Completed</div>
-                </div>
-                <div class="summary-item">
-                    <div class="summary-value">${avgCompletion}%</div>
-                    <div class="summary-label">Average Coverage</div>
-                </div>
-                <div class="summary-item">
-                    <div class="summary-value">${avgRisk}%</div>
-                    <div class="summary-label">Average Risk</div>
-                </div>
-            `;
+            orgList.innerHTML = '';
+
+            orgs.forEach(([orgId, org]) => {
+                const item = document.createElement('div');
+                item.className = 'org-item';
+                item.onclick = () => selectOrganization(orgId);
+
+                const coverage = parseInt(org.coverage.percentage);
+                const riskClass = org.average_risk > 0.66 ? 'high' :
+                    org.average_risk > 0.33 ? 'medium' : 'low';
+
+                item.innerHTML = `
+                    <div class="org-name">${org.name}</div>
+                    <div class="org-meta">
+                        <span class="org-industry">${coverage}% done</span>
+                        <span class="org-risk ${riskClass}">${(org.average_risk * 100).toFixed(0)}% risk</span>
+                    </div>
+                `;
+
+                orgList.appendChild(item);
+            });
         }
 
-        function renderOrganizations() {
-            const container = document.getElementById('organizations-container');
+        function selectOrganization(orgId) {
+            currentOrgId = orgId;
 
-            for (const [orgId, org] of Object.entries(auditingData.organizations)) {
-                const orgDiv = document.createElement('div');
-                orgDiv.className = 'progress-container';
+            // Update active state
+            document.querySelectorAll('.org-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget?.classList.add('active');
 
-                const coverage = org.coverage;
-                const percentage = coverage.percentage;
+            // Hide empty state, show detail
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('org-detail').style.display = 'block';
 
-                // Category progress
-                let categoryHTML = '';
-                for (const [catName, catCov] of Object.entries(coverage.byCategory)) {
-                    categoryHTML += `
-                        <div class="category-progress-item">
-                            <div class="category-name-small">${catName}</div>
-                            <div class="category-bar">
-                                <div class="category-bar-fill" style="width: ${catCov.percentage}%"></div>
-                            </div>
-                            <div class="category-stat">${catCov.completed}/${catCov.total} (${catCov.percentage}%)</div>
-                        </div>
-                    `;
+            // Render both tabs
+            renderProgressTab(orgId);
+            renderAnalysisTab(orgId);
+        }
+
+        function renderProgressTab(orgId) {
+            const org = auditingData.organizations[orgId];
+            const coverage = org.coverage;
+
+            document.getElementById('progress-org-name').textContent = org.name;
+            document.getElementById('progress-completed').textContent = `${coverage.completed}/${coverage.total}`;
+            document.getElementById('progress-percentage').textContent = coverage.percentage + '%';
+
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = coverage.percentage + '%';
+            progressBar.textContent = coverage.percentage + '%';
+
+            // Category progress
+            const categoryGrid = document.getElementById('category-progress-grid');
+            categoryGrid.innerHTML = '';
+
+            for (const [catName, catCov] of Object.entries(coverage.byCategory)) {
+                const item = document.createElement('div');
+                item.className = 'category-progress-item';
+                item.innerHTML = `
+                    <div class="category-name-small">${catName}</div>
+                    <div class="category-bar">
+                        <div class="category-bar-fill" style="width: ${catCov.percentage}%"></div>
+                    </div>
+                    <div class="category-stat">${catCov.completed}/${catCov.total} (${catCov.percentage}%)</div>
+                `;
+                categoryGrid.appendChild(item);
+            }
+
+            // Indicator completion grid
+            const grid = document.getElementById('indicator-completion-grid');
+            grid.innerHTML = '';
+
+            for (let cat = 1; cat <= 10; cat++) {
+                for (let ind = 1; ind <= 10; ind++) {
+                    const indicatorId = `${cat}.${ind}`;
+                    const isCompleted = coverage.completedList.includes(indicatorId);
+                    const cellClass = isCompleted ? 'completed' : 'missing';
+
+                    const cell = document.createElement('div');
+                    cell.className = `indicator-cell ${cellClass}`;
+                    cell.textContent = indicatorId;
+                    cell.title = `Indicator ${indicatorId}`;
+
+                    grid.appendChild(cell);
                 }
+            }
 
-                // Indicator grid
-                let gridHTML = '';
-                for (let cat = 1; cat <= 10; cat++) {
-                    for (let ind = 1; ind <= 10; ind++) {
-                        const indicatorId = `${cat}.${ind}`;
-                        const isCompleted = coverage.completedList.includes(indicatorId);
-                        const cellClass = isCompleted ? 'completed' : 'missing';
-
-                        gridHTML += `<div class="indicator-cell ${cellClass}" title="Indicator ${indicatorId}">${indicatorId}</div>`;
-                    }
-                }
-
-                // Missing indicators list
-                const missingHTML = coverage.missing > 0 ? `
+            // Missing indicators
+            const missingContainer = document.getElementById('missing-indicators-container');
+            if (coverage.missing > 0) {
+                missingContainer.innerHTML = `
                     <div class="missing-list">
                         <div class="missing-title">⚠️ Missing Indicators (${coverage.missing})</div>
                         <div class="missing-indicators">${coverage.missingList.join(', ')}</div>
                     </div>
-                ` : '<div style="background: #d4edda; border: 1px solid #28a745; border-radius: 8px; padding: 15px; margin-top: 15px; color: #155724; font-weight: 600;">✅ All indicators completed!</div>';
-
-                orgDiv.innerHTML = `
-                    <div class="org-progress">
-                        <div class="org-header">
-                            <div class="org-title">${org.name}</div>
-                            <div class="org-stats">
-                                <div class="stat">
-                                    <span class="stat-label">Completed</span>
-                                    <span class="stat-value">${coverage.completed}/${coverage.total}</span>
-                                </div>
-                                <div class="stat">
-                                    <span class="stat-label">Risk</span>
-                                    <span class="stat-value" style="color: ${org.average_risk > 0.66 ? 'var(--danger)' : org.average_risk > 0.33 ? 'var(--warning)' : 'var(--success)'}">${(org.average_risk * 100).toFixed(0)}%</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="progress-bar-large">
-                            <div class="progress-fill-large" style="width: ${percentage}%">
-                                ${percentage}%
-                            </div>
-                        </div>
-
-                        <h4 style="margin: 20px 0 10px 0; font-size: 14px; color: var(--text-light);">Category Progress</h4>
-                        <div class="category-progress-grid">
-                            ${categoryHTML}
-                        </div>
-
-                        <h4 style="margin: 20px 0 10px 0; font-size: 14px; color: var(--text-light);">Indicator Completion Grid (100 total)</h4>
-                        <div class="indicator-completion-grid">
-                            ${gridHTML}
-                        </div>
-
-                        ${missingHTML}
+                `;
+            } else {
+                missingContainer.innerHTML = `
+                    <div style="background: #d4edda; border: 1px solid #28a745; border-radius: 8px; padding: 15px; margin-top: 15px; color: #155724; font-weight: 600;">
+                        ✅ All indicators completed!
                     </div>
                 `;
-
-                container.appendChild(orgDiv);
             }
         }
+
+        function renderAnalysisTab(orgId) {
+            const orgData = organizationsData.organizations[orgId];
+
+            if (!orgData) {
+                console.error('Organization not found in organizations.json');
+                return;
+            }
+
+            // Run Bayesian analysis
+            const analysis = BAYESIAN.analyzeOrganization(orgData);
+
+            // Update overall risk card
+            const riskPct = (analysis.overall_risk * 100).toFixed(1);
+            document.getElementById('overall-risk-value').textContent = riskPct + '%';
+            document.getElementById('overall-risk-bar').style.width = riskPct + '%';
+
+            const riskClass = analysis.overall_risk > 0.66 ? 'high' :
+                analysis.overall_risk > 0.33 ? 'medium' : 'low';
+            document.getElementById('overall-risk-bar').className = `risk-bar-fill ${riskClass}`;
+
+            document.getElementById('confidence-value').textContent = (analysis.confidence * 100).toFixed(0) + '%';
+
+            const trendEl = document.getElementById('trend-value');
+            trendEl.textContent = analysis.trend;
+            trendEl.className = `meta-value trend ${analysis.trend}`;
+
+            const lastUpdated = new Date(analysis.last_calculated);
+            document.getElementById('last-updated').textContent = lastUpdated.toLocaleString();
+
+            // Render category heatmap
+            renderCategoryHeatmap(analysis.by_category);
+
+            // Render prioritization table
+            renderPrioritizationTable(analysis.prioritization);
+
+            // Render convergence chart
+            renderConvergenceChart(orgData);
+
+            // Render indicator grid
+            renderIndicatorGrid(orgData.indicators);
+        }
+
+        function renderCategoryHeatmap(categories) {
+            const container = document.getElementById('category-heatmap');
+            container.innerHTML = '';
+
+            const CATEGORY_NAMES = {
+                authority: 'Authority',
+                temporal: 'Temporal',
+                social: 'Social',
+                affective: 'Affective',
+                cognitive: 'Cognitive',
+                group: 'Group',
+                stress: 'Stress',
+                unconscious: 'Unconscious',
+                ai: 'AI',
+                convergent: 'Convergent'
+            };
+
+            Object.entries(categories).forEach(([name, data]) => {
+                const tile = document.createElement('div');
+                const risk = data.value;
+                const riskPct = (risk * 100).toFixed(0);
+
+                const riskClass = risk > 0.66 ? 'high' : risk > 0.33 ? 'medium' : 'low';
+
+                tile.className = `category-tile ${riskClass}`;
+                tile.innerHTML = `
+                    <div class="category-name">${CATEGORY_NAMES[name]}</div>
+                    <div class="category-risk">${riskPct}%</div>
+                    <div class="category-conf">conf: ${(data.confidence * 100).toFixed(0)}%</div>
+                `;
+
+                container.appendChild(tile);
+            });
+        }
+
+        function renderPrioritizationTable(priorities) {
+            const tbody = document.querySelector('#prioritization-table tbody');
+            tbody.innerHTML = '';
+
+            priorities.forEach((item, idx) => {
+                const row = document.createElement('tr');
+
+                const recClass = item.recommendation === 'critical' ? 'critical' :
+                    item.recommendation === 'review' ? 'review' : 'monitor';
+
+                row.innerHTML = `
+                    <td>${idx + 1}</td>
+                    <td><strong>${item.category.charAt(0).toUpperCase() + item.category.slice(1)}</strong></td>
+                    <td>${(item.risk * 100).toFixed(0)}%</td>
+                    <td>${(item.confidence * 100).toFixed(0)}%</td>
+                    <td><strong>${item.priority_score.toFixed(2)}</strong></td>
+                    <td>${item.downstream_impact.toFixed(2)}</td>
+                    <td><span class="recommendation ${recClass}">${item.recommendation}</span></td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderIndicatorGrid(indicators) {
+            const container = document.getElementById('indicator-grid');
+            container.innerHTML = '';
+
+            for (let cat = 1; cat <= 10; cat++) {
+                for (let ind = 1; ind <= 10; ind++) {
+                    const id = `${cat}.${ind}`;
+                    const indicator = indicators[id];
+
+                    if (indicator) {
+                        const tile = document.createElement('div');
+                        const risk = indicator.current_bayesian;
+                        const riskClass = risk > 0.66 ? 'high' : risk > 0.33 ? 'medium' : 'low';
+
+                        tile.className = `indicator-tile ${riskClass}`;
+                        tile.textContent = id;
+                        tile.title = `Indicator ${id}: ${(risk * 100).toFixed(0)}%`;
+                        tile.onclick = () => showIndicatorDetail(id, indicator);
+
+                        container.appendChild(tile);
+                    }
+                }
+            }
+        }
+
+        function showIndicatorDetail(id, indicator) {
+            const modal = document.getElementById('indicator-modal');
+            document.getElementById('modal-indicator-title').textContent = `Indicator ${id} Detail`;
+
+            const socLatest = indicator.soc_values[indicator.soc_values.length - 1];
+            const humanLatest = indicator.human_values[indicator.human_values.length - 1];
+
+            const body = document.getElementById('modal-indicator-body');
+            body.innerHTML = `
+                <div class="indicator-detail">
+                    <div class="detail-row">
+                        <strong>Bayesian Merged Value:</strong> ${(indicator.current_bayesian * 100).toFixed(1)}%
+                    </div>
+                    <div class="detail-row">
+                        <strong>SOC Assessments:</strong> ${indicator.soc_values.length} data points
+                        ${socLatest ? `<br>Latest: ${(socLatest.value * 100).toFixed(1)}% (${new Date(socLatest.timestamp).toLocaleString()})` : ''}
+                    </div>
+                    <div class="detail-row">
+                        <strong>Human Assessments:</strong> ${indicator.human_values.length} audits
+                        ${humanLatest ? `<br>Latest: ${(humanLatest.value * 100).toFixed(1)}% by ${humanLatest.assessor} (${new Date(humanLatest.timestamp).toLocaleString()})` : ''}
+                    </div>
+                    <div class="detail-row">
+                        <strong>Last Updated:</strong> ${new Date(indicator.last_updated).toLocaleString()}
+                    </div>
+                </div>
+            `;
+
+            modal.style.display = 'block';
+        }
+
+        function closeIndicatorModal() {
+            document.getElementById('indicator-modal').style.display = 'none';
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            // Redraw convergence chart if switching to analysis tab
+            if (tabName === 'analysis' && currentOrgId && organizationsData) {
+                const orgData = organizationsData.organizations[currentOrgId];
+                if (orgData) {
+                    setTimeout(() => renderConvergenceChart(orgData), 100);
+                }
+            }
+        }
+
+        // Close modal on outside click
+        window.onclick = function (event) {
+            const modal = document.getElementById('indicator-modal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        };
     </script>
 </body>
 </html>
