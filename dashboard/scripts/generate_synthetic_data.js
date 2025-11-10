@@ -150,6 +150,36 @@ function calculateBayesian(socValues, humanValues) {
   return totalWeight > 0 ? weightedSum / totalWeight : 0.5;
 }
 
+// Helper: Generate maturity scores (synthetic data)
+function generateMaturityScores() {
+  const maturityLevels = ['green', 'yellow', 'red'];
+  const scores = {};
+
+  // Generate random scores for maturity levels
+  for (let i = 0; i < 3; i++) {
+    const level = maturityLevels[i];
+    scores[`maturity_${level}`] = randomChoice(maturityLevels);
+  }
+
+  return scores;
+}
+
+// Helper: Generate risk assessments (synthetic data)
+function generateRiskAssessments(indicatorId) {
+  const scenarios = ['scenario_1', 'scenario_2', 'scenario_3'];
+  const assessments = {};
+
+  for (const scenario of scenarios) {
+    assessments[scenario] = {
+      likelihood: randomChoice(['low', 'medium', 'high']),
+      impact: randomChoice(['low', 'medium', 'high']),
+      notes: `DEMO -- DEMO Synthetic risk assessment for indicator ${indicatorId} ${scenario}`
+    };
+  }
+
+  return assessments;
+}
+
 // Generate all 100 indicators for an organization
 function generateIndicators(orgProfile) {
   const indicators = {};
@@ -176,7 +206,24 @@ function generateIndicators(orgProfile) {
         soc_values: socValues,
         human_values: humanValues,
         current_bayesian: parseFloat(currentBayesian.toFixed(3)),
-        last_updated: lastUpdated
+        last_updated: lastUpdated,
+        // ADDED: Full assessment data for edit mode
+        full_assessment: {
+          maturity_scores: generateMaturityScores(),
+          risk_assessments: generateRiskAssessments(id),
+          notes: `DEMO -- DEMO Synthetic assessment for ${orgProfile.name}, indicator ${id}. This is placeholder data for testing purposes.`,
+          metadata: {
+            client: orgProfile.name,
+            auditor: randomChoice(ASSESSORS),
+            date: lastUpdated,
+            version: '1.0-synthetic'
+          },
+          field_kit_reference: {
+            indicator: id,
+            title: `Indicator ${id}`,
+            category: CATEGORIES[category]
+          }
+        }
       };
     }
   }
