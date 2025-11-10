@@ -1301,6 +1301,126 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// ============================================
+// BATCH IMPORT & DASHBOARD INTEGRATION
+// ============================================
+
+/**
+ * Batch import all Field Kit exports and open auditing dashboard
+ * Calls server API to process all exports and view results
+ */
+async function batchImportAndViewDashboard() {
+    const confirmed = confirm(
+        '📊 Batch Import & View Dashboard\n\n' +
+        'This will:\n' +
+        '1. Import all Field Kit exports from the configured folder\n' +
+        '2. Update organizations.json and auditing_results.json\n' +
+        '3. Open the Auditing Dashboard to view results\n\n' +
+        'Continue?'
+    );
+
+    if (!confirmed) return;
+
+    try {
+        // Show loading indicator
+        const originalContent = document.querySelector('.toolbar').innerHTML;
+        const toolbar = document.querySelector('.toolbar');
+
+        const loadingMsg = document.createElement('div');
+        loadingMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 10000; text-align: center;';
+        loadingMsg.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 15px;">⚙️</div>
+            <h3 style="margin-bottom: 10px; color: #1a1a2e;">Batch Import in Progress...</h3>
+            <p style="color: #7f8c8d; margin-bottom: 20px;">Processing Field Kit exports</p>
+            <div class="spinner" style="margin: 0 auto;"></div>
+        `;
+        document.body.appendChild(loadingMsg);
+
+        // Call batch import API
+        console.log('🔧 Calling batch import API...');
+
+        const response = await fetch('/api/batch-import', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                folderPath: null // Use default folder (../field_kit_exports)
+            })
+        });
+
+        const result = await response.json();
+
+        // Remove loading indicator
+        document.body.removeChild(loadingMsg);
+
+        if (result.success) {
+            // Show success message
+            alert(
+                `✅ Batch Import Successful!\n\n` +
+                `Files processed: ${result.filesProcessed}\n` +
+                `Folder: ${result.folderPath}\n\n` +
+                `Opening Auditing Dashboard...`
+            );
+
+            console.log('✅ Batch import completed:', result);
+
+            // Open auditing dashboard in new tab
+            window.open('/dashboard_auditing.html', '_blank');
+
+        } else {
+            throw new Error(result.error || 'Batch import failed');
+        }
+
+    } catch (error) {
+        console.error('❌ Batch import error:', error);
+
+        alert(
+            `❌ Batch Import Failed\n\n` +
+            `Error: ${error.message}\n\n` +
+            `Please ensure:\n` +
+            `1. The server is running (http://localhost:3000)\n` +
+            `2. Field Kit export files exist in the configured folder\n` +
+            `3. The folder path is correct`
+        );
+    }
+}
+
+/**
+ * Generate synthetic data for testing (calls server API)
+ */
+async function generateSyntheticData() {
+    const confirmed = confirm(
+        '🔧 Generate Synthetic Data\n\n' +
+        'This will create 100 synthetic Field Kit assessment files ' +
+        'for testing purposes.\n\n' +
+        'Continue?'
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch('/api/generate-synthetic', {
+            method: 'POST'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert(
+                '✅ Synthetic Data Generated!\n\n' +
+                '100 Field Kit assessment files have been created.\n\n' +
+                'You can now use "Batch Import & View Dashboard" to process them.'
+            );
+        } else {
+            throw new Error(result.error);
+        }
+
+    } catch (error) {
+        alert(`❌ Failed to generate synthetic data:\n\n${error.message}`);
+    }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('cpf_current');
     if (saved) {
