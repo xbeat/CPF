@@ -1088,6 +1088,77 @@ function updateResponseWithAutoScore(id, value) {
     }
 }
 
+/**
+ * Generate a URL-friendly slug from organization name
+ * Example: "Acme Corporation Ltd." → "acme-corporation-ltd"
+ */
+function generateSlug(name) {
+    return name
+        .toLowerCase()
+        .trim()
+        // Remove special characters except spaces and hyphens
+        .replace(/[^a-z0-9\s-]/g, '')
+        // Replace spaces with hyphens
+        .replace(/\s+/g, '-')
+        // Remove multiple consecutive hyphens
+        .replace(/-+/g, '-')
+        // Remove leading/trailing hyphens
+        .replace(/^-+|-+$/g, '')
+        // Limit to 50 characters
+        .substring(0, 50);
+}
+
+/**
+ * Generate unique organization ID from client name
+ * Checks existing organizations and increments if duplicate
+ */
+async function generateUniqueOrgId(clientName) {
+    const baseSlug = generateSlug(clientName);
+
+    try {
+        // Fetch existing organizations to check for duplicates
+        const response = await fetch('/api/organizations');
+
+        if (!response.ok) {
+            // If organizations.json doesn't exist yet, use base slug
+            console.log('No existing organizations found, using base slug');
+            return baseSlug;
+        }
+
+        const data = await response.json();
+        const existingOrgIds = Object.keys(data.organizations || {});
+
+        // Check if base slug exists
+        if (!existingOrgIds.includes(baseSlug)) {
+            return baseSlug;
+        }
+
+        // Base slug exists, find next available number
+        let counter = 2;
+        let candidateId = `${baseSlug}-${counter}`;
+
+        while (existingOrgIds.includes(candidateId)) {
+            counter++;
+            candidateId = `${baseSlug}-${counter}`;
+
+            // Safety check to prevent infinite loop
+            if (counter > 1000) {
+                console.warn('Too many duplicates, using timestamp');
+                return `${baseSlug}-${Date.now().toString().slice(-6)}`;
+            }
+        }
+
+        console.log(`Slug "${baseSlug}" already exists, using "${candidateId}"`);
+        return candidateId;
+
+    } catch (error) {
+        console.error('Error checking existing organizations:', error);
+        // Fallback: use slug with short timestamp
+        const timestamp = Date.now().toString().slice(-6);
+        return `${baseSlug}-${timestamp}`;
+    }
+}
+
 // Export assessment to Dashboard format
 async function exportToDashboard() {
     if (!currentData.fieldKit || !currentScore) {
@@ -1102,40 +1173,42 @@ async function exportToDashboard() {
         return;
     }
 
-    const orgId = prompt('Enter organization ID (e.g., org-001):', 'org-001');
-    if (!orgId) return;
-
-    // Convert Field Kit assessment to dashboard format
-    const indicator = currentData.fieldKit.indicator;
-    const timestamp = new Date().toISOString();
-
-    // Create indicator entry
-    const indicatorEntry = {
-        soc_values: [], // No SOC data from Field Kit
-        human_values: [{
-            timestamp: timestamp,
-            value: currentScore.final_score,
-            assessor: currentData.metadata.auditor || 'Unknown',
-            assessment_id: `fk-${Date.now()}`
-        }],
-        current_bayesian: currentScore.final_score,
-        last_updated: timestamp
-    };
-
-    // Create minimal organization structure for dashboard import
-    const dashboardExport = {
-        organization_id: orgId,
-        organization_name: orgName,
-        indicator_id: indicator,
-        indicator_data: indicatorEntry,
-        metadata: {
-            exported_from: 'field_kit',
-            export_timestamp: timestamp,
-            field_kit_version: '1.0'
-        }
-    };
-
     try {
+        // Generate unique org ID from client name automatically
+        console.log('🔧 Generating unique org ID from client name...');
+        const orgId = await generateUniqueOrgId(orgName.trim());
+        console.log(`✅ Generated org ID: ${orgId}`);
+
+        // Convert Field Kit assessment to dashboard format
+        const indicator = currentData.fieldKit.indicator;
+        const timestamp = new Date().toISOString();
+
+        // Create indicator entry
+        const indicatorEntry = {
+            soc_values: [], // No SOC data from Field Kit
+            human_values: [{
+                timestamp: timestamp,
+                value: currentScore.final_score,
+                assessor: currentData.metadata.auditor || 'Unknown',
+                assessment_id: `fk-${Date.now()}`
+            }],
+            current_bayesian: currentScore.final_score,
+            last_updated: timestamp
+        };
+
+        // Create minimal organization structure for dashboard import
+        const dashboardExport = {
+            organization_id: orgId,
+            organization_name: orgName,
+            indicator_id: indicator,
+            indicator_data: indicatorEntry,
+            metadata: {
+                exported_from: 'field_kit',
+                export_timestamp: timestamp,
+                field_kit_version: '1.0'
+            }
+        };
+
         // Save directly to server via API
         console.log('💾 Saving export to server...');
 
@@ -1155,6 +1228,7 @@ async function exportToDashboard() {
             alert(
                 `✅ Assessment Saved Successfully!\n\n` +
                 `Organization: ${result.organization}\n` +
+                `Organization ID: ${orgId}\n` +
                 `Indicator: ${result.indicator}\n` +
                 `File: ${result.filename}\n\n` +
                 `The assessment has been saved to field_kit_exports/ and is ready for batch import.`
@@ -1176,6 +1250,38 @@ async function exportToDashboard() {
         );
 
         if (fallback) {
+            // For fallback, generate a simple slug with timestamp
+            const simpleSlug = generateSlug(orgName.trim());
+            const timestamp = Date.now();
+            const orgId = `${simpleSlug}-${timestamp.toString().slice(-6)}`;
+
+            const indicator = currentData.fieldKit.indicator;
+            const isoTimestamp = new Date().toISOString();
+
+            const indicatorEntry = {
+                soc_values: [],
+                human_values: [{
+                    timestamp: isoTimestamp,
+                    value: currentScore.final_score,
+                    assessor: currentData.metadata.auditor || 'Unknown',
+                    assessment_id: `fk-${Date.now()}`
+                }],
+                current_bayesian: currentScore.final_score,
+                last_updated: isoTimestamp
+            };
+
+            const dashboardExport = {
+                organization_id: orgId,
+                organization_name: orgName,
+                indicator_id: indicator,
+                indicator_data: indicatorEntry,
+                metadata: {
+                    exported_from: 'field_kit',
+                    export_timestamp: isoTimestamp,
+                    field_kit_version: '1.0'
+                }
+            };
+
             // Download as JSON (fallback)
             const blob = new Blob([JSON.stringify(dashboardExport, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -1185,7 +1291,7 @@ async function exportToDashboard() {
             a.click();
             URL.revokeObjectURL(url);
 
-            alert(`⚠️ File downloaded to your Downloads folder.\n\nPlease move it to field_kit_exports/ manually.`);
+            alert(`⚠️ File downloaded to your Downloads folder.\n\nOrg ID: ${orgId}\n\nPlease move it to field_kit_exports/ manually.`);
         }
     }
 }
