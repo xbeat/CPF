@@ -1196,7 +1196,7 @@ async function exportToDashboard() {
             last_updated: timestamp
         };
 
-        // Create minimal organization structure for dashboard import
+        // Create complete organization structure with full assessment data
         const dashboardExport = {
             organization_id: orgId,
             organization_name: orgName,
@@ -1206,6 +1206,18 @@ async function exportToDashboard() {
                 exported_from: 'field_kit',
                 export_timestamp: timestamp,
                 field_kit_version: '1.0'
+            },
+            // ADDED: Full assessment data for edit mode
+            full_assessment: {
+                maturity_scores: currentData.scores || {},
+                risk_assessments: currentData.assessments || {},
+                notes: document.getElementById('notes')?.value || '',
+                metadata: currentData.metadata || {},
+                field_kit_reference: {
+                    indicator: currentData.fieldKit.indicator,
+                    title: currentData.fieldKit.title,
+                    category: currentData.fieldKit.category
+                }
             }
         };
 
@@ -1279,6 +1291,18 @@ async function exportToDashboard() {
                     exported_from: 'field_kit',
                     export_timestamp: isoTimestamp,
                     field_kit_version: '1.0'
+                },
+                // ADDED: Full assessment data for edit mode
+                full_assessment: {
+                    maturity_scores: currentData.scores || {},
+                    risk_assessments: currentData.assessments || {},
+                    notes: document.getElementById('notes')?.value || '',
+                    metadata: currentData.metadata || {},
+                    field_kit_reference: {
+                        indicator: currentData.fieldKit.indicator,
+                        title: currentData.fieldKit.title,
+                        category: currentData.fieldKit.category
+                    }
                 }
             };
 
@@ -1518,8 +1542,9 @@ async function batchImportAndViewDashboard() {
 
             console.log('✅ Batch import completed:', result);
 
-            // Open auditing dashboard in new tab
-            window.open('/dashboard/dashboard_auditing.html', '_blank');
+            // Open auditing dashboard in new tab with cache-busting timestamp
+            const timestamp = Date.now();
+            window.open(`/dashboard/dashboard_auditing.html?t=${timestamp}`, '_blank');
 
         } else {
             throw new Error(result.error || 'Batch import failed');
@@ -1764,26 +1789,35 @@ async function loadExistingExport(indicatorId, orgId) {
         // Render Field Kit UI
         renderFieldKit(fieldKit);
 
-        // Now populate with existing data from export
-        currentData.metadata = exportData.indicator_data.metadata || currentData.metadata;
-        currentData.fieldKit = fieldKit;
+        // Now populate with existing data from full_assessment (if available)
+        if (exportData.full_assessment) {
+            console.log('📋 Loading data from full_assessment...');
 
-        // Populate maturity scores
-        if (exportData.indicator_data.maturity_scores) {
-            currentData.scores = exportData.indicator_data.maturity_scores;
-        }
+            currentData.metadata = exportData.full_assessment.metadata || currentData.metadata;
+            currentData.fieldKit = fieldKit;
 
-        // Populate risk assessments
-        if (exportData.indicator_data.risk_assessments) {
-            currentData.assessments = exportData.indicator_data.risk_assessments;
-        }
-
-        // Populate notes
-        if (exportData.indicator_data.notes) {
-            const notesTextarea = document.getElementById('notes');
-            if (notesTextarea) {
-                notesTextarea.value = exportData.indicator_data.notes;
+            // Populate maturity scores
+            if (exportData.full_assessment.maturity_scores) {
+                currentData.scores = exportData.full_assessment.maturity_scores;
             }
+
+            // Populate risk assessments
+            if (exportData.full_assessment.risk_assessments) {
+                currentData.assessments = exportData.full_assessment.risk_assessments;
+            }
+
+            // Populate notes
+            if (exportData.full_assessment.notes) {
+                const notesTextarea = document.getElementById('notes');
+                if (notesTextarea) {
+                    notesTextarea.value = exportData.full_assessment.notes;
+                }
+            }
+        } else {
+            // Fallback for old format exports (backward compatibility)
+            console.log('⚠️ Old format export detected, using indicator_data fallback');
+            currentData.metadata = exportData.metadata || currentData.metadata;
+            currentData.fieldKit = fieldKit;
         }
 
         // Re-render to show loaded data
@@ -1841,6 +1875,13 @@ window.addEventListener('DOMContentLoaded', () => {
     // Load specific indicator if provided in URL
     if (indicatorParam) {
         console.log(`🔗 Loading indicator ${indicatorParam} from URL (mode: ${modeParam || 'new'})`);
+
+        // Clean URL (remove query parameters after reading them)
+        if (window.history && window.history.replaceState) {
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState(null, '', cleanUrl);
+            console.log('🧹 URL cleaned, parameters removed');
+        }
 
         // Use setTimeout to ensure DOM is fully ready
         setTimeout(async () => {
