@@ -65,6 +65,43 @@ function ensureDir(dirPath) {
   }
 }
 
+/**
+ * Fetch indicator metadata from GitHub
+ */
+async function fetchIndicatorFromGitHub(indicatorId, language = 'en-US') {
+  const [category, indicator] = indicatorId.split('.');
+  const categoryNames = {
+    '1': '1.x-authority', '2': '2.x-temporal', '3': '3.x-social', '4': '4.x-affective',
+    '5': '5.x-cognitive', '6': '6.x-group', '7': '7.x-stress', '8': '8.x-unconscious',
+    '9': '9.x-ai', '10': '10.x-convergent'
+  };
+
+  const url = `https://raw.githubusercontent.com/xbeat/CPF/main/auditor%20field%20kit/interactive/${language}/${categoryNames[category]}/indicator_${indicatorId}.json`;
+
+  try {
+    const https = require('https');
+    return new Promise((resolve, reject) => {
+      https.get(url, (res) => {
+        let data = '';
+        res.on('data', (chunk) => { data += chunk; });
+        res.on('end', () => {
+          if (res.statusCode === 200) {
+            try {
+              resolve(JSON.parse(data));
+            } catch (e) {
+              reject(new Error(`Failed to parse JSON for ${indicatorId}`));
+            }
+          } else {
+            reject(new Error(`HTTP ${res.statusCode} for ${indicatorId}`));
+          }
+        });
+      }).on('error', reject);
+    });
+  } catch (error) {
+    throw new Error(`Failed to fetch indicator ${indicatorId}: ${error.message}`);
+  }
+}
+
 // ============================================================================
 // Organizations Index Management
 // ============================================================================
@@ -403,6 +440,7 @@ module.exports = {
 
   // Helpers
   generateAllIndicatorIds,
+  fetchIndicatorFromGitHub,
 
   // Constants
   DATA_DIR,
