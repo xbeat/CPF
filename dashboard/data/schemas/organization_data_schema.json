@@ -1,0 +1,221 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CPF Organization Data",
+  "description": "Complete data for a single organization (metadata + assessments + aggregates)",
+  "type": "object",
+  "required": ["id", "name", "metadata", "assessments", "aggregates"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^org-[a-z0-9-]+$",
+      "description": "Unique organization ID"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "description": "Organization name"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["industry", "size", "country", "language", "created_at", "updated_at"],
+      "properties": {
+        "industry": {
+          "type": "string",
+          "description": "Industry sector"
+        },
+        "size": {
+          "type": "string",
+          "enum": ["small", "medium", "enterprise"]
+        },
+        "country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
+        "language": {
+          "type": "string",
+          "enum": ["en-US", "it-IT", "es-ES", "fr-FR", "de-DE"]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by": {
+          "type": "string",
+          "description": "Name of creator"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes about organization"
+        }
+      }
+    },
+    "assessments": {
+      "type": "object",
+      "description": "Dictionary of assessments (key = indicator_id)",
+      "patternProperties": {
+        "^(10|[1-9])\\.(10|[1-9])$": {
+          "type": "object",
+          "required": ["indicator_id", "bayesian_score", "confidence", "assessment_date"],
+          "properties": {
+            "indicator_id": {
+              "type": "string",
+              "pattern": "^(10|[1-9])\\.(10|[1-9])$",
+              "description": "Indicator ID (1.1 to 10.10)"
+            },
+            "title": {
+              "type": "string",
+              "description": "Indicator title"
+            },
+            "category": {
+              "type": "string",
+              "description": "Indicator category"
+            },
+            "bayesian_score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Bayesian risk score (0.0 = low risk, 1.0 = high risk)"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Confidence level (0.0 = low, 1.0 = high)"
+            },
+            "maturity_level": {
+              "type": "string",
+              "enum": ["green", "yellow", "red"],
+              "description": "Maturity level"
+            },
+            "assessor": {
+              "type": "string",
+              "description": "Name of assessor"
+            },
+            "assessment_date": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Date of assessment"
+            },
+            "raw_data": {
+              "type": "object",
+              "description": "Complete assessment form data",
+              "properties": {
+                "quick_assessment": {
+                  "type": "array",
+                  "description": "Quick assessment questions and answers"
+                },
+                "client_conversation": {
+                  "type": "object",
+                  "description": "Client conversation notes and red flags"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "aggregates": {
+      "type": "object",
+      "required": ["overall_risk", "overall_confidence", "by_category", "completion", "last_calculated"],
+      "properties": {
+        "overall_risk": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall risk score (average of all assessments)"
+        },
+        "overall_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall confidence (average of all assessments)"
+        },
+        "trend": {
+          "type": "string",
+          "enum": ["improving", "stable", "deteriorating"],
+          "description": "Risk trend"
+        },
+        "by_category": {
+          "type": "object",
+          "description": "Aggregates per category (1-10)",
+          "patternProperties": {
+            "^(10|[1-9])$": {
+              "type": "object",
+              "properties": {
+                "category_name": {
+                  "type": "string"
+                },
+                "avg_score": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "avg_confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "total_assessments": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 10
+                },
+                "completion_percentage": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              }
+            }
+          }
+        },
+        "completion": {
+          "type": "object",
+          "required": ["total_indicators", "assessed_indicators", "percentage"],
+          "properties": {
+            "total_indicators": {
+              "type": "integer",
+              "const": 100,
+              "description": "Total number of indicators (always 100)"
+            },
+            "assessed_indicators": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Number of completed assessments"
+            },
+            "percentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Completion percentage"
+            },
+            "missing_indicators": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(10|[1-9])\\.(10|[1-9])$"
+              },
+              "description": "Array of missing indicator IDs"
+            }
+          }
+        },
+        "last_calculated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When aggregates were last calculated"
+        }
+      }
+    }
+  }
+}
