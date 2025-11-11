@@ -921,7 +921,6 @@
                                 </div>
                             </div>
                             <div class="org-card-actions" onclick="event.stopPropagation()">
-                                <button class="icon-btn" onclick="openInClient('${org.id}', '${escapeHtml(org.name)}', '${org.language || 'en-US'}')" title="Open in Client">📝</button>
                                 <button class="icon-btn" onclick="editOrganization('${org.id}')" title="Edit">✏️</button>
                                 <button class="icon-btn" onclick="deleteOrganization('${org.id}', '${escapeHtml(org.name)}')" title="Delete">🗑️</button>
                             </div>
@@ -1146,92 +1145,260 @@
 
         async function openIndicatorDetail(indicatorId, orgId) {
             selectedIndicatorId = indicatorId;
-            document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Detail`;
+            const assessment = selectedOrgData.assessments[indicatorId];
+
+            if (assessment) {
+                // Show existing assessment details
+                showAssessmentDetails(indicatorId, assessment);
+            } else {
+                // Open integrated client for new assessment
+                openIntegratedClient(indicatorId, orgId);
+            }
+        }
+
+        function showAssessmentDetails(indicatorId, assessment) {
+            document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Assessment Details`;
             document.getElementById('indicatorModal').classList.add('active');
 
+            const content = document.getElementById('indicatorModalContent');
+            const riskClass = assessment.bayesian_score < 0.3 ? 'risk-low' :
+                             assessment.bayesian_score < 0.7 ? 'risk-medium' : 'risk-high';
+            const riskLabel = assessment.bayesian_score < 0.3 ? '🟢 Low Risk' :
+                             assessment.bayesian_score < 0.7 ? '🟡 Medium Risk' : '🔴 High Risk';
+
+            content.innerHTML = `
+                <div style="display: grid; gap: 20px;">
+                    <div>
+                        <h4 style="margin: 0 0 10px 0; color: var(--primary);">${assessment.title || 'Indicator ' + indicatorId}</h4>
+                        <p style="margin: 0; color: var(--text-light); font-size: 14px;">${assessment.category || 'Category'}</p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                        <div class="stat-box">
+                            <div class="stat-label">Risk Score</div>
+                            <div class="stat-value ${riskClass}">${(assessment.bayesian_score * 100).toFixed(1)}%</div>
+                            <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">${riskLabel}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Confidence</div>
+                            <div class="stat-value">${(assessment.confidence * 100).toFixed(1)}%</div>
+                            <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Assessment reliability</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Maturity Level</div>
+                            <div class="stat-value" style="text-transform: uppercase;">${assessment.maturity_level || 'N/A'}</div>
+                            <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Control maturity</div>
+                        </div>
+                    </div>
+
+                    <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                        <div style="font-weight: 600; margin-bottom: 10px;">Assessment Information</div>
+                        <div style="display: grid; gap: 8px; font-size: 14px;">
+                            <div><strong>Assessor:</strong> ${assessment.assessor || 'Unknown'}</div>
+                            <div><strong>Assessment Date:</strong> ${new Date(assessment.assessment_date).toLocaleString()}</div>
+                        </div>
+                    </div>
+
+                    ${assessment.raw_data && assessment.raw_data.client_conversation ? `
+                        <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                            <div style="font-weight: 600; margin-bottom: 10px;">Notes</div>
+                            <p style="margin: 0; font-size: 14px; line-height: 1.6;">${assessment.raw_data.client_conversation.notes || 'No notes available'}</p>
+                        </div>
+                    ` : ''}
+
+                    ${assessment.raw_data && assessment.raw_data.client_conversation && assessment.raw_data.client_conversation.red_flags && assessment.raw_data.client_conversation.red_flags.length > 0 ? `
+                        <div style="background: #fee2e2; padding: 15px; border-radius: 8px; border: 1px solid var(--danger);">
+                            <div style="font-weight: 600; margin-bottom: 10px; color: var(--danger);">🚩 Red Flags Identified (${assessment.raw_data.client_conversation.red_flags.length})</div>
+                            <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
+                                ${assessment.raw_data.client_conversation.red_flags.map(flag => `<li>${flag}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('deleteAssessmentBtn').style.display = 'inline-flex';
+        }
+
+        async function openIntegratedClient(indicatorId, orgId) {
+            document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - New Assessment`;
+            document.getElementById('indicatorModal').classList.add('active');
+
+            const content = document.getElementById('indicatorModalContent');
+            content.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 15px;">Loading indicator JSON...</p>
+                </div>
+            `;
+
+            document.getElementById('deleteAssessmentBtn').style.display = 'none';
+
             try {
-                // Get assessment data
-                const assessment = selectedOrgData.assessments[indicatorId];
+                const [category, indicator] = indicatorId.split('.');
+                const categoryNames = {
+                    '1': '1.x-authority', '2': '2.x-temporal', '3': '3.x-social', '4': '4.x-affective',
+                    '5': '5.x-cognitive', '6': '6.x-group', '7': '7.x-stress', '8': '8.x-unconscious',
+                    '9': '9.x-ai', '10': '10.x-convergent'
+                };
 
-                const content = document.getElementById('indicatorModalContent');
+                const language = selectedOrgData.metadata.language || 'en-US';
+                const url = `https://raw.githubusercontent.com/xbeat/CPF/main/auditor%20field%20kit/interactive/${language}/${categoryNames[category]}/indicator_${indicatorId}.json`;
 
-                if (assessment) {
-                    // Assessment exists - show details
-                    const riskClass = assessment.bayesian_score < 0.3 ? 'risk-low' :
-                                     assessment.bayesian_score < 0.7 ? 'risk-medium' : 'risk-high';
-                    const riskLabel = assessment.bayesian_score < 0.3 ? '🟢 Low Risk' :
-                                     assessment.bayesian_score < 0.7 ? '🟡 Medium Risk' : '🔴 High Risk';
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to load indicator JSON');
 
-                    content.innerHTML = `
-                        <div style="display: grid; gap: 20px;">
-                            <div>
-                                <h4 style="margin: 0 0 10px 0; color: var(--primary);">${assessment.title || 'Indicator ' + indicatorId}</h4>
-                                <p style="margin: 0; color: var(--text-light); font-size: 14px;">${assessment.category || 'Category'}</p>
-                            </div>
+                const indicatorData = await response.json();
+                renderIntegratedClientForm(indicatorId, indicatorData, orgId);
 
-                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                                <div class="stat-box">
-                                    <div class="stat-label">Risk Score</div>
-                                    <div class="stat-value ${riskClass}">${(assessment.bayesian_score * 100).toFixed(1)}%</div>
-                                    <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">${riskLabel}</div>
-                                </div>
-                                <div class="stat-box">
-                                    <div class="stat-label">Confidence</div>
-                                    <div class="stat-value">${(assessment.confidence * 100).toFixed(1)}%</div>
-                                    <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Assessment reliability</div>
-                                </div>
-                                <div class="stat-box">
-                                    <div class="stat-label">Maturity Level</div>
-                                    <div class="stat-value" style="text-transform: uppercase;">${assessment.maturity_level || 'N/A'}</div>
-                                    <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Control maturity</div>
-                                </div>
-                            </div>
+            } catch (error) {
+                console.error('Error loading indicator:', error);
+                content.innerHTML = `
+                    <div class="alert alert-error">
+                        Failed to load indicator: ${error.message}
+                    </div>
+                    <p style="text-align: center; margin-top: 20px;">
+                        <button class="btn btn-secondary" onclick="closeIndicatorModal()">Close</button>
+                    </p>
+                `;
+            }
+        }
 
-                            <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
-                                <div style="font-weight: 600; margin-bottom: 10px;">Assessment Information</div>
-                                <div style="display: grid; gap: 8px; font-size: 14px;">
-                                    <div><strong>Assessor:</strong> ${assessment.assessor || 'Unknown'}</div>
-                                    <div><strong>Assessment Date:</strong> ${new Date(assessment.assessment_date).toLocaleString()}</div>
-                                </div>
-                            </div>
+        function renderIntegratedClientForm(indicatorId, indicatorData, orgId) {
+            const content = document.getElementById('indicatorModalContent');
 
-                            ${assessment.raw_data && assessment.raw_data.client_conversation ? `
-                                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
-                                    <div style="font-weight: 600; margin-bottom: 10px;">Notes</div>
-                                    <p style="margin: 0; font-size: 14px; line-height: 1.6;">${assessment.raw_data.client_conversation.notes || 'No notes available'}</p>
-                                </div>
-                            ` : ''}
+            let html = `
+                <div class="integrated-client-form">
+                    <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 10px 0; color: var(--primary);">${indicatorData.indicator_title}</h4>
+                        <p style="margin: 0; color: var(--text-light); font-size: 14px;">${indicatorData.category_name}</p>
+                    </div>
 
-                            ${assessment.raw_data && assessment.raw_data.client_conversation && assessment.raw_data.client_conversation.red_flags && assessment.raw_data.client_conversation.red_flags.length > 0 ? `
-                                <div style="background: #fee2e2; padding: 15px; border-radius: 8px; border: 1px solid var(--danger);">
-                                    <div style="font-weight: 600; margin-bottom: 10px; color: var(--danger);">🚩 Red Flags Identified (${assessment.raw_data.client_conversation.red_flags.length})</div>
-                                    <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
-                                        ${assessment.raw_data.client_conversation.red_flags.map(flag => `<li>${flag}</li>`).join('')}
-                                    </ul>
-                                </div>
-                            ` : ''}
-                        </div>
+                    <form id="assessmentForm" onsubmit="submitIntegratedAssessment(event, '${indicatorId}', '${orgId}')">
+            `;
+
+            indicatorData.sections.forEach((section, sectionIdx) => {
+                html += `
+                    <div style="margin-bottom: 25px;">
+                        <h5 style="color: var(--primary); margin-bottom: 15px;">${section.title}</h5>
+                `;
+
+                section.questions.forEach((question, qIdx) => {
+                    const fieldId = `q_${sectionIdx}_${qIdx}`;
+                    html += `
+                        <div class="form-group">
+                            <label class="form-label">${question.text}</label>
                     `;
 
-                    document.getElementById('deleteAssessmentBtn').style.display = 'inline-flex';
+                    if (question.type === 'multiple_choice') {
+                        question.options.forEach((option, optIdx) => {
+                            html += `
+                                <div class="form-checkbox">
+                                    <input type="radio" name="${fieldId}" value="${option.value}" id="${fieldId}_${optIdx}" required>
+                                    <label for="${fieldId}_${optIdx}">${option.label}</label>
+                                </div>
+                            `;
+                        });
+                    } else if (question.type === 'open_text') {
+                        html += `<textarea class="form-textarea" id="${fieldId}" name="${fieldId}" placeholder="${question.placeholder || ''}"></textarea>`;
+                    }
+
+                    html += `</div>`;
+                });
+
+                html += `</div>`;
+            });
+
+            html += `
+                        <div class="form-group">
+                            <label class="form-label">Notes / Red Flags</label>
+                            <textarea class="form-textarea" id="assessment_notes" name="notes" placeholder="Additional observations, red flags, or contextual information..."></textarea>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeIndicatorModal()">Cancel</button>
+                            <button type="submit" class="btn btn-success">💾 Save Assessment</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            content.innerHTML = html;
+        }
+
+        async function submitIntegratedAssessment(event, indicatorId, orgId) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const responses = {};
+
+            for (let [key, value] of formData.entries()) {
+                responses[key] = value;
+            }
+
+            const bayesianScore = calculateSimplifiedScore(responses);
+            const confidence = 0.75;
+
+            const assessmentData = {
+                indicator_id: indicatorId,
+                title: document.querySelector('.integrated-client-form h4').textContent,
+                category: document.querySelector('.integrated-client-form p').textContent,
+                bayesian_score: bayesianScore,
+                confidence: confidence,
+                maturity_level: bayesianScore < 0.3 ? 'high' : bayesianScore < 0.7 ? 'medium' : 'low',
+                assessor: 'Dashboard User',
+                assessment_date: new Date().toISOString(),
+                raw_data: {
+                    client_conversation: {
+                        responses: responses,
+                        notes: responses.notes || ''
+                    }
+                }
+            };
+
+            try {
+                const saveBtn = event.target.querySelector('button[type="submit"]');
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving...';
+
+                const response = await fetch(`/api/organizations/${orgId}/assessments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(assessmentData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Assessment saved successfully!', 'success');
+                    closeIndicatorModal();
+                    await loadOrganizationDetails(orgId);
                 } else {
-                    // No assessment - show empty state
-                    content.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📝</div>
-                            <h3 class="empty-state-title">No Assessment Data</h3>
-                            <p class="empty-state-text">This indicator has not been assessed yet for ${selectedOrgData.name}.</p>
-                            <p style="font-size: 14px; color: var(--text-light);">Complete the assessment in the Field Kit Client to see detailed information here.</p>
-                        </div>
-                    `;
-
-                    document.getElementById('deleteAssessmentBtn').style.display = 'none';
+                    showAlert('Failed to save assessment: ' + result.error, 'error');
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = '💾 Save Assessment';
                 }
             } catch (error) {
-                console.error('Error loading indicator detail:', error);
-                showAlert('Failed to load indicator details', 'error');
-                closeIndicatorModal();
+                console.error('Error saving assessment:', error);
+                showAlert('Failed to save assessment: ' + error.message, 'error');
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Save Assessment';
             }
+        }
+
+        function calculateSimplifiedScore(responses) {
+            let riskCount = 0;
+            let totalQuestions = 0;
+
+            for (let [key, value] of Object.entries(responses)) {
+                if (key.startsWith('q_') && !isNaN(value)) {
+                    totalQuestions++;
+                    riskCount += parseInt(value);
+                }
+            }
+
+            if (totalQuestions === 0) return 0.5;
+            return riskCount / (totalQuestions * 4);
         }
 
         function closeIndicatorModal() {
