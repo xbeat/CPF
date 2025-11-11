@@ -1209,6 +1209,7 @@ async function exportToDashboard() {
             },
             // ADDED: Full assessment data for edit mode
             full_assessment: {
+                responses: currentData.responses || {},
                 maturity_scores: currentData.scores || {},
                 risk_assessments: currentData.assessments || {},
                 notes: document.getElementById('notes')?.value || '',
@@ -1294,6 +1295,7 @@ async function exportToDashboard() {
                 },
                 // ADDED: Full assessment data for edit mode
                 full_assessment: {
+                    responses: currentData.responses || {},
                     maturity_scores: currentData.scores || {},
                     risk_assessments: currentData.assessments || {},
                     notes: document.getElementById('notes')?.value || '',
@@ -1759,7 +1761,7 @@ async function loadExistingExport(indicatorId, orgId) {
         if (!response.ok) {
             if (response.status === 404) {
                 alert(`⚠️ Export not found for ${orgId}/${indicatorId}. Loading empty form.`);
-                loadIndicatorFromReference(indicatorId);
+                await loadIndicatorFromReference(indicatorId);
                 return;
             }
             throw new Error(`Failed to load export: ${response.status}`);
@@ -1777,7 +1779,9 @@ async function loadExistingExport(indicatorId, orgId) {
         const lang = langSelect ? langSelect.value : 'EN';
         const langCode = lang === 'IT' ? 'it-IT' : 'en-US';
 
-        const url = `en-US/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
+        // Construct GitHub raw URL (same pattern as loadJSON)
+        const url = `https://raw.githubusercontent.com/xbeat/CPF/main/auditor%20field%20kit/interactive/${langCode}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
+        console.log('Loading Field Kit from GitHub:', url);
 
         const fieldKitResponse = await fetch(url);
         if (!fieldKitResponse.ok) {
@@ -1795,6 +1799,11 @@ async function loadExistingExport(indicatorId, orgId) {
 
             currentData.metadata = exportData.full_assessment.metadata || currentData.metadata;
             currentData.fieldKit = fieldKit;
+
+            // Populate responses (form fields)
+            if (exportData.full_assessment.responses) {
+                currentData.responses = exportData.full_assessment.responses;
+            }
 
             // Populate maturity scores
             if (exportData.full_assessment.maturity_scores) {
@@ -1831,7 +1840,7 @@ async function loadExistingExport(indicatorId, orgId) {
     } catch (error) {
         console.error('Error loading existing export:', error);
         alert(`❌ Error loading existing assessment: ${error.message}\n\nLoading empty form instead.`);
-        loadIndicatorFromReference(indicatorId);
+        await loadIndicatorFromReference(indicatorId);
     }
 }
 
