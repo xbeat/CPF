@@ -1839,7 +1839,7 @@ async function loadExistingExport(indicatorId, orgId) {
 
     } catch (error) {
         console.error('Error loading existing export:', error);
-        alert(`❌ Error loading existing assessment: ${error.message}\n\nLoading empty form instead.`);
+        // Silently fallback to loading from GitHub (error logged to console for debug)
         await loadIndicatorFromReference(indicatorId);
     }
 }
