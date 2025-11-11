@@ -363,7 +363,7 @@ app.post('/api/generate-synthetic', (req, res) => {
 
 app.listen(PORT, () => {
   console.log('\n╔════════════════════════════════════════════════════════════╗');
-  console.log('║          🛡️  CPF Dashboard Server - RUNNING                ║');
+  console.log('║          🛡️  CPF Dashboard Server - RUNNING                 ║');
   console.log('╚════════════════════════════════════════════════════════════╝\n');
   console.log(`📡 Server listening on: http://localhost:${PORT}\n`);
   console.log('📂 Available endpoints:\n');
