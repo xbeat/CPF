@@ -1,3 +1,14 @@
+// ============================================
+// CLIENT V2.0 - CONFIGURATION
+// ============================================
+
+// Organization context (loaded from URL parameters or dashboard)
+let organizationContext = {
+    orgId: null,
+    orgName: null,
+    language: 'en-US'
+};
+
 let currentData = {
     fieldKit: null,
     metadata: {
@@ -9,12 +20,71 @@ let currentData = {
     responses: {}
 };
 
-// Auto-save every 30 seconds
+// Auto-save to localStorage every 30 seconds (backup)
 setInterval(() => {
     if (currentData.fieldKit) {
         localStorage.setItem('cpf_current', JSON.stringify(currentData));
     }
 }, 30000);
+
+// Auto-save status indicator
+let autoSaveTimeout = null;
+
+// ============================================
+// INITIALIZATION - Load Organization Context
+// ============================================
+
+// Parse URL parameters on page load
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // Get organization context from URL
+    organizationContext.orgId = urlParams.get('org_id');
+    organizationContext.orgName = urlParams.get('org_name');
+    organizationContext.language = urlParams.get('language') || 'en-US';
+
+    // Display organization info if available
+    if (organizationContext.orgId && organizationContext.orgName) {
+        displayOrganizationInfo();
+
+        // Pre-fill client metadata
+        currentData.metadata.client = organizationContext.orgName;
+
+        // Set language based on organization
+        const langCode = mapISOToLangCode(organizationContext.language);
+        const langSelect = document.getElementById('lang-select');
+        if (langSelect) {
+            langSelect.value = langCode;
+        }
+    }
+
+    console.log('✅ Client v2.0 initialized with organization:', organizationContext);
+});
+
+// Display organization information in header
+function displayOrganizationInfo() {
+    const orgInfo = document.getElementById('organization-info');
+    const orgNameDisplay = document.getElementById('org-name-display');
+    const orgIdDisplay = document.getElementById('org-id-display');
+
+    if (orgInfo && orgNameDisplay && orgIdDisplay) {
+        orgInfo.style.display = 'block';
+        orgNameDisplay.textContent = organizationContext.orgName;
+        orgIdDisplay.textContent = organizationContext.orgId;
+    }
+}
+
+// Map ISO language code to short code
+function mapISOToLangCode(isoLang) {
+    const mapping = {
+        'en-US': 'EN',
+        'it-IT': 'IT',
+        'es-ES': 'ES',
+        'fr-FR': 'FR',
+        'de-DE': 'DE'
+    };
+    return mapping[isoLang] || 'EN';
+}
 
 // Language code mapping
 const LANG_MAP = {
@@ -440,10 +510,105 @@ function saveData() {
     alert('✅ Assessment saved to browser storage!');
 }
 
-function autoSave() {
-    if (currentData.fieldKit) {
-        localStorage.setItem('cpf_current', JSON.stringify(currentData));
-        console.log('✅ Auto-saved at', new Date().toLocaleTimeString());
+// ============================================
+// AUTO-SAVE TO API (V2.0)
+// ============================================
+
+async function autoSave() {
+    if (!currentData.fieldKit) {
+        return;
+    }
+
+    // Always save to localStorage as backup
+    localStorage.setItem('cpf_current', JSON.stringify(currentData));
+    console.log('✅ Local auto-save at', new Date().toLocaleTimeString());
+
+    // If organization context is available, save to API
+    if (organizationContext.orgId && currentScore) {
+        // Debounce API calls (wait 2 seconds after last change)
+        clearTimeout(autoSaveTimeout);
+
+        autoSaveTimeout = setTimeout(async () => {
+            try {
+                await saveToAPI();
+            } catch (error) {
+                console.error('❌ Auto-save to API failed:', error);
+                // Continue silently - localStorage backup is still working
+            }
+        }, 2000);
+    }
+}
+
+async function saveToAPI() {
+    if (!organizationContext.orgId) {
+        console.warn('⚠️ No organization context - cannot save to API');
+        return;
+    }
+
+    if (!currentScore) {
+        console.warn('⚠️ No score calculated - cannot save to API');
+        return;
+    }
+
+    const indicator = currentData.fieldKit.indicator;
+    const timestamp = new Date().toISOString();
+
+    // Prepare assessment data for API
+    const assessmentData = {
+        indicator_id: indicator,
+        title: currentData.fieldKit.title || '',
+        category: currentData.fieldKit.category || '',
+        bayesian_score: currentScore.final_score,
+        confidence: 0.85, // Default confidence level
+        maturity_level: currentScore.maturity_level || 'yellow',
+        assessor: currentData.metadata.auditor || 'Client User',
+        assessment_date: timestamp,
+        raw_data: {
+            quick_assessment: currentScore.details?.quick_assessment_breakdown || {},
+            client_conversation: {
+                responses: currentData.responses || {},
+                scores: currentScore,
+                metadata: currentData.metadata
+            },
+            red_flags: currentScore.details?.red_flags_breakdown || {}
+        }
+    };
+
+    console.log('💾 Saving assessment to API:', {
+        orgId: organizationContext.orgId,
+        indicator,
+        score: currentScore.final_score
+    });
+
+    const response = await fetch(`/api/organizations/${organizationContext.orgId}/assessments`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(assessmentData)
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+        console.log('✅ Assessment saved to API successfully');
+        showAutoSaveIndicator();
+    } else {
+        throw new Error(result.error || 'API save failed');
+    }
+}
+
+function showAutoSaveIndicator() {
+    const indicator = document.getElementById('auto-save-status');
+    if (indicator) {
+        indicator.style.display = 'inline';
+        indicator.textContent = '✓ Auto-saved';
+        indicator.style.color = '#4CAF50';
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+            indicator.style.display = 'none';
+        }, 3000);
     }
 }
 
@@ -1088,241 +1253,19 @@ function updateResponseWithAutoScore(id, value) {
     }
 }
 
-/**
- * Generate a URL-friendly slug from organization name
- * Example: "Acme Corporation Ltd." → "acme-corporation-ltd"
- */
-function generateSlug(name) {
-    return name
-        .toLowerCase()
-        .trim()
-        // Remove special characters except spaces and hyphens
-        .replace(/[^a-z0-9\s-]/g, '')
-        // Replace spaces with hyphens
-        .replace(/\s+/g, '-')
-        // Remove multiple consecutive hyphens
-        .replace(/-+/g, '-')
-        // Remove leading/trailing hyphens
-        .replace(/^-+|-+$/g, '')
-        // Limit to 50 characters
-        .substring(0, 50);
-}
+// ============================================
+// DEPRECATED FUNCTIONS REMOVED IN V2.0
+// ============================================
+// The following functions have been removed:
+// - generateSlug() - No longer needed (org ID comes from dashboard)
+// - generateUniqueOrgId() - No longer needed (org ID comes from dashboard)
+// - exportToDashboard() - Replaced by auto-save to API
+// - batchImportAndViewDashboard() - No longer needed with direct API integration
+// ============================================
 
-/**
- * Generate unique organization ID from client name
- * Checks existing organizations and increments if duplicate
- */
-async function generateUniqueOrgId(clientName) {
-    const baseSlug = generateSlug(clientName);
-
-    try {
-        // Fetch existing organizations to check for duplicates
-        const response = await fetch('/api/organizations');
-
-        if (!response.ok) {
-            // If organizations.json doesn't exist yet, use base slug
-            console.log('No existing organizations found, using base slug');
-            return baseSlug;
-        }
-
-        const data = await response.json();
-        const existingOrgIds = Object.keys(data.organizations || {});
-
-        // Check if base slug exists
-        if (!existingOrgIds.includes(baseSlug)) {
-            return baseSlug;
-        }
-
-        // Base slug exists, find next available number
-        let counter = 2;
-        let candidateId = `${baseSlug}-${counter}`;
-
-        while (existingOrgIds.includes(candidateId)) {
-            counter++;
-            candidateId = `${baseSlug}-${counter}`;
-
-            // Safety check to prevent infinite loop
-            if (counter > 1000) {
-                console.warn('Too many duplicates, using timestamp');
-                return `${baseSlug}-${Date.now().toString().slice(-6)}`;
-            }
-        }
-
-        console.log(`Slug "${baseSlug}" already exists, using "${candidateId}"`);
-        return candidateId;
-
-    } catch (error) {
-        console.error('Error checking existing organizations:', error);
-        // Fallback: use slug with short timestamp
-        const timestamp = Date.now().toString().slice(-6);
-        return `${baseSlug}-${timestamp}`;
-    }
-}
-
-// Export assessment to Dashboard format
-async function exportToDashboard() {
-    if (!currentData.fieldKit || !currentScore) {
-        alert('Please complete an assessment and calculate the score first');
-        return;
-    }
-
-    // Get organization name from metadata.client
-    const orgName = currentData.metadata.client;
-    if (!orgName || orgName.trim() === '') {
-        alert('❌ Error: Organization name (Client) is not set.\n\nPlease fill in the Client field in the metadata section before exporting.');
-        return;
-    }
-
-    try {
-        // Generate unique org ID from client name automatically
-        console.log('🔧 Generating unique org ID from client name...');
-        const orgId = await generateUniqueOrgId(orgName.trim());
-        console.log(`✅ Generated org ID: ${orgId}`);
-
-        // Convert Field Kit assessment to dashboard format
-        const indicator = currentData.fieldKit.indicator;
-        const timestamp = new Date().toISOString();
-
-        // Create indicator entry
-        const indicatorEntry = {
-            soc_values: [], // No SOC data from Field Kit
-            human_values: [{
-                timestamp: timestamp,
-                value: currentScore.final_score,
-                assessor: currentData.metadata.auditor || 'Unknown',
-                assessment_id: `fk-${Date.now()}`
-            }],
-            current_bayesian: currentScore.final_score,
-            last_updated: timestamp
-        };
-
-        // Create complete organization structure with full assessment data
-        const dashboardExport = {
-            organization_id: orgId,
-            organization_name: orgName,
-            indicator_id: indicator,
-            indicator_data: indicatorEntry,
-            metadata: {
-                exported_from: 'field_kit',
-                export_timestamp: timestamp,
-                field_kit_version: '1.0'
-            },
-            // ADDED: Full assessment data for edit mode
-            full_assessment: {
-                responses: currentData.responses || {},
-                maturity_scores: currentData.scores || {},
-                risk_assessments: currentData.assessments || {},
-                notes: document.getElementById('notes')?.value || '',
-                metadata: currentData.metadata || {},
-                field_kit_reference: {
-                    indicator: currentData.fieldKit.indicator,
-                    title: currentData.fieldKit.title,
-                    category: currentData.fieldKit.category
-                }
-            }
-        };
-
-        // Save directly to server via API
-        console.log('💾 Saving export to server...');
-
-        const response = await fetch('/api/save-export', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                exportData: dashboardExport
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            alert(
-                `✅ Assessment Saved Successfully!\n\n` +
-                `Organization: ${result.organization}\n` +
-                `Organization ID: ${orgId}\n` +
-                `Indicator: ${result.indicator}\n` +
-                `File: ${result.filename}\n\n` +
-                `The assessment has been saved to field_kit_exports/ and is ready for batch import.`
-            );
-            console.log('✅ Export saved:', result);
-        } else {
-            throw new Error(result.error || 'Save failed');
-        }
-
-    } catch (error) {
-        console.error('❌ Export error:', error);
-
-        // Fallback to browser download if server save fails
-        const fallback = confirm(
-            `❌ Server Save Failed\n\n` +
-            `Error: ${error.message}\n\n` +
-            `Would you like to download the file instead?\n` +
-            `(You'll need to manually move it to field_kit_exports/)`
-        );
-
-        if (fallback) {
-            // For fallback, generate a simple slug with timestamp
-            const simpleSlug = generateSlug(orgName.trim());
-            const timestamp = Date.now();
-            const orgId = `${simpleSlug}-${timestamp.toString().slice(-6)}`;
-
-            const indicator = currentData.fieldKit.indicator;
-            const isoTimestamp = new Date().toISOString();
-
-            const indicatorEntry = {
-                soc_values: [],
-                human_values: [{
-                    timestamp: isoTimestamp,
-                    value: currentScore.final_score,
-                    assessor: currentData.metadata.auditor || 'Unknown',
-                    assessment_id: `fk-${Date.now()}`
-                }],
-                current_bayesian: currentScore.final_score,
-                last_updated: isoTimestamp
-            };
-
-            const dashboardExport = {
-                organization_id: orgId,
-                organization_name: orgName,
-                indicator_id: indicator,
-                indicator_data: indicatorEntry,
-                metadata: {
-                    exported_from: 'field_kit',
-                    export_timestamp: isoTimestamp,
-                    field_kit_version: '1.0'
-                },
-                // ADDED: Full assessment data for edit mode
-                full_assessment: {
-                    responses: currentData.responses || {},
-                    maturity_scores: currentData.scores || {},
-                    risk_assessments: currentData.assessments || {},
-                    notes: document.getElementById('notes')?.value || '',
-                    metadata: currentData.metadata || {},
-                    field_kit_reference: {
-                        indicator: currentData.fieldKit.indicator,
-                        title: currentData.fieldKit.title,
-                        category: currentData.fieldKit.category
-                    }
-                }
-            };
-
-            // Download as JSON (fallback)
-            const blob = new Blob([JSON.stringify(dashboardExport, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `dashboard_export_${orgId}_${indicator}_${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-
-            alert(`⚠️ File downloaded to your Downloads folder.\n\nOrg ID: ${orgId}\n\nPlease move it to field_kit_exports/ manually.`);
-        }
-    }
-}
-
-// Funzione:
+// ============================================
+// JSON VALIDATION
+// ============================================
 function validateCurrentJSON() {
     if (!currentData.fieldKit) {
         alert('No JSON loaded');
@@ -1484,122 +1427,8 @@ document.addEventListener('keydown', (e) => {
 // BATCH IMPORT & DASHBOARD INTEGRATION
 // ============================================
 
-/**
- * Batch import all Field Kit exports and open auditing dashboard
- * Calls server API to process all exports and view results
- */
-async function batchImportAndViewDashboard() {
-    const confirmed = confirm(
-        '📊 Batch Import & View Dashboard\n\n' +
-        'This will:\n' +
-        '1. Import all Field Kit exports from the configured folder\n' +
-        '2. Update organizations.json and auditing_results.json\n' +
-        '3. Open the Auditing Dashboard to view results\n\n' +
-        'Continue?'
-    );
-
-    if (!confirmed) return;
-
-    try {
-        // Show loading indicator
-        const originalContent = document.querySelector('.toolbar').innerHTML;
-        const toolbar = document.querySelector('.toolbar');
-
-        const loadingMsg = document.createElement('div');
-        loadingMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 10000; text-align: center;';
-        loadingMsg.innerHTML = `
-            <div style="font-size: 48px; margin-bottom: 15px;">⚙️</div>
-            <h3 style="margin-bottom: 10px; color: #1a1a2e;">Batch Import in Progress...</h3>
-            <p style="color: #7f8c8d; margin-bottom: 20px;">Processing Field Kit exports</p>
-            <div class="spinner" style="margin: 0 auto;"></div>
-        `;
-        document.body.appendChild(loadingMsg);
-
-        // Call batch import API
-        console.log('🔧 Calling batch import API...');
-
-        const response = await fetch('/api/batch-import', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                folderPath: null // Use default folder (../field_kit_exports)
-            })
-        });
-
-        const result = await response.json();
-
-        // Remove loading indicator
-        document.body.removeChild(loadingMsg);
-
-        if (result.success) {
-            // Show success message
-            alert(
-                `✅ Batch Import Successful!\n\n` +
-                `Files processed: ${result.filesProcessed}\n` +
-                `Folder: ${result.folderPath}\n\n` +
-                `Opening Auditing Dashboard...`
-            );
-
-            console.log('✅ Batch import completed:', result);
-
-            // Open auditing dashboard in new tab with cache-busting timestamp
-            const timestamp = Date.now();
-            window.open(`/dashboard/dashboard_auditing.html?t=${timestamp}`, '_blank');
-
-        } else {
-            throw new Error(result.error || 'Batch import failed');
-        }
-
-    } catch (error) {
-        console.error('❌ Batch import error:', error);
-
-        alert(
-            `❌ Batch Import Failed\n\n` +
-            `Error: ${error.message}\n\n` +
-            `Please ensure:\n` +
-            `1. The server is running (http://localhost:3000)\n` +
-            `2. Field Kit export files exist in the configured folder\n` +
-            `3. The folder path is correct`
-        );
-    }
-}
-
-/**
- * Generate synthetic data for testing (calls server API)
- */
-async function generateSyntheticData() {
-    const confirmed = confirm(
-        '🔧 Generate Synthetic Data\n\n' +
-        'This will create 100 synthetic Field Kit assessment files ' +
-        'for testing purposes.\n\n' +
-        'Continue?'
-    );
-
-    if (!confirmed) return;
-
-    try {
-        const response = await fetch('/api/generate-synthetic', {
-            method: 'POST'
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            alert(
-                '✅ Synthetic Data Generated!\n\n' +
-                '100 Field Kit assessment files have been created.\n\n' +
-                'You can now use "Batch Import & View Dashboard" to process them.'
-            );
-        } else {
-            throw new Error(result.error);
-        }
-
-    } catch (error) {
-        alert(`❌ Failed to generate synthetic data:\n\n${error.message}`);
-    }
-}
+// NOTE: batchImportAndViewDashboard() and generateSyntheticData() removed in v2.0
+// These functions are no longer needed with direct API integration
 
 // ============================================
 // INDICATOR DETAILS MODAL

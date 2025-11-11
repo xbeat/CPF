@@ -810,6 +810,26 @@
         </div>
     </div>
 
+    <!-- Indicator Detail Modal -->
+    <div id="indicatorModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="indicatorModalTitle">Indicator Detail</h3>
+                <button class="close-btn" onclick="closeIndicatorModal()">×</button>
+            </div>
+            <div id="indicatorModalContent">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <div>Loading indicator details...</div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeIndicatorModal()">Close</button>
+                <button type="button" class="btn btn-danger btn-small" id="deleteAssessmentBtn" onclick="deleteAssessmentFromModal()" style="display: none;">Delete Assessment</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ===== GLOBAL STATE =====
         let organizations = [];
@@ -817,6 +837,8 @@
         let selectedOrgData = null;
         let editingOrgId = null;
         let deletingOrgId = null;
+        let selectedIndicatorId = null;
+        let categoryFilter = null;
 
         // ===== INITIALIZATION =====
         document.addEventListener('DOMContentLoaded', () => {
@@ -899,6 +921,7 @@
                                 </div>
                             </div>
                             <div class="org-card-actions" onclick="event.stopPropagation()">
+                                <button class="icon-btn" onclick="openInClient('${org.id}', '${escapeHtml(org.name)}', '${org.language || 'en-US'}')" title="Open in Client">📝</button>
                                 <button class="icon-btn" onclick="editOrganization('${org.id}')" title="Edit">✏️</button>
                                 <button class="icon-btn" onclick="deleteOrganization('${org.id}', '${escapeHtml(org.name)}')" title="Delete">🗑️</button>
                             </div>
@@ -1008,6 +1031,21 @@
 
             let html = '';
 
+            // Show filter info if active
+            if (categoryFilter) {
+                const categoryNames = {
+                    '1': 'Authority-Based', '2': 'Temporal-Based', '3': 'Social-Based', '4': 'Affective-Based',
+                    '5': 'Cognitive-Based', '6': 'Group-Based', '7': 'Stress-Based', '8': 'Unconscious-Based',
+                    '9': 'AI-Enhanced', '10': 'Convergent'
+                };
+                html += `
+                    <div style="background: var(--primary); color: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>🔍 Filter active: Category ${categoryFilter} - ${categoryNames[categoryFilter]}</div>
+                        <button onclick="clearCategoryFilter()" class="btn btn-small" style="background: white; color: var(--primary);">Clear Filter</button>
+                    </div>
+                `;
+            }
+
             // Header row
             html += '<div class="matrix-cell header" style="font-size: 11px;">CAT</div>';
             for (let i = 1; i <= 10; i++) {
@@ -1016,7 +1054,11 @@
 
             // Data rows
             for (let cat = 1; cat <= 10; cat++) {
-                html += `<div class="matrix-cell header">${cat}</div>`;
+                const catKey = cat.toString();
+                const isFiltered = categoryFilter && categoryFilter !== catKey;
+                const rowStyle = isFiltered ? 'opacity: 0.3;' : '';
+
+                html += `<div class="matrix-cell header" style="${rowStyle}">${cat}</div>`;
 
                 for (let ind = 1; ind <= 10; ind++) {
                     const indicatorId = `${cat}.${ind}`;
@@ -1024,11 +1066,13 @@
                     const completed = !!assessment;
                     const cellClass = completed ? 'completed' : '';
                     const title = completed ? `${indicatorId} - Completed (${(assessment.bayesian_score * 100).toFixed(1)}%)` : `${indicatorId} - Not assessed`;
+                    const cellStyle = isFiltered ? 'opacity: 0.3; cursor: default;' : '';
 
                     html += `
                         <div class="matrix-cell indicator ${cellClass}"
                              title="${title}"
-                             onclick="openIndicatorDetail('${indicatorId}', '${org.id}')">
+                             style="${cellStyle}"
+                             onclick="${isFiltered ? '' : `openIndicatorDetail('${indicatorId}', '${org.id}')`}">
                             ${ind}
                         </div>
                     `;
@@ -1100,14 +1144,151 @@
             heatmap.innerHTML = html;
         }
 
-        function openIndicatorDetail(indicatorId, orgId) {
-            // TODO: Implement indicator detail modal
-            showAlert(`Opening detail for indicator ${indicatorId}...`, 'info');
+        async function openIndicatorDetail(indicatorId, orgId) {
+            selectedIndicatorId = indicatorId;
+            document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Detail`;
+            document.getElementById('indicatorModal').classList.add('active');
+
+            try {
+                // Get assessment data
+                const assessment = selectedOrgData.assessments[indicatorId];
+
+                const content = document.getElementById('indicatorModalContent');
+
+                if (assessment) {
+                    // Assessment exists - show details
+                    const riskClass = assessment.bayesian_score < 0.3 ? 'risk-low' :
+                                     assessment.bayesian_score < 0.7 ? 'risk-medium' : 'risk-high';
+                    const riskLabel = assessment.bayesian_score < 0.3 ? '🟢 Low Risk' :
+                                     assessment.bayesian_score < 0.7 ? '🟡 Medium Risk' : '🔴 High Risk';
+
+                    content.innerHTML = `
+                        <div style="display: grid; gap: 20px;">
+                            <div>
+                                <h4 style="margin: 0 0 10px 0; color: var(--primary);">${assessment.title || 'Indicator ' + indicatorId}</h4>
+                                <p style="margin: 0; color: var(--text-light); font-size: 14px;">${assessment.category || 'Category'}</p>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                                <div class="stat-box">
+                                    <div class="stat-label">Risk Score</div>
+                                    <div class="stat-value ${riskClass}">${(assessment.bayesian_score * 100).toFixed(1)}%</div>
+                                    <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">${riskLabel}</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Confidence</div>
+                                    <div class="stat-value">${(assessment.confidence * 100).toFixed(1)}%</div>
+                                    <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Assessment reliability</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Maturity Level</div>
+                                    <div class="stat-value" style="text-transform: uppercase;">${assessment.maturity_level || 'N/A'}</div>
+                                    <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Control maturity</div>
+                                </div>
+                            </div>
+
+                            <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                                <div style="font-weight: 600; margin-bottom: 10px;">Assessment Information</div>
+                                <div style="display: grid; gap: 8px; font-size: 14px;">
+                                    <div><strong>Assessor:</strong> ${assessment.assessor || 'Unknown'}</div>
+                                    <div><strong>Assessment Date:</strong> ${new Date(assessment.assessment_date).toLocaleString()}</div>
+                                </div>
+                            </div>
+
+                            ${assessment.raw_data && assessment.raw_data.client_conversation ? `
+                                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                                    <div style="font-weight: 600; margin-bottom: 10px;">Notes</div>
+                                    <p style="margin: 0; font-size: 14px; line-height: 1.6;">${assessment.raw_data.client_conversation.notes || 'No notes available'}</p>
+                                </div>
+                            ` : ''}
+
+                            ${assessment.raw_data && assessment.raw_data.client_conversation && assessment.raw_data.client_conversation.red_flags && assessment.raw_data.client_conversation.red_flags.length > 0 ? `
+                                <div style="background: #fee2e2; padding: 15px; border-radius: 8px; border: 1px solid var(--danger);">
+                                    <div style="font-weight: 600; margin-bottom: 10px; color: var(--danger);">🚩 Red Flags Identified (${assessment.raw_data.client_conversation.red_flags.length})</div>
+                                    <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
+                                        ${assessment.raw_data.client_conversation.red_flags.map(flag => `<li>${flag}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+
+                    document.getElementById('deleteAssessmentBtn').style.display = 'inline-flex';
+                } else {
+                    // No assessment - show empty state
+                    content.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <h3 class="empty-state-title">No Assessment Data</h3>
+                            <p class="empty-state-text">This indicator has not been assessed yet for ${selectedOrgData.name}.</p>
+                            <p style="font-size: 14px; color: var(--text-light);">Complete the assessment in the Field Kit Client to see detailed information here.</p>
+                        </div>
+                    `;
+
+                    document.getElementById('deleteAssessmentBtn').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading indicator detail:', error);
+                showAlert('Failed to load indicator details', 'error');
+                closeIndicatorModal();
+            }
+        }
+
+        function closeIndicatorModal() {
+            document.getElementById('indicatorModal').classList.remove('active');
+            selectedIndicatorId = null;
+        }
+
+        async function deleteAssessmentFromModal() {
+            if (!selectedIndicatorId || !selectedOrgId) return;
+
+            if (!confirm(`Are you sure you want to delete the assessment for indicator ${selectedIndicatorId}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/organizations/${selectedOrgId}/assessments/${selectedIndicatorId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Assessment deleted successfully', 'success');
+                    closeIndicatorModal();
+                    await loadOrganizationDetails(selectedOrgId);
+                } else {
+                    showAlert('Failed to delete assessment: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting assessment:', error);
+                showAlert('Failed to delete assessment: ' + error.message, 'error');
+            }
         }
 
         function filterByCategory(categoryId) {
-            // TODO: Implement category filtering
-            showAlert(`Filtering by category ${categoryId}...`, 'info');
+            // Toggle filter
+            if (categoryFilter === categoryId) {
+                // Unfilter
+                categoryFilter = null;
+                showAlert('Filter removed', 'info');
+            } else {
+                // Apply filter
+                categoryFilter = categoryId;
+                showAlert(`Filtering by category ${categoryId}`, 'info');
+            }
+
+            // Re-render matrix with filter
+            if (selectedOrgData) {
+                renderProgressMatrix(selectedOrgData);
+            }
+        }
+
+        function clearCategoryFilter() {
+            categoryFilter = null;
+            if (selectedOrgData) {
+                renderProgressMatrix(selectedOrgData);
+            }
         }
 
         // ===== ORGANIZATION CRUD =====
@@ -1119,6 +1300,17 @@
             document.getElementById('orgId').disabled = false;
             document.getElementById('fetchIndicators').parentElement.parentElement.classList.remove('hidden');
             document.getElementById('orgModal').classList.add('active');
+        }
+
+        // ===== OPEN IN CLIENT =====
+        function openInClient(orgId, orgName, language) {
+            // Build client URL with organization context
+            const clientUrl = `/client/cpf_client_json.html?org_id=${encodeURIComponent(orgId)}&org_name=${encodeURIComponent(orgName)}&language=${encodeURIComponent(language)}`;
+
+            // Open in new tab
+            window.open(clientUrl, '_blank');
+
+            console.log(`🚀 Opening client for organization: ${orgName} (${orgId})`);
         }
 
         function editOrganization(orgId) {
@@ -1219,24 +1411,70 @@
             const progressBar = document.getElementById('fetchProgressBar');
             progressEl.classList.remove('hidden');
 
+            const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/xbeat/CPF/main/auditor%20field%20kit/interactive';
+
+            const categories = [
+                { id: 1, name: '1.x-authority' },
+                { id: 2, name: '2.x-temporal' },
+                { id: 3, name: '3.x-social' },
+                { id: 4, name: '4.x-affective' },
+                { id: 5, name: '5.x-cognitive' },
+                { id: 6, name: '6.x-group' },
+                { id: 7, name: '7.x-stress' },
+                { id: 8, name: '8.x-unconscious' },
+                { id: 9, name: '9.x-ai' },
+                { id: 10, name: '10.x-convergent' }
+            ];
+
             try {
                 const totalIndicators = 100;
                 let fetchedCount = 0;
+                let successCount = 0;
+                let failedCount = 0;
 
-                // TODO: Implement actual fetch from GitHub
-                // For now, just show progress simulation
-                for (let i = 1; i <= 10; i++) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    fetchedCount += 10;
-                    const percent = Math.round((fetchedCount / totalIndicators) * 100);
-                    progressBar.style.width = percent + '%';
-                    progressBar.textContent = percent + '%';
+                // Fetch all 100 indicators
+                for (const category of categories) {
+                    for (let ind = 1; ind <= 10; ind++) {
+                        const indicatorId = `${category.id}.${ind}`;
+                        const url = `${GITHUB_BASE_URL}/${language}/${category.name}/indicator_${indicatorId}.json`;
+
+                        try {
+                            const response = await fetch(url);
+
+                            if (response.ok) {
+                                const indicatorData = await response.json();
+                                // Successfully fetched - we could store this in indicators_metadata if needed
+                                successCount++;
+                                console.log(`✅ Fetched indicator ${indicatorId}`);
+                            } else {
+                                failedCount++;
+                                console.warn(`⚠️ Failed to fetch indicator ${indicatorId}: ${response.status}`);
+                            }
+                        } catch (error) {
+                            failedCount++;
+                            console.error(`❌ Error fetching indicator ${indicatorId}:`, error.message);
+                        }
+
+                        fetchedCount++;
+                        const percent = Math.round((fetchedCount / totalIndicators) * 100);
+                        progressBar.style.width = percent + '%';
+                        progressBar.textContent = `${percent}% (${fetchedCount}/${totalIndicators})`;
+
+                        // Small delay to avoid rate limiting
+                        if (fetchedCount % 10 === 0) {
+                            await new Promise(resolve => setTimeout(resolve, 200));
+                        }
+                    }
                 }
 
-                showAlert('All indicators fetched successfully!', 'success');
+                if (failedCount === 0) {
+                    showAlert(`✅ All ${successCount} indicators fetched successfully!`, 'success');
+                } else {
+                    showAlert(`⚠️ Fetched ${successCount} indicators, ${failedCount} failed. Check console for details.`, 'info');
+                }
             } catch (error) {
                 console.error('Error fetching indicators:', error);
-                showAlert('Failed to fetch some indicators: ' + error.message, 'error');
+                showAlert('Failed to fetch indicators: ' + error.message, 'error');
             } finally {
                 progressEl.classList.add('hidden');
                 progressBar.style.width = '0%';
