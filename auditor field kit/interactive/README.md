@@ -1,65 +1,77 @@
-# CPF Auditor Field Kit - Interactive JSON Client
+# CPF Auditor Field Kit - Interactive Assessment Data
 
-A lightweight, browser-based interactive client for conducting Cybersecurity Psychology Framework (CPF) field assessments. This tool enables security auditors to evaluate organizational psychological vulnerabilities using the CPF 100-indicator methodology.
+This directory contains the core CPF assessment data structured by language and category. The interactive client application has been archived.
 
 ## 🎯 Overview
 
-The CPF Field Kit Interactive Client is a standalone HTML/CSS/JavaScript application that:
+This directory contains the CPF 100-indicator assessment data organized in JSON format:
 
-- Loads CPF indicator assessments from JSON files (local or GitHub)
-- Provides interactive questionnaires for field auditors
-- Calculates vulnerability scores using weighted formulas
-- Generates professional PDF reports
-- Supports 5 languages (en-US, it-IT, es-ES, fr-FR, de-DE)
-- Requires zero installation (runs directly in browser)
+- Multi-language support (en-US, it-IT)
+- 10 vulnerability categories (1.x through 10.x)
+- Reference guides for each language
+- Structured indicator definitions with scoring methodology
 
 ## 📁 Project Structure
 
 ```
 interactive/
-├── cpf_client_json.html    # Main application file
-├── script.js                # Core logic and scoring engine
-├── styles.css               # UI styling
-├── README.md                # This file
-├── STARTUP_PROMPT.md        # Batch generation workflow guide
-├── en-US/                   # English indicator JSONs
+├── README.md                          # This file
+├── reference_guide_en-US.json         # English reference guide
+├── reference_guide_it-IT.json         # Italian reference guide
+├── en-US/                             # English indicator JSONs
 │   ├── README.md
 │   ├── 1.x-authority/
-│   │   └── indicator_1.3.json
+│   │   └── indicator_1.1.json, indicator_1.2.json, ...
 │   ├── 2.x-temporal/
 │   ├── 3.x-social/
-│   └── ... (10 categories total)
-├── it-IT/                   # Italian translations
+│   ├── 4.x-affective/
+│   ├── 5.x-cognitive/
+│   ├── 6.x-group/
+│   ├── 7.x-stress/
+│   ├── 8.x-unconscious/
+│   ├── 9.x-ai/
+│   └── 10.x-convergent/
+├── it-IT/                             # Italian translations
 │   ├── README.md
-│   └── ... (same structure)
-└── ... (es-ES, fr-FR, de-DE)
+│   └── ... (same structure as en-US)
+└── archive/                           # Archived client application
+    └── client-app/
+        ├── cpf_client_json.html       # Interactive web client (archived)
+        ├── script.js                  # Client logic (archived)
+        ├── styles.css                 # UI styles (archived)
+        ├── validator.js               # JSON validator (archived)
+        ├── test-validator.js          # Validator tests (archived)
+        ├── PROMPT_TEMPLATE.md         # Generation templates (archived)
+        └── STARTUP_PROMPT.md          # Workflow guide (archived)
 ```
+
+> **Note**: The interactive HTML/JavaScript client has been archived. This directory now focuses on maintaining the core assessment data (JSON indicators) that can be consumed by various client applications.
 
 ## 🚀 Quick Start
 
-### Option 1: Open Directly
-1. Open `cpf_client_json.html` in any modern browser
-2. Click **"📥 Load JSON"**
-3. Enter indicator code (e.g., `1.3` for en-US or `1.3-IT` for Italian)
-4. Complete the assessment
-5. Click **"📊 Show/Hide Analysis"** to view scores
+### Accessing the Data
 
-### Option 2: Load from File
-1. Open `cpf_client_json.html`
-2. Click **"📂 Import JSON"**
-3. Select a local `.json` file
-4. Complete the assessment
+The assessment data is organized by language and category:
 
-## 📋 How to Use
+1. **English Indicators**: Browse `en-US/` directory
+2. **Italian Indicators**: Browse `it-IT/` directory
+3. **Reference Guides**: Use `reference_guide_en-US.json` or `reference_guide_it-IT.json`
 
-### Loading Indicators
+### Using with Client Applications
 
-**Format**: `X.Y-LANG` or `X.Y` (defaults to en-US)
+These JSON files can be consumed by:
+- The archived interactive client (see `archive/client-app/`)
+- The main CPF dashboard (see `/dashboard` in repository root)
+- Custom integrations via REST API
+- Direct JSON parsing in any application
 
-Examples:
-- `1.3` → Loads `en-US/1.x-authority/indicator_1.3.json` from GitHub
-- `1.3-IT` → Loads `it-IT/1.x-authority/indicator_1.3.json` from GitHub
-- `2.5-ES` → Loads `es-ES/2.x-temporal/indicator_2.5.json` from GitHub
+## 📋 Data Organization
+
+### Indicator Naming Convention
+
+**Format**: `indicator_X.Y.json` where:
+- `X` = Category number (1-10)
+- `Y` = Specific indicator within category
 
 **Category Mapping:**
 1. Authority → `1.x-authority`
@@ -73,20 +85,24 @@ Examples:
 9. AI → `9.x-ai`
 10. Convergent → `10.x-convergent`
 
-### Assessment Workflow
+### File Locations
 
-1. **Load Indicator**: Choose your indicator
-2. **Fill Metadata**: Date, auditor name, client, status
-3. **Complete Sections**:
-   - Quick Assessment (multiple choice)
-   - Client Conversation (open-ended questions)
-   - Red Flags (checkboxes)
-4. **Auto-scoring**: Score updates in real-time
-5. **Review Analysis**: Click "Show/Hide Analysis" button
-6. **Export**:
-   - 💾 Save (localStorage)
-   - 📥 Export (JSON download)
-   - 📊 Generate Report (PDF)
+**English Indicators:**
+- Path: `en-US/{category}/indicator_{X.Y}.json`
+- Example: `en-US/1.x-authority/indicator_1.3.json`
+
+**Italian Indicators:**
+- Path: `it-IT/{category}/indicator_{X.Y}.json`
+- Example: `it-IT/1.x-authority/indicator_1.3.json`
+
+### Assessment Structure
+
+Each indicator JSON contains:
+1. **Metadata**: Indicator code, category, title, version, language
+2. **Quick Assessment**: Multiple-choice questions (70% weight)
+3. **Client Conversation**: Open-ended follow-up questions
+4. **Red Flags**: Binary risk indicators (30% weight)
+5. **Scoring**: Weighted formula and maturity level thresholds
 
 ## 📊 Scoring System
 
@@ -144,29 +160,17 @@ See language-specific READMEs for translation guidelines and terminology.
 
 ## 🔧 Technical Details
 
-### Browser Compatibility
-- Chrome/Edge 90+
-- Firefox 88+
-- Safari 14+
-- No server required (pure client-side)
+### Data Format
+- **Standard**: JSON (RFC 8259 compliant)
+- **Encoding**: UTF-8
+- **Size**: ~5-15KB per indicator
+- **Validation**: Schema-validated structure
 
-### Dependencies
-- **Zero external dependencies**
-- Pure vanilla JavaScript (ES6+)
-- CSS Grid/Flexbox for layout
-- LocalStorage for persistence
-- jsPDF for PDF generation (included via CDN)
-
-### Performance
-- Lightweight: ~150KB total (HTML+CSS+JS)
-- Instant load time
-- Real-time scoring (<50ms)
-- Optimized DOM updates (no full re-renders)
-
-### Data Storage
-- **LocalStorage**: Auto-save every response
-- **Export JSON**: Download complete assessment data
-- **No cloud sync**: All data stays local for privacy
+### File Organization
+- Hierarchical: Language → Category → Indicator
+- Consistent naming: `indicator_{X.Y}.json`
+- Self-contained: Each file includes full assessment definition
+- Portable: Can be used standalone or in collections
 
 ## 📄 JSON Schema
 
@@ -203,154 +207,141 @@ Each indicator JSON follows this structure:
 
 See `en-US/README.md` for complete schema documentation.
 
-## 🛠️ Development
+## 🛠️ Working with Indicators
 
 ### Creating New Indicators
 
-1. Use **STARTUP_PROMPT.md** for batch generation workflow
-2. Follow JSON schema from master reference (indicator 1.3)
-3. Validate using "🔍 Validate JSON" button
-4. Test scoring calculation
-5. Commit to appropriate language directory
+1. Use indicator 1.3 as reference template
+2. Follow JSON schema structure (see below)
+3. Maintain consistency in field naming and structure
+4. Validate JSON syntax before committing
+5. Commit to appropriate category directory
 
 ### Translating Indicators
 
-1. Copy from `en-US/` to target language directory
+1. Copy from `en-US/` to target language directory (e.g., `it-IT/`)
 2. Follow translation guidelines in `{lang}/README.md`
-3. Keep IDs, values, and scoring formulas unchanged
-4. Translate only user-facing text
-5. Update `language` field in JSON
-6. Test in application
+3. **CRITICAL**: Keep IDs, values, and scoring formulas unchanged
+4. Translate only user-facing text (titles, questions, descriptions)
+5. Update `language` field in JSON metadata
+6. Test with client application
 
-### Customization
+### Quality Assurance
 
-**Colors** (styles.css):
-```css
-:root {
-    --primary: #1a1a2e;
-    --highlight: #e94560;
-    --success: #2ecc71;
-    --warning: #f39c12;
-    --danger: #e74c3c;
-}
-```
+- **JSON Validation**: Use `archive/client-app/validator.js` if needed
+- **Schema Compliance**: Check against reference indicator
+- **Consistency**: Ensure all translations match source structure
+- **Completeness**: Verify all fields are translated
 
-**Scoring Weights** (script.js):
-```javascript
-const QUICK_WEIGHT = 0.70;
-const RED_FLAGS_WEIGHT = 0.30;
-```
+## 📝 Data Features
 
-## 📝 Features
+### Structure
+- ✅ Standardized JSON schema across all indicators
+- ✅ Self-contained assessment definitions
+- ✅ Multilingual support (en-US, it-IT)
+- ✅ Hierarchical category organization
+- ✅ Version tracking per indicator
+- ✅ Consistent naming conventions
 
-### Core Features
-- ✅ Load indicators from GitHub or local files
-- ✅ Interactive questionnaires with auto-save
-- ✅ Real-time vulnerability scoring
-- ✅ Multilingual support (5 languages)
-- ✅ Expandable detailed analysis
-- ✅ PDF report generation
-- ✅ JSON export/import
-- ✅ Offline-capable (no internet required after load)
+### Content
+- ✅ 100 total indicators across 10 categories
+- ✅ Weighted scoring methodology embedded
+- ✅ Maturity level definitions (Green/Yellow/Red)
+- ✅ Quick assessment questions with weights
+- ✅ Conversation prompts for qualitative depth
+- ✅ Red flag indicators for critical risks
 
-### Scoring Features
-- ✅ Auto-update on value change (zero lag)
-- ✅ Weighted scoring algorithm
-- ✅ Maturity level classification
-- ✅ Detailed breakdown by component
-- ✅ Question-level scoring visibility
-- ✅ Red flags impact tracking
-
-### UX Features
-- ✅ Sticky score bar (always visible)
-- ✅ Collapsible detailed analysis (in-place, no modal)
-- ✅ Smooth animations
-- ✅ Responsive design (mobile-friendly)
-- ✅ Clean, professional interface
-- ✅ Zero flicker on updates (optimized DOM)
+### Integration
+- ✅ Client-agnostic format (JSON standard)
+- ✅ Direct GitHub raw access supported
+- ✅ Local file system compatible
+- ✅ REST API ready
+- ✅ Dashboard integration ready
+- ✅ Portable and redistributable
 
 ## 🐛 Troubleshooting
 
-### Common Issues
+### Data Issues
 
-**"Indicator not found" error**
-- Check spelling: `1.3` not `1-3`
-- Verify language code: `IT` not `it`
-- Ensure JSON exists in GitHub repo
-- Try loading from local file instead
+**File not found**
+- Verify path follows structure: `{lang}/{category}/indicator_{X.Y}.json`
+- Check indicator number format: `1.3` not `1-3`
+- Ensure language code is correct: `it-IT` not `IT`
+- Confirm file exists in repository
 
-**Score not updating**
-- Open browser console (F12)
-- Look for JavaScript errors
-- Ensure all required fields are filled
-- Click "🧮 Calcola Score CPF" manually
+**JSON parsing errors**
+- Validate JSON syntax using a JSON validator
+- Check for missing commas, brackets, or quotes
+- Ensure UTF-8 encoding (no BOM)
+- Use `validator.js` from archive if available
 
-**PDF export not working**
-- Check if jsPDF loaded (F12 → Network tab)
-- Ensure popup blocker is disabled
-- Try different browser
-- Use JSON export as alternative
+**Missing translations**
+- Confirm target language directory exists
+- Check that indicator number matches source (en-US)
+- Verify all required fields are present
+- Compare structure with reference indicator
 
-**Data lost after browser close**
-- Use "💾 Export Data" before closing
-- Check if localStorage is enabled
-- Try "📥 Export" for backup
+**Schema inconsistencies**
+- Use indicator 1.3 as reference template
+- Ensure all IDs remain unchanged from en-US version
+- Verify scoring weights match across languages
+- Check that field names follow exact schema
 
 ## 🤝 Contributing
 
 ### Adding Indicators
-1. Follow `STARTUP_PROMPT.md` workflow
-2. Use indicator 1.3 as template
-3. Validate JSON schema
-4. Test scoring in application
+1. Use indicator 1.3 as reference template
+2. Follow JSON schema exactly
+3. Validate syntax and structure
+4. Test with a client application
 5. Commit to appropriate category folder
+6. Update language-specific README if needed
 
 ### Translations
-1. Read `{lang}/README.md` for guidelines
+1. Read `{lang}/README.md` for translation guidelines
 2. Use terminology mapping tables
-3. Keep IDs and structure unchanged
-4. Test in application
-5. Submit for review
+3. **CRITICAL**: Keep all IDs and structure unchanged
+4. Translate only user-facing content
+5. Test with client application
+6. Submit for review with validation proof
 
-### Bug Reports
-Include:
-- Browser and version
-- Steps to reproduce
-- Expected vs actual behavior
-- Console errors (F12)
-- Sample JSON if relevant
+### Data Quality Issues
+When reporting issues, include:
+- File path and indicator number
+- JSON validation error (if applicable)
+- Expected vs actual structure
+- Language and version
+- Sample JSON snippet if relevant
 
 ## 📚 Documentation
 
-- **STARTUP_PROMPT.md**: Batch generation workflow
-- **en-US/README.md**: Master reference and schema
-- **it-IT/README.md**: Italian translation guide
-- **{lang}/README.md**: Language-specific guidelines
+- **en-US/README.md**: Master reference and JSON schema documentation
+- **it-IT/README.md**: Italian translation guidelines and terminology
+- **reference_guide_{lang}.json**: Quick reference for all indicators
+- **archive/client-app/**: Legacy client documentation (archived)
 
-## 🔒 Privacy & Security
+## 🔒 Data Privacy
 
-- ✅ All data stays local (no cloud)
-- ✅ No analytics or tracking
-- ✅ No external API calls (except GitHub raw for JSON loading)
-- ✅ No authentication required
-- ✅ Export data anytime (full ownership)
+- ✅ No personal data embedded in indicator definitions
+- ✅ Assessment data structure respects privacy by design
+- ✅ Client implementations handle sensitive data (not the JSON files)
+- ✅ Publicly accessible via GitHub (contains only assessment methodology)
+- ✅ No tracking or analytics in data files
 
-## 📈 Roadmap
+## 📈 Status & Versioning
 
-### Completed (v1.0)
-- ✅ Core assessment functionality
-- ✅ Multilingual support
-- ✅ Real-time scoring
-- ✅ PDF export
-- ✅ Optimized UX
+### Current (v1.0)
+- ✅ Complete 100-indicator taxonomy
+- ✅ English (en-US) indicators complete
+- ✅ Italian (it-IT) translations in progress
+- ✅ Standardized JSON schema
+- ✅ Reference guides available
 
-### Planned (v2.0)
-- [ ] Backend persistence (optional)
-- [ ] Multi-indicator dashboard
-- [ ] Bayesian cross-indicator analysis
-- [ ] Collaborative editing
-- [ ] API for integrations
-- [ ] Advanced analytics
+### Maintenance
+- Regular updates to indicator content based on field testing
+- New language additions as translations become available
+- Schema versioning to maintain backward compatibility
+- Quality assurance and validation improvements
 
 ## 📄 License
 
@@ -361,15 +352,16 @@ For licensing information, contact the CPF team.
 
 **CPF Framework**: Developed by the Cybersecurity Psychology Research Team
 
-**Interactive Client**:
-- Architecture: CPF Development Team
-- Implementation: Claude (Anthropic) + Human collaboration
-- Optimization: Multiple iteration cycles for production quality
+**Assessment Data**:
+- Design: CPF Development Team
+- Structure: Standardized indicator methodology
+- Translations: Community contributors
+- Maintenance: Ongoing quality assurance program
 
 ---
 
 **Version**: 1.0
-**Last Updated**: 2025-11-08
-**Status**: Production-ready for field testing
+**Last Updated**: 2025-11-11
+**Status**: Production-ready
 
 For questions or support, refer to project documentation or contact the CPF team.
