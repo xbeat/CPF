@@ -6,9 +6,60 @@ Unified Node.js server for the CPF (Cognitive Persuasion Framework) Dashboard sy
 
 - **Dashboard SOC** - SOC + Bayesian Analysis Dashboard
 - **Dashboard Auditing** - Field Kit Progress Tracking + Risk Analysis
-- **Field Kit Client** - Interactive assessment interface
 - **Batch Import System** - Automated import of Field Kit assessments
 - **RESTful API** - Backend services for data management
+- **PostgreSQL Integration** - Database schema and seed data
+
+## 📁 Repository Structure
+
+```
+dashboard/
+├── README.md                    # This file
+├── index.html                   # Main dashboard interface
+├── styles.css                   # Global dashboard styles
+├── bayesian.js                  # Bayesian inference engine
+├── visualizations.js            # Chart and visualization library
+├── start.sh                     # Server startup script
+│
+├── lib/                         # Core libraries
+│   └── dataManager.js           # Data management module
+│
+├── scripts/                     # Utility scripts
+│   ├── batch_import.js          # Batch import Field Kit exports
+│   ├── generate_synthetic_data.js
+│   ├── generate_field_kit_assessments.js
+│   └── generate_demo_organizations.js
+│
+├── data/                        # Application data
+│   ├── organizations.json       # Organization data
+│   ├── auditing_results.json    # Assessment results
+│   └── README.md
+│
+├── postgres/                    # PostgreSQL files
+│   ├── README.md
+│   ├── DATABASE_SETUP.md        # Database setup guide
+│   ├── QUICK_START.md           # Quick start guide
+│   ├── db_schema.sql            # Database schema
+│   └── db_seed_demo.js          # Seed data script
+│
+├── auditing/                    # Auditing dashboard
+│   ├── index.html               # Auditing interface
+│   └── v1_backup.html           # Legacy version
+│
+├── soc-integration/             # SOC integration
+│   └── index.html
+│
+└── docs/                        # Documentation
+    ├── USER_GUIDE.html
+    └── archive/                 # Archived documentation
+        ├── API_DOCUMENTATION.md
+        ├── INTEGRATION.md
+        └── papers/              # Academic papers
+            ├── Bayesian_Cross_Indicator_Inference...pdf
+            └── Bayesian_Cross_Indicator_Inference...tex
+```
+
+> **Note**: Assessment data (JSON indicators) is located in `/auditor field kit/interactive/` directory. See main repository documentation for details.
 
 ---
 
@@ -43,9 +94,11 @@ Server will start on **http://localhost:3000**
 
 | URL | Description |
 |-----|-------------|
-| `http://localhost:3000/dashboard/dashboard.html` | SOC + Bayesian Analysis Dashboard |
-| `http://localhost:3000/dashboard/dashboard_auditing.html` | Auditing Progress + Risk Analysis Dashboard |
-| `http://localhost:3000/client/cpf_client_json.html` | Field Kit Assessment Client |
+| `http://localhost:3000/dashboard/` | Main dashboard interface |
+| `http://localhost:3000/dashboard/auditing/` | Auditing Progress + Risk Analysis Dashboard |
+| `http://localhost:3000/dashboard/soc-integration/` | SOC Integration Dashboard |
+
+> **Note**: Field Kit Assessment Client is located in `/auditor field kit/interactive/archive/client-app/`
 
 ### API Endpoints
 
@@ -67,49 +120,44 @@ Server will start on **http://localhost:3000**
    ```bash
    node server.js
    ```
+   (From repository root)
 
 2. **Generate synthetic data:**
    ```bash
-   node scripts/generate_field_kit_assessments.js
+   node dashboard/scripts/generate_field_kit_assessments.js
    ```
    This creates 100 synthetic Field Kit assessments in `/field_kit_exports/`
 
 3. **Run batch import:**
    ```bash
-   node scripts/batch_import.js ../field_kit_exports
+   node dashboard/scripts/batch_import.js field_kit_exports
    ```
 
 4. **View results:**
-   - Open `http://localhost:3000/dashboard/dashboard_auditing.html`
-   - Or `http://localhost:3000/dashboard/dashboard.html`
+   - Open `http://localhost:3000/dashboard/`
+   - Or `http://localhost:3000/dashboard/auditing/`
 
-### Option B: Using Field Kit Client (Recommended)
+### Option B: Using PostgreSQL Database
 
-1. **Start the server:**
+1. **Setup database:**
+   ```bash
+   psql -U postgres -f dashboard/postgres/db_schema.sql
+   ```
+
+2. **Seed demo data:**
+   ```bash
+   node dashboard/postgres/db_seed_demo.js
+   ```
+
+3. **Start the server:**
    ```bash
    node server.js
    ```
 
-2. **Open Field Kit Client:**
-   ```
-   http://localhost:3000/client/cpf_client_json.html
-   ```
-
-3. **Load and complete assessments:**
-   - Select language, category, and indicator
-   - Click "Load Indicator"
-   - Fill out the assessment form
-   - Click "Calculate Score CPF"
-
-4. **Export to Dashboard:**
-   - Click "Export to Dashboard"
-   - Enter organization ID and name
-   - File saved to `/field_kit_exports/`
-
-5. **Batch Import & View:**
-   - Click **"Batch Import & View Dashboard"** button
-   - Automatically imports all exports
-   - Opens auditing dashboard in new tab
+4. **View dashboards:**
+   - Main: `http://localhost:3000/dashboard/`
+   - Auditing: `http://localhost:3000/dashboard/auditing/`
+   - SOC: `http://localhost:3000/dashboard/soc-integration/`
 
 ---
 
@@ -266,7 +314,11 @@ const PORT = 3001; // Change this
 ## 📚 Resources
 
 - **CPF Framework:** https://cpf3.org
-- **Field Kit JSON Structure:** See `/auditor field kit/interactive/{lang}/{cat}.x-{name}/indicator_{id}.json`
+- **Assessment Data (JSON):** `/auditor field kit/interactive/`
+- **Field Kit Client (archived):** `/auditor field kit/interactive/archive/client-app/`
+- **Database Schema:** `/dashboard/postgres/db_schema.sql`
+- **API Documentation:** `/dashboard/docs/archive/API_DOCUMENTATION.md`
+- **Integration Guide:** `/dashboard/docs/archive/INTEGRATION.md`
 - **Bayesian Engine:** `/dashboard/bayesian.js`
 - **Visualization Library:** `/dashboard/visualizations.js`
 
@@ -277,8 +329,9 @@ const PORT = 3001; // Change this
 ### Adding New Indicators
 
 1. Create JSON file in `/auditor field kit/interactive/{lang}/{cat}.x-{name}/`
-2. Follow schema in `validator.js`
-3. Ensure indicator ID matches filename
+2. Follow schema documentation in `/auditor field kit/interactive/README.md`
+3. Use indicator 1.3 as reference template
+4. Validate JSON syntax before committing
 
 ### Modifying Bayesian Weights
 
@@ -307,14 +360,16 @@ All dashboards use `/dashboard/styles.css`
 - **Integrated with server API** - No more manual imports
 
 ### Unified Server
-- **One server for everything** - SOC, Auditing, Field Kit Client
+- **One server for everything** - SOC, Auditing dashboards
 - **RESTful API** - Programmatic access to all data
-- **Batch import integration** - Direct from Field Kit Client
+- **Batch import system** - Automated assessment processing
+- **PostgreSQL integration** - Database-backed data persistence
 
-### Field Kit Client Integration
-- **"Batch Import & View Dashboard" button** - One-click workflow
-- **Server API calls** - Automated import process
-- **Auto-open dashboard** - Seamless user experience
+### Reorganized Structure
+- **PostgreSQL consolidated** - All database files in `/postgres/`
+- **Documentation archived** - API docs and papers in `/docs/archive/`
+- **Clean root directory** - Focus on dashboard application files
+- **Modular architecture** - Clear separation of concerns
 
 ---
 
