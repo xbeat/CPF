@@ -1439,7 +1439,7 @@ function toggleCategory(categoryId) {
     body.classList.toggle('active');
 }
 
-function loadIndicatorFromReference(indicatorId) {
+async function loadIndicatorFromReference(indicatorId) {
     // Parse indicator ID (e.g., "1.3" -> category=1, indicator=3)
     const parts = indicatorId.split('.');
     const category = parts[0];
@@ -1459,8 +1459,8 @@ function loadIndicatorFromReference(indicatorId) {
     // Close modal
     closeQuickReference();
 
-    // Load the indicator
-    loadJSON();
+    // Load the indicator (AWAIT it!)
+    await loadJSON();
 }
 
 function closeQuickReference() {
@@ -1890,7 +1890,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 await loadExistingExport(indicatorParam, orgIdParam);
             } else {
                 // New mode: load from GitHub as usual
-                loadIndicatorFromReference(indicatorParam);
+                await loadIndicatorFromReference(indicatorParam);
             }
         }, 100);
         return; // Skip localStorage loading
