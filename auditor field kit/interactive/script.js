@@ -1790,15 +1790,14 @@ async function loadExistingExport(indicatorId, orgId) {
 
         const fieldKit = await fieldKitResponse.json();
 
-        // Render Field Kit UI
-        renderFieldKit(fieldKit);
+        // Populate currentData FIRST, then render
+        currentData.fieldKit = fieldKit;
 
         // Now populate with existing data from full_assessment (if available)
         if (exportData.full_assessment) {
             console.log('📋 Loading data from full_assessment...');
 
             currentData.metadata = exportData.full_assessment.metadata || currentData.metadata;
-            currentData.fieldKit = fieldKit;
 
             // Populate responses (form fields)
             if (exportData.full_assessment.responses) {
@@ -1826,10 +1825,9 @@ async function loadExistingExport(indicatorId, orgId) {
             // Fallback for old format exports (backward compatibility)
             console.log('⚠️ Old format export detected, using indicator_data fallback');
             currentData.metadata = exportData.metadata || currentData.metadata;
-            currentData.fieldKit = fieldKit;
         }
 
-        // Re-render to show loaded data
+        // Render ONCE with all data populated
         renderFieldKit(fieldKit);
 
         // Save to localStorage
