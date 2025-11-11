@@ -10,21 +10,33 @@ This repository contains the operational assessment tools for the Cybersecurity 
 auditor-field-kit/
 ├── README.md
 │
-├── interactive/                 # Web-based interactive assessment tool
-│   ├── script.js
-│   ├── validator.js
-│   ├── styles.css
-│   ├── STARTUP_PROMPT.md
-│   ├── it-IT/                   # Italian indicators (JSON format)
+├── interactive/                        # Assessment data repository
+│   ├── README.md
+│   ├── reference_guide_en-US.json      # English reference guide
+│   ├── reference_guide_it-IT.json      # Italian reference guide
+│   ├── en-US/                          # English indicators (JSON format)
 │   │   ├── 1.x-authority/
 │   │   ├── 2.x-temporal/
-│   │   └── ... (10 categories)
-│   └── en-US/                   # English indicators (JSON format)
-│       ├── 1.x-authority/
-│       ├── 2.x-temporal/
-│       └── ... (10 categories)
+│   │   ├── 3.x-social/
+│   │   ├── 4.x-affective/
+│   │   ├── 5.x-cognitive/
+│   │   ├── 6.x-group/
+│   │   ├── 7.x-stress/
+│   │   ├── 8.x-unconscious/
+│   │   ├── 9.x-ai/
+│   │   └── 10.x-convergent/
+│   ├── it-IT/                          # Italian indicators (JSON format)
+│   │   └── ... (same structure as en-US)
+│   └── archive/
+│       └── client-app/                 # Legacy web client (archived)
+│           ├── cpf_client_json.html
+│           ├── script.js
+│           ├── validator.js
+│           ├── styles.css
+│           ├── PROMPT_TEMPLATE.md
+│           └── STARTUP_PROMPT.md
 │
-├── it-IT/                       # Italian assessment documents
+├── it-IT/                              # Italian assessment documents
 │   ├── README.md
 │   ├── 1.x-authority/
 │   │   ├── cpf_indicator_1_1_foundation.md
@@ -33,7 +45,7 @@ auditor-field-kit/
 │   ├── 2.x-temporal/
 │   └── ... (10 categories)
 │
-└── en-US/                       # English assessment documents
+└── en-US/                              # English assessment documents
     ├── README.md
     ├── 1.x-authority/
     │   ├── cpf_indicator_1_1_foundation.md
@@ -43,20 +55,23 @@ auditor-field-kit/
     └── ... (10 categories)
 ```
 
-## Interactive Assessment Tool
+## Assessment Data Repository
 
-The `interactive/` folder contains a web-based assessment interface that provides:
-- **Multi-language support** (English & Italian) with JSON-based indicator data
-- **Real-time validation** of assessment responses
-- **Automated scoring** with visual feedback (Green/Yellow/Red)
-- **Fast assessment workflow** optimized for rapid evaluations
+The `interactive/` folder contains the core CPF assessment data in JSON format:
+- **100 indicators** across 10 vulnerability categories
+- **Multi-language support** (English & Italian)
+- **Standardized schema** for consistent assessment methodology
+- **Reference guides** for quick indicator lookup
+- **Client-agnostic format** ready for dashboard, API, or custom integrations
 
-### How to Use the Interactive Tool
-1. Navigate to the `interactive/` folder
-2. Open in a web browser or integrate into your assessment platform
-3. Select your language (it-IT or en-US)
-4. Complete the indicator assessments
-5. Generate automated risk scoring and reports
+### Using the Assessment Data
+The JSON indicator files can be consumed by:
+- **CPF Dashboard** (see `/dashboard` in repository root)
+- **Custom integrations** via REST API or direct file access
+- **Legacy web client** (archived in `interactive/archive/client-app/`)
+- **Third-party applications** supporting the CPF schema
+
+For detailed information on the data structure and usage, see `interactive/README.md`.
 
 ---
 
