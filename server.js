@@ -36,6 +36,19 @@ app.use('/dashboard', express.static(path.join(__dirname, 'dashboard')));
 app.use('/client', express.static(path.join(__dirname, 'auditor field kit/interactive')));
 
 // ============================================
+// BACKWARD COMPATIBILITY REDIRECTS
+// ============================================
+
+// Redirect old dashboard URLs to new organized structure
+app.get('/dashboard/dashboard_auditing.html', (req, res) => {
+  res.redirect(301, '/dashboard/auditing/index.html');
+});
+
+app.get('/dashboard/dashboard.html', (req, res) => {
+  res.redirect(301, '/dashboard/soc-integration/index.html');
+});
+
+// ============================================
 // API ENDPOINTS - ORGANIZATIONS
 // ============================================
 
@@ -784,12 +797,15 @@ app.listen(PORT, () => {
   console.log(`📡 Server listening on: http://localhost:${PORT}\n`);
   console.log('📂 Available endpoints:\n');
   console.log('   🌐 Dashboards:');
-  console.log(`      → http://localhost:${PORT}/dashboard/dashboard.html`);
-  console.log(`        (SOC + Bayesian Analysis Dashboard)`);
-  console.log(`      → http://localhost:${PORT}/dashboard/dashboard_auditing.html`);
+  console.log(`      → http://localhost:${PORT}/dashboard/auditing/`);
   console.log(`        (Auditing Progress + Risk Analysis Dashboard)`);
+  console.log(`      → http://localhost:${PORT}/dashboard/soc-integration/`);
+  console.log(`        (SOC + Bayesian Analysis Dashboard)`);
   console.log(`      → http://localhost:${PORT}/client/cpf_client_json.html`);
   console.log(`        (Field Kit Assessment Client)\n`);
+  console.log('   📝 Legacy URLs (auto-redirect):');
+  console.log(`      → /dashboard/dashboard_auditing.html → /dashboard/auditing/`);
+  console.log(`      → /dashboard/dashboard.html → /dashboard/soc-integration/\n`);
   console.log('   🔌 API Endpoints (v2.0 - JSON Storage):');
   console.log(`      Organizations:`);
   console.log(`        GET    /api/organizations`);
