@@ -36,6 +36,15 @@ app.use('/dashboard', express.static(path.join(__dirname, 'dashboard')));
 app.use('/client', express.static(path.join(__dirname, 'auditor field kit/interactive')));
 
 // ============================================
+// LANDING PAGE ROUTE
+// ============================================
+
+// Main landing page
+app.get('/', (req, res) => {
+  res.redirect(301, '/dashboard/');
+});
+
+// ============================================
 // BACKWARD COMPATIBILITY REDIRECTS
 // ============================================
 
@@ -102,11 +111,11 @@ app.get('/api/organizations/:orgId', (req, res) => {
 /**
  * POST /api/organizations
  * Create new organization
- * Body: { id, name, industry, size, country, language, created_by, notes }
+ * Body: { id, name, industry, size, country, language, created_by, notes, fetch_indicators }
  */
-app.post('/api/organizations', (req, res) => {
+app.post('/api/organizations', async (req, res) => {
   try {
-    const { id, name, industry, size, country, language, created_by, notes } = req.body;
+    const { id, name, industry, size, country, language, created_by, notes, fetch_indicators } = req.body;
 
     // Validate required fields
     if (!id || !name || !industry || !size || !country) {
@@ -137,12 +146,24 @@ app.post('/api/organizations', (req, res) => {
       notes: notes || ''
     });
 
-    console.log(`\n✅ [API] Created organization: ${id} (${name})\n`);
+    console.log(`\n✅ [API] Created organization: ${id} (${name})`);
+
+    // Fetch indicators if requested
+    if (fetch_indicators) {
+      console.log(`📥 [API] Fetching 100 indicators for ${id}...`);
+      // This will be done asynchronously - return success immediately
+      fetchIndicatorsForOrganization(id, language || 'en-US').catch(err => {
+        console.error(`❌ [API] Failed to fetch indicators for ${id}:`, err.message);
+      });
+    }
+
+    console.log('');
 
     res.status(201).json({
       success: true,
       message: 'Organization created successfully',
-      data: orgData
+      data: orgData,
+      indicators_fetching: fetch_indicators || false
     });
   } catch (error) {
     console.error('[API] Error creating organization:', error.message);
@@ -152,6 +173,35 @@ app.post('/api/organizations', (req, res) => {
     });
   }
 });
+
+/**
+ * Background task: Fetch all 100 indicators for organization
+ */
+async function fetchIndicatorsForOrganization(orgId, language) {
+  const allIndicators = dataManager.generateAllIndicatorIds();
+  let fetched = 0;
+  let failed = 0;
+
+  for (const indicatorId of allIndicators) {
+    try {
+      const indicatorData = await dataManager.fetchIndicatorFromGitHub(indicatorId, language);
+      // Successfully fetched - could store metadata if needed
+      fetched++;
+
+      if (fetched % 10 === 0) {
+        console.log(`   Progress: ${fetched}/100 indicators fetched`);
+      }
+
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 50));
+    } catch (error) {
+      failed++;
+      console.warn(`   ⚠️ Failed to fetch ${indicatorId}: ${error.message}`);
+    }
+  }
+
+  console.log(`\n✅ [API] Indicator fetch complete for ${orgId}: ${fetched} fetched, ${failed} failed\n`);
+}
 
 /**
  * PUT /api/organizations/:orgId
