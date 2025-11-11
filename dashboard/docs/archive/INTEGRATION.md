@@ -1,8 +1,10 @@
 # CPF Dashboard - Technical Integration Guide
 
-**Version:** 1.0
-**Last Updated:** 2025-11-09
+**Version:** 2.0
+**Last Updated:** 2025-11-11
 **Audience:** Developers, Security Engineers, SOC Integrators
+
+> **Note**: This document has been updated to reflect the new modular file architecture and REST API v2.0
 
 ---
 
@@ -14,10 +16,11 @@
 4. [Field Kit Integration](#field-kit-integration)
 5. [Batch Import Workflow](#batch-import-workflow)
 6. [Bayesian Engine API](#bayesian-engine-api)
-7. [Extending the Framework](#extending-the-framework)
-8. [Deployment Options](#deployment-options)
-9. [Security Considerations](#security-considerations)
-10. [Troubleshooting](#troubleshooting)
+7. [REST API Reference](#rest-api-reference)
+8. [Extending the Framework](#extending-the-framework)
+9. [Deployment Options](#deployment-options)
+10. [Security Considerations](#security-considerations)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -27,7 +30,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     CPF ECOSYSTEM                           │
+│                     CPF ECOSYSTEM v2.0                      │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌──────────────┐         ┌──────────────┐                  │
@@ -35,30 +38,51 @@
 │  │  (SIEM, EDR) │         │  (Human)     │                  │
 │  └──────┬───────┘         └──────┬───────┘                  │
 │         │                        │                          │
-│         │ JSON Export            │ JSON Export              │
+│         │ REST API               │ JSON Export              │
 │         ▼                        ▼                          │
 │  ┌─────────────────────────────────────────┐                │
-│  │   organizations.json (Unified Store)    │                │
-│  │   - 100 indicators per org              │                │
-│  │   - SOC + Human values                  │                │
-│  │   - Bayesian merged scores              │                │
+│  │   Node.js Server (Express + CORS)      │                │
+│  │   - REST API v2.0 (dataManager.js)    │                │
+│  │   - Organizations CRUD                │                │
+│  │   - Assessments management            │                │
+│  │   - Batch import automation           │                │
 │  └─────────────┬───────────────────────────┘                │
 │                │                                            │
-│                │ Fetch (HTTP)                               │
+│                │ File I/O                                   │
 │                ▼                                            │
 │  ┌─────────────────────────────────────────┐                │
-│  │       Dashboard (Client-Side)           │                │
+│  │   Modular File Storage                 │                │
 │  │  ┌───────────────────────────────────┐  │                │
-│  │  │ Bayesian Engine (bayesian.js)     │  │                │
-│  │  │ - Indicator merge                 │  │                │
-│  │  │ - Cross-category dependencies     │  │                │
-│  │  │ - Overall risk aggregation        │  │                │
+│  │  │ organizations_index.json          │  │                │
+│  │  │ - Org list + stats                │  │                │
 │  │  └───────────────────────────────────┘  │                │
 │  │  ┌───────────────────────────────────┐  │                │
-│  │  │ Visualization (Canvas + HTML5)    │  │                │
-│  │  │ - Multi-org grid                  │  │                │
+│  │  │ organizations/org-*.json          │  │                │
+│  │  │ - Individual org data (100 ind)  │  │                │
+│  │  │ - Assessments + aggregates       │  │                │
+│  │  └───────────────────────────────────┘  │                │
+│  └─────────────┬───────────────────────────┘                │
+│                │                                            │
+│                │ HTTP/REST API                              │
+│                ▼                                            │
+│  ┌─────────────────────────────────────────┐                │
+│  │       Dashboard Applications            │                │
+│  │  ┌───────────────────────────────────┐  │                │
+│  │  │ Landing Page (index.html)         │  │                │
+│  │  └───────────────────────────────────┘  │                │
+│  │  ┌───────────────────────────────────┐  │                │
+│  │  │ SOC Dashboard                     │  │                │
+│  │  │ (soc-integration/index.html)      │  │                │
+│  │  │ - Multi-org analysis              │  │                │
+│  │  │ - Bayesian risk scoring           │  │                │
 │  │  │ - Convergence charts              │  │                │
-│  │  │ - Prioritization matrix           │  │                │
+│  │  └───────────────────────────────────┘  │                │
+│  │  ┌───────────────────────────────────┐  │                │
+│  │  │ Auditing Dashboard                │  │                │
+│  │  │ (auditing/index.html)             │  │                │
+│  │  │ - Progress tracking               │  │                │
+│  │  │ - Risk analysis                   │  │                │
+│  │  │ - Completion grids                │  │                │
 │  │  └───────────────────────────────────┘  │                │
 │  └─────────────────────────────────────────┘                │
 │                                                             │
@@ -69,88 +93,145 @@
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
+| **Backend Server** | Node.js (Express 4.x) | REST API, file serving |
+| **Data Manager** | Custom dataManager.js | Atomic file I/O, JSON operations |
 | **Dashboard UI** | HTML5, CSS3, Vanilla JavaScript | Client-side rendering |
 | **Bayesian Engine** | JavaScript (ES6+) | Risk calculation |
 | **Visualizations** | Canvas API | Charts (SOC vs Human) |
-| **Data Storage** | JSON files (6MB typical) | Zero-backend architecture |
-| **Batch Import** | Node.js 14+ | Field Kit automation |
-| **Synthetic Generator** | Node.js 14+ | Demo data creation |
-| **HTTP Server** | Python 3.8+ / Node.js http-server | Local development (CORS) |
+| **Data Storage** | Modular JSON files (~100KB each) | File-based database |
+| **Batch Import** | Node.js 18+ | Field Kit automation |
+| **PostgreSQL** | Optional database | Alternative to JSON files |
+| **CORS** | Express middleware | Cross-origin API access |
 
 ### Key Design Principles
 
-1. **Client-Side Only**: Zero server dependencies, all computation in browser
-2. **JSON-Based Storage**: No database, version-controllable data
-3. **Real-Time Updates**: Auto-recalculation on data changes
-4. **Stateless**: No sessions, no authentication (deploy behind SSO if needed)
-5. **Air-Gapped Compatible**: Works offline after initial data load
+1. **REST API First**: Modern RESTful architecture with JSON responses
+2. **Modular File Storage**: Separate file per organization for scalability
+3. **Atomic Operations**: Safe concurrent writes with temp files
+4. **Real-Time Updates**: Auto-recalculation on data changes
+5. **Stateless API**: No sessions, authentication optional (deploy behind SSO)
+6. **Air-Gapped Compatible**: Can run offline with file-based storage
+7. **Database Optional**: Use PostgreSQL if needed, JSON files by default
 
 ---
 
 ## Data Format Specifications
 
-### organizations.json Schema
+### File Structure Overview
+
+The system now uses **modular file storage** instead of a single monolithic JSON:
+
+```
+/dashboard/data/
+├── organizations_index.json          # Fast lookup index
+├── organizations/                    # Individual organization files
+│   ├── org-demo-001.json             # ~100KB per file
+│   ├── org-demo-002.json
+│   └── ...
+└── schemas/                          # JSON schemas for validation
+    ├── organization_index_schema.json
+    └── organization_data_schema.json
+```
+
+**Benefits:**
+- ✅ Faster reads (load only needed org)
+- ✅ Safer writes (atomic per-org updates)
+- ✅ Better Git diff/merge
+- ✅ Scalable to 100+ organizations
+
+---
+
+### organizations_index.json Schema
+
+**Purpose:** Lightweight index for quick overview of all organizations.
 
 ```json
 {
   "metadata": {
-    "version": "1.0",
-    "generated": "2025-11-09T10:00:00Z",
-    "total_organizations": 8
+    "version": "2.0",
+    "last_updated": "2025-11-11T15:30:00Z",
+    "total_organizations": 5
   },
-  "organizations": {
-    "org-001": {
-      "name": "Organization 1",
-      "industry": "Healthcare | Finance | Technology | Manufacturing | Retail",
-      "size": "small | medium | enterprise",
-      "country": "US | UK | DE | ...",
-      "indicators": {
-        "1.1": {
-          "soc_values": [
-            {
-              "timestamp": "2025-11-01T00:00:00Z",
-              "value": 0.45,
-              "confidence": 0.9,
-              "source": "siem-analyzer",
-              "metadata": {
-                "alert_count": 12,
-                "severity": "medium"
-              }
-            }
-          ],
-          "human_values": [
-            {
-              "timestamp": "2025-11-05T14:30:00Z",
-              "value": 0.52,
-              "assessor": "John Doe",
-              "assessment_id": "fk-1730815800-11"
-            }
-          ],
-          "current_bayesian": 0.49,
-          "last_updated": "2025-11-05T14:30:00Z"
-        }
-        // ... indicators 1.1 through 10.10 (100 total)
-      },
-      "aggregates": {
-        "overall_risk": 0.54,
-        "by_category": {
-          "authority": 0.45,
-          "temporal": 0.60,
-          "social": 0.52,
-          "affective": 0.48,
-          "cognitive": 0.55,
-          "group": 0.50,
-          "stress": 0.68,
-          "unconscious": 0.51,
-          "ai": 0.58,
-          "convergent": 0.47
-        },
-        "confidence": 0.85,
-        "trend": "stable | improving | deteriorating",
-        "last_calculated": "2025-11-09T10:00:00Z"
+  "organizations": [
+    {
+      "id": "org-demo-001",
+      "name": "TechCorp Global",
+      "industry": "Technology",
+      "size": "enterprise",
+      "country": "US",
+      "language": "en-US",
+      "created_at": "2025-01-11T10:00:00Z",
+      "updated_at": "2025-01-11T15:30:00Z",
+      "stats": {
+        "total_assessments": 45,
+        "completion_percentage": 45.0,
+        "overall_risk": 0.6543,
+        "avg_confidence": 0.8234,
+        "last_assessment_date": "2025-01-10T14:20:00Z"
       }
     }
-    // ... more organizations
+  ]
+}
+```
+
+---
+
+### organizations/org-{id}.json Schema
+
+**Purpose:** Complete data for a single organization (100 indicators + aggregates).
+
+```json
+{
+  "id": "org-demo-001",
+  "name": "TechCorp Global",
+  "metadata": {
+    "industry": "Technology",
+    "size": "enterprise",
+    "country": "US",
+    "language": "en-US",
+    "created_at": "2025-01-11T10:00:00Z",
+    "updated_at": "2025-01-11T15:30:00Z",
+    "created_by": "Alice Johnson",
+    "notes": "Enterprise tech company"
+  },
+  "assessments": {
+    "1.1": {
+      "indicator_id": "1.1",
+      "title": "Unquestioning Compliance with Authority",
+      "category": "Authority-Based Vulnerabilities",
+      "bayesian_score": 0.6543,
+      "confidence": 0.8500,
+      "maturity_level": "yellow",
+      "assessor": "Alice Johnson",
+      "assessment_date": "2025-01-10T14:20:00Z",
+      "raw_data": {
+        "quick_assessment": [...],
+        "client_conversation": {...}
+      }
+    }
+    // ... indicators 1.1 through 10.10 (100 total)
+  },
+  "aggregates": {
+    "overall_risk": 0.5208,
+    "overall_confidence": 0.8212,
+    "trend": "stable",
+    "by_category": {
+      "1": {
+        "category_name": "Authority-Based Vulnerabilities",
+        "avg_score": 0.6123,
+        "avg_confidence": 0.8456,
+        "total_assessments": 7,
+        "completion_percentage": 70.0
+      }
+      // ... categories 1-10
+    },
+    "completion": {
+      "total_indicators": 100,
+      "assessed_indicators": 45,
+      "percentage": 45.0,
+      "missing_indicators": ["1.3", "1.4", ...]
+    },
+    "last_calculated": "2025-11-11T15:30:00Z"
   }
 }
 ```
@@ -233,51 +314,55 @@ SOC systems (SIEM, EDR, SOAR, vulnerability scanners) export indicator values to
 | **7.5** Security shortcuts | Policy violations during high-load | DLP | `violations_peak_hours / violations_normal` |
 | **7.9** Incident correlation | Incidents during overtime hours | SIEM | `incidents_18-22 / incidents_09-17` |
 
-### SOC Export Script Template
+### SOC Export Script Template (REST API v2.0)
 
 ```javascript
-// soc_exporter.js - Example Splunk integration
-const fs = require('fs');
-const path = require('path');
+// soc_exporter.js - Example Splunk integration using REST API
+const axios = require('axios');
 const splunk = require('splunk-sdk'); // Hypothetical
 
-async function exportToOrganizationsJSON(orgId, indicatorId, value, confidence, source) {
-  const dataPath = path.join(__dirname, '../data/organizations.json');
-  const orgsData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+const API_BASE = 'http://localhost:3000/api';
 
-  if (!orgsData.organizations[orgId]) {
-    console.error(`Organization ${orgId} not found`);
-    return;
+/**
+ * Export SOC assessment to CPF Dashboard via REST API
+ */
+async function exportAssessment(orgId, indicatorId, value, confidence, source) {
+  try {
+    const assessmentData = {
+      indicator_id: indicatorId,
+      bayesian_score: parseFloat(value.toFixed(3)),
+      confidence: parseFloat(confidence.toFixed(3)),
+      assessor: `SOC-${source}`,
+      assessment_date: new Date().toISOString(),
+      raw_data: {
+        source: source,
+        soc_generated: true,
+        metadata: {
+          // Add custom SOC metrics
+          confidence_level: confidence,
+          detection_method: source
+        }
+      }
+    };
+
+    const response = await axios.post(
+      `${API_BASE}/organizations/${orgId}/assessments`,
+      assessmentData,
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    if (response.data.success) {
+      console.log(`✓ Updated ${orgId} indicator ${indicatorId}: ${value}`);
+      console.log(`  New overall risk: ${response.data.aggregates.overall_risk}`);
+    }
+  } catch (error) {
+    console.error(`✗ Failed to export ${orgId}/${indicatorId}:`, error.message);
   }
-
-  const indicator = orgsData.organizations[orgId].indicators[indicatorId];
-
-  // Append SOC value
-  indicator.soc_values.push({
-    timestamp: new Date().toISOString(),
-    value: parseFloat(value.toFixed(3)),
-    confidence: parseFloat(confidence.toFixed(3)),
-    source: source,
-    metadata: {} // Add custom metadata
-  });
-
-  // Update timestamp
-  indicator.last_updated = new Date().toISOString();
-
-  // Recalculate Bayesian (requires bayesian.js)
-  const BAYESIAN = require('../bayesian.js');
-  const merged = BAYESIAN.mergeIndicatorValues(
-    indicator.soc_values,
-    indicator.human_values
-  );
-  indicator.current_bayesian = merged.value;
-
-  // Save
-  fs.writeFileSync(dataPath, JSON.stringify(orgsData, null, 2));
-  console.log(`✓ Updated ${orgId} indicator ${indicatorId}: ${value}`);
 }
 
-// Example: Query Splunk for failed auth attempts (Indicator 1.7)
+/**
+ * Example: Query Splunk for failed auth attempts (Indicator 1.7)
+ */
 async function calculateIndicator1_7(orgId) {
   const service = new splunk.Service({
     username: process.env.SPLUNK_USER,
@@ -296,12 +381,41 @@ async function calculateIndicator1_7(orgId) {
   const risk = result.rows[0].risk;
   const confidence = 0.9; // High confidence from direct log data
 
-  await exportToOrganizationsJSON(orgId, '1.7', risk, confidence, 'splunk-auth-analyzer');
+  await exportAssessment(orgId, '1.7', risk, confidence, 'splunk-auth-analyzer');
+}
+
+/**
+ * Batch export multiple indicators
+ */
+async function exportMultipleIndicators(orgId, indicators) {
+  for (const [indicatorId, data] of Object.entries(indicators)) {
+    await exportAssessment(
+      orgId,
+      indicatorId,
+      data.value,
+      data.confidence,
+      data.source
+    );
+    // Rate limiting
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  // Verify final aggregates
+  const response = await axios.get(`${API_BASE}/organizations/${orgId}/aggregates`);
+  console.log('✓ Final overall risk:', response.data.aggregates.overall_risk);
 }
 
 // Run every 2 days (SOC frequency)
-setInterval(() => calculateIndicator1_7('org-001'), 2 * 24 * 60 * 60 * 1000);
+setInterval(() => calculateIndicator1_7('org-demo-001'), 2 * 24 * 60 * 60 * 1000);
 ```
+
+**Advantages of REST API approach:**
+- ✅ Automatic Bayesian recalculation
+- ✅ Automatic aggregate updates
+- ✅ Atomic operations (no file corruption)
+- ✅ Index auto-update
+- ✅ Error handling and validation
+- ✅ No direct file access needed
 
 ### SOC Integration Checklist
 
@@ -684,6 +798,198 @@ const HUMAN_WEIGHT = 0.8;  // Trust machines more (not recommended)
 
 ---
 
+## REST API Reference
+
+The CPF Dashboard Server exposes a complete REST API for programmatic access. All endpoints return JSON responses.
+
+**Base URL:** `http://localhost:3000/api`
+
+### Organizations Endpoints
+
+#### GET /api/organizations
+Returns the organizations index with metadata and stats.
+
+**Response:**
+```json
+{
+  "metadata": {
+    "version": "2.0",
+    "last_updated": "2025-11-11T15:30:00Z",
+    "total_organizations": 5
+  },
+  "organizations": [...]
+}
+```
+
+#### GET /api/organizations/:orgId
+Returns complete data for a single organization.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "org-demo-001",
+    "name": "TechCorp Global",
+    "metadata": {...},
+    "assessments": {...},
+    "aggregates": {...}
+  }
+}
+```
+
+#### POST /api/organizations
+Creates a new organization.
+
+**Request Body:**
+```json
+{
+  "id": "org-new-001",
+  "name": "New Company",
+  "industry": "Technology",
+  "size": "medium",
+  "country": "IT",
+  "language": "it-IT"
+}
+```
+
+**Response:** `201 Created` with organization data
+
+#### PUT /api/organizations/:orgId
+Updates organization metadata.
+
+**Request Body:**
+```json
+{
+  "name": "Updated Name",
+  "notes": "New notes"
+}
+```
+
+**Response:** `200 OK` with updated data
+
+#### DELETE /api/organizations/:orgId
+Deletes an organization and all its data.
+
+**Response:** `200 OK` with confirmation
+
+---
+
+### Assessments Endpoints
+
+#### GET /api/organizations/:orgId/assessments
+Returns all assessments for an organization.
+
+**Response:**
+```json
+{
+  "success": true,
+  "orgId": "org-demo-001",
+  "assessments": {...},
+  "count": 45
+}
+```
+
+#### GET /api/organizations/:orgId/assessments/:indicatorId
+Returns a specific assessment.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "indicator_id": "1.1",
+    "bayesian_score": 0.65,
+    "confidence": 0.85,
+    ...
+  }
+}
+```
+
+#### POST /api/organizations/:orgId/assessments
+Saves or updates an assessment. **Automatically recalculates aggregates.**
+
+**Request Body:**
+```json
+{
+  "indicator_id": "1.1",
+  "bayesian_score": 0.75,
+  "confidence": 0.85,
+  "assessor": "John Doe",
+  "assessment_date": "2025-11-11T17:00:00Z",
+  "raw_data": {...}
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Assessment saved successfully",
+  "aggregates": {...}
+}
+```
+
+#### DELETE /api/organizations/:orgId/assessments/:indicatorId
+Deletes an assessment and recalculates aggregates.
+
+**Response:** `200 OK` with updated aggregates
+
+---
+
+### Aggregates Endpoints
+
+#### GET /api/organizations/:orgId/aggregates
+Returns calculated aggregates (risk scores, completion, etc.).
+
+**Response:**
+```json
+{
+  "success": true,
+  "aggregates": {
+    "overall_risk": 0.5208,
+    "overall_confidence": 0.8212,
+    "by_category": {...},
+    "completion": {...}
+  }
+}
+```
+
+#### POST /api/organizations/:orgId/recalculate
+Forces recalculation of aggregates.
+
+**Response:** `200 OK` with recalculated aggregates
+
+#### GET /api/organizations/:orgId/missing
+Returns list of missing indicators.
+
+**Response:**
+```json
+{
+  "success": true,
+  "missing_indicators": ["1.3", "1.4", ...],
+  "count": 55
+}
+```
+
+---
+
+### Legacy & Utility Endpoints
+
+#### POST /api/batch-import
+Executes batch import of Field Kit exports.
+
+**Response:** Import results and statistics
+
+#### POST /api/generate-synthetic
+Generates synthetic demo data.
+
+**Response:** Generation confirmation
+
+**Complete API documentation:** See `/dashboard/docs/archive/API_DOCUMENTATION.md`
+
+---
+
 ## Extending the Framework
 
 ### Adding New Indicators
@@ -837,57 +1143,73 @@ async function sendAlerts(orgName, alerts) {
 
 ### Option 1: Local Development (Default)
 
+**Using Node.js Server (Recommended):**
 ```bash
-cd dashboard
-python3 -m http.server 8000
-# Open: http://localhost:8000/dashboard.html
+# From repository root
+npm install
+npm start
+
+# Server starts on http://localhost:3000
+# Access:
+#   http://localhost:3000/dashboard/               (Landing page)
+#   http://localhost:3000/dashboard/soc-integration/   (SOC Dashboard)
+#   http://localhost:3000/dashboard/auditing/          (Auditing Dashboard)
 ```
 
-**Pros:** Zero setup, instant start
-**Cons:** Single-user, no persistence across restarts
+**Pros:**
+- Full REST API available
+- Automatic data management
+- CORS enabled for development
 
-### Option 2: Static Web Hosting
+**Cons:**
+- Requires Node.js 18+
+- Single-user (no authentication)
 
-**GitHub Pages:**
+---
+
+### Option 2: Production Server (Node.js)
+
+**PM2 Deployment:**
 ```bash
-# Push to GitHub
-git add dashboard/*
-git commit -m "Deploy CPF Dashboard"
-git push origin main
+# Install PM2
+npm install -g pm2
 
-# Enable GitHub Pages in repo settings
-# Select source: main branch, /dashboard folder
-# Access: https://yourusername.github.io/CPF/dashboard.html
+# Start server with PM2
+pm2 start server.js --name cpf-dashboard
+
+# Enable startup script
+pm2 startup
+pm2 save
+
+# Monitor
+pm2 logs cpf-dashboard
+pm2 status
 ```
 
-**Pros:** Free hosting, HTTPS, accessible anywhere
-**Cons:** Data publicly visible (use private repo if sensitive)
-
-**Netlify/Vercel:**
-```bash
-# Install Netlify CLI
-npm install -g netlify-cli
-
-# Deploy
-cd dashboard
-netlify deploy --prod
-
-# Follow prompts to publish
-```
-
-### Option 3: Internal Web Server
-
-**Nginx Configuration:**
+**With Nginx Reverse Proxy:**
 ```nginx
 server {
     listen 80;
-    server_name cpf-dashboard.internal.company.com;
+    server_name cpf.example.com;
 
-    root /var/www/cpf/dashboard;
-    index dashboard.html;
+    # Redirect to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name cpf.example.com;
+
+    ssl_certificate /etc/ssl/certs/cpf.crt;
+    ssl_certificate_key /etc/ssl/private/cpf.key;
 
     location / {
-        try_files $uri $uri/ =404;
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
     }
 
     # Optional: Basic authentication
@@ -896,56 +1218,159 @@ server {
 }
 ```
 
-**Pros:** Controlled access, SSO integration possible
-**Cons:** Requires infrastructure, maintenance
+**Pros:**
+- Production-ready
+- HTTPS support
+- Authentication via Nginx
+- Process management with PM2
 
-### Option 4: Air-Gapped Environment
+**Cons:**
+- Requires server infrastructure
+- Maintenance overhead
+
+---
+
+### Option 3: Docker Container
+
+**Dockerfile:**
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+RUN npm install --production
+
+# Copy application
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Start server
+CMD ["node", "server.js"]
+```
+
+**Build and Run:**
+```bash
+# Build image
+docker build -t cpf-dashboard .
+
+# Run container
+docker run -d \
+  -p 3000:3000 \
+  -v $(pwd)/dashboard/data:/app/dashboard/data \
+  --name cpf \
+  cpf-dashboard
+
+# Access: http://localhost:3000
+```
+
+**Docker Compose:**
+```yaml
+version: '3.8'
+
+services:
+  cpf-dashboard:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./dashboard/data:/app/dashboard/data
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+```
+
+**Pros:**
+- Portable deployment
+- Consistent environment
+- Easy scaling
+
+---
+
+### Option 4: Static Hosting (Limited Features)
+
+> **Note:** Static hosting only supports client-side dashboards. REST API will not be available.
+
+**GitHub Pages:**
+```bash
+git add dashboard/*
+git commit -m "Deploy CPF Dashboard"
+git push origin main
+
+# Enable GitHub Pages: Settings > Pages > Source: main > /dashboard
+# Access: https://yourusername.github.io/CPF/dashboard/
+```
+
+**Pros:** Free, HTTPS, CDN
+**Cons:** No API, no server-side features, static data only
+
+---
+
+### Option 5: Air-Gapped Environment
 
 For classified/isolated networks:
 
-1. **Prepare bundle:**
+**Prepare bundle:**
 ```bash
 # On internet-connected machine
 git clone https://github.com/yourrepo/CPF.git
-cd CPF/dashboard
-zip -r cpf-dashboard.zip .
+cd CPF
+npm install
+zip -r cpf-dashboard.zip . -x "node_modules/*" ".git/*"
 ```
 
-2. **Transfer to air-gapped system** (USB drive, approved file transfer)
+**Transfer to air-gapped system** (USB drive, approved file transfer)
 
-3. **Deploy:**
+**Deploy:**
 ```bash
 unzip cpf-dashboard.zip -d /opt/cpf-dashboard
 cd /opt/cpf-dashboard
-python3 -m http.server 8000 --bind 127.0.0.1  # Localhost only
+npm install --production
+node server.js
+
+# Access: http://localhost:3000
 ```
 
-**Pros:** Maximum security
+**Pros:** Maximum security, full features available
 **Cons:** Manual updates, no external integrations
 
-### Option 5: Docker Container
+---
 
-```dockerfile
-# Dockerfile
-FROM nginx:alpine
+### Option 6: PostgreSQL Backend
 
-COPY dashboard /usr/share/nginx/html
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
-```
+For enterprise deployments requiring database:
 
 ```bash
-# Build and run
-docker build -t cpf-dashboard .
-docker run -d -p 8080:80 --name cpf cpf-dashboard
+# Setup PostgreSQL
+psql -U postgres -f dashboard/postgres/db_schema.sql
 
-# Access: http://localhost:8080/dashboard.html
+# Seed demo data
+node dashboard/postgres/db_seed_demo.js
+
+# Configure environment
+export DB_HOST=localhost
+export DB_USER=cpf_user
+export DB_PASSWORD=secure_password
+export DB_NAME=cpf_dashboard
+
+# Start server
+node server.js
 ```
 
-**Pros:** Portable, consistent environment
-**Cons:** Requires Docker, slight overhead
+**See:** `/dashboard/postgres/README.md` for detailed setup
+
+**Pros:**
+- ACID transactions
+- Better for 100+ organizations
+- Query optimization
+- Backup/restore tools
+
+**Cons:**
+- Additional complexity
+- Database maintenance required
 
 ---
 
@@ -1030,19 +1455,63 @@ try {
 
 ## Troubleshooting
 
-### Issue: "Failed to fetch organizations.json"
+### Issue: "Cannot GET /api/organizations"
 
-**Symptoms:** Dashboard shows loading spinner, console error: `net::ERR_FAILED`
+**Symptoms:** API requests return 404 or connection refused
 
-**Cause:** Using `file://` protocol (CORS policy blocks local file fetch)
+**Cause:** Server not running
 
 **Solution:**
 ```bash
-# Start HTTP server
-cd dashboard
-python3 -m http.server 8000
+# Check if server is running
+ps aux | grep node
 
-# Open: http://localhost:8000/dashboard.html (NOT file://)
+# Start server if not running
+cd /path/to/CPF
+npm start
+
+# Verify server is listening
+curl http://localhost:3000/api/organizations
+```
+
+---
+
+### Issue: "Failed to load organizations data"
+
+**Symptoms:** Dashboard shows empty state or error message
+
+**Cause:** No organization data files exist
+
+**Solution:**
+```bash
+# Generate demo data
+node dashboard/scripts/generate_demo_organizations.js
+
+# Or import Field Kit assessments
+node dashboard/scripts/batch_import.js /path/to/field_kit_exports
+
+# Verify data files exist
+ls -la dashboard/data/organizations/
+```
+
+---
+
+### Issue: "Port 3000 already in use"
+
+**Symptoms:** `Error: listen EADDRINUSE: address already in use :::3000`
+
+**Solution:**
+```bash
+# Find process using port 3000
+lsof -i :3000
+# or
+netstat -tulpn | grep :3000
+
+# Kill the process
+kill -9 <PID>
+
+# Or change port in server.js
+# const PORT = 3001;
 ```
 
 ---
@@ -1052,30 +1521,24 @@ python3 -m http.server 8000
 **Symptoms:** Overall risk doesn't match manual calculations
 
 **Debugging:**
-1. **Check raw indicator values:**
-```javascript
-// In browser console
-fetch('data/organizations.json')
-  .then(r => r.json())
-  .then(data => {
-    const org = data.organizations['org-001'];
-    console.log(org.indicators['1.1']);
-    // Verify soc_values, human_values, current_bayesian
-  });
+1. **Check API response:**
+```bash
+# Fetch organization data
+curl http://localhost:3000/api/organizations/org-demo-001 | jq
+
+# Check aggregates
+curl http://localhost:3000/api/organizations/org-demo-001/aggregates | jq
 ```
 
 2. **Verify dependency matrix:**
 ```javascript
-// Check DEPENDENCIES in bayesian.js
+// In browser console
 console.log(BAYESIAN.DEPENDENCIES);
 ```
 
-3. **Test mergeIndicatorValues:**
-```javascript
-const soc = [{ timestamp: '...', value: 0.5, confidence: 0.9, source: 'test' }];
-const human = [{ timestamp: '...', value: 0.6, assessor: 'test', assessment_id: 'test' }];
-const result = BAYESIAN.mergeIndicatorValues(soc, human);
-console.log(result); // Expected: { value: ~0.56, confidence: ~0.96 }
+3. **Force recalculation:**
+```bash
+curl -X POST http://localhost:3000/api/organizations/org-demo-001/recalculate
 ```
 
 ---
@@ -1085,13 +1548,9 @@ console.log(result); // Expected: { value: ~0.56, confidence: ~0.96 }
 **Symptoms:** Blank canvas, no SOC vs Human timeline
 
 **Debugging:**
-1. **Check data structure:**
-```javascript
-// Convergence requires both SOC and Human values with timestamps
-const org = data.organizations['org-001'];
-const indicator = org.indicators['1.1'];
-console.log(indicator.soc_values.length, indicator.human_values.length);
-// Need at least 1 of each
+1. **Check API data:**
+```bash
+curl http://localhost:3000/api/organizations/org-demo-001/assessments/1.1
 ```
 
 2. **Verify Canvas API support:**
@@ -1109,43 +1568,64 @@ console.log(canvas.getContext('2d')); // Should not be null
 
 ---
 
-### Issue: "Batch import fails with 'File not found'"
+### Issue: "Batch import fails with 'Organization not found'"
 
-**Symptoms:** `❌ Folder not found: /path/to/exports`
+**Symptoms:** `Error: Organization org-001 not found`
 
-**Solutions:**
+**Cause:** Organization must exist before importing assessments
+
+**Solution:**
 ```bash
-# 1. Check path exists
-ls /path/to/field_kit_exports
+# Create organization first via API
+curl -X POST http://localhost:3000/api/organizations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "org-001",
+    "name": "Organization Name",
+    "industry": "Technology",
+    "size": "medium",
+    "country": "US"
+  }'
 
-# 2. Use absolute path (not relative)
-node batch_import.js /Users/username/field_kit_exports  # Good
-node batch_import.js ../exports                          # May fail
-
-# 3. Check file naming pattern
-# Files must match: dashboard_export_*.json
-ls field_kit_exports/dashboard_export_*
-
-# 4. Verify JSON validity
-node -e "console.log(JSON.parse(require('fs').readFileSync('field_kit_exports/dashboard_export_org-001_1.1_12345.json')))"
+# Then run batch import
+node dashboard/scripts/batch_import.js /path/to/field_kit_exports
 ```
 
 ---
 
-### Issue: "Import succeeds but dashboard shows old data"
+### Issue: "Dashboard shows old data after update"
 
-**Cause:** Browser cache serving stale organizations.json
+**Cause:** Browser cache or API not returning latest data
 
 **Solution:**
 ```bash
-# Hard refresh in browser
+# 1. Check file modification time
+ls -la dashboard/data/organizations/org-demo-001.json
+
+# 2. Verify API returns fresh data
+curl http://localhost:3000/api/organizations/org-demo-001 | jq '.metadata.updated_at'
+
+# 3. Hard refresh browser
 # Chrome/Firefox: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)
 
-# Or disable cache in DevTools:
-# 1. Open DevTools (F12)
-# 2. Network tab
-# 3. Check "Disable cache"
-# 4. Refresh page
+# 4. Clear browser cache
+# DevTools (F12) > Application > Clear storage
+```
+
+---
+
+### Issue: "File write errors / Permission denied"
+
+**Symptoms:** `EACCES: permission denied, open 'dashboard/data/organizations/org-001.json'`
+
+**Solution:**
+```bash
+# Fix file permissions
+chmod -R 755 dashboard/data/
+chmod -R 644 dashboard/data/organizations/*.json
+
+# Verify ownership
+ls -la dashboard/data/organizations/
 ```
 
 ---
@@ -1292,6 +1772,79 @@ function analyzeOrganization(
 
 ---
 
-**Version:** 1.0
-**Last Updated:** 2025-11-09
+**Version:** 2.0
+**Last Updated:** 2025-11-11
+**Maintainers:** CPF Framework Team
+
+---
+
+## 🆕 What's New in v2.0
+
+### Architecture Changes
+- ✅ **Modular File Storage**: Separate JSON files per organization instead of monolithic `organizations.json`
+- ✅ **REST API**: Full RESTful API with Express.js server
+- ✅ **Data Manager**: Atomic file operations with `dataManager.js`
+- ✅ **Auto-recalculation**: Bayesian aggregates update automatically on save
+
+### New File Structure
+```
+dashboard/
+├── index.html                      # NEW: Landing page
+├── soc-integration/index.html      # (was dashboard.html)
+├── auditing/index.html             # (was dashboard_auditing.html)
+├── lib/dataManager.js              # NEW: Data management module
+├── data/
+│   ├── organizations_index.json    # NEW: Fast index
+│   ├── organizations/              # NEW: Modular storage
+│   │   ├── org-demo-001.json
+│   │   └── ...
+│   └── schemas/                    # NEW: JSON schemas
+└── postgres/                       # NEW: Optional database support
+```
+
+### Migration from v1.0
+
+**If you have existing `organizations.json`:**
+
+The new system is **backward compatible**. The server will automatically migrate old data format to new modular structure on first run.
+
+**Manual migration:**
+```bash
+# Backup old data
+cp dashboard/data/organizations.json dashboard/data/organizations_backup.json
+
+# Start server (auto-migrates)
+npm start
+
+# Verify migration
+ls -la dashboard/data/organizations/
+```
+
+### API Changes
+
+**Old (v1.0):** Direct file access
+```javascript
+const data = JSON.parse(fs.readFileSync('organizations.json'));
+```
+
+**New (v2.0):** REST API
+```javascript
+const response = await fetch('http://localhost:3000/api/organizations');
+const data = await response.json();
+```
+
+---
+
+## 📚 Additional Resources
+
+- **Main README**: `/dashboard/README.md` - Complete system documentation
+- **API Documentation**: `/dashboard/docs/archive/API_DOCUMENTATION.md` - Full REST API reference
+- **User Guide**: `/dashboard/docs/USER_GUIDE.html` - End-user dashboard guide
+- **PostgreSQL Setup**: `/dashboard/postgres/README.md` - Database integration
+- **Data Schemas**: `/dashboard/data/README.md` - JSON structure documentation
+
+---
+
+**Version:** 2.0
+**Last Updated:** 2025-11-11
 **Maintainers:** CPF Framework Team
