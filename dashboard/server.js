@@ -19,7 +19,7 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 
 // Import data manager
-const dataManager = require('./dashboard/lib/dataManager');
+const dataManager = require('./lib/dataManager');
 
 const app = express();
 const PORT = 3000;
@@ -30,10 +30,10 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve static files from dashboard folder
-app.use('/dashboard', express.static(path.join(__dirname, 'dashboard')));
+app.use('/dashboard', express.static(path.join(__dirname)));
 
 // Serve static files from auditor field kit
-app.use('/client', express.static(path.join(__dirname, 'auditor field kit/interactive')));
+app.use('/client', express.static(path.join(__dirname, '../auditor field kit/interactive')));
 
 // ============================================
 // LANDING PAGE ROUTE
