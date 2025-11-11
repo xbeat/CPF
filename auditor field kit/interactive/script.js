@@ -1209,6 +1209,7 @@ async function exportToDashboard() {
             },
             // ADDED: Full assessment data for edit mode
             full_assessment: {
+                responses: currentData.responses || {},
                 maturity_scores: currentData.scores || {},
                 risk_assessments: currentData.assessments || {},
                 notes: document.getElementById('notes')?.value || '',
@@ -1294,6 +1295,7 @@ async function exportToDashboard() {
                 },
                 // ADDED: Full assessment data for edit mode
                 full_assessment: {
+                    responses: currentData.responses || {},
                     maturity_scores: currentData.scores || {},
                     risk_assessments: currentData.assessments || {},
                     notes: document.getElementById('notes')?.value || '',
@@ -1797,6 +1799,11 @@ async function loadExistingExport(indicatorId, orgId) {
 
             currentData.metadata = exportData.full_assessment.metadata || currentData.metadata;
             currentData.fieldKit = fieldKit;
+
+            // Populate responses (form fields)
+            if (exportData.full_assessment.responses) {
+                currentData.responses = exportData.full_assessment.responses;
+            }
 
             // Populate maturity scores
             if (exportData.full_assessment.maturity_scores) {
