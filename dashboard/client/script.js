@@ -1385,10 +1385,20 @@ function toggleCategory(categoryId) {
 }
 
 async function loadIndicatorFromReference(indicatorId) {
+    console.log('📥 loadIndicatorFromReference called with:', indicatorId);
+
+    if (!indicatorId) {
+        alert('❌ Error: No indicator ID provided to loadIndicatorFromReference');
+        console.error('indicatorId is null or undefined');
+        return;
+    }
+
     // Parse indicator ID (e.g., "1.3" -> category=1, indicator=3)
     const parts = indicatorId.split('.');
     const category = parts[0];
     const indicator = parts[1];
+
+    console.log('🔧 Parsed:', { category, indicator });
 
     // Get current language
     const langSelect = document.getElementById('lang-select');
@@ -1698,6 +1708,14 @@ window.addEventListener('DOMContentLoaded', () => {
     const langParam = urlParams.get('lang') || urlParams.get('language'); // Support both 'lang' and 'language' parameters
     const modeParam = urlParams.get('mode'); // 'edit' or 'new'
     const orgIdParam = urlParams.get('org_id');
+
+    console.log('🔍 Client loaded with URL params:', {
+        indicator: indicatorParam,
+        language: langParam,
+        mode: modeParam,
+        org_id: orgIdParam,
+        fullURL: window.location.href
+    });
 
     // Set language if provided in URL
     if (langParam) {
