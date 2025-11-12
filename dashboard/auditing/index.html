@@ -1858,25 +1858,31 @@
         function editAssessmentFromModal() {
             if (!selectedIndicatorId || !selectedOrgId) return;
 
-            // Close the detail modal
-            closeIndicatorModal();
-
-            // Get organization data
+            // CRITICAL: Save these values BEFORE closing modal (closeIndicatorModal sets selectedIndicatorId = null!)
+            const indicatorId = selectedIndicatorId;
+            const orgId = selectedOrgId;
             const orgName = selectedOrgData.metadata.name || 'Unknown Organization';
             const language = selectedOrgData.metadata.language || 'en-US';
 
+            console.log('✏️ editAssessmentFromModal: saved values before close:', { indicatorId, orgId, orgName, language });
+
+            // Close the detail modal
+            closeIndicatorModal();
+
             // Open integrated client in EDIT mode
-            document.getElementById('indicatorModalTitle').textContent = `Indicator ${selectedIndicatorId} - Edit Assessment`;
+            document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Edit Assessment`;
             document.getElementById('indicatorModal').classList.add('active');
 
             const content = document.getElementById('indicatorModalContent');
 
-            // Show edit and delete buttons
+            // Show delete button only (hide edit since we're already editing)
             document.getElementById('editAssessmentBtn').style.display = 'none';
             document.getElementById('deleteAssessmentBtn').style.display = 'inline-block';
 
             // Build URL for the client with parameters - mode=edit is KEY!
-            const clientUrl = `/dashboard/client/index.html?org_id=${encodeURIComponent(selectedOrgId)}&org_name=${encodeURIComponent(orgName)}&language=${encodeURIComponent(language)}&indicator=${encodeURIComponent(selectedIndicatorId)}&mode=edit`;
+            const clientUrl = `/dashboard/client/index.html?org_id=${encodeURIComponent(orgId)}&org_name=${encodeURIComponent(orgName)}&language=${encodeURIComponent(language)}&indicator=${encodeURIComponent(indicatorId)}&mode=edit`;
+
+            console.log('🔗 Edit Assessment URL:', clientUrl);
 
             // Render iframe with the client app in EDIT mode
             content.innerHTML = `
