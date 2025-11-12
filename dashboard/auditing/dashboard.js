@@ -679,6 +679,10 @@ async function openIntegratedClient(indicatorId, orgId) {
     document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - New Assessment`;
     document.getElementById('indicatorModal').classList.add('active');
 
+    // Add fullscreen class for client modal
+    const modalContent = document.querySelector('#indicatorModal .modal-content');
+    modalContent.classList.add('fullscreen-client');
+
     const content = document.getElementById('indicatorModalContent');
 
     // Hide delete button for new assessments
@@ -692,12 +696,17 @@ async function openIntegratedClient(indicatorId, orgId) {
     const categoryName = CATEGORY_MAP[categoryNum];
     const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
 
-    // Show loading
+    console.log('📎 Opening client with URL:', clientUrl);
+
+    // Render iframe with the client app (full height)
     content.innerHTML = `
-        <div style="text-align: center; padding: 40px;">
-            <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-            <p>Loading indicator...</p>
-        </div>
+        <iframe
+            id="clientIframe"
+            src="${clientUrl}"
+            style="width: 100%; height: 100%; border: none; border-radius: 8px;"
+            frameborder="0"
+            allow="clipboard-read; clipboard-write">
+        </iframe>
     `;
 
     try {
@@ -958,6 +967,11 @@ function calculateSimplifiedScore(responses) {
 
 function closeIndicatorModal() {
     document.getElementById('indicatorModal').classList.remove('active');
+
+    // Remove fullscreen class when closing
+    const modalContent = document.querySelector('#indicatorModal .modal-content');
+    modalContent.classList.remove('fullscreen-client');
+
     document.getElementById('editAssessmentBtn').style.display = 'none';
     document.getElementById('deleteAssessmentBtn').style.display = 'none';
     selectedIndicatorId = null;
@@ -983,6 +997,12 @@ async function editAssessmentFromModal() {
     document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Edit Assessment`;
     document.getElementById('indicatorModal').classList.add('active');
 
+    // Add fullscreen class for client modal
+    const modalContent = document.querySelector('#indicatorModal .modal-content');
+    modalContent.classList.add('fullscreen-client');
+
+    const content = document.getElementById('indicatorModalContent');
+
     // Show delete button only (hide edit since we're already editing)
     document.getElementById('editAssessmentBtn').style.display = 'none';
     document.getElementById('deleteAssessmentBtn').style.display = 'inline-block';
@@ -996,15 +1016,16 @@ async function editAssessmentFromModal() {
         const response = await fetch(url);
         if (!response.ok) throw new Error('Field Kit not found');
 
-        const fieldKit = await response.json();
-
-        // Render edit form with existing data pre-populated
-        renderIntegratedClientForm(indicatorId, fieldKit, orgId, assessment);
-    } catch (error) {
-        console.error('Error loading Field Kit for edit:', error);
-        showAlert('Failed to load indicator definition: ' + error.message, 'error');
-        closeIndicatorModal();
-    }
+    // Render iframe with the client app in EDIT mode (full height)
+    content.innerHTML = `
+        <iframe
+            id="clientIframe"
+            src="${clientUrl}"
+            style="width: 100%; height: 100%; border: none; border-radius: 8px;"
+            frameborder="0"
+            allow="clipboard-read; clipboard-write">
+        </iframe>
+    `;
 }
 
 async function deleteAssessmentFromModal() {
