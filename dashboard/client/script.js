@@ -1290,7 +1290,7 @@ async function showQuickReference() {
     try {
         content.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">Loading reference guide...</p>';
 
-        const response = await fetch(`reference_guide_${isoLang}.json`);
+        const response = await fetch(`../auditing/reference_guide_${isoLang}.json`);
         if (!response.ok) {
             throw new Error(`Failed to load reference guide: ${response.status}`);
         }
@@ -1681,7 +1681,7 @@ async function loadExistingExport(indicatorId, orgId) {
         // Save to localStorage
         localStorage.setItem('cpf_current', JSON.stringify(currentData));
 
-        alert(`✅ Loaded existing assessment for ${exportData.organization_name}`);
+        console.log(`✅ Loaded existing assessment for ${exportData.organization_name}`);
 
     } catch (error) {
         console.error('Error loading existing export:', error);
