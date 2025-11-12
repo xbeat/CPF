@@ -30,7 +30,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve static files from dashboard folder
-app.use('/dashboard', express.static(path.join(__dirname)));
+app.use('/dashboard', express.static(__dirname));
 
 // Serve static files from auditor field kit
 app.use('/client', express.static(path.join(__dirname, '../auditor field kit/interactive')));
@@ -561,7 +561,7 @@ app.get('/api/organizations/:orgId/missing', (req, res) => {
  */
 app.get('/api/auditing-results', (req, res) => {
   try {
-    const dataPath = path.join(__dirname, 'dashboard/data/auditing_results.json');
+    const dataPath = path.join(__dirname, 'data/auditing_results.json');
 
     if (!fs.existsSync(dataPath)) {
       return res.status(404).json({
@@ -583,7 +583,7 @@ app.get('/api/auditing-results', (req, res) => {
  */
 app.get('/api/list-exports', (req, res) => {
   try {
-    const exportsPath = path.join(__dirname, 'field_kit_exports');
+    const exportsPath = path.join(__dirname, '../field_kit_exports');
 
     if (!fs.existsSync(exportsPath)) {
       return res.json({ files: [], count: 0 });
@@ -624,7 +624,7 @@ app.get('/api/get-export', (req, res) => {
       });
     }
 
-    const exportsPath = path.join(__dirname, 'field_kit_exports');
+    const exportsPath = path.join(__dirname, '../field_kit_exports');
 
     if (!fs.existsSync(exportsPath)) {
       return res.status(404).json({
@@ -688,7 +688,7 @@ app.get('/api/get-export', (req, res) => {
  */
 app.post('/api/batch-import', (req, res) => {
   try {
-    const folderPath = req.body.folderPath || path.join(__dirname, 'field_kit_exports');
+    const folderPath = req.body.folderPath || path.join(__dirname, '../field_kit_exports');
 
     console.log(`\n🔧 [API] Batch import requested for: ${folderPath}`);
 
@@ -713,14 +713,14 @@ app.post('/api/batch-import', (req, res) => {
 
     console.log(`   Found ${files.length} export files`);
 
-    const scriptPath = path.join(__dirname, 'dashboard/scripts/batch_import.js');
+    const scriptPath = path.join(__dirname, 'scripts/batch_import.js');
     const command = `node "${scriptPath}" "${folderPath}"`;
 
     console.log(`   Executing: ${command}`);
 
     const output = execSync(command, {
       encoding: 'utf8',
-      cwd: path.join(__dirname, 'dashboard')
+      cwd: __dirname
     });
 
     console.log(`   ✅ Import completed successfully\n`);
@@ -767,7 +767,7 @@ app.post('/api/save-export', (req, res) => {
       });
     }
 
-    const exportsPath = path.join(__dirname, 'field_kit_exports');
+    const exportsPath = path.join(__dirname, '../field_kit_exports');
     if (!fs.existsSync(exportsPath)) {
       fs.mkdirSync(exportsPath, { recursive: true });
       console.log(`✅ Created field_kit_exports directory`);
@@ -810,7 +810,7 @@ app.post('/api/generate-synthetic', (req, res) => {
   try {
     console.log('\n🔧 [API] Generating synthetic Field Kit assessments...');
 
-    const scriptPath = path.join(__dirname, 'dashboard/scripts/generate_field_kit_assessments.js');
+    const scriptPath = path.join(__dirname, 'scripts/generate_field_kit_assessments.js');
 
     const output = execSync(`node "${scriptPath}"`, {
       encoding: 'utf8',
