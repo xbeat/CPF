@@ -738,7 +738,8 @@
                 <button class="tab" onclick="switchTab('risk')">
                     🔥 Risk Analysis
                 </button>
-                <button class="tab" onclick="switchTab('compile')">
+                <!-- Compile Assessment tab removed - use matrix to create/edit assessments -->
+                <button class="tab" onclick="switchTab('compile')" style="display: none;">
                     ✏️ Compile Assessment
                 </button>
             </div>
@@ -1839,79 +1840,33 @@
             // Close the detail modal
             closeIndicatorModal();
 
-            // Parse indicator ID (e.g., "1.4" -> category=1, indicator=4)
-            const [category, indicator] = selectedIndicatorId.split('.');
-
-            // Switch to Compile Assessment tab
-            switchTab('compile');
-            document.querySelector('.tab[onclick*="compile"]').classList.add('active');
-            document.querySelector('.tab[onclick*="progress"]').classList.remove('active');
-            document.querySelector('.tab[onclick*="risk"]').classList.remove('active');
-
-            // Set the dropdowns to the correct values
-            document.getElementById('compile-category-select').value = category;
-            document.getElementById('compile-indicator-select').value = indicator;
-
-            // Get organization language
+            // Get organization data
+            const orgName = selectedOrgData.metadata.name || 'Unknown Organization';
             const language = selectedOrgData.metadata.language || 'en-US';
-            document.getElementById('compile-language-select').value = language;
 
-            // Update preview
-            updateIndicatorPreview();
+            // Open integrated client in EDIT mode
+            document.getElementById('indicatorModalTitle').textContent = `Indicator ${selectedIndicatorId} - Edit Assessment`;
+            document.getElementById('indicatorModal').classList.add('active');
 
-            // Auto-load the indicator and populate with existing data
-            setTimeout(async () => {
-                await loadIndicatorForCompile();
+            const content = document.getElementById('indicatorModalContent');
 
-                // Get the existing assessment data
-                const existingAssessment = selectedOrgData.assessments[selectedIndicatorId];
-                if (existingAssessment) {
-                    // Pre-fill metadata
-                    document.getElementById('compile-assessor').value = existingAssessment.assessor || '';
+            // Show edit and delete buttons
+            document.getElementById('editAssessmentBtn').style.display = 'none';
+            document.getElementById('deleteAssessmentBtn').style.display = 'inline-block';
 
-                    // Set date
-                    if (existingAssessment.assessment_date) {
-                        const dateStr = existingAssessment.assessment_date.split('T')[0];
-                        document.getElementById('compile-date').value = dateStr;
-                    }
+            // Build URL for the client with parameters - mode=edit is KEY!
+            const clientUrl = `/dashboard/client/index.html?org_id=${encodeURIComponent(selectedOrgId)}&org_name=${encodeURIComponent(orgName)}&language=${encodeURIComponent(language)}&indicator=${encodeURIComponent(selectedIndicatorId)}&mode=edit`;
 
-                    // Set confidence
-                    document.getElementById('compile-confidence').value = existingAssessment.confidence || 0.7;
-
-                    // Pre-fill responses if available
-                    if (existingAssessment.raw_data && existingAssessment.raw_data.responses) {
-                        const responses = existingAssessment.raw_data.responses;
-
-                        // Wait a bit for the form to render
-                        setTimeout(() => {
-                            Object.keys(responses).forEach(key => {
-                                const value = responses[key];
-
-                                // Try to find the input element
-                                // Could be radio button (name="question_X" value="...")
-                                // Or text/number input (id="question_X")
-
-                                // For radio buttons
-                                const radioInput = document.querySelector(`input[name="${key}"][value="${value}"]`);
-                                if (radioInput) {
-                                    radioInput.checked = true;
-                                }
-
-                                // For text/number inputs
-                                const textInput = document.getElementById(key);
-                                if (textInput) {
-                                    textInput.value = value;
-                                }
-                            });
-
-                            showAlert('Assessment data loaded for editing', 'info');
-                        }, 500);
-                    }
-                }
-
-                // Scroll to compile tab
-                document.getElementById('compileTab').scrollIntoView({ behavior: 'smooth' });
-            }, 100);
+            // Render iframe with the client app in EDIT mode
+            content.innerHTML = `
+                <iframe
+                    id="clientIframe"
+                    src="${clientUrl}"
+                    style="width: 100%; height: 80vh; border: none; border-radius: 8px;"
+                    frameborder="0"
+                    allow="clipboard-read; clipboard-write">
+                </iframe>
+            `;
         }
 
         async function deleteAssessmentFromModal() {
