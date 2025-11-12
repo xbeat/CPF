@@ -304,6 +304,11 @@ function renderFieldKit(data) {
 function renderItem(item, itemId) {
     const value = currentData.responses[itemId];
 
+    // Debug: log when we have a value
+    if (value !== undefined && value !== null && value !== '') {
+        console.log(`✅ Found value for ${itemId}:`, value);
+    }
+
     if (item.type === 'radio-group') {
         return `
             <div class="question-group">
@@ -1612,12 +1617,16 @@ async function loadExistingExport(indicatorId, orgId) {
         // Now populate with existing data from full_assessment (if available)
         if (exportData.full_assessment) {
             console.log('📋 Loading data from full_assessment...');
+            console.log('🔍 full_assessment structure:', Object.keys(exportData.full_assessment));
+            console.log('🔍 full_assessment.responses:', exportData.full_assessment.responses);
 
             currentData.metadata = exportData.full_assessment.metadata || currentData.metadata;
 
             // Populate responses (form fields)
             if (exportData.full_assessment.responses) {
                 currentData.responses = exportData.full_assessment.responses;
+                console.log('✅ Responses loaded:', Object.keys(currentData.responses).length, 'items');
+                console.log('📝 Response keys:', Object.keys(currentData.responses));
             }
 
             // Populate maturity scores
