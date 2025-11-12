@@ -10,19 +10,24 @@
     <div class="dashboard-container">
         <!-- Header -->
         <header class="dashboard-header">
-            <h1>🛡️ CPF Dashboard</h1>
-            <p class="subtitle">SOC Integration + Bayesian Cross-Indicator Analysis</p>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>🛡️ CPF Dashboard</h1>
+                    <p class="subtitle">SOC Integration + Bayesian Cross-Indicator Analysis</p>
+                </div>
+                <!-- Open Button (shown when sidebar is hidden) -->
+                <button class="sidebar-open-btn" id="sidebarOpenBtn" onclick="openSidebar()" title="Show organizations">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="18"></rect>
+                        <rect x="14" y="3" width="7" height="18"></rect>
+                    </svg>
+                    Organizations
+                </button>
+            </div>
         </header>
 
         <!-- Main Layout -->
         <div class="dashboard-main" id="dashboardMain">
-            <!-- Sidebar Toggle Button -->
-            <button class="sidebar-toggle-btn sidebar-open" id="sidebarToggle" onclick="toggleSidebar()" title="Toggle sidebar">
-                <svg id="toggleIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="15 6 9 12 15 18"></polyline>
-                </svg>
-            </button>
-
             <!-- Sidebar: Organizations List -->
             <aside class="sidebar" id="sidebar">
                 <div class="sidebar-header">
@@ -30,6 +35,12 @@
                         <h2 style="margin: 0;">Organizations</h2>
                         <span id="org-count" class="badge">0</span>
                     </div>
+                    <!-- Close Button (in sidebar) -->
+                    <button class="sidebar-close-btn" id="sidebarCloseBtn" onclick="closeSidebar()" title="Hide sidebar">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
                 </div>
                 <div id="org-list" class="org-list">
                     <!-- Populated by JS -->
@@ -150,24 +161,29 @@
         let organizationsData = null;
         let currentOrgId = null;
 
-        // Toggle sidebar function
-        function toggleSidebar() {
+        // Open sidebar - idempotent (do nothing if already open)
+        function openSidebar() {
             const sidebar = document.getElementById('sidebar');
-            const button = document.getElementById('sidebarToggle');
-            const icon = document.getElementById('toggleIcon');
+            const main = document.getElementById('dashboardMain');
 
-            // Toggle sidebar visibility
-            const isHidden = sidebar.classList.toggle('sidebar-hidden');
-            button.classList.toggle('sidebar-open', !isHidden);
-
-            // Update icon based on state
-            if (isHidden) {
-                // Sidebar CLOSED: show right arrow → (open)
-                icon.innerHTML = '<polyline points="9 6 15 12 9 18"></polyline>';
-            } else {
-                // Sidebar OPEN: show left arrow ← (close)
-                icon.innerHTML = '<polyline points="15 6 9 12 15 18"></polyline>';
+            // If already open, do nothing
+            if (!sidebar.classList.contains('sidebar-hidden')) {
+                return;
             }
+
+            // Remove hidden class and collapsed state
+            sidebar.classList.remove('sidebar-hidden');
+            main.classList.remove('sidebar-collapsed');
+        }
+
+        // Close sidebar
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('dashboardMain');
+
+            // Hide sidebar and mark main as collapsed
+            sidebar.classList.add('sidebar-hidden');
+            main.classList.add('sidebar-collapsed');
         }
 
         // Load data on page load
