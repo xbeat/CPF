@@ -1618,28 +1618,51 @@ async function loadExistingExport(indicatorId, orgId) {
         if (exportData.full_assessment) {
             console.log('📋 Loading data from full_assessment...');
             console.log('🔍 full_assessment structure:', Object.keys(exportData.full_assessment));
-            console.log('🔍 full_assessment.responses:', exportData.full_assessment.responses);
 
-            currentData.metadata = exportData.full_assessment.metadata || currentData.metadata;
+            // Check if raw_data exists (new format)
+            if (exportData.full_assessment.raw_data) {
+                console.log('🔍 raw_data structure:', Object.keys(exportData.full_assessment.raw_data));
 
-            // Populate responses (form fields)
-            if (exportData.full_assessment.responses) {
+                // Load responses from raw_data.client_conversation.responses
+                if (exportData.full_assessment.raw_data.client_conversation?.responses) {
+                    currentData.responses = exportData.full_assessment.raw_data.client_conversation.responses;
+                    console.log('✅ Responses loaded from raw_data:', Object.keys(currentData.responses).length, 'items');
+                    console.log('📝 Response keys:', Object.keys(currentData.responses));
+                }
+
+                // Load metadata from raw_data if available
+                if (exportData.full_assessment.raw_data.client_conversation?.metadata) {
+                    currentData.metadata = {
+                        ...currentData.metadata,
+                        ...exportData.full_assessment.raw_data.client_conversation.metadata
+                    };
+                }
+            }
+            // Fallback to old format (if responses are directly under full_assessment)
+            else if (exportData.full_assessment.responses) {
                 currentData.responses = exportData.full_assessment.responses;
-                console.log('✅ Responses loaded:', Object.keys(currentData.responses).length, 'items');
-                console.log('📝 Response keys:', Object.keys(currentData.responses));
+                console.log('✅ Responses loaded (legacy format):', Object.keys(currentData.responses).length, 'items');
             }
 
-            // Populate maturity scores
+            // Populate metadata from full_assessment level
+            if (exportData.full_assessment.metadata) {
+                currentData.metadata = {
+                    ...currentData.metadata,
+                    ...exportData.full_assessment.metadata
+                };
+            }
+
+            // Populate maturity scores (if available)
             if (exportData.full_assessment.maturity_scores) {
                 currentData.scores = exportData.full_assessment.maturity_scores;
             }
 
-            // Populate risk assessments
+            // Populate risk assessments (if available)
             if (exportData.full_assessment.risk_assessments) {
                 currentData.assessments = exportData.full_assessment.risk_assessments;
             }
 
-            // Populate notes
+            // Populate notes (if available)
             if (exportData.full_assessment.notes) {
                 const notesTextarea = document.getElementById('notes');
                 if (notesTextarea) {
