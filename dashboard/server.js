@@ -32,9 +32,6 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Serve static files from dashboard folder
 app.use('/dashboard', express.static(__dirname));
 
-// Serve static files from auditor field kit
-app.use('/client', express.static(path.join(__dirname, '../auditor field kit/interactive')));
-
 // ============================================
 // LANDING PAGE ROUTE
 // ============================================
@@ -54,7 +51,7 @@ app.get('/dashboard/dashboard_auditing.html', (req, res) => {
 });
 
 app.get('/dashboard/dashboard.html', (req, res) => {
-  res.redirect(301, '/dashboard/soc-integration/index.html');
+  res.redirect(301, '/dashboard/soc/index.html');
 });
 
 // ============================================
@@ -848,14 +845,12 @@ app.listen(PORT, () => {
   console.log('📂 Available endpoints:\n');
   console.log('   🌐 Dashboards:');
   console.log(`      → http://localhost:${PORT}/dashboard/auditing/`);
-  console.log(`        (Auditing Progress + Risk Analysis Dashboard)`);
-  console.log(`      → http://localhost:${PORT}/dashboard/soc-integration/`);
-  console.log(`        (SOC + Bayesian Analysis Dashboard)`);
-  console.log(`      → http://localhost:${PORT}/client/cpf_client_json.html`);
-  console.log(`        (Field Kit Assessment Client)\n`);
+  console.log(`        (Auditing Progress + Risk Analysis Dashboard - with integrated client)`);
+  console.log(`      → http://localhost:${PORT}/dashboard/soc/`);
+  console.log(`        (SOC + Bayesian Analysis Dashboard)\n`);
   console.log('   📝 Legacy URLs (auto-redirect):');
   console.log(`      → /dashboard/dashboard_auditing.html → /dashboard/auditing/`);
-  console.log(`      → /dashboard/dashboard.html → /dashboard/soc-integration/\n`);
+  console.log(`      → /dashboard/dashboard.html → /dashboard/soc/\n`);
   console.log('   🔌 API Endpoints (v2.0 - JSON Storage):');
   console.log(`      Organizations:`);
   console.log(`        GET    /api/organizations`);
