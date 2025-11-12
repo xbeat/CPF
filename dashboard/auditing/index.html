@@ -1839,8 +1839,79 @@
             // Close the detail modal
             closeIndicatorModal();
 
-            // Open the integrated client to edit the assessment
-            openIntegratedClient(selectedIndicatorId, selectedOrgId);
+            // Parse indicator ID (e.g., "1.4" -> category=1, indicator=4)
+            const [category, indicator] = selectedIndicatorId.split('.');
+
+            // Switch to Compile Assessment tab
+            switchTab('compile');
+            document.querySelector('.tab[onclick*="compile"]').classList.add('active');
+            document.querySelector('.tab[onclick*="progress"]').classList.remove('active');
+            document.querySelector('.tab[onclick*="risk"]').classList.remove('active');
+
+            // Set the dropdowns to the correct values
+            document.getElementById('compile-category-select').value = category;
+            document.getElementById('compile-indicator-select').value = indicator;
+
+            // Get organization language
+            const language = selectedOrgData.metadata.language || 'en-US';
+            document.getElementById('compile-language-select').value = language;
+
+            // Update preview
+            updateIndicatorPreview();
+
+            // Auto-load the indicator and populate with existing data
+            setTimeout(async () => {
+                await loadIndicatorForCompile();
+
+                // Get the existing assessment data
+                const existingAssessment = selectedOrgData.assessments[selectedIndicatorId];
+                if (existingAssessment) {
+                    // Pre-fill metadata
+                    document.getElementById('compile-assessor').value = existingAssessment.assessor || '';
+
+                    // Set date
+                    if (existingAssessment.assessment_date) {
+                        const dateStr = existingAssessment.assessment_date.split('T')[0];
+                        document.getElementById('compile-date').value = dateStr;
+                    }
+
+                    // Set confidence
+                    document.getElementById('compile-confidence').value = existingAssessment.confidence || 0.7;
+
+                    // Pre-fill responses if available
+                    if (existingAssessment.raw_data && existingAssessment.raw_data.responses) {
+                        const responses = existingAssessment.raw_data.responses;
+
+                        // Wait a bit for the form to render
+                        setTimeout(() => {
+                            Object.keys(responses).forEach(key => {
+                                const value = responses[key];
+
+                                // Try to find the input element
+                                // Could be radio button (name="question_X" value="...")
+                                // Or text/number input (id="question_X")
+
+                                // For radio buttons
+                                const radioInput = document.querySelector(`input[name="${key}"][value="${value}"]`);
+                                if (radioInput) {
+                                    radioInput.checked = true;
+                                }
+
+                                // For text/number inputs
+                                const textInput = document.getElementById(key);
+                                if (textInput) {
+                                    textInput.value = value;
+                                }
+                            });
+
+                            showAlert('Assessment data loaded for editing', 'info');
+                        }, 500);
+                    }
+                }
+
+                // Scroll to compile tab
+                document.getElementById('compileTab').scrollIntoView({ behavior: 'smooth' });
+            }, 100);
         }
 
         async function deleteAssessmentFromModal() {
