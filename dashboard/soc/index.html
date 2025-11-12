@@ -242,26 +242,33 @@
          * bayesian.js expects 'indicators' with current_bayesian, soc_values, human_values
          */
         function convertOrgDataForBayesian(org) {
-            console.log('🔍 Converting org data:', org);
-            console.log('🔍 Has assessments?', !!org.assessments);
-            console.log('🔍 Assessments keys:', org.assessments ? Object.keys(org.assessments) : 'NONE');
-
             const indicators = {};
 
             // Convert each assessment to indicator format
             if (org.assessments) {
                 for (const [indicatorId, assessment] of Object.entries(org.assessments)) {
+                    // Use existing soc_values/human_values if available
+                    let socValues = assessment.raw_data?.soc_values || [];
+                    let humanValues = assessment.raw_data?.human_values || [];
+
+                    // If no data but we have a bayesian_score, create synthetic data point
+                    // This happens with demo data from generate_demo_organizations.js
+                    if (socValues.length === 0 && humanValues.length === 0 && assessment.bayesian_score) {
+                        socValues = [{
+                            timestamp: assessment.assessment_date || new Date().toISOString(),
+                            value: assessment.bayesian_score,
+                            confidence: assessment.confidence || 0.8,
+                            source: 'assessment-data'
+                        }];
+                    }
+
                     indicators[indicatorId] = {
                         current_bayesian: assessment.bayesian_score || 0.5,
-                        soc_values: assessment.raw_data?.soc_values || [],
-                        human_values: assessment.raw_data?.human_values || []
+                        soc_values: socValues,
+                        human_values: humanValues
                     };
                 }
             }
-
-            console.log('✅ Converted indicators count:', Object.keys(indicators).length);
-            console.log('✅ Sample indicators:', Object.keys(indicators).slice(0, 5));
-            console.log('✅ Full indicators object:', indicators);
 
             return {
                 ...org,
