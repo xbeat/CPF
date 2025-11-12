@@ -1604,9 +1604,10 @@ async function loadExistingExport(indicatorId, orgId) {
         // First, load the Field Kit JSON from local files
         const [categoryNum, indicatorNum] = indicatorId.split('.');
         const categoryName = getCategoryName(categoryNum);
-        const langSelect = document.getElementById('lang-select');
-        const lang = langSelect ? langSelect.value : 'EN';
-        const langCode = lang === 'IT' ? 'it-IT' : 'en-US';
+
+        // Use organization language from context (set by URL params), fallback to langSelect
+        const langCode = organizationContext.language ||
+                        (document.getElementById('lang-select')?.value === 'IT' ? 'it-IT' : 'en-US');
 
         // Construct local URL (same pattern as loadJSON)
         const url = `/auditor-field-kit/interactive/${langCode}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
