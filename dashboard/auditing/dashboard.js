@@ -679,6 +679,10 @@ async function openIntegratedClient(indicatorId, orgId) {
     document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - New Assessment`;
     document.getElementById('indicatorModal').classList.add('active');
 
+    // Add fullscreen class for client modal
+    const modalContent = document.querySelector('#indicatorModal .modal-content');
+    modalContent.classList.add('fullscreen-client');
+
     const content = document.getElementById('indicatorModalContent');
 
     // Hide delete button for new assessments
@@ -693,12 +697,12 @@ async function openIntegratedClient(indicatorId, orgId) {
 
     console.log('📎 Opening client with URL:', clientUrl);
 
-    // Render iframe with the client app
+    // Render iframe with the client app (full height)
     content.innerHTML = `
         <iframe
             id="clientIframe"
             src="${clientUrl}"
-            style="width: 100%; height: 80vh; border: none; border-radius: 8px;"
+            style="width: 100%; height: 100%; border: none; border-radius: 8px;"
             frameborder="0"
             allow="clipboard-read; clipboard-write">
         </iframe>
@@ -844,6 +848,11 @@ function calculateSimplifiedScore(responses) {
 
 function closeIndicatorModal() {
     document.getElementById('indicatorModal').classList.remove('active');
+
+    // Remove fullscreen class when closing
+    const modalContent = document.querySelector('#indicatorModal .modal-content');
+    modalContent.classList.remove('fullscreen-client');
+
     document.getElementById('editAssessmentBtn').style.display = 'none';
     document.getElementById('deleteAssessmentBtn').style.display = 'none';
     selectedIndicatorId = null;
@@ -867,6 +876,10 @@ function editAssessmentFromModal() {
     document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Edit Assessment`;
     document.getElementById('indicatorModal').classList.add('active');
 
+    // Add fullscreen class for client modal
+    const modalContent = document.querySelector('#indicatorModal .modal-content');
+    modalContent.classList.add('fullscreen-client');
+
     const content = document.getElementById('indicatorModalContent');
 
     // Show delete button only (hide edit since we're already editing)
@@ -878,12 +891,12 @@ function editAssessmentFromModal() {
 
     console.log('🔗 Edit Assessment URL:', clientUrl);
 
-    // Render iframe with the client app in EDIT mode
+    // Render iframe with the client app in EDIT mode (full height)
     content.innerHTML = `
         <iframe
             id="clientIframe"
             src="${clientUrl}"
-            style="width: 100%; height: 80vh; border: none; border-radius: 8px;"
+            style="width: 100%; height: 100%; border: none; border-radius: 8px;"
             frameborder="0"
             allow="clipboard-read; clipboard-write">
         </iframe>
