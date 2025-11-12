@@ -696,17 +696,12 @@ async function openIntegratedClient(indicatorId, orgId) {
     const categoryName = CATEGORY_MAP[categoryNum];
     const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
 
-    console.log('📎 Opening client with URL:', clientUrl);
-
-    // Render iframe with the client app (full height)
+    // Show loading
     content.innerHTML = `
-        <iframe
-            id="clientIframe"
-            src="${clientUrl}"
-            style="width: 100%; height: 100%; border: none; border-radius: 8px;"
-            frameborder="0"
-            allow="clipboard-read; clipboard-write">
-        </iframe>
+        <div style="text-align: center; padding: 40px;">
+            <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+            <p>Loading indicator...</p>
+        </div>
     `;
 
     try {
@@ -1057,16 +1052,15 @@ async function editAssessmentFromModal() {
         const response = await fetch(url);
         if (!response.ok) throw new Error('Field Kit not found');
 
-    // Render iframe with the client app in EDIT mode (full height)
-    content.innerHTML = `
-        <iframe
-            id="clientIframe"
-            src="${clientUrl}"
-            style="width: 100%; height: 100%; border: none; border-radius: 8px;"
-            frameborder="0"
-            allow="clipboard-read; clipboard-write">
-        </iframe>
-    `;
+        const fieldKit = await response.json();
+
+        // Render edit form with existing data pre-populated
+        renderIntegratedClientForm(indicatorId, fieldKit, orgId, assessment);
+    } catch (error) {
+        console.error('Error loading Field Kit for edit:', error);
+        showAlert('Failed to load indicator definition: ' + error.message, 'error');
+        closeIndicatorModal();
+    }
 }
 
 async function deleteAssessmentFromModal() {
