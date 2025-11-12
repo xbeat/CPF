@@ -32,6 +32,9 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Serve static files from dashboard folder
 app.use('/dashboard', express.static(__dirname));
 
+// Serve data files for SOC dashboard (static JSON files)
+app.use('/data', express.static(path.join(__dirname, 'data')));
+
 // ============================================
 // LANDING PAGE ROUTE
 // ============================================
