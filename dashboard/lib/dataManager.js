@@ -10,7 +10,7 @@ const path = require('path');
 // Configuration
 // ============================================================================
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+const DATA_DIR = path.join(__dirname, '..', 'data', 'soc');
 const ORGS_DIR = path.join(DATA_DIR, 'organizations');
 const INDEX_FILE = path.join(DATA_DIR, 'organizations_index.json');
 
