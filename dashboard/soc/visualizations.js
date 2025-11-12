@@ -18,6 +18,15 @@ function renderConvergenceChart(orgData) {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Check if indicators exist
+    if (!orgData || !orgData.indicators) {
+        ctx.fillStyle = '#7f8c8d';
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('No indicator data available', canvas.width / 2, canvas.height / 2);
+        return;
+    }
+
     // Aggregate SOC and Human data over time
     const socTimeline = [];
     const humanTimeline = [];
