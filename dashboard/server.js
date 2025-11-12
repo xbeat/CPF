@@ -613,7 +613,7 @@ app.get('/api/list-exports', (req, res) => {
 
 /**
  * GET /api/get-export
- * LEGACY: Retrieves a specific export file for an organization and indicator
+ * Retrieves a specific assessment for an organization and indicator
  * Query params: org_id, indicator_id
  */
 app.get('/api/get-export', (req, res) => {
@@ -627,52 +627,48 @@ app.get('/api/get-export', (req, res) => {
       });
     }
 
-    const exportsPath = path.join(__dirname, '../field_kit_exports');
+    console.log(`\n🔍 [API] Looking for assessment: org_id=${org_id}, indicator_id=${indicator_id}`);
 
-    if (!fs.existsSync(exportsPath)) {
+    // Check if organization exists
+    if (!dataManager.organizationExists(org_id)) {
+      console.log(`   ❌ Organization not found: ${org_id}\n`);
       return res.status(404).json({
         success: false,
-        error: 'Export folder not found'
-      });
-    }
-
-    console.log(`\n🔍 [API] Looking for export: org_id=${org_id}, indicator_id=${indicator_id}`);
-
-    // Find export file matching org_id and indicator_id
-    const files = fs.readdirSync(exportsPath)
-      .filter(f => {
-        const matches = f.startsWith(`dashboard_export_${org_id}_${indicator_id}_`) &&
-               f.endsWith('.json');
-        if (matches) {
-          console.log(`   ✅ Found: ${f}`);
-        }
-        return matches;
-      })
-      .sort((a, b) => {
-        const timeA = parseInt(a.split('_').pop().replace('.json', ''));
-        const timeB = parseInt(b.split('_').pop().replace('.json', ''));
-        return timeB - timeA;
-      });
-
-    if (files.length === 0) {
-      console.log(`   ❌ No export found\n`);
-      return res.status(404).json({
-        success: false,
-        error: 'Export not found',
+        error: 'Organization not found',
         org_id,
         indicator_id
       });
     }
 
-    // Read most recent export
-    const filePath = path.join(exportsPath, files[0]);
-    const exportData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    // Read organization data
+    const orgData = dataManager.readOrganization(org_id);
 
-    console.log(`   ✅ Loaded: ${files[0]}\n`);
+    // Check if assessment exists for this indicator
+    if (!orgData.assessments || !orgData.assessments[indicator_id]) {
+      console.log(`   ❌ Assessment not found for indicator: ${indicator_id}\n`);
+      return res.status(404).json({
+        success: false,
+        error: 'Assessment not found',
+        org_id,
+        indicator_id
+      });
+    }
+
+    const assessment = orgData.assessments[indicator_id];
+
+    console.log(`   ✅ Assessment loaded for ${indicator_id}\n`);
+
+    // Format response to match expected structure from client
+    const exportData = {
+      organization_name: orgData.name,
+      organization_id: org_id,
+      indicator_id: indicator_id,
+      metadata: orgData.metadata,
+      full_assessment: assessment
+    };
 
     res.json({
       success: true,
-      filename: files[0],
       data: exportData
     });
 

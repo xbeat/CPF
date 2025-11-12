@@ -34,32 +34,8 @@ let autoSaveTimeout = null;
 // INITIALIZATION - Load Organization Context
 // ============================================
 
-// Parse URL parameters on page load
-window.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-
-    // Get organization context from URL
-    organizationContext.orgId = urlParams.get('org_id');
-    organizationContext.orgName = urlParams.get('org_name');
-    organizationContext.language = urlParams.get('language') || 'en-US';
-
-    // Display organization info if available
-    if (organizationContext.orgId && organizationContext.orgName) {
-        displayOrganizationInfo();
-
-        // Pre-fill client metadata
-        currentData.metadata.client = organizationContext.orgName;
-
-        // Set language based on organization
-        const langCode = mapISOToLangCode(organizationContext.language);
-        const langSelect = document.getElementById('lang-select');
-        if (langSelect) {
-            langSelect.value = langCode;
-        }
-    }
-
-    console.log('✅ Client v2.0 initialized with organization:', organizationContext);
-});
+// NOTE: URL parameter handling moved to unified DOMContentLoaded listener at the end of this file
+// This avoids duplicate event listeners and ensures proper initialization order
 
 // Display organization information in header
 function displayOrganizationInfo() {
@@ -1704,18 +1680,41 @@ function getCategoryName(categoryNum) {
 window.addEventListener('DOMContentLoaded', () => {
     // Check for URL parameters (e.g., from dashboard link)
     const urlParams = new URLSearchParams(window.location.search);
+
+    // Get all URL parameters
     const indicatorParam = urlParams.get('indicator');
     const langParam = urlParams.get('lang') || urlParams.get('language'); // Support both 'lang' and 'language' parameters
     const modeParam = urlParams.get('mode'); // 'edit' or 'new'
     const orgIdParam = urlParams.get('org_id');
+    const orgNameParam = urlParams.get('org_name');
 
     console.log('🔍 Client loaded with URL params:', {
         indicator: indicatorParam,
         language: langParam,
         mode: modeParam,
         org_id: orgIdParam,
+        org_name: orgNameParam,
         fullURL: window.location.href
     });
+
+    // Set organization context from URL parameters
+    if (orgIdParam) {
+        organizationContext.orgId = orgIdParam;
+    }
+    if (orgNameParam) {
+        organizationContext.orgName = orgNameParam;
+    }
+    if (langParam) {
+        organizationContext.language = langParam;
+    }
+
+    // Display organization info if available
+    if (organizationContext.orgId && organizationContext.orgName) {
+        displayOrganizationInfo();
+
+        // Pre-fill client metadata
+        currentData.metadata.client = organizationContext.orgName;
+    }
 
     // Set language if provided in URL
     if (langParam) {
@@ -1726,6 +1725,8 @@ window.addEventListener('DOMContentLoaded', () => {
             langSelect.value = shortLang;
         }
     }
+
+    console.log('✅ Client v2.0 initialized with organization:', organizationContext);
 
     // Load specific indicator if provided in URL
     if (indicatorParam) {
@@ -1742,9 +1743,11 @@ window.addEventListener('DOMContentLoaded', () => {
         setTimeout(async () => {
             if (modeParam === 'edit' && orgIdParam) {
                 // Edit mode: load existing export from server
+                console.log(`📥 Edit mode: loading assessment for org=${orgIdParam}, indicator=${indicatorParam}`);
                 await loadExistingExport(indicatorParam, orgIdParam);
             } else {
                 // New mode: load from local files
+                console.log(`📄 New mode: loading indicator ${indicatorParam} from local files`);
                 await loadIndicatorFromReference(indicatorParam);
             }
         }, 100);
