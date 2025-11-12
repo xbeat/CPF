@@ -15,12 +15,20 @@
         </header>
 
         <!-- Main Layout -->
-        <div class="dashboard-main">
+        <div class="dashboard-main" id="dashboardMain">
             <!-- Sidebar: Organizations List -->
             <aside class="sidebar">
                 <div class="sidebar-header">
-                    <h2>Organizations</h2>
-                    <span id="org-count" class="badge">0</span>
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                        <h2 style="margin: 0;">Organizations</h2>
+                        <span id="org-count" class="badge">0</span>
+                    </div>
+                    <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">
+                        <svg id="toggleIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <polyline points="15 18 21 12 15 6"></polyline>
+                        </svg>
+                    </button>
                 </div>
                 <div id="org-list" class="org-list">
                     <!-- Populated by JS -->
@@ -141,6 +149,22 @@
         let organizationsData = null;
         let currentOrgId = null;
 
+        // Toggle sidebar function
+        function toggleSidebar() {
+            const main = document.getElementById('dashboardMain');
+            const icon = document.getElementById('toggleIcon');
+            const isCollapsed = main.classList.toggle('sidebar-collapsed');
+
+            // Update icon based on state
+            if (isCollapsed) {
+                // Collapsed: show right arrow (open)
+                icon.innerHTML = '<polyline points="9 18 15 12 9 6"></polyline>';
+            } else {
+                // Expanded: show left arrow (close)
+                icon.innerHTML = '<line x1="3" y1="12" x2="21" y2="12"></line><polyline points="15 18 21 12 15 6"></polyline>';
+            }
+        }
+
         // Load data on page load
         window.addEventListener('DOMContentLoaded', async () => {
             await loadOrganizationsData();
@@ -184,12 +208,20 @@
                 const overallRisk = org.stats?.overall_risk || 0;
                 const riskClass = overallRisk > 0.66 ? 'high' :
                     overallRisk > 0.33 ? 'medium' : 'low';
+                const completion = org.stats?.completion_percentage || 0;
+                const totalAssessments = org.stats?.total_assessments || 0;
 
                 item.innerHTML = `
                     <div class="org-name">${org.name}</div>
                     <div class="org-meta">
                         <span class="org-industry">${org.industry}</span>
-                        <span class="org-risk ${riskClass}">${(overallRisk * 100).toFixed(0)}%</span>
+                        <span class="org-risk ${riskClass}">Risk: ${(overallRisk * 100).toFixed(0)}%</span>
+                    </div>
+                    <div class="org-stats-mini">
+                        <div class="stat-mini">
+                            <span class="stat-mini-label">Progress:</span>
+                            <span class="stat-mini-value">${totalAssessments}/100 (${completion}%)</span>
+                        </div>
                     </div>
                 `;
 
