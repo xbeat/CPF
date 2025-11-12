@@ -72,7 +72,8 @@ const LANG_MAP = {
 };
 
 // Category mapping
-const CATEGORY_MAP = {
+// Use existing CATEGORY_MAP from dashboard.js if available, otherwise define it
+window.CATEGORY_MAP = window.CATEGORY_MAP || {
     '1': 'authority',
     '2': 'temporal',
     '3': 'social',
@@ -84,6 +85,7 @@ const CATEGORY_MAP = {
     '9': 'ai',
     '10': 'convergent'
 };
+const CATEGORY_MAP = window.CATEGORY_MAP;
 
 // Category details for dropdown
 const CATEGORIES = [
