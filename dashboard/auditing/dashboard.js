@@ -731,14 +731,54 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
     const existingNotes = existingAssessment?.raw_data?.client_conversation?.notes || '';
 
     let html = `
-        <div class="integrated-client-form">
-            <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <h4 style="margin: 0 0 10px 0; color: var(--primary);">${indicatorData.title || indicatorData.indicator_title}</h4>
-                <p style="margin: 0; color: var(--text-light); font-size: 14px;">${indicatorData.category || indicatorData.category_name}</p>
-                ${isEditMode ? '<div style="margin-top: 10px; padding: 8px; background: #dbeafe; border-radius: 4px; font-size: 13px;"><strong>📝 Edit Mode:</strong> Modify your assessment below</div>' : ''}
+        <div class="integrated-client-form" style="max-height: 70vh; overflow-y: auto; padding-right: 10px;">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h2 style="margin: 0 0 5px 0; font-size: 24px;">${indicatorData.indicator || indicatorId}</h2>
+                <div style="font-size: 16px; opacity: 0.9;">${indicatorData.title || indicatorData.indicator_title}</div>
+                <div style="font-size: 14px; opacity: 0.8; margin-top: 5px;">${indicatorData.subtitle || ''}</div>
+                <div style="margin-top: 10px; padding: 8px 12px; background: rgba(255,255,255,0.2); border-radius: 6px; display: inline-block; font-size: 13px;">${indicatorData.category || indicatorData.category_name}</div>
+                ${isEditMode ? '<div style="margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.9); color: var(--primary); border-radius: 4px; font-size: 13px;"><strong>📝 Edit Mode:</strong> Modifying existing assessment</div>' : ''}
             </div>
 
-            <form id="assessmentForm" onsubmit="submitIntegratedAssessment(event, '${indicatorId}', '${orgId}', ${isEditMode})">
+            <!-- Description Section -->
+            ${indicatorData.description ? `
+            <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--primary);">
+                <h3 style="margin: 0 0 15px 0; color: var(--primary); font-size: 18px;">📚 Description</h3>
+                <p style="margin: 0 0 15px 0; line-height: 1.6;">${indicatorData.description.short || ''}</p>
+                ${indicatorData.description.context ? `
+                    <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 6px;">
+                        <strong style="color: var(--primary);">Context:</strong>
+                        <p style="margin: 8px 0 0 0; line-height: 1.6;">${indicatorData.description.context}</p>
+                    </div>
+                ` : ''}
+                ${indicatorData.description.impact ? `
+                    <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 6px;">
+                        <strong style="color: var(--primary);">Impact:</strong>
+                        <p style="margin: 8px 0 0 0; line-height: 1.6;">${indicatorData.description.impact}</p>
+                    </div>
+                ` : ''}
+            </div>
+            ` : ''}
+
+            <!-- Risk Scenarios -->
+            ${indicatorData.risk_scenarios && indicatorData.risk_scenarios.length > 0 ? `
+            <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--warning);">
+                <h3 style="margin: 0 0 15px 0; color: var(--warning); font-size: 18px;">⚠️ Risk Scenarios</h3>
+                ${indicatorData.risk_scenarios.map((scenario, idx) => `
+                    <div style="background: white; padding: 15px; border-radius: 6px; margin-bottom: 12px;">
+                        <strong style="color: var(--text); font-size: 15px;">${scenario.title || 'Scenario ' + (idx + 1)}</strong>
+                        <p style="margin: 8px 0 0 0; line-height: 1.6; color: var(--text);">${scenario.description || ''}</p>
+                        ${scenario.likelihood ? `<div style="margin-top: 8px; font-size: 13px; color: var(--text-light);">Likelihood: <strong>${scenario.likelihood}</strong></div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+            ` : ''}
+
+            <!-- Assessment Form -->
+            <div style="background: white; padding: 20px; border-radius: 8px; border: 2px solid var(--border);">
+                <h3 style="margin: 0 0 15px 0; color: var(--primary); font-size: 18px;">✏️ Assessment Questions</h3>
+                <form id="assessmentForm" onsubmit="submitIntegratedAssessment(event, '${indicatorId}', '${orgId}', ${isEditMode})">
     `;
 
     // Handle both field_kit.sections and sections formats
@@ -782,17 +822,18 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
     });
 
     html += `
-                <div class="form-group">
-                    <label class="form-label">📝 Notes / Red Flags</label>
-                    <textarea class="form-textarea" id="assessment_notes" name="notes" placeholder="Additional observations, red flags, or contextual information..." rows="4">${existingNotes}</textarea>
-                    <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">💡 Use this field to document any concerns, unusual behaviors, or important context</div>
-                </div>
+                    <div class="form-group">
+                        <label class="form-label">📝 Notes / Red Flags</label>
+                        <textarea class="form-textarea" id="assessment_notes" name="notes" placeholder="Additional observations, red flags, or contextual information..." rows="4">${existingNotes}</textarea>
+                        <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">💡 Use this field to document any concerns, unusual behaviors, or important context</div>
+                    </div>
 
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeIndicatorModal()">Cancel</button>
-                    <button type="submit" class="btn btn-success">💾 ${isEditMode ? 'Update' : 'Save'} Assessment</button>
-                </div>
-            </form>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeIndicatorModal()">Cancel</button>
+                        <button type="submit" class="btn btn-success">💾 ${isEditMode ? 'Update' : 'Save'} Assessment</button>
+                    </div>
+                </form>
+            </div>
         </div>
     `;
 
@@ -814,8 +855,8 @@ async function submitIntegratedAssessment(event, indicatorId, orgId, isEditMode 
 
     const assessmentData = {
         indicator_id: indicatorId,
-        title: document.querySelector('.integrated-client-form h4').textContent,
-        category: document.querySelector('.integrated-client-form p').textContent,
+        title: document.querySelector('.integrated-client-form h2')?.textContent || indicatorId,
+        category: document.querySelector('.integrated-client-form .gradient-header + div')?.textContent || 'Unknown Category',
         bayesian_score: bayesianScore,
         confidence: confidence,
         maturity_level: bayesianScore < 0.3 ? 'high' : bayesianScore < 0.7 ? 'medium' : 'low',
