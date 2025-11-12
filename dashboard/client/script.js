@@ -181,8 +181,8 @@ async function loadJSON() {
                 throw new Error(`Invalid category number: ${categoryNum}. Must be 1-10.`);
             }
 
-            // Construct GitHub raw URL for multilingual structure
-            fetchUrl = `https://raw.githubusercontent.com/xbeat/CPF/main/auditor%20field%20kit/interactive/${isoLang}/${categoryNum}.x-${categoryName}/indicator_${indicator}.json`;
+            // Construct local URL for multilingual structure
+            fetchUrl = `/auditor-field-kit/interactive/${isoLang}/${categoryNum}.x-${categoryName}/indicator_${indicator}.json`;
             console.log('Loading from:', fetchUrl);
         }
 
@@ -1601,16 +1601,16 @@ async function loadExistingExport(indicatorId, orgId) {
 
         console.log('✅ Export loaded:', exportData);
 
-        // First, load the Field Kit JSON from GitHub
+        // First, load the Field Kit JSON from local files
         const [categoryNum, indicatorNum] = indicatorId.split('.');
         const categoryName = getCategoryName(categoryNum);
         const langSelect = document.getElementById('lang-select');
         const lang = langSelect ? langSelect.value : 'EN';
         const langCode = lang === 'IT' ? 'it-IT' : 'en-US';
 
-        // Construct GitHub raw URL (same pattern as loadJSON)
-        const url = `https://raw.githubusercontent.com/xbeat/CPF/main/auditor%20field%20kit/interactive/${langCode}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
-        console.log('Loading Field Kit from GitHub:', url);
+        // Construct local URL (same pattern as loadJSON)
+        const url = `/auditor-field-kit/interactive/${langCode}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
+        console.log('Loading Field Kit from local:', url);
 
         const fieldKitResponse = await fetch(url);
         if (!fieldKitResponse.ok) {
@@ -1666,7 +1666,7 @@ async function loadExistingExport(indicatorId, orgId) {
 
     } catch (error) {
         console.error('Error loading existing export:', error);
-        // Silently fallback to loading from GitHub (error logged to console for debug)
+        // Silently fallback to loading from local files (error logged to console for debug)
         await loadIndicatorFromReference(indicatorId);
     }
 }
@@ -1725,7 +1725,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 // Edit mode: load existing export from server
                 await loadExistingExport(indicatorParam, orgIdParam);
             } else {
-                // New mode: load from GitHub as usual
+                // New mode: load from local files
                 await loadIndicatorFromReference(indicatorParam);
             }
         }, 100);
