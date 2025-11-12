@@ -353,6 +353,21 @@
             color: white;
         }
 
+        .matrix-cell.indicator.risk-low {
+            background: var(--success);
+            color: white;
+        }
+
+        .matrix-cell.indicator.risk-medium {
+            background: var(--warning);
+            color: white;
+        }
+
+        .matrix-cell.indicator.risk-high {
+            background: var(--danger);
+            color: white;
+        }
+
         .matrix-cell.indicator:hover {
             transform: scale(1.1);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -638,6 +653,43 @@
         .hidden {
             display: none !important;
         }
+
+        /* Prioritization Table */
+        #prioritizationTable tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        #prioritizationTable tbody tr:hover {
+            background: var(--bg-gray);
+        }
+
+        #prioritizationTable tbody td {
+            padding: 12px;
+        }
+
+        .recommendation-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .recommendation-badge.critical {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+
+        .recommendation-badge.review {
+            background: #fff3cd;
+            color: #f59e0b;
+        }
+
+        .recommendation-badge.monitor {
+            background: #d1fae5;
+            color: var(--success);
+        }
     </style>
 </head>
 <body>
@@ -710,6 +762,32 @@
                         <div id="riskSummary"></div>
                     </div>
                     <div id="riskHeatmap" class="heatmap-grid"></div>
+                </div>
+
+                <!-- Prioritization Table -->
+                <div class="heatmap-container" style="margin-top: 20px;">
+                    <div class="matrix-header">
+                        <h3 class="matrix-title">🎯 Prioritization Matrix</h3>
+                        <p style="font-size: 14px; color: var(--text-light); margin-top: 10px;">Categories ordered by priority for remediation (risk × weight + downstream impact)</p>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table id="prioritizationTable" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                            <thead>
+                                <tr style="background: var(--bg-gray); border-bottom: 2px solid var(--border);">
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">#</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Category</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Risk</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Confidence</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Completion</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Priority Score</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Recommendation</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prioritizationTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -953,6 +1031,7 @@
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeIndicatorModal()">Close</button>
+                <button type="button" class="btn btn-primary btn-small" id="editAssessmentBtn" onclick="editAssessmentFromModal()" style="display: none;">✏️ Edit Assessment</button>
                 <button type="button" class="btn btn-danger btn-small" id="deleteAssessmentBtn" onclick="deleteAssessmentFromModal()" style="display: none;">Delete Assessment</button>
             </div>
         </div>
@@ -1100,6 +1179,7 @@
             // Render matrix and heatmap
             renderProgressMatrix(org);
             renderRiskHeatmap(org);
+            renderPrioritizationTable(org);
         }
 
         function renderProgressSummary(org) {
@@ -1191,8 +1271,25 @@
                     const indicatorId = `${cat}.${ind}`;
                     const assessment = assessments[indicatorId];
                     const completed = !!assessment;
-                    const cellClass = completed ? 'completed' : '';
-                    const title = completed ? `${indicatorId} - Completed (${(assessment.bayesian_score * 100).toFixed(1)}%)` : `${indicatorId} - Not assessed`;
+
+                    let cellClass = '';
+                    let riskLevel = 'Not assessed';
+
+                    if (completed) {
+                        const score = assessment.bayesian_score;
+                        if (score < 0.33) {
+                            cellClass = 'risk-low';
+                            riskLevel = 'Low Risk';
+                        } else if (score < 0.66) {
+                            cellClass = 'risk-medium';
+                            riskLevel = 'Medium Risk';
+                        } else {
+                            cellClass = 'risk-high';
+                            riskLevel = 'High Risk';
+                        }
+                    }
+
+                    const title = completed ? `${indicatorId} - ${riskLevel} (${(assessment.bayesian_score * 100).toFixed(1)}%)` : `${indicatorId} - Not assessed`;
                     const cellStyle = isFiltered ? 'opacity: 0.3; cursor: default;' : '';
 
                     html += `
@@ -1271,6 +1368,88 @@
             heatmap.innerHTML = html;
         }
 
+        function renderPrioritizationTable(org) {
+            const tbody = document.getElementById('prioritizationTableBody');
+            const categories = org.aggregates.by_category || {};
+
+            const categoryNames = {
+                '1': 'Authority-Based',
+                '2': 'Temporal-Based',
+                '3': 'Social-Based',
+                '4': 'Affective-Based',
+                '5': 'Cognitive-Based',
+                '6': 'Group-Based',
+                '7': 'Stress-Based',
+                '8': 'Unconscious-Based',
+                '9': 'AI-Enhanced',
+                '10': 'Convergent'
+            };
+
+            // Category weights for priority calculation (can be adjusted)
+            const categoryWeights = {
+                '1': 1.2, '2': 1.0, '3': 1.1, '4': 1.0, '5': 1.1,
+                '6': 1.0, '7': 1.0, '8': 1.1, '9': 1.3, '10': 1.2
+            };
+
+            // Calculate priority scores
+            const priorityData = [];
+            for (let cat = 1; cat <= 10; cat++) {
+                const catKey = cat.toString();
+                const catData = categories[catKey];
+
+                if (catData && catData.total_assessments > 0) {
+                    const risk = catData.avg_score;
+                    const confidence = catData.avg_confidence;
+                    const weight = categoryWeights[catKey] || 1.0;
+                    const completion = catData.completion_percentage / 100;
+
+                    // Priority score = risk × weight × confidence × (1 + incomplete_factor)
+                    const incompleteFactor = (1 - completion) * 0.3; // Incomplete categories get higher priority
+                    const priorityScore = risk * weight * confidence * (1 + incompleteFactor);
+
+                    // Recommendation based on risk and completion
+                    let recommendation = 'monitor';
+                    if (risk >= 0.66 || (risk >= 0.5 && completion < 0.5)) {
+                        recommendation = 'critical';
+                    } else if (risk >= 0.33 || completion < 0.7) {
+                        recommendation = 'review';
+                    }
+
+                    priorityData.push({
+                        category: catKey,
+                        name: categoryNames[catKey],
+                        risk: risk,
+                        confidence: confidence,
+                        completion: catData.completion_percentage,
+                        priorityScore: priorityScore,
+                        recommendation: recommendation
+                    });
+                }
+            }
+
+            // Sort by priority score (descending)
+            priorityData.sort((a, b) => b.priorityScore - a.priorityScore);
+
+            // Render table rows
+            let html = '';
+            priorityData.forEach((item, idx) => {
+                const riskClass = item.risk < 0.33 ? 'risk-low' : item.risk < 0.66 ? 'risk-medium' : 'risk-high';
+                html += `
+                    <tr>
+                        <td style="font-weight: 600; color: var(--text-light);">${idx + 1}</td>
+                        <td style="font-weight: 600;">${item.category}. ${item.name}</td>
+                        <td><span class="stat-value ${riskClass}" style="font-size: 14px;">${(item.risk * 100).toFixed(1)}%</span></td>
+                        <td>${(item.confidence * 100).toFixed(0)}%</td>
+                        <td>${item.completion}%</td>
+                        <td style="font-weight: 700; color: var(--primary);">${item.priorityScore.toFixed(3)}</td>
+                        <td><span class="recommendation-badge ${item.recommendation}">${item.recommendation}</span></td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
         async function openIndicatorDetail(indicatorId, orgId) {
             selectedIndicatorId = indicatorId;
             const assessment = selectedOrgData.assessments[indicatorId];
@@ -1284,67 +1463,201 @@
             }
         }
 
-        function showAssessmentDetails(indicatorId, assessment) {
+        async function showAssessmentDetails(indicatorId, assessment) {
             document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Assessment Details`;
             document.getElementById('indicatorModal').classList.add('active');
 
             const content = document.getElementById('indicatorModalContent');
-            const riskClass = assessment.bayesian_score < 0.3 ? 'risk-low' :
-                             assessment.bayesian_score < 0.7 ? 'risk-medium' : 'risk-high';
-            const riskLabel = assessment.bayesian_score < 0.3 ? '🟢 Low Risk' :
-                             assessment.bayesian_score < 0.7 ? '🟡 Medium Risk' : '🔴 High Risk';
+            const riskClass = assessment.bayesian_score < 0.33 ? 'risk-low' :
+                             assessment.bayesian_score < 0.66 ? 'risk-medium' : 'risk-high';
+            const riskLabel = assessment.bayesian_score < 0.33 ? '🟢 Low Risk' :
+                             assessment.bayesian_score < 0.66 ? '🟡 Medium Risk' : '🔴 High Risk';
 
+            // Show loading state first
             content.innerHTML = `
-                <div style="display: grid; gap: 20px;">
-                    <div>
-                        <h4 style="margin: 0 0 10px 0; color: var(--primary);">${assessment.title || 'Indicator ' + indicatorId}</h4>
-                        <p style="margin: 0; color: var(--text-light); font-size: 14px;">${assessment.category || 'Category'}</p>
-                    </div>
+                <div style="text-align: center; padding: 40px;">
+                    <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                    <p>Loading Field Kit details...</p>
+                </div>
+            `;
 
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                        <div class="stat-box">
-                            <div class="stat-label">Risk Score</div>
-                            <div class="stat-value ${riskClass}">${(assessment.bayesian_score * 100).toFixed(1)}%</div>
-                            <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">${riskLabel}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Confidence</div>
-                            <div class="stat-value">${(assessment.confidence * 100).toFixed(1)}%</div>
-                            <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Assessment reliability</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Maturity Level</div>
-                            <div class="stat-value" style="text-transform: uppercase;">${assessment.maturity_level || 'N/A'}</div>
-                            <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Control maturity</div>
-                        </div>
-                    </div>
+            // Try to load Field Kit from GitHub
+            try {
+                const [categoryNum, indicatorNum] = indicatorId.split('.');
+                const categoryName = CATEGORY_MAP[categoryNum];
+                const language = selectedOrgData.metadata.language || 'en-US';
+                const url = `https://raw.githubusercontent.com/xbeat/auditor-field-kit/main/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
 
-                    <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
-                        <div style="font-weight: 600; margin-bottom: 10px;">Assessment Information</div>
-                        <div style="display: grid; gap: 8px; font-size: 14px;">
-                            <div><strong>Assessor:</strong> ${assessment.assessor || 'Unknown'}</div>
-                            <div><strong>Assessment Date:</strong> ${new Date(assessment.assessment_date).toLocaleString()}</div>
-                        </div>
-                    </div>
+                const response = await fetch(url);
+                let fieldKit = null;
+                if (response.ok) {
+                    fieldKit = await response.json();
+                }
 
-                    ${assessment.raw_data && assessment.raw_data.client_conversation ? `
+                // Render full details with Field Kit
+                content.innerHTML = `
+                    <div style="display: grid; gap: 20px;">
+                        <!-- Assessment Summary -->
+                        <div>
+                            <h4 style="margin: 0 0 10px 0; color: var(--primary);">${fieldKit?.title || assessment.title || 'Indicator ' + indicatorId}</h4>
+                            <p style="margin: 0; color: var(--text-light); font-size: 14px;">${fieldKit?.category || assessment.category || 'Category'}</p>
+                        </div>
+
+                        <!-- Risk Stats -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                            <div class="stat-box">
+                                <div class="stat-label">Risk Score</div>
+                                <div class="stat-value ${riskClass}">${(assessment.bayesian_score * 100).toFixed(1)}%</div>
+                                <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">${riskLabel}</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Confidence</div>
+                                <div class="stat-value">${(assessment.confidence * 100).toFixed(1)}%</div>
+                                <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Assessment reliability</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Maturity Level</div>
+                                <div class="stat-value" style="text-transform: uppercase;">${assessment.maturity_level || 'N/A'}</div>
+                                <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Control maturity</div>
+                            </div>
+                        </div>
+
+                        <!-- Assessment Information -->
                         <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
-                            <div style="font-weight: 600; margin-bottom: 10px;">Notes</div>
+                            <div style="font-weight: 600; margin-bottom: 10px;">Assessment Information</div>
+                            <div style="display: grid; gap: 8px; font-size: 14px;">
+                                <div><strong>Assessor:</strong> ${assessment.assessor || 'Unknown'}</div>
+                                <div><strong>Assessment Date:</strong> ${new Date(assessment.assessment_date).toLocaleString()}</div>
+                            </div>
+                        </div>
+
+                        ${fieldKit && fieldKit.description ? `
+                        <!-- Field Kit Description -->
+                        <div style="background: #dbeafe; padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary);">
+                            <h4 style="margin: 0 0 10px 0; color: var(--primary);">📚 Description</h4>
+                            <p style="margin: 0 0 10px 0; line-height: 1.6;">${fieldKit.description.short || ''}</p>
+                            ${fieldKit.description.context ? `
+                                <div style="margin-top: 15px;">
+                                    <strong>Context:</strong>
+                                    <p style="margin: 5px 0 0 0; line-height: 1.6;">${fieldKit.description.context}</p>
+                                </div>
+                            ` : ''}
+                            ${fieldKit.description.impact ? `
+                                <div style="margin-top: 15px;">
+                                    <strong>Impact:</strong>
+                                    <p style="margin: 5px 0 0 0; line-height: 1.6;">${fieldKit.description.impact}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                        ` : ''}
+
+                        ${fieldKit && fieldKit.risk_scenarios && fieldKit.risk_scenarios.length > 0 ? `
+                        <!-- Risk Scenarios -->
+                        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
+                            <h4 style="margin: 0 0 10px 0; color: var(--warning);">⚠️ Risk Scenarios</h4>
+                            ${fieldKit.risk_scenarios.slice(0, 3).map((scenario, idx) => `
+                                <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
+                                    <strong>${scenario.title || 'Scenario ' + (idx + 1)}</strong>
+                                    <p style="margin: 5px 0 0 0;">${scenario.description || ''}</p>
+                                    ${scenario.likelihood ? `<small style="color: var(--text-light);">Likelihood: ${scenario.likelihood}</small>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+
+                        ${fieldKit && fieldKit.field_kit && fieldKit.field_kit.questions ? `
+                        <!-- Questions and Responses -->
+                        <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                            <h4 style="margin: 0 0 15px 0; color: var(--primary);">❓ Assessment Questions & Responses</h4>
+                            ${fieldKit.field_kit.questions.map((q, idx) => {
+                                const responseKey = `q${idx + 1}`;
+                                const response = assessment.raw_data?.responses?.[responseKey] || assessment.raw_data?.responses?.[`question_${idx}`];
+                                return `
+                                    <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
+                                        <div style="font-weight: 600; margin-bottom: 8px;">${idx + 1}. ${q.text}</div>
+                                        ${response ? `
+                                            <div style="padding: 8px; background: #e0f2fe; border-radius: 4px;">
+                                                <strong>Response:</strong> ${response}
+                                            </div>
+                                        ` : '<div style="color: var(--text-light); font-style: italic;">No response recorded</div>'}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        ` : ''}
+
+                        ${assessment.raw_data && assessment.raw_data.client_conversation ? `
+                        <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                            <div style="font-weight: 600; margin-bottom: 10px;">📝 Notes</div>
                             <p style="margin: 0; font-size: 14px; line-height: 1.6;">${assessment.raw_data.client_conversation.notes || 'No notes available'}</p>
                         </div>
-                    ` : ''}
+                        ` : ''}
 
-                    ${assessment.raw_data && assessment.raw_data.client_conversation && assessment.raw_data.client_conversation.red_flags && assessment.raw_data.client_conversation.red_flags.length > 0 ? `
+                        ${assessment.raw_data && assessment.raw_data.client_conversation && assessment.raw_data.client_conversation.red_flags && assessment.raw_data.client_conversation.red_flags.length > 0 ? `
                         <div style="background: #fee2e2; padding: 15px; border-radius: 8px; border: 1px solid var(--danger);">
                             <div style="font-weight: 600; margin-bottom: 10px; color: var(--danger);">🚩 Red Flags Identified (${assessment.raw_data.client_conversation.red_flags.length})</div>
                             <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
                                 ${assessment.raw_data.client_conversation.red_flags.map(flag => `<li>${flag}</li>`).join('')}
                             </ul>
                         </div>
-                    ` : ''}
-                </div>
-            `;
+                        ` : ''}
 
+                        ${fieldKit ? `
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
+                            <a href="${url}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                                📄 View Full Field Kit JSON on GitHub →
+                            </a>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Error loading Field Kit:', error);
+
+                // Fallback to basic info if Field Kit not available
+                content.innerHTML = `
+                    <div style="display: grid; gap: 20px;">
+                        <div>
+                            <h4 style="margin: 0 0 10px 0; color: var(--primary);">${assessment.title || 'Indicator ' + indicatorId}</h4>
+                            <p style="margin: 0; color: var(--text-light); font-size: 14px;">${assessment.category || 'Category'}</p>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                            <div class="stat-box">
+                                <div class="stat-label">Risk Score</div>
+                                <div class="stat-value ${riskClass}">${(assessment.bayesian_score * 100).toFixed(1)}%</div>
+                                <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">${riskLabel}</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Confidence</div>
+                                <div class="stat-value">${(assessment.confidence * 100).toFixed(1)}%</div>
+                                <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Assessment reliability</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Maturity Level</div>
+                                <div class="stat-value" style="text-transform: uppercase;">${assessment.maturity_level || 'N/A'}</div>
+                                <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Control maturity</div>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                            <div style="font-weight: 600; margin-bottom: 10px;">Assessment Information</div>
+                            <div style="display: grid; gap: 8px; font-size: 14px;">
+                                <div><strong>Assessor:</strong> ${assessment.assessor || 'Unknown'}</div>
+                                <div><strong>Assessment Date:</strong> ${new Date(assessment.assessment_date).toLocaleString()}</div>
+                            </div>
+                        </div>
+
+                        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
+                            <strong>⚠️ Field Kit Details Not Available</strong>
+                            <p style="margin-top: 10px;">Could not load full Field Kit from GitHub: ${error.message}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('editAssessmentBtn').style.display = 'inline-flex';
             document.getElementById('deleteAssessmentBtn').style.display = 'inline-flex';
         }
 
@@ -1515,7 +1828,19 @@
 
         function closeIndicatorModal() {
             document.getElementById('indicatorModal').classList.remove('active');
+            document.getElementById('editAssessmentBtn').style.display = 'none';
+            document.getElementById('deleteAssessmentBtn').style.display = 'none';
             selectedIndicatorId = null;
+        }
+
+        function editAssessmentFromModal() {
+            if (!selectedIndicatorId || !selectedOrgId) return;
+
+            // Close the detail modal
+            closeIndicatorModal();
+
+            // Open the integrated client to edit the assessment
+            openIntegratedClient(selectedIndicatorId, selectedOrgId);
         }
 
         async function deleteAssessmentFromModal() {
