@@ -1111,18 +1111,17 @@ async function editAssessmentFromModal() {
     // CRITICAL: Save these values BEFORE closing modal
     const indicatorId = selectedIndicatorId;
     const orgId = selectedOrgId;
-    const language = selectedOrgData.metadata.language || 'en-US';
 
     // Get current assessment data
     const assessment = selectedOrgData.assessments[indicatorId];
 
-    console.log('✏️ Edit Assessment:', { indicatorId, orgId, assessment });
+    console.log('✏️ Edit Assessment (IFRAME):', { indicatorId, orgId, assessment });
 
     // Close the detail modal
     closeIndicatorModal();
 
-    // Open integrated client in EDIT mode
-    document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Edit Assessment`;
+    // Open OLD CLIENT in IFRAME
+    document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Edit Assessment (IFRAME)`;
     document.getElementById('indicatorModal').classList.add('active');
 
     // Add fullscreen class for client modal
@@ -1134,25 +1133,35 @@ async function editAssessmentFromModal() {
     // Show delete button only (hide edit since we're already editing)
     document.getElementById('editAssessmentBtn').style.display = 'none';
     document.getElementById('deleteAssessmentBtn').style.display = 'inline-block';
+    document.getElementById('openIntegratedBtn').style.display = 'none';
 
-    // Load indicator from GitHub
-    const [categoryNum, indicatorNum] = indicatorId.split('.');
-    const categoryName = CATEGORY_MAP[categoryNum];
-    const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
+    // Create iframe with OLD client
+    const iframeUrl = `/dashboard/client/index.html?org_id=${orgId}&indicator_id=${indicatorId}`;
 
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Field Kit not found');
+    content.innerHTML = `
+        <div style="width: 100%; height: 80vh; position: relative;">
+            <iframe
+                id="clientIframe"
+                src="${iframeUrl}"
+                style="width: 100%; height: 100%; border: none; border-radius: 8px;"
+                onload="console.log('Iframe loaded')">
+            </iframe>
+        </div>
+    `;
 
-        const fieldKit = await response.json();
-
-        // Render edit form with existing data pre-populated
-        renderIntegratedClientForm(indicatorId, fieldKit, orgId, assessment);
-    } catch (error) {
-        console.error('Error loading Field Kit for edit:', error);
-        showAlert('Failed to load indicator definition: ' + error.message, 'error');
-        closeIndicatorModal();
-    }
+    // Pass assessment data to iframe via postMessage when it loads
+    const iframe = document.getElementById('clientIframe');
+    iframe.addEventListener('load', () => {
+        console.log('📨 Sending assessment data to iframe:', assessment);
+        iframe.contentWindow.postMessage({
+            type: 'LOAD_ASSESSMENT',
+            data: {
+                indicatorId: indicatorId,
+                orgId: orgId,
+                assessment: assessment
+            }
+        }, '*');
+    });
 }
 
 async function deleteAssessmentFromModal() {
