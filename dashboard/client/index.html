@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPF Auditor Field Kit Client - JSON Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+	<link rel="stylesheet" href="styles.css?v=2.1">
+</head>
+<body>
+    <div class="container">
+        <div class="header" id="header">
+            <div class="header-content">
+                <h1>CPF Auditor Field Kit Client v2.0</h1>
+                <div class="subtitle">Auto-Save Edition - Connected to Dashboard</div>
+                <div id="organization-info" style="margin-top: 10px; padding: 8px 15px; background: rgba(255,255,255,0.1); border-radius: 6px; display: none;">
+                    <span style="opacity: 0.8;">Organization:</span>
+                    <strong id="org-name-display">Not Selected</strong>
+                    <span style="margin-left: 20px; opacity: 0.8;">ID:</span>
+                    <strong id="org-id-display">-</strong>
+                </div>
+            </div>
+        </div>
+        <div class="toolbar">
+            <input type="text" id="indicator-input" class="selector" placeholder="e.g., 1.3 or 1.3-IT" title="Type indicator manually (e.g., 1.3)" onkeypress="if(event.key==='Enter') loadJSON()">
+            <span style="color: white; opacity: 0.7;">or</span>
+            <select id="category-select" class="selector" title="Select Category">
+                <option value="1">1. Authority</option>
+                <option value="2">2. Temporal</option>
+                <option value="3">3. Social</option>
+                <option value="4">4. Affective</option>
+                <option value="5">5. Cognitive</option>
+                <option value="6">6. Group</option>
+                <option value="7">7. Stress</option>
+                <option value="8">8. Unconscious</option>
+                <option value="9">9. AI</option>
+                <option value="10">10. Convergent</option>
+            </select>
+            <select id="indicator-select" class="selector" title="Select Indicator">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+            </select>
+            <select id="lang-select" class="selector" title="Select Language" style="display: none;">
+                <option value="EN">English</option>
+                <option value="IT">Italiano</option>
+                <option value="ES">Español</option>
+                <option value="FR">Français</option>
+                <option value="DE">Deutsch</option>
+            </select>
+            <button class="btn btn-primary" onclick="loadJSON()">📥 Load Indicator</button>
+            <button class="btn btn-light" onclick="document.getElementById('file-input').click()">📂 Import JSON</button>
+            <input type="file" id="file-input" accept=".json" onchange="importJSON(event)">
+            <button class="btn btn-info" onclick="showQuickReference()">📚 Quick Reference</button>
+            <button class="btn btn-success" onclick="showIndicatorDetails()" title="View detailed information about the current indicator">📄 Indicator Details</button>
+            <button class="btn btn-info" onclick="toggleDetailedAnalysis()">📊 Show/Hide Analysis</button>
+            <button class="btn btn-warning" onclick="calculateIndicatorScore()">🧮 Calcola Score CPF</button>
+            <button class="btn btn-warning" onclick="validateCurrentJSON()">🔍 Validate JSON</button>
+            <button class="btn btn-danger" onclick="resetAll()" title="Clear all data and reset">🗑️ Reset</button>
+            <div style="flex: 1;"></div>
+            <span id="auto-save-status" style="color: #4CAF50; font-size: 14px; margin-right: 15px; display: none;">
+                ✓ Auto-saved
+            </span>
+            <button class="btn btn-secondary" onclick="saveData()">💾 Save Local</button>
+            <button class="btn btn-success" onclick="exportData()">💾 Export Data</button>
+            <button class="btn btn-secondary" onclick="generateReport()">📊 Generate Report</button>
+        </div>
+        <div class="metadata-bar" id="metadata-bar" style="display: none;"></div>
+        <div class="content" id="content">
+            <div class="empty-state">
+                <h2>Welcome to CPF Field Kit JSON Client</h2>
+                <p>Load a JSON field kit to begin assessment</p>
+                <button class="btn btn-primary" onclick="loadTest()" style="margin-top: 20px;">Load Test 1.1</button>
+            </div>
+        </div>
+        <div class="action-bar" id="action-bar" style="display: none;"></div>
+        <div class="footer">
+            CPF Field Kit JSON Edition v1.0 | <a href="https://cpf3.org" style="color: var(--highlight);">cpf3.org</a>
+        </div>
+    </div>
+
+    <!-- Quick Reference Modal -->
+    <div id="reference-modal" class="modal" style="display: none;" onclick="if(event.target.id==='reference-modal') closeQuickReference()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📚 CPF Indicators Quick Reference</h2>
+                <button class="modal-close" onclick="closeQuickReference()">✕</button>
+            </div>
+            <div class="modal-body" id="reference-content">
+                <p style="text-align: center; color: #7f8c8d; padding: 40px;">Loading reference guide...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicator Details Modal -->
+    <div id="indicator-details-modal" class="modal" style="display: none;" onclick="if(event.target.id==='indicator-details-modal') closeIndicatorDetails()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="indicator-details-title">📄 Indicator Details</h2>
+                <button class="modal-close" onclick="closeIndicatorDetails()">✕</button>
+            </div>
+            <div class="modal-body" id="indicator-details-content">
+                <p style="text-align: center; color: #7f8c8d; padding: 40px;">No indicator loaded</p>
+            </div>
+        </div>
+    </div>
+
+    <script defer src="script.js?v=2.9"></script>
+    <script defer src="validator.js?v=1.0"></script>
+</body>
+</html>
