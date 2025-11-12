@@ -659,6 +659,7 @@ async function showAssessmentDetails(indicatorId, assessment) {
 
     document.getElementById('editAssessmentBtn').style.display = 'inline-flex';
     document.getElementById('deleteAssessmentBtn').style.display = 'inline-flex';
+    document.getElementById('openIntegratedBtn').style.display = 'inline-flex';
 }
 
 async function openIntegratedClient(indicatorId, orgId) {
@@ -726,166 +727,180 @@ async function openIntegratedClient(indicatorId, orgId) {
     }
 }
 
+async function openIntegratedVersion() {
+    if (!selectedIndicatorId || !selectedOrgId) {
+        showAlert('Error: No indicator or organization selected', 'error');
+        return;
+    }
+
+    const indicatorId = selectedIndicatorId;
+    const orgId = selectedOrgId;
+    const language = selectedOrgData.metadata.language || 'en-US';
+    const assessment = selectedOrgData.assessments[indicatorId];
+
+    console.log('🎨 openIntegratedVersion called with:', { indicatorId, orgId, assessment: !!assessment });
+
+    // Close current modal
+    closeIndicatorModal();
+
+    // Reopen with integrated form
+    document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - ${assessment ? 'Edit' : 'New'} Assessment (INTEGRATED)`;
+    document.getElementById('indicatorModal').classList.add('active');
+
+    // Add fullscreen class for client modal
+    const modalContent = document.querySelector('#indicatorModal .modal-content');
+    modalContent.classList.add('fullscreen-client');
+
+    const content = document.getElementById('indicatorModalContent');
+
+    // Load and render integrated form
+    const [categoryNum, indicatorNum] = indicatorId.split('.');
+    const categoryName = CATEGORY_MAP[categoryNum];
+    const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
+
+    // Show loading
+    content.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+            <p>Loading integrated form...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Field Kit not found');
+
+        const fieldKit = await response.json();
+
+        // Render integrated form with existing assessment data if available
+        renderIntegratedClientForm(indicatorId, fieldKit, orgId, assessment);
+
+        // Hide buttons since we're in the form now
+        document.getElementById('editAssessmentBtn').style.display = 'none';
+        document.getElementById('deleteAssessmentBtn').style.display = 'none';
+        document.getElementById('openIntegratedBtn').style.display = 'none';
+    } catch (error) {
+        console.error('Error loading Field Kit:', error);
+        showAlert('Failed to load integrated form: ' + error.message, 'error');
+        content.innerHTML = `
+            <div style="padding: 40px; text-align: center;">
+                <div style="background: #fee2e2; padding: 20px; border-radius: 8px; border: 1px solid var(--danger);">
+                    <strong>⚠️ Failed to load indicator</strong>
+                    <p style="margin-top: 10px;">${error.message}</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
 function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingAssessment = null) {
     const content = document.getElementById('indicatorModalContent');
     const isEditMode = !!existingAssessment;
 
-    // Insert CLIENT HTML wrapped in cpf-client class
+    // Insert the REAL client HTML structure
     const html = `
-        <div class="cpf-client">
-            <div class="container" style="max-width: 100%; margin: 0; box-shadow: none; border-radius: 0;">
-                <div class="header" id="client-header">
-                    <div class="header-content">
-                        <h1>Indicator ${indicatorId} Field Kit</h1>
-                        <div class="subtitle">${isEditMode ? 'Edit Mode' : 'New Assessment'}</div>
-                        <div id="organization-info" style="display: block;">
-                            <span>Organization:</span>
-                            <strong id="org-name-display">${selectedOrgData?.name || 'Unknown'}</strong>
-                            <span style="margin-left: 20px;">ID:</span>
-                            <strong id="org-id-display">${orgId}</strong>
-                        </div>
+        <div class="container" id="client-integrated-container" style="max-width: 100%; margin: 0; box-shadow: none;">
+            <div class="header" id="header">
+                <div class="header-content">
+                    <h1>CPF Auditor Field Kit Client - Integrated Mode</h1>
+                    <div class="subtitle">Indicator ${indicatorId} ${isEditMode ? '(Edit Mode)' : '(New Assessment)'}</div>
+                    <div id="organization-info" style="margin-top: 10px; padding: 8px 15px; background: rgba(255,255,255,0.1); border-radius: 6px; display: block;">
+                        <span style="opacity: 0.8;">Organization:</span>
+                        <strong id="org-name-display">${selectedOrgData?.name || 'Unknown'}</strong>
+                        <span style="margin-left: 20px; opacity: 0.8;">ID:</span>
+                        <strong id="org-id-display">${orgId}</strong>
                     </div>
                 </div>
-                <div class="toolbar" style="display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-success" onclick="saveIntegratedAssessment()" id="save-integrated-btn">💾 Save to Dashboard</button>
-                    <button class="btn btn-secondary" onclick="closeIndicatorModal()">✖️ Close</button>
-                </div>
-                <div class="metadata-bar" id="metadata-bar" style="display: none;"></div>
-                <div class="content" id="content">
-                    <div class="empty-state">
-                        <h2>Loading...</h2>
-                    </div>
-                </div>
-                <div class="action-bar" id="action-bar" style="display: none;"></div>
             </div>
+            <div class="toolbar" style="justify-content: flex-end;">
+                <button class="btn btn-success" onclick="window.CPFClient.saveToAPI()" id="save-to-dashboard-btn">💾 Save to Dashboard</button>
+                <button class="btn btn-secondary" onclick="closeIndicatorModal()">✖️ Close</button>
+            </div>
+            <div class="metadata-bar" id="metadata-bar" style="display: none;"></div>
+            <div class="content" id="content">
+                <div class="empty-state">
+                    <h2>Loading Field Kit...</h2>
+                    <p>Please wait</p>
+                </div>
+            </div>
+            <div class="action-bar" id="action-bar" style="display: none;"></div>
         </div>
     `;
 
     content.innerHTML = html;
 
-    // Initialize client script vars and call renderFieldKit
+    // Wait for DOM to be ready, then initialize client
     setTimeout(() => {
-        // Set organizationContext from client-script.js
-        if (window.organizationContext) {
-            window.organizationContext.orgId = orgId;
-            window.organizationContext.orgName = selectedOrgData?.name || 'Unknown';
-            window.organizationContext.language = selectedOrgData?.metadata?.language || 'en-US';
-        }
-
-        // Set currentData from client-script.js
-        if (window.currentData) {
-            window.currentData.fieldKit = indicatorData;
-            window.currentData.metadata = {
-                date: existingAssessment?.raw_data?.metadata?.date || new Date().toISOString().split('T')[0],
-                auditor: existingAssessment?.raw_data?.metadata?.auditor || '',
-                client: selectedOrgData?.name || '',
-                status: existingAssessment?.raw_data?.metadata?.status || 'in-progress'
-            };
-            window.currentData.responses = existingAssessment?.raw_data?.client_conversation?.responses || {};
-        }
-
-        // Call renderFieldKit from client-script.js
-        if (typeof window.renderFieldKit === 'function') {
-            console.log('🎨 Calling renderFieldKit with:', indicatorData);
-            window.renderFieldKit(indicatorData);
-        } else {
-            console.error('❌ renderFieldKit not found!');
-        }
-    }, 300);
-}
-
-// Save function that wraps client's saveToAPI
-async function saveIntegratedAssessment() {
-    try {
-        // Call client's saveToAPI
-        if (typeof window.saveToAPI === 'function') {
-            await window.saveToAPI();
-            showAlert('Assessment saved successfully!', 'success');
-
-            // Reload org data and close modal
-            setTimeout(async () => {
-                await loadOrganizationDetails(selectedOrgId);
-                closeIndicatorModal();
-            }, 1000);
-        } else {
-            showAlert('Save function not available', 'error');
-        }
-    } catch (error) {
-        console.error('Error saving:', error);
-        showAlert('Failed to save: ' + error.message, 'error');
-    }
-}
-
-async function submitIntegratedAssessment(event, indicatorId, orgId, isEditMode = false) {
-    event.preventDefault();
-
-    const formData = new FormData(event.target);
-    const responses = {};
-
-    for (let [key, value] of formData.entries()) {
-        responses[key] = value;
-    }
-
-    // Get metadata from form
-    const metadata = {
-        date: document.getElementById('meta_date')?.value || new Date().toISOString().split('T')[0],
-        auditor: document.getElementById('meta_auditor')?.value || 'Unknown',
-        client: document.getElementById('meta_client')?.value || selectedOrgData?.metadata?.name || '',
-        status: document.getElementById('meta_status')?.value || 'in-progress'
-    };
-
-    const bayesianScore = calculateSimplifiedScore(responses);
-    const confidence = 0.75;
-
-    const assessmentData = {
-        indicator_id: indicatorId,
-        title: document.querySelector('.client-wrapper h1')?.textContent || indicatorId,
-        category: document.querySelector('.client-wrapper .gradient + div')?.textContent || 'Unknown',
-        bayesian_score: bayesianScore,
-        confidence: confidence,
-        maturity_level: bayesianScore < 0.3 ? 'high' : bayesianScore < 0.7 ? 'medium' : 'low',
-        assessor: metadata.auditor,
-        assessment_date: new Date(metadata.date).toISOString(),
-        raw_data: {
-            metadata: metadata,
-            client_conversation: {
-                responses: responses,
-                notes: responses.notes || ''
+        if (typeof window.CPFClient !== 'undefined' && typeof window.CPFClient.renderFieldKit === 'function') {
+            // Initialize client's global variables with our data
+            if (window.CPFClient.organizationContext) {
+                window.CPFClient.organizationContext.orgId = orgId;
+                window.CPFClient.organizationContext.orgName = selectedOrgData?.name || 'Unknown';
+                window.CPFClient.organizationContext.language = selectedOrgData?.metadata?.language || 'en-US';
             }
-        }
-    };
 
-    try {
-        const saveBtn = event.target.querySelector('button[type="submit"]');
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Saving...';
+            if (window.CPFClient.currentData) {
+                window.CPFClient.currentData.fieldKit = indicatorData;
+                window.CPFClient.currentData.metadata = {
+                    date: new Date().toISOString().split('T')[0],
+                    auditor: selectedOrgData?.metadata?.auditor || '',
+                    client: selectedOrgData?.name || '',
+                    status: 'in-progress'
+                };
+                window.CPFClient.currentData.responses = {};
 
-        const response = await fetch(`/api/organizations/${orgId}/assessments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(assessmentData)
-        });
+                // If editing, populate with existing data
+                if (existingAssessment && existingAssessment.raw_data) {
+                    if (existingAssessment.raw_data.metadata) {
+                        window.CPFClient.currentData.metadata = existingAssessment.raw_data.metadata;
+                    }
+                    if (existingAssessment.raw_data.client_conversation) {
+                        window.CPFClient.currentData.responses = existingAssessment.raw_data.client_conversation.responses || {};
+                    }
+                }
+            }
 
-        const result = await response.json();
+            console.log('🎨 Calling CPFClient.renderFieldKit with data:', indicatorData);
+            console.log('📊 Organization context:', window.CPFClient.organizationContext);
+            console.log('📝 Current data:', window.CPFClient.currentData);
 
-        if (result.success) {
-            showAlert(isEditMode ? 'Assessment updated successfully!' : 'Assessment saved successfully!', 'success');
-            closeIndicatorModal();
+            // Render the field kit
+            window.CPFClient.renderFieldKit(indicatorData);
 
-            // REAL-TIME UPDATE: Update local data instead of full reload
-            updateAssessmentRealtime(indicatorId, assessmentData);
+            // After rendering, close modal on successful save
+            // Override saveToAPI to close modal after save
+            const originalSaveToAPI = window.CPFClient.saveToAPI;
+            window.CPFClient.saveToAPI = async function() {
+                try {
+                    await originalSaveToAPI();
+                    showAlert('Assessment saved successfully!', 'success');
+
+                    // Reload organization data and close modal
+                    setTimeout(async () => {
+                        await loadOrganizationDetails(orgId);
+                        closeIndicatorModal();
+                    }, 1000);
+                } catch (error) {
+                    console.error('Error saving assessment:', error);
+                    showAlert('Failed to save assessment: ' + error.message, 'error');
+                }
+            };
+
         } else {
-            showAlert('Failed to save assessment: ' + result.error, 'error');
-            saveBtn.disabled = false;
-            saveBtn.textContent = `💾 ${isEditMode ? 'Update' : 'Save'} Assessment`;
+            console.error('❌ CPFClient not found! Client script may not be loaded yet.');
+            content.innerHTML = `
+                <div style="padding: 40px; text-align: center;">
+                    <div style="background: #fee2e2; padding: 20px; border-radius: 8px;">
+                        <strong>⚠️ Client script not loaded</strong>
+                        <p style="margin-top: 10px;">CPFClient namespace not available. Please refresh the page.</p>
+                    </div>
+                </div>
+            `;
         }
-    } catch (error) {
-        console.error('Error saving assessment:', error);
-        showAlert('Failed to save assessment: ' + error.message, 'error');
-        saveBtn.disabled = false;
-        saveBtn.textContent = `💾 ${isEditMode ? 'Update' : 'Save'} Assessment`;
-    }
+    }, 100);
 }
+
+// Old functions removed - now using real client functions from client-integrated.js
 
 // REAL-TIME UPDATE: Update grid without full reload
 function updateAssessmentRealtime(indicatorId, assessmentData) {
@@ -991,6 +1006,7 @@ function closeIndicatorModal() {
 
     document.getElementById('editAssessmentBtn').style.display = 'none';
     document.getElementById('deleteAssessmentBtn').style.display = 'none';
+    document.getElementById('openIntegratedBtn').style.display = 'none';
     selectedIndicatorId = null;
 }
 
@@ -1000,18 +1016,17 @@ async function editAssessmentFromModal() {
     // CRITICAL: Save these values BEFORE closing modal
     const indicatorId = selectedIndicatorId;
     const orgId = selectedOrgId;
-    const language = selectedOrgData.metadata.language || 'en-US';
 
     // Get current assessment data
     const assessment = selectedOrgData.assessments[indicatorId];
 
-    console.log('✏️ Edit Assessment:', { indicatorId, orgId, assessment });
+    console.log('✏️ Edit Assessment (IFRAME):', { indicatorId, orgId, assessment });
 
     // Close the detail modal
     closeIndicatorModal();
 
-    // Open integrated client in EDIT mode
-    document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Edit Assessment`;
+    // Open OLD CLIENT in IFRAME
+    document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Edit Assessment (IFRAME)`;
     document.getElementById('indicatorModal').classList.add('active');
 
     // Add fullscreen class for client modal
@@ -1023,25 +1038,35 @@ async function editAssessmentFromModal() {
     // Show delete button only (hide edit since we're already editing)
     document.getElementById('editAssessmentBtn').style.display = 'none';
     document.getElementById('deleteAssessmentBtn').style.display = 'inline-block';
+    document.getElementById('openIntegratedBtn').style.display = 'none';
 
-    // Load indicator from GitHub
-    const [categoryNum, indicatorNum] = indicatorId.split('.');
-    const categoryName = CATEGORY_MAP[categoryNum];
-    const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
+    // Create iframe with OLD client
+    const iframeUrl = `/dashboard/client/index.html?org_id=${orgId}&indicator_id=${indicatorId}`;
 
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Field Kit not found');
+    content.innerHTML = `
+        <div style="width: 100%; height: 80vh; position: relative;">
+            <iframe
+                id="clientIframe"
+                src="${iframeUrl}"
+                style="width: 100%; height: 100%; border: none; border-radius: 8px;"
+                onload="console.log('Iframe loaded')">
+            </iframe>
+        </div>
+    `;
 
-        const fieldKit = await response.json();
-
-        // Render edit form with existing data pre-populated
-        renderIntegratedClientForm(indicatorId, fieldKit, orgId, assessment);
-    } catch (error) {
-        console.error('Error loading Field Kit for edit:', error);
-        showAlert('Failed to load indicator definition: ' + error.message, 'error');
-        closeIndicatorModal();
-    }
+    // Pass assessment data to iframe via postMessage when it loads
+    const iframe = document.getElementById('clientIframe');
+    iframe.addEventListener('load', () => {
+        console.log('📨 Sending assessment data to iframe:', assessment);
+        iframe.contentWindow.postMessage({
+            type: 'LOAD_ASSESSMENT',
+            data: {
+                indicatorId: indicatorId,
+                orgId: orgId,
+                assessment: assessment
+            }
+        }, '*');
+    });
 }
 
 async function deleteAssessmentFromModal() {
