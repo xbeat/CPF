@@ -20,6 +20,8 @@ class CPF3PVMSCertificateGenerator {
 
     /**
      * Disegna un singolo esagono
+     * Nota: reportlab usa coordinate con origine in basso, pdfkit usa origine in alto
+     * Le coordinate Y sono invertite
      */
     drawHexagon(doc, cx, cy, size) {
         const points = [];
@@ -70,34 +72,50 @@ class CPF3PVMSCertificateGenerator {
 
     /**
      * Disegna l'intestazione con il box scuro
+     * In reportlab: header_y = height - margin - header_height (dal basso)
+     * In pdfkit: header_y = margin (dall'alto)
      */
     drawHeader(doc, certificateId) {
         const headerHeight = 50 * this.mm;
-        const headerY = this.height - this.margin - headerHeight;
+        const headerY = this.margin; // Dall'alto in pdfkit
 
         // Box scuro
         doc.save();
         doc.fillColor('#2C3E50');
         doc.rect(this.margin, headerY, this.width - 2 * this.margin, headerHeight);
         doc.fill();
+        doc.restore();
 
         // Testo intestazione centrato
+        // In reportlab: header_y è l'angolo in basso a sinistra del box
+        // Il testo è a header_y + 30*mm (baseline) - quindi 30mm dal fondo del box verso l'alto
+        // In pdfkit: header_y è l'angolo in alto a sinistra del box
+        // Quindi: headerY + (headerHeight - 30*mm) è equivalente
+        // Ma doc.text() usa il TOP del testo, non la baseline
+        // Font 32 ha circa 23 punti di ascent, quindi sottraggo questo
+        doc.save();
         doc.fillColor('#FFFFFF');
         doc.fontSize(32);
         doc.font('Helvetica-Bold');
         const titleText = "CPF3 PVMS CERTIFICATE";
-        const titleWidth = doc.widthOfString(titleText);
-        doc.text(titleText, (this.width - titleWidth) / 2, headerY + 30 * this.mm, {
-            width: titleWidth,
+
+        // Posizione: dal top del box + altezza box - 30mm - ascent del font
+        const titleY = headerY + headerHeight - 30 * this.mm - 23; // ~23 punti di ascent per font 32
+
+        doc.text(titleText, 0, titleY, {
+            width: this.width,
             align: 'center',
             lineBreak: false
         });
 
+        // ID del certificato
         doc.fontSize(14);
         doc.font('Helvetica');
-        const idWidth = doc.widthOfString(certificateId);
-        doc.text(certificateId, (this.width - idWidth) / 2, headerY + 15 * this.mm, {
-            width: idWidth,
+        // Font 14 ha circa 10 punti di ascent
+        const idY = headerY + headerHeight - 15 * this.mm - 10;
+
+        doc.text(certificateId, 0, idY, {
+            width: this.width,
             align: 'center',
             lineBreak: false
         });
@@ -107,6 +125,8 @@ class CPF3PVMSCertificateGenerator {
 
     /**
      * Disegna il testo introduttivo
+     * In reportlab: y_position è passato e il testo è disegnato lì (baseline)
+     * In pdfkit: dobbiamo convertire la posizione
      */
     drawIntroText(doc, yPosition) {
         doc.save();
@@ -117,20 +137,20 @@ class CPF3PVMSCertificateGenerator {
         const text1 = "The Authority referred hereunder hereby certifies that files and data in the Project";
         const text2 = "below existed at the Registration Date.";
 
-        doc.text(text1, this.width / 2, yPosition, {
-            width: this.width - 2 * this.margin,
+        doc.text(text1, 0, yPosition, {
+            width: this.width,
             align: 'center',
             lineBreak: false
         });
 
-        doc.text(text2, this.width / 2, yPosition - 5 * this.mm, {
-            width: this.width - 2 * this.margin,
+        doc.text(text2, 0, yPosition + 5 * this.mm, {
+            width: this.width,
             align: 'center',
             lineBreak: false
         });
 
         doc.restore();
-        return yPosition - 15 * this.mm;
+        return yPosition + 15 * this.mm;
     }
 
     /**
@@ -145,41 +165,49 @@ class CPF3PVMSCertificateGenerator {
         const textWidth = doc.widthOfString(title);
         const xCenter = this.width / 2;
 
-        doc.text(title, xCenter - textWidth / 2, yPosition, {
-            width: textWidth,
+        doc.text(title, 0, yPosition, {
+            width: this.width,
             align: 'center',
             lineBreak: false
         });
 
         // Linea di sottolineatura
+        // In reportlab: underline_y = y_position - 2*mm (sotto il testo)
+        // In pdfkit: il testo parte da yPosition, quindi la linea deve essere più giù
+        const fontSize = 20;
+        const underlineY = yPosition + fontSize + 2 * this.mm;
+
         doc.strokeColor(underlineColor);
         doc.lineWidth(3);
-        const underlineY = yPosition + 14; // Adjusted for proper positioning
         doc.moveTo(xCenter - textWidth / 2, underlineY);
         doc.lineTo(xCenter + textWidth / 2, underlineY);
         doc.stroke();
 
         doc.restore();
-        return yPosition - 12 * this.mm;
+        return yPosition + 12 * this.mm;
     }
 
     /**
      * Disegna un campo label: valore
+     * In reportlab: y è la baseline, il testo si estende sopra
+     * In pdfkit: y è il top, il testo si estende sotto
      */
     drawField(doc, x, y, label, value, labelWidth = 40 * this.mm) {
         doc.save();
 
+        // Label
         doc.fontSize(10);
         doc.font('Helvetica-Bold');
         doc.fillColor('#000000');
-        doc.text(label, x, y, { lineBreak: false });
+        doc.text(label, x, y, { lineBreak: false, continued: false });
 
+        // Value
         doc.fontSize(9);
         doc.font('Courier');
         doc.fillColor('#333333');
 
         const maxWidth = this.width - 2 * this.margin - labelWidth - 15 * this.mm;
-        const valueWidth = doc.widthOfString(value);
+        const valueWidth = doc.widthOfString(value, { font: 'Courier', size: 9 });
 
         if (valueWidth > maxWidth) {
             // Spezza il testo per carattere
@@ -188,7 +216,8 @@ class CPF3PVMSCertificateGenerator {
 
             for (let char of value) {
                 const testLine = currentLine + char;
-                if (doc.widthOfString(testLine) <= maxWidth) {
+                const testWidth = doc.widthOfString(testLine, { font: 'Courier', size: 9 });
+                if (testWidth <= maxWidth) {
                     currentLine = testLine;
                 } else {
                     if (currentLine) {
@@ -204,15 +233,18 @@ class CPF3PVMSCertificateGenerator {
 
             // Disegna tutte le righe
             for (let i = 0; i < lines.length; i++) {
-                doc.text(lines[i], x + labelWidth, y - i * 4 * this.mm, { lineBreak: false });
+                doc.text(lines[i], x + labelWidth, y + i * 4 * this.mm, {
+                    lineBreak: false,
+                    continued: false
+                });
             }
 
             doc.restore();
-            return y - lines.length * 4 * this.mm - 3 * this.mm;
+            return y + lines.length * 4 * this.mm + 3 * this.mm;
         } else {
-            doc.text(value, x + labelWidth, y, { lineBreak: false });
+            doc.text(value, x + labelWidth, y, { lineBreak: false, continued: false });
             doc.restore();
-            return y - 7 * this.mm;
+            return y + 7 * this.mm;
         }
     }
 
@@ -225,11 +257,16 @@ class CPF3PVMSCertificateGenerator {
             const qrBuffer = await QRCode.toBuffer(url, {
                 errorCorrectionLevel: 'L',
                 margin: 1,
-                width: size
+                width: size * 3 // Alta risoluzione
             });
 
+            // In reportlab: y è l'angolo in basso a sinistra
+            // In pdfkit: y è l'angolo in alto a sinistra
+            // Quindi devo convertire: y_pdfkit = height - y_reportlab - size
+            const yConverted = this.height - y - size;
+
             // Disegna l'immagine sul PDF
-            doc.image(qrBuffer, x, y, { width: size, height: size });
+            doc.image(qrBuffer, x, yConverted, { width: size, height: size });
         } catch (error) {
             console.error('❌ Errore generazione QR code:', error);
         }
@@ -241,28 +278,40 @@ class CPF3PVMSCertificateGenerator {
     drawFooter(doc, logoPath = null) {
         doc.save();
 
+        // In reportlab: footer text baseline a 30*mm dal basso
+        // In pdfkit: dobbiamo convertire baseline -> top del testo
+        // Font 22 ha circa 16 punti di ascent
+        // footerTextY_pdfkit = height - 30*mm - ascent = height - 30*mm - 16
+        const footerTextY = this.height - 30 * this.mm - 16;
+
         // Scritta CPF3.org
         doc.fontSize(22);
         doc.font('Helvetica-Bold');
         doc.fillColor('#2C3E50');
         const footerText = "CPF3.org";
-        const textWidth = doc.widthOfString(footerText);
-        doc.text(footerText, (this.width - textWidth) / 2, 30 * this.mm, {
+
+        doc.text(footerText, 0, footerTextY, {
+            width: this.width,
+            align: 'center',
             lineBreak: false
         });
 
         // Logo sopra la scritta (se fornito)
+        // In reportlab: logo con angolo in basso a sinistra a (logo_x, 38*mm)
+        // In pdfkit: angolo in alto a sinistra a (logo_x, height - 38*mm - logo_height)
         if (logoPath && fs.existsSync(logoPath)) {
             try {
                 const logoWidth = 45 * this.mm;
                 const logoHeight = 22 * this.mm;
                 const logoX = (this.width - logoWidth) / 2;
-                const logoY = 38 * this.mm;
+                const logoY = this.height - 38 * this.mm - logoHeight;
 
                 doc.image(logoPath, logoX, logoY, {
                     width: logoWidth,
                     height: logoHeight,
-                    align: 'center'
+                    fit: [logoWidth, logoHeight],
+                    align: 'center',
+                    valign: 'center'
                 });
                 console.log(`✅ Logo caricato: ${logoPath}`);
             } catch (error) {
@@ -284,11 +333,12 @@ class CPF3PVMSCertificateGenerator {
                 const doc = new PDFDocument({
                     size: 'A4',
                     margins: {
-                        top: this.margin,
-                        bottom: this.margin,
-                        left: this.margin,
-                        right: this.margin
-                    }
+                        top: 0,
+                        bottom: 0,
+                        left: 0,
+                        right: 0
+                    },
+                    autoFirstPage: true
                 });
 
                 // Crea lo stream di output
@@ -302,7 +352,9 @@ class CPF3PVMSCertificateGenerator {
                 this.drawHeader(doc, data.certificate_id);
 
                 // Testo introduttivo
-                let yPos = this.height - this.margin - 65 * this.mm;
+                // In Python: y_pos = height - margin - 65*mm
+                // In pdfkit: y_pos = margin + 65*mm
+                let yPos = this.margin + 65 * this.mm;
                 yPos = this.drawIntroText(doc, yPos);
 
                 // Sezione Project Data
@@ -316,7 +368,7 @@ class CPF3PVMSCertificateGenerator {
                 yPos = this.drawField(doc, xStart, yPos, "Fingerprint:", data.fingerprint);
 
                 // Linea separatrice
-                yPos -= 5 * this.mm;
+                yPos += 5 * this.mm;
                 doc.save();
                 doc.strokeColor('#CCCCCC');
                 doc.lineWidth(1);
@@ -324,7 +376,7 @@ class CPF3PVMSCertificateGenerator {
                 doc.lineTo(this.width / 2 + 50 * this.mm, yPos);
                 doc.stroke();
                 doc.restore();
-                yPos -= 10 * this.mm;
+                yPos += 10 * this.mm;
 
                 // Sezione Timestamping Data
                 yPos = this.drawSectionHeader(doc, yPos, "Timestamping Data");
@@ -341,8 +393,9 @@ class CPF3PVMSCertificateGenerator {
 
                 // QR Code (se fornito)
                 if (qrUrl) {
+                    // In reportlab: qr_x = width - margin - 30*mm, qr_y = 25*mm
                     const qrX = this.width - this.margin - 30 * this.mm;
-                    const qrY = 25 * this.mm;
+                    const qrY = 25 * this.mm; // Questa è la posizione reportlab (dal basso)
                     await this.drawQRCode(doc, qrUrl, qrX, qrY, 25 * this.mm);
                 }
 
