@@ -813,7 +813,7 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                 </div>
             </div>
             <div class="toolbar" style="justify-content: flex-end;">
-                <button class="btn btn-success" onclick="saveToAPI()" id="save-to-dashboard-btn">💾 Save to Dashboard</button>
+                <button class="btn btn-success" onclick="window.CPFClient.saveToAPI()" id="save-to-dashboard-btn">💾 Save to Dashboard</button>
                 <button class="btn btn-secondary" onclick="closeIndicatorModal()">✖️ Close</button>
             </div>
             <div class="metadata-bar" id="metadata-bar" style="display: none;"></div>
@@ -831,46 +831,46 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
 
     // Wait for DOM to be ready, then initialize client
     setTimeout(() => {
-        if (typeof window.renderFieldKit === 'function') {
+        if (typeof window.CPFClient !== 'undefined' && typeof window.CPFClient.renderFieldKit === 'function') {
             // Initialize client's global variables with our data
-            if (window.organizationContext) {
-                window.organizationContext.orgId = orgId;
-                window.organizationContext.orgName = selectedOrgData?.name || 'Unknown';
-                window.organizationContext.language = selectedOrgData?.metadata?.language || 'en-US';
+            if (window.CPFClient.organizationContext) {
+                window.CPFClient.organizationContext.orgId = orgId;
+                window.CPFClient.organizationContext.orgName = selectedOrgData?.name || 'Unknown';
+                window.CPFClient.organizationContext.language = selectedOrgData?.metadata?.language || 'en-US';
             }
 
-            if (window.currentData) {
-                window.currentData.fieldKit = indicatorData;
-                window.currentData.metadata = {
+            if (window.CPFClient.currentData) {
+                window.CPFClient.currentData.fieldKit = indicatorData;
+                window.CPFClient.currentData.metadata = {
                     date: new Date().toISOString().split('T')[0],
                     auditor: selectedOrgData?.metadata?.auditor || '',
                     client: selectedOrgData?.name || '',
                     status: 'in-progress'
                 };
-                window.currentData.responses = {};
+                window.CPFClient.currentData.responses = {};
 
                 // If editing, populate with existing data
                 if (existingAssessment && existingAssessment.raw_data) {
                     if (existingAssessment.raw_data.metadata) {
-                        window.currentData.metadata = existingAssessment.raw_data.metadata;
+                        window.CPFClient.currentData.metadata = existingAssessment.raw_data.metadata;
                     }
                     if (existingAssessment.raw_data.client_conversation) {
-                        window.currentData.responses = existingAssessment.raw_data.client_conversation.responses || {};
+                        window.CPFClient.currentData.responses = existingAssessment.raw_data.client_conversation.responses || {};
                     }
                 }
             }
 
-            console.log('🎨 Calling renderFieldKit with data:', indicatorData);
-            console.log('📊 Organization context:', window.organizationContext);
-            console.log('📝 Current data:', window.currentData);
+            console.log('🎨 Calling CPFClient.renderFieldKit with data:', indicatorData);
+            console.log('📊 Organization context:', window.CPFClient.organizationContext);
+            console.log('📝 Current data:', window.CPFClient.currentData);
 
             // Render the field kit
-            window.renderFieldKit(indicatorData);
+            window.CPFClient.renderFieldKit(indicatorData);
 
             // After rendering, close modal on successful save
             // Override saveToAPI to close modal after save
-            const originalSaveToAPI = window.saveToAPI;
-            window.saveToAPI = async function() {
+            const originalSaveToAPI = window.CPFClient.saveToAPI;
+            window.CPFClient.saveToAPI = async function() {
                 try {
                     await originalSaveToAPI();
                     showAlert('Assessment saved successfully!', 'success');
@@ -887,12 +887,12 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
             };
 
         } else {
-            console.error('❌ renderFieldKit function not found! Client script may not be loaded yet.');
+            console.error('❌ CPFClient not found! Client script may not be loaded yet.');
             content.innerHTML = `
                 <div style="padding: 40px; text-align: center;">
                     <div style="background: #fee2e2; padding: 20px; border-radius: 8px;">
                         <strong>⚠️ Client script not loaded</strong>
-                        <p style="margin-top: 10px;">Please refresh the page and try again.</p>
+                        <p style="margin-top: 10px;">CPFClient namespace not available. Please refresh the page.</p>
                     </div>
                 </div>
             `;
