@@ -2293,6 +2293,21 @@
                 }
 
                 const data = await response.json();
+
+                // Transform sections structure to field_kit structure for compatibility
+                if (data.sections && !data.field_kit) {
+                    const quickSection = data.sections.find(s => s.id === 'quick-assessment');
+                    if (quickSection && quickSection.items) {
+                        data.field_kit = {
+                            questions: quickSection.items.map(item => ({
+                                text: item.question || item.title,
+                                type: item.type === 'radio-list' ? 'single_choice' : item.type,
+                                answer_scale: item.options || []
+                            }))
+                        };
+                    }
+                }
+
                 currentIndicatorData = data;
                 currentIndicatorId = indicatorId;
 
