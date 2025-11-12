@@ -1714,6 +1714,16 @@ function getCategoryName(categoryNum) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+    // IMPORTANT: Skip auto-init if we're integrated into dashboard
+    // Check if we're in dashboard context by looking for dashboard-specific elements
+    const isDashboardIntegrated = document.querySelector('.dashboard-container') !== null;
+
+    if (isDashboardIntegrated) {
+        console.log('🎯 Client detected dashboard integration - skipping auto-init');
+        console.log('✅ CPFClient namespace available for manual initialization');
+        return; // Exit early, let dashboard code initialize manually
+    }
+
     // Check for URL parameters (e.g., from dashboard link)
     const urlParams = new URLSearchParams(window.location.search);
 
