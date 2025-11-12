@@ -730,133 +730,90 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
     const content = document.getElementById('indicatorModalContent');
     const isEditMode = !!existingAssessment;
 
-    // Extract existing responses if in edit mode
-    const existingResponses = existingAssessment?.raw_data?.client_conversation?.responses || {};
-    const existingNotes = existingAssessment?.raw_data?.client_conversation?.notes || '';
-    const existingMetadata = existingAssessment?.raw_data?.metadata || {};
-
-    // Handle both field_kit and direct structure
-    const sections = indicatorData.field_kit?.sections || indicatorData.sections || [];
-
-    let html = `
-        <div class="client-wrapper" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-height: 75vh; overflow-y: auto;">
-            <!-- Header -->
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 12px; margin-bottom: 20px;">
-                <h1 style="margin: 0 0 10px 0; font-size: 32px; font-weight: 700;">Indicator ${indicatorData.indicator || indicatorId} Field Kit</h1>
-                <div style="font-size: 18px; opacity: 0.95; margin-bottom: 5px;">${indicatorData.title || indicatorData.subtitle || ''}</div>
-                <div style="display: inline-block; background: rgba(255,255,255,0.25); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-top: 10px;">
-                    ${indicatorData.category || 'Category'}
-                </div>
-                ${isEditMode ? '<div style="margin-top: 12px; background: rgba(255,255,255,0.9); color: #764ba2; padding: 10px 15px; border-radius: 8px; font-size: 14px; font-weight: 600;">📝 EDIT MODE - Modifying existing assessment</div>' : ''}
-            </div>
-
-            <!-- Metadata Bar -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
-                <div>
-                    <label style="display: block; font-weight: 600; font-size: 13px; color: #6c757d; margin-bottom: 6px;">Assessment Date</label>
-                    <input type="date" id="meta_date" value="${existingMetadata.date || new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 8px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 14px;">
-                </div>
-                <div>
-                    <label style="display: block; font-weight: 600; font-size: 13px; color: #6c757d; margin-bottom: 6px;">Auditor</label>
-                    <input type="text" id="meta_auditor" value="${existingMetadata.auditor || ''}" placeholder="Your name" style="width: 100%; padding: 8px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 14px;">
-                </div>
-                <div>
-                    <label style="display: block; font-weight: 600; font-size: 13px; color: #6c757d; margin-bottom: 6px;">Client</label>
-                    <input type="text" id="meta_client" value="${existingMetadata.client || selectedOrgData?.metadata?.name || ''}" placeholder="Client name" style="width: 100%; padding: 8px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 14px;">
-                </div>
-                <div>
-                    <label style="display: block; font-weight: 600; font-size: 13px; color: #6c757d; margin-bottom: 6px;">Status</label>
-                    <select id="meta_status" style="width: 100%; padding: 8px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 14px;">
-                        <option value="in-progress" ${(existingMetadata.status === 'in-progress' || !existingMetadata.status) ? 'selected' : ''}>In Progress</option>
-                        <option value="completed" ${existingMetadata.status === 'completed' ? 'selected' : ''}>Completed</option>
-                        <option value="review" ${existingMetadata.status === 'review' ? 'selected' : ''}>Under Review</option>
-                    </select>
-                </div>
-            </div>
-
-            <form id="assessmentForm" onsubmit="submitIntegratedAssessment(event, '${indicatorId}', '${orgId}', ${isEditMode})">
-    `;
-
-    // Render sections
-    sections.forEach((section, sIdx) => {
-        const sectionIcon = section.icon || '📋';
-        const sectionTime = section.time ? `<div style="background: #e3f2fd; color: #1976d2; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">⏱️ ${section.time} min</div>` : '';
-
-        html += `
-            <div style="background: white; border: 2px solid #e9ecef; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f1f3f5;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="font-size: 28px;">${sectionIcon}</div>
-                        <div style="font-size: 20px; font-weight: 700; color: #343a40;">${section.title}</div>
-                    </div>
-                    ${sectionTime}
-                </div>
-        `;
-
-        const items = section.questions || section.items || [];
-        items.forEach((item, iIdx) => {
-            const itemId = `s${sIdx}_i${iIdx}`;
-            const existingValue = existingResponses[itemId];
-
-            html += `
-                <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #667eea;">
-                    <label style="display: block; font-weight: 600; font-size: 15px; color: #495057; margin-bottom: 12px;">
-                        ${item.text || item.question}
-                    </label>
-            `;
-
-            if (item.type === 'multiple_choice' && item.options) {
-                item.options.forEach((opt, optIdx) => {
-                    const optionId = `${itemId}_${optIdx}`;
-                    const isChecked = existingValue == opt.value ? 'checked' : '';
-                    html += `
-                        <div style="margin-bottom: 10px;">
-                            <label style="display: flex; align-items: center; padding: 12px 16px; background: white; border: 2px solid ${isChecked ? '#667eea' : '#dee2e6'}; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#667eea'" onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='#dee2e6'">
-                                <input type="radio" name="${itemId}" value="${opt.value}" id="${optionId}" ${isChecked} required style="margin-right: 12px; width: 18px; height: 18px; cursor: pointer;">
-                                <span style="font-size: 14px; color: #495057;">${opt.label}</span>
-                            </label>
+    // Insert CLIENT HTML wrapped in cpf-client class
+    const html = `
+        <div class="cpf-client">
+            <div class="container" style="max-width: 100%; margin: 0; box-shadow: none; border-radius: 0;">
+                <div class="header" id="client-header">
+                    <div class="header-content">
+                        <h1>Indicator ${indicatorId} Field Kit</h1>
+                        <div class="subtitle">${isEditMode ? 'Edit Mode' : 'New Assessment'}</div>
+                        <div id="organization-info" style="display: block;">
+                            <span>Organization:</span>
+                            <strong id="org-name-display">${selectedOrgData?.name || 'Unknown'}</strong>
+                            <span style="margin-left: 20px;">ID:</span>
+                            <strong id="org-id-display">${orgId}</strong>
                         </div>
-                    `;
-                });
-            } else if (item.type === 'open_text') {
-                const textValue = existingValue || '';
-                html += `
-                    <textarea name="${itemId}" id="${itemId}" placeholder="${item.placeholder || 'Enter your response...'}" style="width: 100%; min-height: 100px; padding: 12px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;">${textValue}</textarea>
-                `;
-            }
-
-            html += `</div>`;
-        });
-
-        html += `</div>`; // Close section
-    });
-
-    // Notes section
-    html += `
-        <div style="background: white; border: 2px solid #e9ecef; border-radius: 12px; padding: 25px; margin-bottom: 25px;">
-            <label style="display: block; font-weight: 700; font-size: 17px; color: #343a40; margin-bottom: 12px;">
-                📝 Notes / Red Flags
-            </label>
-            <textarea id="assessment_notes" name="notes" placeholder="Document any concerns, unusual behaviors, red flags, or important context..." rows="5" style="width: 100%; padding: 15px; border: 2px solid #dee2e6; border-radius: 10px; font-size: 14px; font-family: inherit; resize: vertical;">${existingNotes}</textarea>
-            <div style="margin-top: 10px; font-size: 13px; color: #6c757d;">
-                💡 Use this field to record observations that don't fit in the structured questions above
+                    </div>
+                </div>
+                <div class="toolbar" style="display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-success" onclick="saveIntegratedAssessment()" id="save-integrated-btn">💾 Save to Dashboard</button>
+                    <button class="btn btn-secondary" onclick="closeIndicatorModal()">✖️ Close</button>
+                </div>
+                <div class="metadata-bar" id="metadata-bar" style="display: none;"></div>
+                <div class="content" id="content">
+                    <div class="empty-state">
+                        <h2>Loading...</h2>
+                    </div>
+                </div>
+                <div class="action-bar" id="action-bar" style="display: none;"></div>
             </div>
         </div>
-
-        <!-- Action Buttons -->
-        <div style="display: flex; gap: 12px; justify-content: flex-end; padding: 20px; background: #f8f9fa; border-radius: 12px; margin-top: 25px;">
-            <button type="button" onclick="closeIndicatorModal()" style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#5a6268'" onmouseout="this.style.background='#6c757d'">
-                ✖️ Cancel
-            </button>
-            <button type="submit" style="padding: 12px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)'">
-                💾 ${isEditMode ? 'Update Assessment' : 'Save Assessment'}
-            </button>
-        </div>
-    </form>
-</div>
     `;
 
     content.innerHTML = html;
+
+    // Initialize client script vars and call renderFieldKit
+    setTimeout(() => {
+        // Set organizationContext from client-script.js
+        if (window.organizationContext) {
+            window.organizationContext.orgId = orgId;
+            window.organizationContext.orgName = selectedOrgData?.name || 'Unknown';
+            window.organizationContext.language = selectedOrgData?.metadata?.language || 'en-US';
+        }
+
+        // Set currentData from client-script.js
+        if (window.currentData) {
+            window.currentData.fieldKit = indicatorData;
+            window.currentData.metadata = {
+                date: existingAssessment?.raw_data?.metadata?.date || new Date().toISOString().split('T')[0],
+                auditor: existingAssessment?.raw_data?.metadata?.auditor || '',
+                client: selectedOrgData?.name || '',
+                status: existingAssessment?.raw_data?.metadata?.status || 'in-progress'
+            };
+            window.currentData.responses = existingAssessment?.raw_data?.client_conversation?.responses || {};
+        }
+
+        // Call renderFieldKit from client-script.js
+        if (typeof window.renderFieldKit === 'function') {
+            console.log('🎨 Calling renderFieldKit with:', indicatorData);
+            window.renderFieldKit(indicatorData);
+        } else {
+            console.error('❌ renderFieldKit not found!');
+        }
+    }, 300);
+}
+
+// Save function that wraps client's saveToAPI
+async function saveIntegratedAssessment() {
+    try {
+        // Call client's saveToAPI
+        if (typeof window.saveToAPI === 'function') {
+            await window.saveToAPI();
+            showAlert('Assessment saved successfully!', 'success');
+
+            // Reload org data and close modal
+            setTimeout(async () => {
+                await loadOrganizationDetails(selectedOrgId);
+                closeIndicatorModal();
+            }, 1000);
+        } else {
+            showAlert('Save function not available', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving:', error);
+        showAlert('Failed to save: ' + error.message, 'error');
+    }
 }
 
 async function submitIntegratedAssessment(event, indicatorId, orgId, isEditMode = false) {
