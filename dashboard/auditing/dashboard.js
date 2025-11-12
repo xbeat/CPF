@@ -659,6 +659,7 @@ async function showAssessmentDetails(indicatorId, assessment) {
 
     document.getElementById('editAssessmentBtn').style.display = 'inline-flex';
     document.getElementById('deleteAssessmentBtn').style.display = 'inline-flex';
+    document.getElementById('openIntegratedBtn').style.display = 'inline-flex';
 }
 
 async function openIntegratedClient(indicatorId, orgId) {
@@ -720,6 +721,72 @@ async function openIntegratedClient(indicatorId, orgId) {
                     <strong>⚠️ Failed to load indicator</strong>
                     <p style="margin-top: 10px;">${error.message}</p>
                     <p style="margin-top: 10px; font-size: 14px;">The indicator definition might not exist yet in the repository.</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+async function openIntegratedVersion() {
+    if (!selectedIndicatorId || !selectedOrgId) {
+        showAlert('Error: No indicator or organization selected', 'error');
+        return;
+    }
+
+    const indicatorId = selectedIndicatorId;
+    const orgId = selectedOrgId;
+    const language = selectedOrgData.metadata.language || 'en-US';
+    const assessment = selectedOrgData.assessments[indicatorId];
+
+    console.log('🎨 openIntegratedVersion called with:', { indicatorId, orgId, assessment: !!assessment });
+
+    // Close current modal
+    closeIndicatorModal();
+
+    // Reopen with integrated form
+    document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - ${assessment ? 'Edit' : 'New'} Assessment (INTEGRATED)`;
+    document.getElementById('indicatorModal').classList.add('active');
+
+    // Add fullscreen class for client modal
+    const modalContent = document.querySelector('#indicatorModal .modal-content');
+    modalContent.classList.add('fullscreen-client');
+
+    const content = document.getElementById('indicatorModalContent');
+
+    // Load and render integrated form
+    const [categoryNum, indicatorNum] = indicatorId.split('.');
+    const categoryName = CATEGORY_MAP[categoryNum];
+    const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
+
+    // Show loading
+    content.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+            <p>Loading integrated form...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Field Kit not found');
+
+        const fieldKit = await response.json();
+
+        // Render integrated form with existing assessment data if available
+        renderIntegratedClientForm(indicatorId, fieldKit, orgId, assessment);
+
+        // Hide buttons since we're in the form now
+        document.getElementById('editAssessmentBtn').style.display = 'none';
+        document.getElementById('deleteAssessmentBtn').style.display = 'none';
+        document.getElementById('openIntegratedBtn').style.display = 'none';
+    } catch (error) {
+        console.error('Error loading Field Kit:', error);
+        showAlert('Failed to load integrated form: ' + error.message, 'error');
+        content.innerHTML = `
+            <div style="padding: 40px; text-align: center;">
+                <div style="background: #fee2e2; padding: 20px; border-radius: 8px; border: 1px solid var(--danger);">
+                    <strong>⚠️ Failed to load indicator</strong>
+                    <p style="margin-top: 10px;">${error.message}</p>
                 </div>
             </div>
         `;
@@ -1034,6 +1101,7 @@ function closeIndicatorModal() {
 
     document.getElementById('editAssessmentBtn').style.display = 'none';
     document.getElementById('deleteAssessmentBtn').style.display = 'none';
+    document.getElementById('openIntegratedBtn').style.display = 'none';
     selectedIndicatorId = null;
 }
 
