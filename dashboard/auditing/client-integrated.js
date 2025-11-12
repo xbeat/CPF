@@ -1,6 +1,8 @@
 // ============================================
-// CLIENT V2.0 - CONFIGURATION
+// CLIENT V2.0 - WRAPPED IN NAMESPACE TO AVOID CONFLICTS
 // ============================================
+(function() {
+'use strict';
 
 // Organization context (loaded from URL parameters or dashboard)
 let organizationContext = {
@@ -1797,3 +1799,36 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+// ============================================
+// EXPORT TO GLOBAL SCOPE (for dashboard integration)
+// ============================================
+window.CPFClient = {
+    // Data
+    organizationContext: organizationContext,
+    currentData: currentData,
+
+    // Core functions
+    renderFieldKit: renderFieldKit,
+    saveToAPI: saveToAPI,
+    calculateIndicatorScore: calculateIndicatorScore,
+
+    // Utility functions
+    loadJSON: loadJSON,
+    importJSON: importJSON,
+    saveData: saveData,
+    exportData: exportData,
+    generateReport: generateReport,
+    resetAll: resetAll,
+
+    // Modal functions
+    showQuickReference: showQuickReference,
+    closeQuickReference: closeQuickReference,
+    showIndicatorDetails: showIndicatorDetails,
+    closeIndicatorDetails: closeIndicatorDetails,
+
+    // Validation
+    validateCurrentJSON: validateCurrentJSON
+};
+
+})(); // End of IIFE wrapper
