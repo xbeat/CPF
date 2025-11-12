@@ -236,10 +236,37 @@
             }
         }
 
+        /**
+         * Convert API v2.0 organization format to bayesian.js expected format
+         * API v2.0 has 'assessments' with bayesian_score
+         * bayesian.js expects 'indicators' with current_bayesian, soc_values, human_values
+         */
+        function convertOrgDataForBayesian(org) {
+            const indicators = {};
+
+            // Convert each assessment to indicator format
+            if (org.assessments) {
+                for (const [indicatorId, assessment] of Object.entries(org.assessments)) {
+                    indicators[indicatorId] = {
+                        current_bayesian: assessment.bayesian_score || 0.5,
+                        soc_values: assessment.raw_data?.soc_values || [],
+                        human_values: assessment.raw_data?.human_values || []
+                    };
+                }
+            }
+
+            return {
+                ...org,
+                indicators: indicators
+            };
+        }
+
         function renderOrganizationDetail(org) {
+            // Convert API v2.0 format (assessments) to bayesian.js format (indicators)
+            const orgDataForBayesian = convertOrgDataForBayesian(org);
 
             // Run Bayesian analysis
-            const analysis = BAYESIAN.analyzeOrganization(org);
+            const analysis = BAYESIAN.analyzeOrganization(orgDataForBayesian);
 
             // Update overall risk card
             const riskPct = (analysis.overall_risk * 100).toFixed(1);
