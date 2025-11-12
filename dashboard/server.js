@@ -35,6 +35,9 @@ app.use('/dashboard', express.static(__dirname));
 // Serve data files for SOC dashboard (static JSON files)
 app.use('/data', express.static(path.join(__dirname, 'data')));
 
+// Serve Auditor Field Kit interactive indicator files
+app.use('/auditor-field-kit', express.static(path.join(__dirname, '../auditor field kit')));
+
 // ============================================
 // LANDING PAGE ROUTE
 // ============================================
