@@ -148,7 +148,7 @@
 
         async function loadOrganizationsData() {
             try {
-                const response = await fetch('../data/soc/organizations_index.json');
+                const response = await fetch('/api/organizations');
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
@@ -164,7 +164,7 @@
                 document.getElementById('loading').innerHTML = `
                     <h2>⚠️ Error Loading Data</h2>
                     <p>${error.message}</p>
-                    <p>Make sure organizations.json exists in data/ directory</p>
+                    <p>Make sure server is running and organizations exist</p>
                 `;
             }
         }
@@ -175,20 +175,21 @@
 
             orgCount.textContent = data.metadata.total_organizations;
 
-            const orgs = Object.entries(data.organizations);
-            orgs.forEach(([orgId, org]) => {
+            const orgs = data.organizations;
+            orgs.forEach((org) => {
                 const item = document.createElement('div');
                 item.className = 'org-item';
-                item.onclick = () => selectOrganization(orgId);
+                item.onclick = () => selectOrganization(org.id);
 
-                const riskClass = org.aggregates.overall_risk > 0.66 ? 'high' :
-                    org.aggregates.overall_risk > 0.33 ? 'medium' : 'low';
+                const overallRisk = org.stats?.overall_risk || 0;
+                const riskClass = overallRisk > 0.66 ? 'high' :
+                    overallRisk > 0.33 ? 'medium' : 'low';
 
                 item.innerHTML = `
                     <div class="org-name">${org.name}</div>
                     <div class="org-meta">
                         <span class="org-industry">${org.industry}</span>
-                        <span class="org-risk ${riskClass}">${(org.aggregates.overall_risk * 100).toFixed(0)}%</span>
+                        <span class="org-risk ${riskClass}">${(overallRisk * 100).toFixed(0)}%</span>
                     </div>
                 `;
 
@@ -196,7 +197,7 @@
             });
         }
 
-        function selectOrganization(orgId) {
+        async function selectOrganization(orgId) {
             currentOrgId = orgId;
 
             // Update active state
@@ -209,12 +210,33 @@
             document.getElementById('empty-state').style.display = 'none';
             document.getElementById('org-detail').style.display = 'block';
 
-            // Render organization analysis
-            renderOrganizationDetail(orgId);
+            // Fetch and render organization analysis
+            await loadAndRenderOrganization(orgId);
         }
 
-        function renderOrganizationDetail(orgId) {
-            const org = organizationsData.organizations[orgId];
+        async function loadAndRenderOrganization(orgId) {
+            try {
+                // Fetch complete organization data from API
+                const response = await fetch(`/api/organizations/${orgId}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to load organization: ${response.status}`);
+                }
+                const result = await response.json();
+                const org = result.data;
+
+                renderOrganizationDetail(org);
+            } catch (error) {
+                console.error('Error loading organization:', error);
+                document.getElementById('org-detail').innerHTML = `
+                    <div class="error-message">
+                        <h3>⚠️ Error Loading Organization</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderOrganizationDetail(org) {
 
             // Run Bayesian analysis
             const analysis = BAYESIAN.analyzeOrganization(org);
