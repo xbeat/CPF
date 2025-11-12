@@ -799,31 +799,33 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
 
     // Insert the REAL client HTML structure
     const html = `
-        <div class="container" id="client-integrated-container" style="max-width: 100%; margin: 0; box-shadow: none;">
-            <div class="header" id="header">
-                <div class="header-content">
-                    <h1>CPF Auditor Field Kit Client - Integrated Mode</h1>
-                    <div class="subtitle">Indicator ${indicatorId} ${isEditMode ? '(Edit Mode)' : '(New Assessment)'}</div>
-                    <div id="organization-info" style="margin-top: 10px; padding: 8px 15px; background: rgba(255,255,255,0.1); border-radius: 6px; display: block;">
-                        <span style="opacity: 0.8;">Organization:</span>
-                        <strong id="org-name-display">${selectedOrgData?.name || 'Unknown'}</strong>
-                        <span style="margin-left: 20px; opacity: 0.8;">ID:</span>
-                        <strong id="org-id-display">${orgId}</strong>
+        <div class="cpf-client">
+            <div class="container" id="client-integrated-container" style="max-width: 100%; margin: 0; box-shadow: none;">
+                <div class="header" id="header">
+                    <div class="header-content">
+                        <h1>CPF Auditor Field Kit Client - Integrated Mode</h1>
+                        <div class="subtitle">Indicator ${indicatorId} ${isEditMode ? '(Edit Mode)' : '(New Assessment)'}</div>
+                        <div id="organization-info" style="margin-top: 10px; padding: 8px 15px; background: rgba(255,255,255,0.1); border-radius: 6px; display: block;">
+                            <span style="opacity: 0.8;">Organization:</span>
+                            <strong id="org-name-display">${selectedOrgData?.name || 'Unknown'}</strong>
+                            <span style="margin-left: 20px; opacity: 0.8;">ID:</span>
+                            <strong id="org-id-display">${orgId}</strong>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="toolbar" style="justify-content: flex-end;">
-                <button class="btn btn-success" onclick="window.CPFClient.saveToAPI()" id="save-to-dashboard-btn">💾 Save to Dashboard</button>
-                <button class="btn btn-secondary" onclick="closeIndicatorModal()">✖️ Close</button>
-            </div>
-            <div class="metadata-bar" id="metadata-bar" style="display: none;"></div>
-            <div class="content" id="content">
-                <div class="empty-state">
-                    <h2>Loading Field Kit...</h2>
-                    <p>Please wait</p>
+                <div class="toolbar" style="justify-content: flex-end;">
+                    <button class="btn btn-success" onclick="window.CPFClient.saveToAPI()" id="save-to-dashboard-btn">💾 Save to Dashboard</button>
+                    <button class="btn btn-secondary" onclick="closeIndicatorModal()">✖️ Close</button>
                 </div>
+                <div class="metadata-bar" id="metadata-bar" style="display: none;"></div>
+                <div class="content" id="content">
+                    <div class="empty-state">
+                        <h2>Loading Field Kit...</h2>
+                        <p>Please wait</p>
+                    </div>
+                </div>
+                <div class="action-bar" id="action-bar" style="display: none;"></div>
             </div>
-            <div class="action-bar" id="action-bar" style="display: none;"></div>
         </div>
     `;
 
