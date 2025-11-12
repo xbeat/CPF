@@ -685,63 +685,94 @@ async function openIntegratedClient(indicatorId, orgId) {
     document.getElementById('deleteAssessmentBtn').style.display = 'none';
 
     // Get organization data
-    const orgName = selectedOrgData.metadata.name || 'Unknown Organization';
     const language = selectedOrgData.metadata.language || 'en-US';
 
-    // Build URL for the client with parameters
-    const clientUrl = `/dashboard/client/index.html?org_id=${encodeURIComponent(orgId)}&org_name=${encodeURIComponent(orgName)}&language=${encodeURIComponent(language)}&indicator=${encodeURIComponent(indicatorId)}`;
+    // Load indicator from GitHub and render integrated form
+    const [categoryNum, indicatorNum] = indicatorId.split('.');
+    const categoryName = CATEGORY_MAP[categoryNum];
+    const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
 
-    console.log('📎 Opening client with URL:', clientUrl);
-
-    // Render iframe with the client app
+    // Show loading
     content.innerHTML = `
-        <iframe
-            id="clientIframe"
-            src="${clientUrl}"
-            style="width: 100%; height: 80vh; border: none; border-radius: 8px;"
-            frameborder="0"
-            allow="clipboard-read; clipboard-write">
-        </iframe>
+        <div style="text-align: center; padding: 40px;">
+            <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+            <p>Loading indicator...</p>
+        </div>
     `;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Field Kit not found');
+
+        const fieldKit = await response.json();
+
+        // Render integrated form (no existing assessment = create mode)
+        renderIntegratedClientForm(indicatorId, fieldKit, orgId, null);
+    } catch (error) {
+        console.error('Error loading Field Kit:', error);
+        content.innerHTML = `
+            <div style="padding: 40px; text-align: center;">
+                <div style="background: #fee2e2; padding: 20px; border-radius: 8px; border: 1px solid var(--danger);">
+                    <strong>⚠️ Failed to load indicator</strong>
+                    <p style="margin-top: 10px;">${error.message}</p>
+                    <p style="margin-top: 10px; font-size: 14px;">The indicator definition might not exist yet in the repository.</p>
+                </div>
+            </div>
+        `;
+    }
 }
 
-function renderIntegratedClientForm(indicatorId, indicatorData, orgId) {
+function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingAssessment = null) {
     const content = document.getElementById('indicatorModalContent');
+    const isEditMode = !!existingAssessment;
+
+    // Extract existing responses if in edit mode
+    const existingResponses = existingAssessment?.raw_data?.client_conversation?.responses || {};
+    const existingNotes = existingAssessment?.raw_data?.client_conversation?.notes || '';
 
     let html = `
         <div class="integrated-client-form">
             <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <h4 style="margin: 0 0 10px 0; color: var(--primary);">${indicatorData.indicator_title}</h4>
-                <p style="margin: 0; color: var(--text-light); font-size: 14px;">${indicatorData.category_name}</p>
+                <h4 style="margin: 0 0 10px 0; color: var(--primary);">${indicatorData.title || indicatorData.indicator_title}</h4>
+                <p style="margin: 0; color: var(--text-light); font-size: 14px;">${indicatorData.category || indicatorData.category_name}</p>
+                ${isEditMode ? '<div style="margin-top: 10px; padding: 8px; background: #dbeafe; border-radius: 4px; font-size: 13px;"><strong>📝 Edit Mode:</strong> Modify your assessment below</div>' : ''}
             </div>
 
-            <form id="assessmentForm" onsubmit="submitIntegratedAssessment(event, '${indicatorId}', '${orgId}')">
+            <form id="assessmentForm" onsubmit="submitIntegratedAssessment(event, '${indicatorId}', '${orgId}', ${isEditMode})">
     `;
 
-    indicatorData.sections.forEach((section, sectionIdx) => {
+    // Handle both field_kit.sections and sections formats
+    const sections = indicatorData.field_kit?.sections || indicatorData.sections || [];
+
+    sections.forEach((section, sectionIdx) => {
         html += `
             <div style="margin-bottom: 25px;">
                 <h5 style="color: var(--primary); margin-bottom: 15px;">${section.title}</h5>
         `;
 
-        section.questions.forEach((question, qIdx) => {
+        const questions = section.questions || section.items || [];
+        questions.forEach((question, qIdx) => {
             const fieldId = `q_${sectionIdx}_${qIdx}`;
+            const existingValue = existingResponses[fieldId];
+
             html += `
                 <div class="form-group">
-                    <label class="form-label">${question.text}</label>
+                    <label class="form-label">${question.text || question.question}</label>
             `;
 
             if (question.type === 'multiple_choice') {
                 question.options.forEach((option, optIdx) => {
+                    const isChecked = existingValue == option.value ? 'checked' : '';
                     html += `
                         <div class="form-checkbox">
-                            <input type="radio" name="${fieldId}" value="${option.value}" id="${fieldId}_${optIdx}" required>
+                            <input type="radio" name="${fieldId}" value="${option.value}" id="${fieldId}_${optIdx}" ${isChecked} required>
                             <label for="${fieldId}_${optIdx}">${option.label}</label>
                         </div>
                     `;
                 });
             } else if (question.type === 'open_text') {
-                html += `<textarea class="form-textarea" id="${fieldId}" name="${fieldId}" placeholder="${question.placeholder || ''}"></textarea>`;
+                const textValue = existingValue || '';
+                html += `<textarea class="form-textarea" id="${fieldId}" name="${fieldId}" placeholder="${question.placeholder || ''}">${textValue}</textarea>`;
             }
 
             html += `</div>`;
@@ -752,13 +783,14 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId) {
 
     html += `
                 <div class="form-group">
-                    <label class="form-label">Notes / Red Flags</label>
-                    <textarea class="form-textarea" id="assessment_notes" name="notes" placeholder="Additional observations, red flags, or contextual information..."></textarea>
+                    <label class="form-label">📝 Notes / Red Flags</label>
+                    <textarea class="form-textarea" id="assessment_notes" name="notes" placeholder="Additional observations, red flags, or contextual information..." rows="4">${existingNotes}</textarea>
+                    <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">💡 Use this field to document any concerns, unusual behaviors, or important context</div>
                 </div>
 
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeIndicatorModal()">Cancel</button>
-                    <button type="submit" class="btn btn-success">💾 Save Assessment</button>
+                    <button type="submit" class="btn btn-success">💾 ${isEditMode ? 'Update' : 'Save'} Assessment</button>
                 </div>
             </form>
         </div>
@@ -767,7 +799,7 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId) {
     content.innerHTML = html;
 }
 
-async function submitIntegratedAssessment(event, indicatorId, orgId) {
+async function submitIntegratedAssessment(event, indicatorId, orgId, isEditMode = false) {
     event.preventDefault();
 
     const formData = new FormData(event.target);
@@ -811,20 +843,102 @@ async function submitIntegratedAssessment(event, indicatorId, orgId) {
         const result = await response.json();
 
         if (result.success) {
-            showAlert('Assessment saved successfully!', 'success');
+            showAlert(isEditMode ? 'Assessment updated successfully!' : 'Assessment saved successfully!', 'success');
             closeIndicatorModal();
-            await loadOrganizationDetails(orgId);
+
+            // REAL-TIME UPDATE: Update local data instead of full reload
+            updateAssessmentRealtime(indicatorId, assessmentData);
         } else {
             showAlert('Failed to save assessment: ' + result.error, 'error');
             saveBtn.disabled = false;
-            saveBtn.textContent = '💾 Save Assessment';
+            saveBtn.textContent = `💾 ${isEditMode ? 'Update' : 'Save'} Assessment`;
         }
     } catch (error) {
         console.error('Error saving assessment:', error);
         showAlert('Failed to save assessment: ' + error.message, 'error');
         saveBtn.disabled = false;
-        saveBtn.textContent = '💾 Save Assessment';
+        saveBtn.textContent = `💾 ${isEditMode ? 'Update' : 'Save'} Assessment`;
     }
+}
+
+// REAL-TIME UPDATE: Update grid without full reload
+function updateAssessmentRealtime(indicatorId, assessmentData) {
+    if (!selectedOrgData) return;
+
+    // Update local data
+    if (!selectedOrgData.assessments) {
+        selectedOrgData.assessments = {};
+    }
+    selectedOrgData.assessments[indicatorId] = assessmentData;
+
+    // Update progress matrix cell
+    const [categoryNum, indicatorNum] = indicatorId.split('.');
+    const cellId = `progress-${categoryNum}-${indicatorNum}`;
+    const cell = document.getElementById(cellId);
+
+    if (cell) {
+        cell.className = 'matrix-cell completed';
+        cell.style.background = '#10b981';
+        cell.style.color = 'white';
+        cell.title = `${indicatorId} - Completed (${(assessmentData.bayesian_score * 100).toFixed(0)}% risk)`;
+        cell.onclick = () => {
+            selectedIndicatorId = indicatorId;
+            showAssessmentDetails(indicatorId, assessmentData);
+        };
+    }
+
+    // Update risk matrix cell
+    const riskCellId = `risk-${categoryNum}-${indicatorNum}`;
+    const riskCell = document.getElementById(riskCellId);
+
+    if (riskCell) {
+        const riskClass = assessmentData.bayesian_score < 0.33 ? 'risk-low' :
+                         assessmentData.bayesian_score < 0.66 ? 'risk-medium' : 'risk-high';
+        riskCell.className = `matrix-cell ${riskClass}`;
+        riskCell.textContent = indicatorId;
+        riskCell.title = `${indicatorId} - ${(assessmentData.bayesian_score * 100).toFixed(0)}% risk`;
+        riskCell.onclick = () => {
+            selectedIndicatorId = indicatorId;
+            showAssessmentDetails(indicatorId, assessmentData);
+        };
+    }
+
+    // Recalculate and update stats
+    const totalAssessments = Object.keys(selectedOrgData.assessments).length;
+    const completionPct = ((totalAssessments / 100) * 100).toFixed(0);
+
+    // Update progress summary
+    const progressSummary = document.getElementById('progressSummary');
+    if (progressSummary) {
+        progressSummary.innerHTML = `
+            <div style="font-size: 14px; color: var(--text-light);">
+                <strong>${totalAssessments}/100</strong> indicators completed (<strong>${completionPct}%</strong>)
+            </div>
+        `;
+    }
+
+    // Update risk summary if visible
+    const riskSummary = document.getElementById('riskSummary');
+    if (riskSummary) {
+        let totalRisk = 0;
+        let count = 0;
+        for (const assessment of Object.values(selectedOrgData.assessments)) {
+            if (assessment.bayesian_score !== undefined) {
+                totalRisk += assessment.bayesian_score;
+                count++;
+            }
+        }
+        const avgRisk = count > 0 ? ((totalRisk / count) * 100).toFixed(1) : 0;
+        const riskClass = avgRisk < 33 ? 'risk-low' : avgRisk < 66 ? 'risk-medium' : 'risk-high';
+
+        riskSummary.innerHTML = `
+            <div style="font-size: 14px; color: var(--text-light);">
+                Average Risk: <strong class="${riskClass}">${avgRisk}%</strong>
+            </div>
+        `;
+    }
+
+    console.log('✅ Real-time update complete for', indicatorId);
 }
 
 function calculateSimplifiedScore(responses) {
@@ -849,16 +963,18 @@ function closeIndicatorModal() {
     selectedIndicatorId = null;
 }
 
-function editAssessmentFromModal() {
+async function editAssessmentFromModal() {
     if (!selectedIndicatorId || !selectedOrgId) return;
 
-    // CRITICAL: Save these values BEFORE closing modal (closeIndicatorModal sets selectedIndicatorId = null!)
+    // CRITICAL: Save these values BEFORE closing modal
     const indicatorId = selectedIndicatorId;
     const orgId = selectedOrgId;
-    const orgName = selectedOrgData.metadata.name || 'Unknown Organization';
     const language = selectedOrgData.metadata.language || 'en-US';
 
-    console.log('✏️ editAssessmentFromModal: saved values before close:', { indicatorId, orgId, orgName, language });
+    // Get current assessment data
+    const assessment = selectedOrgData.assessments[indicatorId];
+
+    console.log('✏️ Edit Assessment:', { indicatorId, orgId, assessment });
 
     // Close the detail modal
     closeIndicatorModal();
@@ -867,27 +983,28 @@ function editAssessmentFromModal() {
     document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Edit Assessment`;
     document.getElementById('indicatorModal').classList.add('active');
 
-    const content = document.getElementById('indicatorModalContent');
-
     // Show delete button only (hide edit since we're already editing)
     document.getElementById('editAssessmentBtn').style.display = 'none';
     document.getElementById('deleteAssessmentBtn').style.display = 'inline-block';
 
-    // Build URL for the client with parameters - mode=edit is KEY!
-    const clientUrl = `/dashboard/client/index.html?org_id=${encodeURIComponent(orgId)}&org_name=${encodeURIComponent(orgName)}&language=${encodeURIComponent(language)}&indicator=${encodeURIComponent(indicatorId)}&mode=edit`;
+    // Load indicator from GitHub
+    const [categoryNum, indicatorNum] = indicatorId.split('.');
+    const categoryName = CATEGORY_MAP[categoryNum];
+    const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
 
-    console.log('🔗 Edit Assessment URL:', clientUrl);
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Field Kit not found');
 
-    // Render iframe with the client app in EDIT mode
-    content.innerHTML = `
-        <iframe
-            id="clientIframe"
-            src="${clientUrl}"
-            style="width: 100%; height: 80vh; border: none; border-radius: 8px;"
-            frameborder="0"
-            allow="clipboard-read; clipboard-write">
-        </iframe>
-    `;
+        const fieldKit = await response.json();
+
+        // Render edit form with existing data pre-populated
+        renderIntegratedClientForm(indicatorId, fieldKit, orgId, assessment);
+    } catch (error) {
+        console.error('Error loading Field Kit for edit:', error);
+        showAlert('Failed to load indicator definition: ' + error.message, 'error');
+        closeIndicatorModal();
+    }
 }
 
 async function deleteAssessmentFromModal() {
