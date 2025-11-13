@@ -846,9 +846,12 @@ async function showAssessmentDetails(indicatorId, assessment) {
         `;
     }
 
-    document.getElementById('deleteAssessmentBtn').style.display = 'inline-flex';
-    document.getElementById('openIntegratedBtn').style.display = 'inline-flex';
-    document.getElementById('historyBtn').style.display = 'inline-flex';
+    // Hide buttons in details view - use only Close button
+    document.getElementById('deleteAssessmentBtn').style.display = 'none';
+    document.getElementById('openIntegratedBtn').style.display = 'none';
+    if (document.getElementById('historyBtn')) {
+        document.getElementById('historyBtn').style.display = 'none';
+    }
 }
 
 async function openIntegratedClient(indicatorId, orgId, existingAssessment = null) {
@@ -1540,6 +1543,68 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
 // Close assessment details modal (returns to edit form which is still open)
 function closeAssessmentDetailsModal() {
     document.getElementById('assessmentDetailsModal').classList.remove('active');
+}
+
+// Open history modal from assessment details
+async function openHistoryModalFromDetails() {
+    if (!selectedIndicatorId || !selectedOrgId) {
+        showAlert('No assessment selected', 'error');
+        return;
+    }
+
+    // Keep details modal open, just open history on top
+    await openHistoryModal();
+}
+
+// Edit assessment from details view
+async function editAssessmentFromDetails() {
+    if (!selectedIndicatorId || !selectedOrgId) {
+        showAlert('No assessment selected', 'error');
+        return;
+    }
+
+    const assessment = selectedOrgData.assessments[selectedIndicatorId];
+
+    // Close details modal
+    closeAssessmentDetailsModal();
+
+    // Reopen in edit mode
+    await openIntegratedClient(selectedIndicatorId, selectedOrgId, assessment);
+}
+
+// Delete assessment from details view
+async function deleteAssessmentFromDetails() {
+    if (!selectedIndicatorId || !selectedOrgId) {
+        showAlert('No assessment selected', 'error');
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to delete the assessment for indicator ${selectedIndicatorId}?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/organizations/${selectedOrgId}/assessments/${selectedIndicatorId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert('Assessment deleted successfully!', 'success');
+
+            // Close details modal
+            closeAssessmentDetailsModal();
+
+            // Reload organization to refresh UI
+            await loadOrganizationDetails(selectedOrgId);
+        } else {
+            showAlert(`Failed to delete: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting assessment:', error);
+        showAlert(`Error: ${error.message}`, 'error');
+    }
 }
 
 // Delete assessment from edit form
