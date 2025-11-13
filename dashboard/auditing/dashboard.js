@@ -811,16 +811,23 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                         </div>
                     </div>
                 </div>
-                <div class="toolbar" style="justify-content: space-between; flex-wrap: wrap;">
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <div class="toolbar" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <button class="btn btn-info" onclick="window.CPFClient.showQuickReference()">📚 Quick Reference</button>
                         <button class="btn btn-success" onclick="window.CPFClient.showIndicatorDetails()">📄 Indicator Details</button>
+                        <button class="btn btn-info" onclick="window.CPFClient.toggleDetailedAnalysis()">📊 Show/Hide Analysis</button>
+                        <button class="btn btn-warning" onclick="window.CPFClient.calculateIndicatorScore()">🧮 Calculate Score</button>
+                        <button class="btn btn-warning" onclick="window.CPFClient.validateCurrentJSON()">🔍 Validate</button>
                         <button class="btn btn-light" onclick="document.getElementById('file-input-integrated').click()">📂 Import JSON</button>
                         <input type="file" id="file-input-integrated" accept=".json" onchange="window.CPFClient.importJSON(event)" style="display: none;">
                         <button class="btn btn-danger" onclick="if(confirm('Reset all data?')) window.CPFClient.resetAll()" title="Clear all data and reset">🗑️ Reset</button>
                     </div>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="btn btn-success" onclick="window.CPFClient.saveToAPI()" id="save-to-dashboard-btn">💾 Save to Dashboard</button>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                        <span id="auto-save-status" style="color: #4CAF50; font-size: 14px; display: none;">✓ Auto-saved</span>
+                        <button class="btn btn-secondary" onclick="window.CPFClient.saveData()">💾 Save Local</button>
+                        <button class="btn btn-success" onclick="window.CPFClient.exportData()">💾 Export Data</button>
+                        <button class="btn btn-primary" onclick="window.CPFClient.generateReport()">📊 Report</button>
+                        <button class="btn btn-success" onclick="window.CPFClient.saveToAPI()" id="save-to-dashboard-btn">💾 Save to API</button>
                         <button class="btn btn-secondary" onclick="closeIndicatorModal()">✖️ Close</button>
                     </div>
                 </div>
