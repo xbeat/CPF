@@ -652,8 +652,9 @@ async function showAssessmentDetails(indicatorId, assessment) {
         `;
     }
 
-    document.getElementById('deleteAssessmentBtn').style.display = 'inline-flex';
-    document.getElementById('openIntegratedBtn').style.display = 'inline-flex';
+    // Hide buttons in details view - use only Close button
+    document.getElementById('deleteAssessmentBtn').style.display = 'none';
+    document.getElementById('openIntegratedBtn').style.display = 'none';
 }
 
 async function openIntegratedClient(indicatorId, orgId, existingAssessment = null) {
