@@ -30,9 +30,6 @@ setInterval(() => {
     }
 }, 30000);
 
-// Auto-save status indicator
-let autoSaveTimeout = null;
-
 // ============================================
 // INITIALIZATION - Load Organization Context
 // ============================================
@@ -502,9 +499,22 @@ function updateResponse(id, value) {
     autoSave();
 }
 
-function saveData() {
+async function saveData() {
+    // Save to localStorage as backup
     localStorage.setItem('cpf_current', JSON.stringify(currentData));
-    alert('✅ Assessment saved to browser storage!');
+
+    // If organization context available, save to API
+    if (organizationContext.orgId && currentScore) {
+        try {
+            await saveToAPI();
+            alert('✅ Assessment saved successfully!');
+        } catch (error) {
+            console.error('❌ Save to API failed:', error);
+            alert('⚠️ Saved locally, but API save failed. Check console for details.');
+        }
+    } else {
+        alert('✅ Assessment saved to browser storage!');
+    }
 }
 
 // ============================================
@@ -520,19 +530,14 @@ async function autoSave() {
     localStorage.setItem('cpf_current', JSON.stringify(currentData));
     console.log('✅ Local auto-save at', new Date().toLocaleTimeString());
 
-    // If organization context is available, save to API
+    // If organization context is available, save IMMEDIATELY to API (no debounce!)
     if (organizationContext.orgId && currentScore) {
-        // Debounce API calls (wait 2 seconds after last change)
-        clearTimeout(autoSaveTimeout);
-
-        autoSaveTimeout = setTimeout(async () => {
-            try {
-                await saveToAPI();
-            } catch (error) {
-                console.error('❌ Auto-save to API failed:', error);
-                // Continue silently - localStorage backup is still working
-            }
-        }, 2000);
+        try {
+            await saveToAPI();
+        } catch (error) {
+            console.error('❌ Auto-save to API failed:', error);
+            // Continue silently - localStorage backup is still working
+        }
     }
 }
 
@@ -1682,6 +1687,12 @@ async function loadExistingExport(indicatorId, orgId) {
                         ...currentData.metadata,
                         ...exportData.full_assessment.raw_data.client_conversation.metadata
                     };
+                }
+
+                // Load notes separately (in case they're stored separately for compatibility)
+                if (exportData.full_assessment.raw_data.client_conversation?.notes) {
+                    currentData.metadata.notes = exportData.full_assessment.raw_data.client_conversation.notes;
+                    console.log('✅ Notes loaded:', currentData.metadata.notes);
                 }
             }
             // Fallback to old format (if responses are directly under full_assessment)
