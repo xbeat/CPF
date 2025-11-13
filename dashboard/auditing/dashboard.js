@@ -795,14 +795,17 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
     const content = document.getElementById('indicatorModalContent');
     const isEditMode = !!existingAssessment;
 
+    // Hide modal title since client has its own header
+    document.getElementById('indicatorModalTitle').style.display = 'none';
+
     // Insert the REAL client HTML structure
     const html = `
         <div class="cpf-client">
             <div class="container" id="client-integrated-container" style="max-width: 100%; margin: 0; box-shadow: none;">
                 <div class="header" id="header">
                     <div class="header-content">
-                        <h1>CPF Auditor Field Kit Client - Integrated Mode</h1>
-                        <div class="subtitle">Indicator ${indicatorId} ${isEditMode ? '(Edit Mode)' : '(New Assessment)'}</div>
+                        <h1>Indicator ${indicatorId} Field Kit</h1>
+                        <div class="subtitle">${isEditMode ? 'Edit Mode' : 'New Assessment'}</div>
                         <div id="organization-info" style="margin-top: 10px; padding: 8px 15px; background: rgba(255,255,255,0.1); border-radius: 6px; display: block;">
                             <span style="opacity: 0.8;">Organization:</span>
                             <strong id="org-name-display">${selectedOrgData?.name || 'Unknown'}</strong>
@@ -827,7 +830,7 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                         <button class="btn btn-secondary" onclick="window.CPFClient.saveData()">💾 Save Local</button>
                         <button class="btn btn-success" onclick="window.CPFClient.exportData()">💾 Export Data</button>
                         <button class="btn btn-primary" onclick="window.CPFClient.generateReport()">📊 Report</button>
-                        <button class="btn btn-success" onclick="window.CPFClient.saveToAPI()" id="save-to-dashboard-btn">💾 Save to API</button>
+                        <button class="btn btn-success" onclick="window.CPFClient.saveToAPI()" id="save-to-dashboard-btn">💾 Save Assessment</button>
                         <button class="btn btn-secondary" onclick="closeIndicatorModal()">✖️ Close</button>
                     </div>
                 </div>
@@ -1020,10 +1023,24 @@ function closeIndicatorModal() {
     const modalContent = document.querySelector('#indicatorModal .modal-content');
     modalContent.classList.remove('fullscreen-client');
 
+    // Restore modal title visibility
+    document.getElementById('indicatorModalTitle').style.display = 'block';
+
     document.getElementById('deleteAssessmentBtn').style.display = 'none';
     document.getElementById('openIntegratedBtn').style.display = 'none';
     selectedIndicatorId = null;
 }
+
+// Callback functions for client integration
+window.dashboardReloadOrganization = async function() {
+    if (selectedOrgId) {
+        await loadOrganizationDetails(selectedOrgId);
+    }
+};
+
+window.dashboardCloseModal = function() {
+    closeIndicatorModal();
+};
 
 async function editAssessmentFromModal() {
     if (!selectedIndicatorId || !selectedOrgId) return;
