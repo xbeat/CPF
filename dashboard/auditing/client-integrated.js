@@ -592,17 +592,12 @@ async function saveToAPI() {
         console.log('✅ Assessment saved to API successfully');
         showAutoSaveIndicator();
 
-        // Notify dashboard to reload organization data
+        // Reload organization data in background (no modal close)
         if (window.dashboardReloadOrganization) {
-            await window.dashboardReloadOrganization();
+            window.dashboardReloadOrganization().catch(err => {
+                console.error('Failed to reload org data:', err);
+            });
         }
-
-        // Close modal and show success message
-        if (window.dashboardCloseModal) {
-            window.dashboardCloseModal();
-        }
-
-        alert('✅ Assessment saved successfully!');
     } else {
         throw new Error(result.error || 'API save failed');
     }
