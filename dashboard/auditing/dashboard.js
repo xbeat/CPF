@@ -1239,18 +1239,14 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
                 <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
                     <h4 style="margin: 0 0 15px 0; color: var(--primary);">❓ Assessment Questions & Responses</h4>
                     ${fieldKit.field_kit.questions.map((q, idx) => {
-                        const responseKey = \`q\${idx + 1}\`;
-                        const response = assessment.raw_data?.responses?.[responseKey] || assessment.raw_data?.responses?[\`question_\${idx}\`];
-                        return \`
-                            <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
-                                <div style="font-weight: 600; margin-bottom: 8px;">\${idx + 1}. \${q.text}</div>
-                                \${response ? \`
-                                    <div style="padding: 8px; background: #e0f2fe; border-radius: 4px;">
-                                        <strong>Response:</strong> \${response}
-                                    </div>
-                                \` : '<div style="color: var(--text-light); font-style: italic;">No response recorded</div>'}
-                            </div>
-                        \`;
+                        const responseKey = 'q' + (idx + 1);
+                        const response = assessment.raw_data?.responses?.[responseKey] || assessment.raw_data?.responses?.['question_' + idx];
+                        return '<div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px;">' +
+                            '<div style="font-weight: 600; margin-bottom: 8px;">' + (idx + 1) + '. ' + q.text + '</div>' +
+                            (response ?
+                                '<div style="padding: 8px; background: #e0f2fe; border-radius: 4px;"><strong>Response:</strong> ' + response + '</div>'
+                                : '<div style="color: var(--text-light); font-style: italic;">No response recorded</div>') +
+                            '</div>';
                     }).join('')}
                 </div>
                 ` : ''}
@@ -1266,7 +1262,7 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
                 <div style="background: #fee2e2; padding: 15px; border-radius: 8px; border: 1px solid var(--danger);">
                     <div style="font-weight: 600; margin-bottom: 10px; color: var(--danger);">🚩 Red Flags Identified (${assessment.raw_data.client_conversation.red_flags.length})</div>
                     <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
-                        ${assessment.raw_data.client_conversation.red_flags.map(flag => \`<li>\${flag}</li>\`).join('')}
+                        ${assessment.raw_data.client_conversation.red_flags.map(flag => '<li>' + flag + '</li>').join('')}
                     </ul>
                 </div>
                 ` : ''}
