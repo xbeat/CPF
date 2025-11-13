@@ -19,6 +19,9 @@ async function loadAllData() {
         const data = await response.json();
 
         organizations = data.organizations || [];
+
+        // Load trash count for badge
+        await loadTrashCount();
         renderOrganizations();
 
         // If there's a selected org, reload its data
@@ -154,6 +157,11 @@ function selectOrganization(orgId) {
     renderOrganizations();
     loadOrganizationDetails(orgId);
     document.getElementById('assessmentSection').classList.remove('hidden');
+
+    // Show export buttons
+    document.getElementById('exportXLSXBtn').style.display = 'inline-block';
+    document.getElementById('exportPDFBtn').style.display = 'inline-block';
+
     // Scroll to assessment section
     document.getElementById('assessmentSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -174,6 +182,7 @@ function renderAssessmentDetails() {
     // Render matrix and heatmap
     renderProgressMatrix(org);
     renderRiskHeatmap(org);
+    renderSecurityRadarChart(org);
     renderPrioritizationTable(org);
 }
 
@@ -362,6 +371,191 @@ function renderRiskHeatmap(org) {
     }
 
     heatmap.innerHTML = html;
+}
+
+// Global chart instance to allow updates
+let securityRadarChartInstance = null;
+
+function renderSecurityRadarChart(org) {
+    const canvas = document.getElementById('securityRadarChart');
+    const statsDiv = document.getElementById('radarStats');
+    const categories = org.aggregates.by_category || {};
+
+    const categoryNames = {
+        '1': 'Authority',
+        '2': 'Temporal',
+        '3': 'Social',
+        '4': 'Affective',
+        '5': 'Cognitive',
+        '6': 'Group',
+        '7': 'Stress',
+        '8': 'Unconscious',
+        '9': 'AI-Enhanced',
+        '10': 'Convergent'
+    };
+
+    // Prepare data for radar chart
+    const labels = [];
+    const riskData = [];
+    const confidenceData = [];
+    const completionData = [];
+
+    for (let cat = 1; cat <= 10; cat++) {
+        const catKey = cat.toString();
+        const catData = categories[catKey];
+
+        labels.push(categoryNames[catKey]);
+        riskData.push(catData ? (catData.avg_score * 100) : 0);
+        confidenceData.push(catData ? (catData.avg_confidence * 100) : 0);
+        completionData.push(catData ? catData.completion_percentage : 0);
+    }
+
+    // Destroy existing chart if it exists
+    if (securityRadarChartInstance) {
+        securityRadarChartInstance.destroy();
+    }
+
+    // Create radar chart
+    const ctx = canvas.getContext('2d');
+    securityRadarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Risk Level (%)',
+                    data: riskData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(255, 99, 132, 1)',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                },
+                {
+                    label: 'Confidence (%)',
+                    data: confidenceData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(54, 162, 235, 1)',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 1.2,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 14,
+                            weight: '600'
+                        },
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.parsed.r.toFixed(1)}%`;
+                        },
+                        afterLabel: function(context) {
+                            const catIndex = context.dataIndex;
+                            return `Completion: ${completionData[catIndex].toFixed(0)}%`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20,
+                        font: {
+                            size: 11
+                        },
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    pointLabels: {
+                        font: {
+                            size: 12,
+                            weight: '600'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                }
+            },
+            interaction: {
+                mode: 'point',
+                intersect: true
+            }
+        }
+    });
+
+    // Render quick stats
+    const avgRisk = riskData.reduce((a, b) => a + b, 0) / riskData.filter(r => r > 0).length || 0;
+    const avgConfidence = confidenceData.reduce((a, b) => a + b, 0) / confidenceData.filter(c => c > 0).length || 0;
+    const avgCompletion = completionData.reduce((a, b) => a + b, 0) / 10;
+
+    const highRiskCategories = riskData.filter(r => r >= 70).length;
+    const mediumRiskCategories = riskData.filter(r => r >= 40 && r < 70).length;
+    const lowRiskCategories = riskData.filter(r => r > 0 && r < 40).length;
+
+    statsDiv.innerHTML = `
+        <div style="margin-bottom: 15px;">
+            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Average Risk</div>
+            <div style="font-size: 28px; font-weight: 700; color: ${avgRisk >= 70 ? '#ff6b6b' : avgRisk >= 40 ? '#ffd93d' : '#6bcf7f'};">${avgRisk.toFixed(1)}%</div>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Average Confidence</div>
+            <div style="font-size: 28px; font-weight: 700; color: var(--primary);">${avgConfidence.toFixed(1)}%</div>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Overall Completion</div>
+            <div style="font-size: 28px; font-weight: 700; color: var(--primary);">${avgCompletion.toFixed(1)}%</div>
+        </div>
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+        <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Risk Distribution:</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 13px;">🔴 High Risk (≥70%)</span>
+                <span style="font-weight: 700; color: #ff6b6b;">${highRiskCategories}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 13px;">🟡 Medium Risk (40-69%)</span>
+                <span style="font-weight: 700; color: #ffd93d;">${mediumRiskCategories}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 13px;">🟢 Low Risk (<40%)</span>
+                <span style="font-weight: 700; color: #6bcf7f;">${lowRiskCategories}</span>
+            </div>
+        </div>
+    `;
 }
 
 function renderPrioritizationTable(org) {
@@ -652,9 +846,9 @@ async function showAssessmentDetails(indicatorId, assessment) {
         `;
     }
 
-    // Hide buttons in details view - use only Close button
-    document.getElementById('deleteAssessmentBtn').style.display = 'none';
-    document.getElementById('openIntegratedBtn').style.display = 'none';
+    document.getElementById('deleteAssessmentBtn').style.display = 'inline-flex';
+    document.getElementById('openIntegratedBtn').style.display = 'inline-flex';
+    document.getElementById('historyBtn').style.display = 'inline-flex';
 }
 
 async function openIntegratedClient(indicatorId, orgId, existingAssessment = null) {
@@ -2028,5 +2222,349 @@ function initializeCompileTab() {
     const org = organizations.find(o => o.id === selectedOrganization);
     if (org && org.language) {
         document.getElementById('compile-language-select').value = org.language;
+    }
+}
+
+// ===== TRASH & RESTORE FUNCTIONS =====
+
+async function loadTrashCount() {
+    try {
+        const response = await fetch('/api/trash');
+        const data = await response.json();
+
+        if (data.success) {
+            const count = data.count;
+            const badge = document.getElementById('trashCount');
+
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'inline-block';
+                badge.style.marginLeft = '5px';
+                badge.style.background = 'var(--danger)';
+                badge.style.color = 'white';
+                badge.style.padding = '2px 8px';
+                badge.style.borderRadius = '12px';
+                badge.style.fontSize = '11px';
+                badge.style.fontWeight = '600';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading trash count:', error);
+    }
+}
+
+async function openTrashModal() {
+    document.getElementById('trashModal').classList.add('active');
+
+    try {
+        const response = await fetch('/api/trash');
+        const data = await response.json();
+
+        if (!data.success || data.count === 0) {
+            document.getElementById('trashContent').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🗑️</div>
+                    <div class="empty-state-title">Trash is Empty</div>
+                    <div class="empty-state-text">No deleted organizations</div>
+                </div>
+            `;
+            return;
+        }
+
+        // Render trash items
+        let html = '<div style="padding: 20px;">';
+        html += '<p style="color: var(--text-light); font-size: 14px; margin-bottom: 20px;">Organizations will be automatically deleted after 30 days</p>';
+
+        data.organizations.forEach(org => {
+            const daysLeft = org.days_until_permanent_delete;
+            const warningClass = daysLeft <= 5 ? 'var(--danger)' : 'var(--text-light)';
+
+            html += `
+                <div style="background: var(--bg-gray); border: 2px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 8px 0; color: var(--primary);">${escapeHtml(org.name)}</h4>
+                            <div style="font-size: 13px; color: var(--text-light);">
+                                <div>ID: <code>${escapeHtml(org.id)}</code></div>
+                                <div>Industry: ${escapeHtml(org.industry)}</div>
+                                <div>Assessments: ${org.stats.total_assessments}/100</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 12px; color: ${warningClass}; font-weight: 600; margin-bottom: 10px;">
+                                ${daysLeft > 0 ? `${daysLeft} days left` : 'Expires today'}
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-primary btn-small" onclick="restoreFromTrash('${escapeHtml(org.id)}')">
+                                    ♻️ Restore
+                                </button>
+                                <button class="btn btn-danger btn-small" onclick="permanentDeleteOrg('${escapeHtml(org.id)}', '${escapeHtml(org.name)}')">
+                                    🔥 Delete Forever
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-light); padding-top: 12px; border-top: 1px solid var(--border);">
+                        Deleted: ${new Date(org.deleted_at).toLocaleString()}
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        document.getElementById('trashContent').innerHTML = html;
+
+    } catch (error) {
+        console.error('Error loading trash:', error);
+        showAlert('Failed to load trash', 'error');
+    }
+}
+
+function closeTrashModal() {
+    document.getElementById('trashModal').classList.remove('active');
+}
+
+async function restoreFromTrash(orgId) {
+    if (!confirm('Restore this organization?')) return;
+
+    try {
+        const response = await fetch(`/api/organizations/${orgId}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: 'Dashboard User' })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert(`Organization restored successfully!`, 'success');
+            closeTrashModal();
+            await loadAllData();
+            await loadTrashCount();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error restoring organization:', error);
+        showAlert(`Failed to restore: ${error.message}`, 'error');
+    }
+}
+
+async function permanentDeleteOrg(orgId, orgName) {
+    if (!confirm(`⚠️ PERMANENTLY DELETE "${orgName}"?\n\nThis action CANNOT be undone!\n\nAll assessment data will be lost forever.`)) return;
+
+    // Double confirmation
+    if (!confirm(`Are you absolutely sure? Type the org ID to confirm: ${orgId}`)) return;
+
+    try {
+        const response = await fetch(`/api/organizations/${orgId}/permanent?user=Dashboard%20User`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert('Organization permanently deleted', 'success');
+            closeTrashModal();
+            await loadTrashCount();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error permanently deleting organization:', error);
+        showAlert(`Failed to delete: ${error.message}`, 'error');
+    }
+}
+
+// ===== ASSESSMENT HISTORY FUNCTIONS =====
+
+let currentHistoryOrgId = null;
+let currentHistoryIndicatorId = null;
+
+async function openHistoryModal() {
+    if (!selectedIndicatorId || !selectedOrgId) {
+        showAlert('No assessment selected', 'error');
+        return;
+    }
+
+    currentHistoryOrgId = selectedOrgId;
+    currentHistoryIndicatorId = selectedIndicatorId;
+
+    document.getElementById('historyModal').classList.add('active');
+    document.getElementById('historyModalTitle').textContent = `📜 Version History - ${selectedIndicatorId}`;
+
+    try {
+        const response = await fetch(`/api/organizations/${selectedOrgId}/assessments/${selectedIndicatorId}/history`);
+        const data = await response.json();
+
+        if (!data.success || data.history.versions.length === 0) {
+            document.getElementById('historyContent').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📜</div>
+                    <div class="empty-state-title">No History</div>
+                    <div class="empty-state-text">No previous versions found</div>
+                </div>
+            `;
+            return;
+        }
+
+        // Render history (newest first)
+        const versions = [...data.history.versions].reverse();
+        let html = '<div style="padding: 20px;">';
+
+        versions.forEach((version, index) => {
+            const isCurrent = index === 0;
+            const score = version.data.bayesian_score;
+            const confidence = version.data.confidence;
+            const timestamp = new Date(version.timestamp).toLocaleString();
+
+            html += `
+                <div style="background: ${isCurrent ? '#eff6ff' : 'var(--bg-gray)'}; border: 2px solid ${isCurrent ? 'var(--primary)' : 'var(--border)'}; border-radius: 10px; padding: 20px; margin-bottom: 15px; position: relative;">
+                    ${isCurrent ? '<div style="position: absolute; top: 10px; right: 10px; background: var(--primary); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">CURRENT</div>' : ''}
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 18px; font-weight: 600; color: var(--primary); margin-bottom: 8px;">
+                                Version ${version.version}
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-light); margin-bottom: 12px;">
+                                <div>⏰ ${timestamp}</div>
+                                <div>👤 ${escapeHtml(version.user)}</div>
+                            </div>
+                            <div style="display: flex; gap: 20px; margin-top: 15px;">
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Score</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${score.toFixed(3)}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Confidence</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${confidence.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        </div>
+                        ${!isCurrent ? `
+                        <div>
+                            <button class="btn btn-warning btn-small" onclick="revertToVersion(${version.version})">
+                                ↩️ Revert to This
+                            </button>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        document.getElementById('historyContent').innerHTML = html;
+
+    } catch (error) {
+        console.error('Error loading history:', error);
+        showAlert('Failed to load history', 'error');
+    }
+}
+
+function closeHistoryModal() {
+    document.getElementById('historyModal').classList.remove('active');
+    currentHistoryOrgId = null;
+    currentHistoryIndicatorId = null;
+}
+
+async function revertToVersion(versionNumber) {
+    if (!confirm(`Revert to version ${versionNumber}?\n\nThis will create a new version based on the selected one.`)) return;
+
+    try {
+        const response = await fetch(`/api/organizations/${currentHistoryOrgId}/assessments/${currentHistoryIndicatorId}/revert`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                version: versionNumber,
+                user: 'Dashboard User'
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert(`Reverted to version ${versionNumber}`, 'success');
+            closeHistoryModal();
+
+            // Reload organization data
+            await loadOrganizationDetails(currentHistoryOrgId);
+            renderAssessmentDetails();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error reverting version:', error);
+        showAlert(`Failed to revert: ${error.message}`, 'error');
+    }
+}
+
+// ============================================================================
+// EXPORT FUNCTIONS (XLSX & PDF)
+// ============================================================================
+
+/**
+ * Export current organization to XLSX
+ */
+async function exportCurrentOrgXLSX() {
+    if (!currentOrganization) {
+        showAlert('No organization selected', 'error');
+        return;
+    }
+
+    try {
+        const orgId = currentOrganization.id;
+        const url = `/api/organizations/${orgId}/export/xlsx?user=Dashboard User`;
+
+        showAlert('Generating XLSX export...', 'info');
+
+        // Create temporary link and trigger download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `CPF_Audit_${currentOrganization.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => {
+            showAlert('XLSX export started! Check your downloads.', 'success');
+        }, 1000);
+    } catch (error) {
+        console.error('Error exporting XLSX:', error);
+        showAlert(`Failed to export XLSX: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Export current organization to PDF
+ */
+async function exportCurrentOrgPDF() {
+    if (!currentOrganization) {
+        showAlert('No organization selected', 'error');
+        return;
+    }
+
+    try {
+        const orgId = currentOrganization.id;
+        const url = `/api/organizations/${orgId}/export/pdf?user=Dashboard User`;
+
+        showAlert('Generating PDF export...', 'info');
+
+        // Create temporary link and trigger download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `CPF_Audit_${currentOrganization.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => {
+            showAlert('PDF export started! Check your downloads.', 'success');
+        }, 1000);
+    } catch (error) {
+        console.error('Error exporting PDF:', error);
+        showAlert(`Failed to export PDF: ${error.message}`, 'error');
     }
 }

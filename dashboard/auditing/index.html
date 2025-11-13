@@ -6,6 +6,7 @@
     <title>CPF Auditing Dashboard v2.0 - Organizations & Assessment Progress</title>
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="../shared/styles.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="client-integrated.css">
@@ -31,6 +32,15 @@
                         <rect x="14" y="3" width="7" height="18"></rect>
                     </svg>
                     Organizations
+                </button>
+                <button class="btn btn-secondary" onclick="openTrashModal()" id="trashBtn">
+                    🗑️ Trash <span id="trashCount" class="badge" style="display: none;"></span>
+                </button>
+                <button class="btn btn-info" onclick="exportCurrentOrgXLSX()" id="exportXLSXBtn" style="display: none;">
+                    📊 Export XLSX
+                </button>
+                <button class="btn btn-info" onclick="exportCurrentOrgPDF()" id="exportPDFBtn" style="display: none;">
+                    📄 Export PDF
                 </button>
                 <button class="btn btn-success" onclick="openCreateOrgModal()">
                     ➕ New Organization
@@ -103,6 +113,30 @@
                         <div id="riskSummary"></div>
                     </div>
                     <div id="riskHeatmap" class="heatmap-grid"></div>
+                </div>
+
+                <!-- Radar Chart Visualization -->
+                <div class="heatmap-container" style="margin-top: 20px;">
+                    <div class="matrix-header">
+                        <h3 class="matrix-title">📡 Security Posture Radar</h3>
+                        <p style="font-size: 14px; color: var(--text-light); margin-top: 10px;">
+                            Interactive visualization of vulnerability assessment across all categories.
+                            <strong>Larger area = Higher risk</strong>
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                        <!-- Radar Chart Canvas -->
+                        <div style="flex: 1; min-width: 400px; max-width: 600px; margin: 0 auto;">
+                            <canvas id="securityRadarChart"></canvas>
+                        </div>
+                        <!-- Legend and Stats -->
+                        <div style="flex: 1; min-width: 300px; background: var(--bg-gray); padding: 20px; border-radius: 12px;">
+                            <h4 style="margin: 0 0 15px 0; color: var(--primary);">📊 Quick Stats</h4>
+                            <div id="radarStats">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Prioritization Table -->
@@ -371,6 +405,7 @@
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeIndicatorModal()">Close</button>
+                <button type="button" class="btn btn-warning btn-small" id="historyBtn" onclick="openHistoryModal()" style="display: none;">📜 History</button>
                 <button type="button" class="btn btn-primary btn-small" id="openIntegratedBtn" onclick="openIntegratedVersion()" style="display: none;">✏️ Edit Assessment</button>
                 <button type="button" class="btn btn-danger btn-small" id="deleteAssessmentBtn" onclick="deleteAssessmentFromModal()" style="display: none;">Delete Assessment</button>
             </div>
@@ -391,6 +426,39 @@
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeAssessmentDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trash Modal -->
+    <div id="trashModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title">🗑️ Trash</h3>
+                <button class="close-btn" onclick="closeTrashModal()">×</button>
+            </div>
+            <div id="trashContent">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🗑️</div>
+                    <div class="empty-state-title">Trash is Empty</div>
+                    <div class="empty-state-text">No deleted organizations</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="historyModalTitle">📜 Version History</h3>
+                <button class="close-btn" onclick="closeHistoryModal()">×</button>
+            </div>
+            <div id="historyContent">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <div>Loading history...</div>
+                </div>
             </div>
         </div>
     </div>
