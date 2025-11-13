@@ -1699,14 +1699,14 @@ async function loadExistingExport(indicatorId, orgId) {
             else if (exportData.full_assessment.responses) {
                 currentData.responses = exportData.full_assessment.responses;
                 console.log('✅ Responses loaded (legacy format):', Object.keys(currentData.responses).length, 'items');
-            }
 
-            // Populate metadata from full_assessment level
-            if (exportData.full_assessment.metadata) {
-                currentData.metadata = {
-                    ...currentData.metadata,
-                    ...exportData.full_assessment.metadata
-                };
+                // Also load metadata from full_assessment level for old format
+                if (exportData.full_assessment.metadata) {
+                    currentData.metadata = {
+                        ...currentData.metadata,
+                        ...exportData.full_assessment.metadata
+                    };
+                }
             }
 
             // Populate maturity scores (if available)
