@@ -14,32 +14,137 @@
   "scoring": {
     "method": "bayesian_weighted",
     "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
-    "weights": {"quick_assessment": 0.4, "conversation_depth": 0.35, "red_flags": 0.25},
-    "maturity_levels": {
-      "green": {"score_range": [0, 0.33], "label": "Bassa Vulnerabilità - Resiliente", "description": "Deadline progettate con buffer sicurezza esplicito. Security gate non bypassabili indipendentemente da deadline. Monitoring aumentato durante finestre pre-deadline. Cultura rifiuta tradeoff sicurezza per deadline. Escalation authority per deadline extension se sicurezza compromessa.", "risk_level": "low", "color": "#22c55e"},
-      "yellow": {"score_range": [0.34, 0.66], "label": "Vulnerabilità Moderata - In Sviluppo", "description": "Deadline a volte includono tempo sicurezza ma inconsistente. Security gate esistono ma sotto pressione possono essere waived. Qualche awareness rischi pre-deadline ma mitigazioni incomplete. Tensione culturale tra deadline e sicurezza.", "risk_level": "medium", "color": "#eab308"},
-      "red": {"score_range": [0.67, 1.0], "label": "Alta Vulnerabilità - Critica", "description": "Deadline non considerano requisiti sicurezza. Security controls abitualmente bypassati sotto pressione deadline. Nessun monitoring speciale pre-deadline. Cultura esplicitamente prioritizza meeting deadline su sicurezza. Extension deadline non permesse anche se sicurezza compromessa.", "risk_level": "high", "color": "#ef4444"}
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
     },
-    "question_weights": {"q1_pre_deadline_bypasses": 0.22, "q2_deadline_buffer": 0.18, "q3_security_gates": 0.16, "q4_monitoring_pre_deadline": 0.15, "q5_incident_correlation": 0.14, "q6_extension_authority": 0.10, "q7_cultural_messaging": 0.05}
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Deadline progettate con buffer sicurezza esplicito. Security gate non bypassabili indipendentemente da deadline. Monitoring aumentato durante finestre pre-deadline. Cultura rifiuta tradeoff sicurezza per deadline. Escalation authority per deadline extension se sicurezza compromessa.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Deadline a volte includono tempo sicurezza ma inconsistente. Security gate esistono ma sotto pressione possono essere waived. Qualche awareness rischi pre-deadline ma mitigazioni incomplete. Tensione culturale tra deadline e sicurezza.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Deadline non considerano requisiti sicurezza. Security controls abitualmente bypassati sotto pressione deadline. Nessun monitoring speciale pre-deadline. Cultura esplicitamente prioritizza meeting deadline su sicurezza. Extension deadline non permesse anche se sicurezza compromessa.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_pre_deadline_bypasses": 0.22,
+      "q2_deadline_buffer": 0.18,
+      "q3_security_gates": 0.16,
+      "q4_monitoring_pre_deadline": 0.15,
+      "q5_incident_correlation": 0.14,
+      "q6_extension_authority": 0.1,
+      "q7_cultural_messaging": 0.05
+    }
   },
   "detection_formula": {
     "type": "composite_detection",
     "mathematical_model": {
       "primary": "D_2.6(t) = DeadlineProximity(t) × PressureLevel(t) × SecurityDegradation(t)",
       "components": {
-        "deadline_proximity": {"formula": "DP(t) = Σ_i w_i · e^(-|t-t_deadline_i|/τ)", "description": "Ponderazione proximity a deadline maggiori con decay temporale", "tau": "48 hours characteristic time"},
-        "pressure_level": {"formula": "PL(t) = (WorkRemaining(t) / TimeRemaining(t)) × StakeholderPressure(t)", "description": "Livello pressione deadline composito", "threshold": {"warning": 0.7, "critical": 0.9}},
-        "security_degradation": {"formula": "SD(t) = 1 - (SecurityCompliance(t) / SecurityCompliance_baseline)", "description": "Degradazione compliance sicurezza vs baseline normale"}
+        "deadline_proximity": {
+          "formula": "DP(t) = Σ_i w_i · e^(-|t-t_deadline_i|/τ)",
+          "description": "Ponderazione proximity a deadline maggiori con decay temporale",
+          "tau": "48 hours characteristic time"
+        },
+        "pressure_level": {
+          "formula": "PL(t) = (WorkRemaining(t) / TimeRemaining(t)) × StakeholderPressure(t)",
+          "description": "Livello pressione deadline composito",
+          "threshold": {
+            "warning": 0.7,
+            "critical": 0.9
+          }
+        },
+        "security_degradation": {
+          "formula": "SD(t) = 1 - (SecurityCompliance(t) / SecurityCompliance_baseline)",
+          "description": "Degradazione compliance sicurezza vs baseline normale"
+        }
       }
     }
   },
   "data_sources": {
-    "manual_assessment": {"primary": ["project_schedules", "security_gate_logs", "incident_timeline", "bypass_request_records"], "evidence_required": ["deadline_dates_major_projects", "incident_correlation_analysis", "security_exception_requests_timeline", "project_manager_interviews"]},
-    "automated_soc": {"required": [{"source": "project_management_security_integration", "fields": ["project_id", "deadline_date", "days_to_deadline", "security_gate_status", "bypass_requests", "incident_flags", "timestamp"], "retention": "730_days"}]}
+    "manual_assessment": {
+      "primary": [
+        "project_schedules",
+        "security_gate_logs",
+        "incident_timeline",
+        "bypass_request_records"
+      ],
+      "evidence_required": [
+        "deadline_dates_major_projects",
+        "incident_correlation_analysis",
+        "security_exception_requests_timeline",
+        "project_manager_interviews"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "project_management_security_integration",
+          "fields": [
+            "project_id",
+            "deadline_date",
+            "days_to_deadline",
+            "security_gate_status",
+            "bypass_requests",
+            "incident_flags",
+            "timestamp"
+          ],
+          "retention": "730_days"
+        }
+      ]
+    }
   },
   "interdependencies": {
-    "amplified_by": [{"indicator": "2.1", "name": "Bypass Urgenza", "probability": 0.90, "factor": 1.7, "description": "Deadline imminent massimizza efficacia tattiche bypass urgenza"}, {"indicator": "7.3", "name": "Affaticamento Decisionale", "probability": 0.85, "factor": 1.6, "description": "Crunch pre-deadline esaurisce risorse decisionali"}],
-    "amplifies": [{"indicator": "2.2", "name": "Sfruttamento Fine Periodo", "probability": 0.80, "factor": 1.5, "description": "Pre-deadline vulnerability amplifica rischi fine periodo"}]
+    "amplified_by": [
+      {
+        "indicator": "2.1",
+        "name": "Bypass Urgenza",
+        "probability": 0.9,
+        "factor": 1.7,
+        "description": "Deadline imminent massimizza efficacia tattiche bypass urgenza"
+      },
+      {
+        "indicator": "7.3",
+        "name": "Affaticamento Decisionale",
+        "probability": 0.85,
+        "factor": 1.6,
+        "description": "Crunch pre-deadline esaurisce risorse decisionali"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "2.2",
+        "name": "Sfruttamento Fine Periodo",
+        "probability": 0.8,
+        "factor": 1.5,
+        "description": "Pre-deadline vulnerability amplifica rischi fine periodo"
+      }
+    ]
   },
   "sections": [
     {
@@ -57,9 +162,21 @@
           "title": "Bypass Sicurezza Pre-Deadline",
           "question": "Quanto frequentemente controlli sicurezza bypassati nelle 48h prima deadline maggiori?",
           "options": [
-            {"value": "never", "score": 0, "label": "Mai - Controlli sicurezza mantenuti rigidamente indipendentemente da proximity deadline"},
-            {"value": "occasionally", "score": 0.5, "label": "Occasionalmente - Qualche rilassamento sotto pressione estrema deadline"},
-            {"value": "routinely", "score": 1, "label": "Abitualmente - Bypass sicurezza norma durante finestre pre-deadline"}
+            {
+              "value": "never",
+              "score": 0,
+              "label": "Mai - Controlli sicurezza mantenuti rigidamente indipendentemente da proximity deadline"
+            },
+            {
+              "value": "occasionally",
+              "score": 0.5,
+              "label": "Occasionalmente - Qualche rilassamento sotto pressione estrema deadline"
+            },
+            {
+              "value": "routinely",
+              "score": 1,
+              "label": "Abitualmente - Bypass sicurezza norma durante finestre pre-deadline"
+            }
           ]
         },
         {
@@ -70,9 +187,21 @@
           "title": "Buffer Sicurezza in Deadline",
           "question": "Deadline progetto includono buffer tempo esplicito per attività sicurezza e remediation potenziali issue?",
           "options": [
-            {"value": "explicit_buffer", "score": 0, "label": "Buffer Esplicito - 15-25% deadline è buffer sicurezza protetto"},
-            {"value": "implicit", "score": 0.5, "label": "Implicito - Assunto tempo sicurezza ma non esplicitamente allocato"},
-            {"value": "no_buffer", "score": 1, "label": "Nessun Buffer - Deadline basati solo su feature development, sicurezza squeezed"}
+            {
+              "value": "explicit_buffer",
+              "score": 0,
+              "label": "Buffer Esplicito - 15-25% deadline è buffer sicurezza protetto"
+            },
+            {
+              "value": "implicit",
+              "score": 0.5,
+              "label": "Implicito - Assunto tempo sicurezza ma non esplicitamente allocato"
+            },
+            {
+              "value": "no_buffer",
+              "score": 1,
+              "label": "Nessun Buffer - Deadline basati solo su feature development, sicurezza squeezed"
+            }
           ]
         },
         {
@@ -83,9 +212,21 @@
           "title": "Security Gate Non-Bypassabili",
           "question": "Security gate possono essere bypassati sotto pressione deadline o sono tecnicamente enforced?",
           "options": [
-            {"value": "enforced", "score": 0, "label": "Enforced - Gate automatizzati bloccano deployment se criteri non soddisfatti, no override"},
-            {"value": "waivable", "score": 0.5, "label": "Waivable - Gate possono essere waived con approvazione senior"},
-            {"value": "advisory", "score": 1, "label": "Advisory - Gate puramente advisory, abitualmente ignorati sotto deadline pressure"}
+            {
+              "value": "enforced",
+              "score": 0,
+              "label": "Enforced - Gate automatizzati bloccano deployment se criteri non soddisfatti, no override"
+            },
+            {
+              "value": "waivable",
+              "score": 0.5,
+              "label": "Waivable - Gate possono essere waived con approvazione senior"
+            },
+            {
+              "value": "advisory",
+              "score": 1,
+              "label": "Advisory - Gate puramente advisory, abitualmente ignorati sotto deadline pressure"
+            }
           ]
         },
         {
@@ -96,9 +237,21 @@
           "title": "Monitoring Pre-Deadline",
           "question": "Security monitoring aumentato durante finestre pre-deadline ad alto rischio?",
           "options": [
-            {"value": "increased", "score": 0, "label": "Aumentato - Proattivamente intensificato monitoring 72h pre-deadline maggiori"},
-            {"value": "standard", "score": 0.5, "label": "Standard - Stesso livello monitoring indipendentemente da deadline"},
-            {"value": "reduced", "score": 1, "label": "Ridotto - Attenzione security effettivamente ridotta durante crunch pre-deadline"}
+            {
+              "value": "increased",
+              "score": 0,
+              "label": "Aumentato - Proattivamente intensificato monitoring 72h pre-deadline maggiori"
+            },
+            {
+              "value": "standard",
+              "score": 0.5,
+              "label": "Standard - Stesso livello monitoring indipendentemente da deadline"
+            },
+            {
+              "value": "reduced",
+              "score": 1,
+              "label": "Ridotto - Attenzione security effettivamente ridotta durante crunch pre-deadline"
+            }
           ]
         },
         {
@@ -109,12 +262,25 @@
           "title": "Correlazione Incidenti Pre-Deadline",
           "question": "Analisi incidenti mostra clustering nelle 48-72h prima deadline progetti maggiori?",
           "options": [
-            {"value": "no_correlation", "score": 0, "label": "Nessuna Correlazione - Incidenti distribuiti uniformemente rispetto deadline"},
-            {"value": "some_correlation", "score": 0.5, "label": "Qualche Correlazione - Leggero aumento incidenti durante finestre pre-deadline"},
-            {"value": "strong_correlation", "score": 1, "label": "Correlazione Forte - Spike significativo incidenti 48-72h pre-deadline"}
+            {
+              "value": "no_correlation",
+              "score": 0,
+              "label": "Nessuna Correlazione - Incidenti distribuiti uniformemente rispetto deadline"
+            },
+            {
+              "value": "some_correlation",
+              "score": 0.5,
+              "label": "Qualche Correlazione - Leggero aumento incidenti durante finestre pre-deadline"
+            },
+            {
+              "value": "strong_correlation",
+              "score": 1,
+              "label": "Correlazione Forte - Spike significativo incidenti 48-72h pre-deadline"
+            }
           ]
         }
-      ]
+      ],
+      "subsections": []
     },
     {
       "id": "client-conversation",
@@ -127,7 +293,7 @@
           "type": "question",
           "number": 6,
           "id": "q6_extension_authority",
-          "weight": 0.10,
+          "weight": 0.1,
           "title": "Authority Extension Deadline per Sicurezza",
           "question": "Chi ha authority estendere deadline se issue sicurezza critiche scoperte durante finestra pre-deadline?",
           "guidance": "Cercare: escalation path chiaro, criteri objective extension, storico extension granted per security, bilanciamento business vs security",
@@ -151,7 +317,8 @@
             "Esiste reward system implicito favorente speed over security?"
           ]
         }
-      ]
+      ],
+      "subsections": []
     },
     {
       "id": "red-flags",
@@ -168,7 +335,7 @@
           "title": "Clustering Incidenti Pre-Deadline Forte",
           "description": "Oltre 50% incidenti sicurezza maggiori ultimi 24 mesi verificatisi entro 72h deadline progetti maggiori",
           "detection": "Correlazione statistical analysis incident dates vs project deadline schedules",
-          "weight": 0.40
+          "weight": 0.4
         },
         {
           "type": "red-flag",
@@ -190,22 +357,36 @@
           "detection": "Analisi security gate compliance logs vs deadline proximity",
           "weight": 0.25
         }
-      ]
+      ],
+      "subsections": []
     },
     {
       "id": "scoring-summary",
       "icon": "📊",
       "title": "RIEPILOGO SCORING",
       "type": "score-display",
-      "description": "Visualizzazione score finale e raccomandazioni basate su risposte valutazione"
+      "description": "Visualizzazione score finale e raccomandazioni basate su risposte valutazione",
+      "subsections": []
     }
   ],
   "validation": {
     "method": "matthews_correlation_coefficient",
     "success_metrics": [
-      {"metric": "Correlazione Incidenti-Deadline", "formula": "Coefficiente correlazione tra incidenti e proximity deadline", "target": "Ridurre correlazione a <0.15 entro 120 giorni"},
-      {"metric": "Security Gate Compliance Pre-Deadline", "formula": "Percentuale rilasci passanti security gate durante 72h pre-deadline", "target": "Mantenere ≥95% compliance anche sotto deadline pressure"},
-      {"metric": "Deadline Buffer Sicurezza", "formula": "Percentuale deadline includenti buffer sicurezza esplicito ≥15%", "target": "Raggiungere 100% nuovi progetti"}
+      {
+        "metric": "Correlazione Incidenti-Deadline",
+        "formula": "Coefficiente correlazione tra incidenti e proximity deadline",
+        "target": "Ridurre correlazione a <0.15 entro 120 giorni"
+      },
+      {
+        "metric": "Security Gate Compliance Pre-Deadline",
+        "formula": "Percentuale rilasci passanti security gate durante 72h pre-deadline",
+        "target": "Mantenere ≥95% compliance anche sotto deadline pressure"
+      },
+      {
+        "metric": "Deadline Buffer Sicurezza",
+        "formula": "Percentuale deadline includenti buffer sicurezza esplicito ≥15%",
+        "target": "Raggiungere 100% nuovi progetti"
+      }
     ]
   },
   "remediation": {
@@ -225,8 +406,16 @@
           "Richiedere executive approval utilizzare buffer sicurezza per feature vs sicurezza",
           "Track e report utilizzo buffer sicurezza in project post-mortems"
         ],
-        "kpis": ["100% nuovi progetti includono buffer sicurezza ≥15%", "Riduzione 70% utilizzo buffer sicurezza per non-security work", "Riduzione 65% vulnerabilità introdotte durante pre-deadline crunch"],
-        "tools": ["Project management software", "Automated timeline tracking", "Executive dashboards"],
+        "kpis": [
+          "100% nuovi progetti includono buffer sicurezza ≥15%",
+          "Riduzione 70% utilizzo buffer sicurezza per non-security work",
+          "Riduzione 65% vulnerabilità introdotte durante pre-deadline crunch"
+        ],
+        "tools": [
+          "Project management software",
+          "Automated timeline tracking",
+          "Executive dashboards"
+        ],
         "cost_estimate": "€25.000 - €65.000"
       },
       {
@@ -244,8 +433,16 @@
           "Implementare early warning system quando progetto at risk failing security gate",
           "Processo escalation limitato CISO-level per exception richieste autentiche"
         ],
-        "kpis": ["100% rilasci passano security gate critici", "Zero bypass non autorizzati", "Riduzione 85% vulnerabilità critical in produzione"],
-        "tools": ["CI/CD security integration", "Automated security testing", "Policy enforcement platforms"],
+        "kpis": [
+          "100% rilasci passano security gate critici",
+          "Zero bypass non autorizzati",
+          "Riduzione 85% vulnerabilità critical in produzione"
+        ],
+        "tools": [
+          "CI/CD security integration",
+          "Automated security testing",
+          "Policy enforcement platforms"
+        ],
         "cost_estimate": "€70.000 - €200.000"
       },
       {
@@ -264,8 +461,16 @@
           "Embed security champion in team per duration crunch period",
           "Post-deadline security review obbligatorio prima production deployment"
         ],
-        "kpis": ["100% deadline maggiori ricevono security support intensificato", "Riduzione 60% vulnerabilità scoperte post-deployment", "Miglioramento 50% security decision quality sotto pressure"],
-        "tools": ["Resource scheduling systems", "Security architect allocation", "Enhanced monitoring tools"],
+        "kpis": [
+          "100% deadline maggiori ricevono security support intensificato",
+          "Riduzione 60% vulnerabilità scoperte post-deployment",
+          "Miglioramento 50% security decision quality sotto pressure"
+        ],
+        "tools": [
+          "Resource scheduling systems",
+          "Security architect allocation",
+          "Enhanced monitoring tools"
+        ],
         "cost_estimate": "€35.000 - €90.000"
       }
     ]
@@ -288,9 +493,19 @@
         "Exploitation pre-hotfix deployment, compromissione database",
         "Exfiltration dati sensibili, regulatory fines, litigation"
       ],
-      "indicators": ["Security gate bypass sotto deadline pressure", "Vulnerabilità note accepted con remediation posticipata", "Mancanza executive support per deadline extension security", "Hotfix deployment ritardato per feature prioritization"],
-      "cpe_mapping": ["CPE:2.3:*:software_vulnerability:deadline_pressure_release:*"],
-      "mitre_attack": ["T1190 - Exploit Public-Facing Application", "T1505 - Server Software Component"]
+      "indicators": [
+        "Security gate bypass sotto deadline pressure",
+        "Vulnerabilità note accepted con remediation posticipata",
+        "Mancanza executive support per deadline extension security",
+        "Hotfix deployment ritardato per feature prioritization"
+      ],
+      "cpe_mapping": [
+        "CPE:2.3:*:software_vulnerability:deadline_pressure_release:*"
+      ],
+      "mitre_attack": [
+        "T1190 - Exploit Public-Facing Application",
+        "T1505 - Server Software Component"
+      ]
     },
     {
       "id": "scenario_2",
@@ -309,9 +524,19 @@
         "Malware deployment via ZIP file malevolo",
         "Ransomware encryption o data exfiltration durante crunch finale"
       ],
-      "indicators": ["Richieste urgenti file/resource timing vicino deadline noti", "Sender impersonation stakeholder progetto", "Bypass procedure verification per time pressure", "Attachment o link in comunicazioni urgenti pre-deadline"],
-      "cpe_mapping": ["CPE:2.3:*:social_engineering:deadline_pressure_phishing:*"],
-      "mitre_attack": ["T1566.001 - Phishing: Spearphishing Attachment", "T1204.002 - User Execution: Malicious File"]
+      "indicators": [
+        "Richieste urgenti file/resource timing vicino deadline noti",
+        "Sender impersonation stakeholder progetto",
+        "Bypass procedure verification per time pressure",
+        "Attachment o link in comunicazioni urgenti pre-deadline"
+      ],
+      "cpe_mapping": [
+        "CPE:2.3:*:social_engineering:deadline_pressure_phishing:*"
+      ],
+      "mitre_attack": [
+        "T1566.001 - Phishing: Spearphishing Attachment",
+        "T1204.002 - User Execution: Malicious File"
+      ]
     }
   ],
   "metadata": {
