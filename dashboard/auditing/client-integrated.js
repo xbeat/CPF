@@ -231,19 +231,19 @@ function renderFieldKit(data) {
     metadataBar.innerHTML = `
         <div class="meta-field">
             <label>Assessment Date</label>
-            <input type="date" value="${currentData.metadata.date}" onchange="updateMeta('date', this.value)">
+            <input type="date" value="${currentData.metadata.date}" onchange="window.CPFClient.updateMeta('date', this.value)">
         </div>
         <div class="meta-field">
             <label>Auditor</label>
-            <input type="text" value="${currentData.metadata.auditor}" onchange="updateMeta('auditor', this.value)" placeholder="Your name">
+            <input type="text" value="${currentData.metadata.auditor}" onchange="window.CPFClient.updateMeta('auditor', this.value)" placeholder="Your name">
         </div>
         <div class="meta-field">
             <label>Client</label>
-            <input type="text" value="${currentData.metadata.client}" onchange="updateMeta('client', this.value)" placeholder="Client name">
+            <input type="text" value="${currentData.metadata.client}" onchange="window.CPFClient.updateMeta('client', this.value)" placeholder="Client name">
         </div>
         <div class="meta-field">
             <label>Status</label>
-            <select onchange="updateMeta('status', this.value)">
+            <select onchange="window.CPFClient.updateMeta('status', this.value)">
                 <option value="in-progress" ${currentData.metadata.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
                 <option value="completed" ${currentData.metadata.status === 'completed' ? 'selected' : ''}>Completed</option>
                 <option value="review" ${currentData.metadata.status === 'review' ? 'selected' : ''}>Under Review</option>
@@ -327,7 +327,7 @@ function renderItem(item, itemId) {
                         <div class="radio-option ${opt.value}">
                             <input type="radio" name="${itemId}" id="${itemId}_${opt.value}" value="${opt.value}"
                                     ${value === opt.value ? 'checked' : ''}
-                                    onchange="updateResponseWithAutoScore('${itemId}', '${opt.value}')">
+                                    onchange="window.CPFClient.updateResponseWithAutoScore('${itemId}', '${opt.value}')">
                             <label for="${itemId}_${opt.value}" class="radio-label">
                                 ${opt.label}
                             </label>
@@ -353,7 +353,7 @@ function renderItem(item, itemId) {
                                    data-value="${opt.value}">
                                 <input type="checkbox" 
                                        ${isChecked ? 'checked' : ''}
-                                       onchange="selectRadioOption('${itemId}', '${opt.value}')">
+                                       onchange="window.CPFClient.selectRadioOption('${itemId}', '${opt.value}')">
                                 <span class="checkbox-label">${opt.label}</span>
                             </label>
                         `;
@@ -367,7 +367,7 @@ function renderItem(item, itemId) {
         const checked = value ? 'checked' : '';
         let html = `
             <div class="checkbox-item ${checked}">
-                <input type="checkbox" id="${itemId}" ${checked} onchange="updateResponseWithAutoScore('${itemId}', this.checked)">
+                <input type="checkbox" id="${itemId}" ${checked} onchange="window.CPFClient.updateResponseWithAutoScore('${itemId}', this.checked)">
                 <label for="${itemId}">${item.label}</label>
             </div>
         `;
@@ -382,7 +382,7 @@ function renderItem(item, itemId) {
                     html += `
                         <div class="checkbox-item ${subValue ? 'checked' : ''}" style="display: inline-block; margin-right: 15px;">
                             <input type="checkbox" id="${subItemId}" ${subValue ? 'checked' : ''} 
-                                   onchange="updateResponse('${subItemId}', this.checked)">
+                                   onchange="window.CPFClient.updateResponse('${subItemId}', this.checked)">
                             <label for="${subItemId}">${sub.label}</label>
                         </div>
                     `;
@@ -393,7 +393,7 @@ function renderItem(item, itemId) {
                         <div class="radio-option" style="display: inline-block; margin-right: 15px;">
                             <input type="radio" name="${itemId}_radio" id="${subItemId}" value="${sub.label}" 
                                    ${subValue === sub.label ? 'checked' : ''}
-                                   onchange="updateResponse('${itemId}_radio_value', this.value)">
+                                   onchange="window.CPFClient.updateResponse('${itemId}_radio_value', this.value)">
                             <label for="${subItemId}">${sub.label}</label>
                         </div>
                     `;
@@ -402,7 +402,7 @@ function renderItem(item, itemId) {
                     html += `
                         <div class="input-group" style="margin: 10px 0;">
                             <input type="text" id="${subItemId}" value="${currentData.responses[subItemId] || ''}"
-                                   placeholder="${sub.label}" onchange="updateResponse('${subItemId}', this.value)"
+                                   placeholder="${sub.label}" onchange="window.CPFClient.updateResponse('${subItemId}', this.value)"
                                    style="padding: 6px; width: 200px;">
                         </div>
                     `;
@@ -417,7 +417,7 @@ function renderItem(item, itemId) {
         return `
             <div class="input-group">
                 <label>${item.label}</label>
-                <input type="text" id="${itemId}" value="${value || ''}" onchange="updateResponse('${itemId}', this.value)">
+                <input type="text" id="${itemId}" value="${value || ''}" onchange="window.CPFClient.updateResponse('${itemId}', this.value)">
             </div>
         `;
     }
@@ -442,8 +442,8 @@ function renderItem(item, itemId) {
                         <textarea id="${followupId}"
                                   placeholder="Notes..."
                                   style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; min-height: 60px; font-family: inherit; font-size: 14px;"
-                                  onchange="updateResponseWithAutoScore('${followupId}', this.value)"
-                                  onblur="updateResponseWithAutoScore('${followupId}', this.value)">${followupValue}</textarea>
+                                  onchange="window.CPFClient.updateResponseWithAutoScore('${followupId}', this.value)"
+                                  onblur="window.CPFClient.updateResponseWithAutoScore('${followupId}', this.value)">${followupValue}</textarea>
                     </div>
                 `;
             });
@@ -1847,6 +1847,12 @@ window.CPFClient = {
     renderFieldKit: renderFieldKit,
     saveToAPI: saveToAPI,
     calculateIndicatorScore: calculateIndicatorScore,
+
+    // Response handling (CRITICAL for auto-save)
+    updateResponse: updateResponse,
+    updateResponseWithAutoScore: updateResponseWithAutoScore,
+    selectRadioOption: selectRadioOption,
+    updateMeta: updateMeta,
 
     // Utility functions
     loadJSON: loadJSON,
