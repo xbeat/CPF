@@ -1843,6 +1843,7 @@ window.CPFClient = {
     exportData: exportData,
     generateReport: generateReport,
     resetAll: resetAll,
+    toggleDetailedAnalysis: toggleDetailedAnalysis,
 
     // Modal functions
     showQuickReference: showQuickReference,
