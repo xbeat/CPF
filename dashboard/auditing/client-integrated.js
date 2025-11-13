@@ -591,6 +591,18 @@ async function saveToAPI() {
     if (result.success) {
         console.log('✅ Assessment saved to API successfully');
         showAutoSaveIndicator();
+
+        // Notify dashboard to reload organization data
+        if (window.dashboardReloadOrganization) {
+            await window.dashboardReloadOrganization();
+        }
+
+        // Close modal and show success message
+        if (window.dashboardCloseModal) {
+            window.dashboardCloseModal();
+        }
+
+        alert('✅ Assessment saved successfully!');
     } else {
         throw new Error(result.error || 'API save failed');
     }
@@ -1843,6 +1855,7 @@ window.CPFClient = {
     exportData: exportData,
     generateReport: generateReport,
     resetAll: resetAll,
+    toggleDetailedAnalysis: toggleDetailedAnalysis,
 
     // Modal functions
     showQuickReference: showQuickReference,
