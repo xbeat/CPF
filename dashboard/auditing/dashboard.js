@@ -454,13 +454,8 @@ async function openIndicatorDetail(indicatorId, orgId) {
 
     console.log('📊 Assessment exists?', !!assessment);
 
-    if (assessment) {
-        // Show existing assessment details
-        showAssessmentDetails(indicatorId, assessment);
-    } else {
-        // Open integrated client for new assessment
-        openIntegratedClient(indicatorId, orgId);
-    }
+    // ALWAYS open integrated client (either new or edit mode)
+    await openIntegratedClient(indicatorId, orgId, assessment);
 }
 
 async function showAssessmentDetails(indicatorId, assessment) {
@@ -661,8 +656,8 @@ async function showAssessmentDetails(indicatorId, assessment) {
     document.getElementById('openIntegratedBtn').style.display = 'inline-flex';
 }
 
-async function openIntegratedClient(indicatorId, orgId) {
-    console.log('🔍 openIntegratedClient called with:', { indicatorId, orgId, selectedOrgData });
+async function openIntegratedClient(indicatorId, orgId, existingAssessment = null) {
+    console.log('🔍 openIntegratedClient called with:', { indicatorId, orgId, existingAssessment: !!existingAssessment });
 
     if (!indicatorId) {
         console.error('❌ ERROR: indicatorId is null or undefined!');
@@ -676,7 +671,8 @@ async function openIntegratedClient(indicatorId, orgId) {
         return;
     }
 
-    document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - New Assessment`;
+    const isEditMode = !!existingAssessment;
+    document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - ${isEditMode ? 'Edit' : 'New'} Assessment`;
     document.getElementById('indicatorModal').classList.add('active');
 
     // Add fullscreen class for client modal
@@ -684,9 +680,6 @@ async function openIntegratedClient(indicatorId, orgId) {
     modalContent.classList.add('fullscreen-client');
 
     const content = document.getElementById('indicatorModalContent');
-
-    // Hide delete button for new assessments
-    document.getElementById('deleteAssessmentBtn').style.display = 'none';
 
     // Get organization data
     const language = selectedOrgData.metadata.language || 'en-US';
@@ -710,8 +703,8 @@ async function openIntegratedClient(indicatorId, orgId) {
 
         const fieldKit = await response.json();
 
-        // Render integrated form (no existing assessment = create mode)
-        renderIntegratedClientForm(indicatorId, fieldKit, orgId, null);
+        // Render integrated form (with or without existing assessment)
+        renderIntegratedClientForm(indicatorId, fieldKit, orgId, existingAssessment);
     } catch (error) {
         console.error('Error loading Field Kit:', error);
         content.innerHTML = `
@@ -824,6 +817,8 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                         <button class="btn btn-light" onclick="document.getElementById('file-input-integrated').click()">📂 Import JSON</button>
                         <input type="file" id="file-input-integrated" accept=".json" onchange="window.CPFClient.importJSON(event)" style="display: none;">
                         <button class="btn btn-danger" onclick="if(confirm('Reset all data?')) window.CPFClient.resetAll()" title="Clear all data and reset">🗑️ Reset</button>
+                        ${isEditMode ? `<button class="btn btn-primary" onclick="viewAssessmentDetailsFromEdit('${indicatorId}')">📋 View Details</button>` : ''}
+                        ${isEditMode ? `<button class="btn btn-danger" onclick="deleteAssessmentFromEdit('${indicatorId}')">🗑️ Delete Assessment</button>` : ''}
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <span id="auto-save-status" style="color: #4CAF50; font-size: 14px; display: none;">✓ Auto-saved</span>
@@ -1124,6 +1119,48 @@ async function editAssessmentFromModal() {
             }
         }, '*');
     });
+}
+
+// View assessment details from edit form
+async function viewAssessmentDetailsFromEdit(indicatorId) {
+    if (!selectedOrgId) return;
+
+    const assessment = selectedOrgData.assessments[indicatorId];
+    if (!assessment) {
+        showAlert('Assessment not found', 'error');
+        return;
+    }
+
+    // Close current modal and show details
+    await showAssessmentDetails(indicatorId, assessment);
+}
+
+// Delete assessment from edit form
+async function deleteAssessmentFromEdit(indicatorId) {
+    if (!selectedOrgId) return;
+
+    if (!confirm(`Are you sure you want to delete the assessment for indicator ${indicatorId}?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/organizations/${selectedOrgId}/assessments/${indicatorId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert('Assessment deleted successfully', 'success');
+            closeIndicatorModal();
+            await loadOrganizationDetails(selectedOrgId);
+        } else {
+            showAlert('Failed to delete assessment: ' + result.error, 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting assessment:', error);
+        showAlert('Failed to delete assessment: ' + error.message, 'error');
+    }
 }
 
 async function deleteAssessmentFromModal() {
