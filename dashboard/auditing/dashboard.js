@@ -1163,7 +1163,7 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
             fieldKit = await response.json();
         }
 
-        // Render full details
+        // Render FULL details with ALL sections
         content.innerHTML = `
             <div style="display: grid; gap: 20px;">
                 <!-- Assessment Summary -->
@@ -1199,14 +1199,127 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
                         <div><strong>Assessment Date:</strong> ${new Date(assessment.assessment_date).toLocaleString()}</div>
                     </div>
                 </div>
+
+                ${fieldKit && fieldKit.description ? `
+                <!-- Field Kit Description -->
+                <div style="background: #dbeafe; padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary);">
+                    <h4 style="margin: 0 0 10px 0; color: var(--primary);">📚 Description</h4>
+                    <p style="margin: 0 0 10px 0; line-height: 1.6;">${fieldKit.description.short || ''}</p>
+                    ${fieldKit.description.context ? `
+                        <div style="margin-top: 15px;">
+                            <strong>Context:</strong>
+                            <p style="margin: 5px 0 0 0; line-height: 1.6;">${fieldKit.description.context}</p>
+                        </div>
+                    ` : ''}
+                    ${fieldKit.description.impact ? `
+                        <div style="margin-top: 15px;">
+                            <strong>Impact:</strong>
+                            <p style="margin: 5px 0 0 0; line-height: 1.6;">${fieldKit.description.impact}</p>
+                        </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+
+                ${fieldKit && fieldKit.risk_scenarios && fieldKit.risk_scenarios.length > 0 ? `
+                <!-- Risk Scenarios -->
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
+                    <h4 style="margin: 0 0 10px 0; color: var(--warning);">⚠️ Risk Scenarios</h4>
+                    ${fieldKit.risk_scenarios.slice(0, 3).map((scenario, idx) => `
+                        <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
+                            <strong>${scenario.title || 'Scenario ' + (idx + 1)}</strong>
+                            <p style="margin: 5px 0 0 0;">${scenario.description || ''}</p>
+                            ${scenario.likelihood ? `<small style="color: var(--text-light);">Likelihood: ${scenario.likelihood}</small>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+                ` : ''}
+
+                ${fieldKit && fieldKit.field_kit && fieldKit.field_kit.questions ? `
+                <!-- Questions and Responses -->
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: var(--primary);">❓ Assessment Questions & Responses</h4>
+                    ${fieldKit.field_kit.questions.map((q, idx) => {
+                        const responseKey = \`q\${idx + 1}\`;
+                        const response = assessment.raw_data?.responses?.[responseKey] || assessment.raw_data?.responses?[\`question_\${idx}\`];
+                        return \`
+                            <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
+                                <div style="font-weight: 600; margin-bottom: 8px;">\${idx + 1}. \${q.text}</div>
+                                \${response ? \`
+                                    <div style="padding: 8px; background: #e0f2fe; border-radius: 4px;">
+                                        <strong>Response:</strong> \${response}
+                                    </div>
+                                \` : '<div style="color: var(--text-light); font-style: italic;">No response recorded</div>'}
+                            </div>
+                        \`;
+                    }).join('')}
+                </div>
+                ` : ''}
+
+                ${assessment.raw_data && assessment.raw_data.client_conversation ? `
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <div style="font-weight: 600; margin-bottom: 10px;">📝 Notes</div>
+                    <p style="margin: 0; font-size: 14px; line-height: 1.6;">${assessment.raw_data.client_conversation.notes || 'No notes available'}</p>
+                </div>
+                ` : ''}
+
+                ${assessment.raw_data && assessment.raw_data.client_conversation && assessment.raw_data.client_conversation.red_flags && assessment.raw_data.client_conversation.red_flags.length > 0 ? `
+                <div style="background: #fee2e2; padding: 15px; border-radius: 8px; border: 1px solid var(--danger);">
+                    <div style="font-weight: 600; margin-bottom: 10px; color: var(--danger);">🚩 Red Flags Identified (${assessment.raw_data.client_conversation.red_flags.length})</div>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
+                        ${assessment.raw_data.client_conversation.red_flags.map(flag => \`<li>\${flag}</li>\`).join('')}
+                    </ul>
+                </div>
+                ` : ''}
+
+                ${fieldKit ? `
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
+                    <a href="${url}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                        📄 View Full Field Kit JSON on GitHub →
+                    </a>
+                </div>
+                ` : ''}
             </div>
         `;
+
     } catch (error) {
         console.error('Error loading Field Kit:', error);
         content.innerHTML = `
-            <div style="padding: 20px;">
-                <p>⚠️ Could not load full Field Kit details</p>
-                <p style="font-size: 14px; color: var(--text-light);">Showing basic assessment information only.</p>
+            <div style="display: grid; gap: 20px;">
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: var(--primary);">${assessment.title || 'Indicator ' + indicatorId}</h4>
+                    <p style="margin: 0; color: var(--text-light); font-size: 14px;">${assessment.category || 'Category'}</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="stat-box">
+                        <div class="stat-label">Risk Score</div>
+                        <div class="stat-value ${riskClass}">${(assessment.bayesian_score * 100).toFixed(1)}%</div>
+                        <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">${riskLabel}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Confidence</div>
+                        <div class="stat-value">${(assessment.confidence * 100).toFixed(1)}%</div>
+                        <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Assessment reliability</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Maturity Level</div>
+                        <div class="stat-value" style="text-transform: uppercase;">${assessment.maturity_level || 'N/A'}</div>
+                        <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Control maturity</div>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <div style="font-weight: 600; margin-bottom: 10px;">Assessment Information</div>
+                    <div style="display: grid; gap: 8px; font-size: 14px;">
+                        <div><strong>Assessor:</strong> ${assessment.assessor || 'Unknown'}</div>
+                        <div><strong>Assessment Date:</strong> ${new Date(assessment.assessment_date).toLocaleString()}</div>
+                    </div>
+                </div>
+
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
+                    <strong>⚠️ Field Kit Details Not Available</strong>
+                    <p style="margin-top: 10px;">Could not load full Field Kit from GitHub: ${error.message}</p>
+                </div>
             </div>
         `;
     }
