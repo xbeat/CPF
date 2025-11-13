@@ -1,8 +1,6 @@
 // ============================================
-// CLIENT V2.0 - WRAPPED IN NAMESPACE TO AVOID CONFLICTS
+// CLIENT V2.0 - CONFIGURATION
 // ============================================
-(function() {
-'use strict';
 
 // Organization context (loaded from URL parameters or dashboard)
 let organizationContext = {
@@ -74,8 +72,7 @@ const LANG_MAP = {
 };
 
 // Category mapping
-// Use existing CATEGORY_MAP from dashboard.js if available, otherwise define it
-window.CATEGORY_MAP = window.CATEGORY_MAP || {
+const CATEGORY_MAP = {
     '1': 'authority',
     '2': 'temporal',
     '3': 'social',
@@ -87,7 +84,6 @@ window.CATEGORY_MAP = window.CATEGORY_MAP || {
     '9': 'ai',
     '10': 'convergent'
 };
-const CATEGORY_MAP = window.CATEGORY_MAP;
 
 // Category details for dropdown
 const CATEGORIES = [
@@ -291,13 +287,11 @@ function renderFieldKit(data) {
     document.getElementById('action-bar').style.display = 'flex';
     document.getElementById('action-bar').innerHTML = `
         <div style="display: flex; gap: 15px;">
-            <button class="btn btn-secondary" onclick="window.CPFClient.saveData()">💾 Save</button>
-            <button class="btn btn-warning" onclick="window.CPFClient.calculateIndicatorScore()">🧮 Calculate Score</button>
-            <button class="btn btn-info" onclick="window.CPFClient.validateCurrentJSON()">✓ Validate</button>
+            <button class="btn btn-secondary" onclick="saveData()">💾 Save</button>
         </div>
         <div style="display: flex; gap: 15px;">
-            <button class="btn btn-success" onclick="window.CPFClient.exportData()">📥 Export</button>
-            <button class="btn btn-primary" onclick="window.CPFClient.generateReport()">📊 Report</button>
+            <button class="btn btn-success" onclick="exportData()">📥 Export</button>
+            <button class="btn btn-primary" onclick="generateReport()">📊 Report</button>
         </div>
     `;
 
@@ -529,23 +523,12 @@ async function autoSave() {
 async function saveToAPI() {
     if (!organizationContext.orgId) {
         console.warn('⚠️ No organization context - cannot save to API');
-        alert('⚠️ No organization context available');
         return;
     }
 
-    // Auto-calculate score if not present
     if (!currentScore) {
-        console.log('📊 Auto-calculating score before save...');
-        calculateIndicatorScore();
-
-        // Wait a moment for score to be calculated
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        if (!currentScore) {
-            console.warn('⚠️ Score calculation failed - cannot save to API');
-            alert('⚠️ Unable to calculate score. Please fill in the required fields.');
-            return;
-        }
+        console.warn('⚠️ No score calculated - cannot save to API');
+        return;
     }
 
     const indicator = currentData.fieldKit.indicator;
@@ -1727,16 +1710,6 @@ function getCategoryName(categoryNum) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    // IMPORTANT: Skip auto-init if we're integrated into dashboard
-    // Check if we're in dashboard context by looking for dashboard-specific elements
-    const isDashboardIntegrated = document.querySelector('.dashboard-container') !== null;
-
-    if (isDashboardIntegrated) {
-        console.log('🎯 Client detected dashboard integration - skipping auto-init');
-        console.log('✅ CPFClient namespace available for manual initialization');
-        return; // Exit early, let dashboard code initialize manually
-    }
-
     // Check for URL parameters (e.g., from dashboard link)
     const urlParams = new URLSearchParams(window.location.search);
 
@@ -1822,36 +1795,3 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
-
-// ============================================
-// EXPORT TO GLOBAL SCOPE (for dashboard integration)
-// ============================================
-window.CPFClient = {
-    // Data
-    organizationContext: organizationContext,
-    currentData: currentData,
-
-    // Core functions
-    renderFieldKit: renderFieldKit,
-    saveToAPI: saveToAPI,
-    calculateIndicatorScore: calculateIndicatorScore,
-
-    // Utility functions
-    loadJSON: loadJSON,
-    importJSON: importJSON,
-    saveData: saveData,
-    exportData: exportData,
-    generateReport: generateReport,
-    resetAll: resetAll,
-
-    // Modal functions
-    showQuickReference: showQuickReference,
-    closeQuickReference: closeQuickReference,
-    showIndicatorDetails: showIndicatorDetails,
-    closeIndicatorDetails: closeIndicatorDetails,
-
-    // Validation
-    validateCurrentJSON: validateCurrentJSON
-};
-
-})(); // End of IIFE wrapper
