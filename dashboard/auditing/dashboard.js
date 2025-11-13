@@ -843,6 +843,32 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                 </div>
                 <div class="action-bar" id="action-bar" style="display: none;"></div>
             </div>
+
+            <!-- Quick Reference Modal -->
+            <div id="reference-modal" class="cpf-client modal" style="display: none;" onclick="if(event.target.id==='reference-modal') window.CPFClient.closeQuickReference()">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>📚 CPF Indicators Quick Reference</h2>
+                        <button class="modal-close" onclick="window.CPFClient.closeQuickReference()">✕</button>
+                    </div>
+                    <div class="modal-body" id="reference-content">
+                        <p style="text-align: center; color: #7f8c8d; padding: 40px;">Loading reference guide...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indicator Details Modal -->
+            <div id="indicator-details-modal" class="cpf-client modal" style="display: none;" onclick="if(event.target.id==='indicator-details-modal') window.CPFClient.closeIndicatorDetails()">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="indicator-details-title">📄 Indicator Details</h2>
+                        <button class="modal-close" onclick="window.CPFClient.closeIndicatorDetails()">✕</button>
+                    </div>
+                    <div class="modal-body" id="indicator-details-content">
+                        <p style="text-align: center; color: #7f8c8d; padding: 40px;">No indicator loaded</p>
+                    </div>
+                </div>
+            </div>
         </div>
     `;
 
