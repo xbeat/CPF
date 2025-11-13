@@ -1134,7 +1134,7 @@ function updateScoreDisplay() {
             </div>
 
             <div class="score-details-toggle">
-                <button class="btn btn-light" onclick="toggleScoreDetails()">
+                <button class="btn btn-light" onclick="window.CPFClient.toggleScoreDetails()">
                     📈 Show Question Breakdown
                 </button>
             </div>
@@ -1249,12 +1249,31 @@ function toggleDetailedAnalysis() {
 }
 
 // Auto-calculate score when responses change (optional - real-time)
+// Debounce timer for auto-save to API
+let autoSaveTimer = null;
+
 function updateResponseWithAutoScore(id, value) {
     updateResponse(id, value);
 
     // Auto-calculate IMMEDIATELY (no lag)
     if (currentData.fieldKit && currentData.fieldKit.scoring) {
         calculateIndicatorScore();
+
+        // Auto-save to API after 3 seconds of inactivity (debounced)
+        if (autoSaveTimer) {
+            clearTimeout(autoSaveTimer);
+        }
+
+        autoSaveTimer = setTimeout(async () => {
+            if (organizationContext.orgId && currentScore) {
+                console.log('🔄 Auto-saving assessment...');
+                try {
+                    await saveToAPI();
+                } catch (err) {
+                    console.error('Auto-save failed:', err);
+                }
+            }
+        }, 3000);
     }
 }
 
@@ -1857,6 +1876,7 @@ window.CPFClient = {
     generateReport: generateReport,
     resetAll: resetAll,
     toggleDetailedAnalysis: toggleDetailedAnalysis,
+    toggleScoreDetails: toggleScoreDetails,
 
     // Modal functions
     showQuickReference: showQuickReference,
