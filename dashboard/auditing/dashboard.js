@@ -2509,13 +2509,13 @@ async function revertToVersion(versionNumber) {
  * Export current organization to XLSX
  */
 async function exportCurrentOrgXLSX() {
-    if (!currentOrganization) {
+    if (!selectedOrgData) {
         showAlert('No organization selected', 'error');
         return;
     }
 
     try {
-        const orgId = currentOrganization.id;
+        const orgId = selectedOrgData.id;
         const url = `/api/organizations/${orgId}/export/xlsx?user=Dashboard User`;
 
         showAlert('Generating XLSX export...', 'info');
@@ -2523,7 +2523,7 @@ async function exportCurrentOrgXLSX() {
         // Create temporary link and trigger download
         const link = document.createElement('a');
         link.href = url;
-        link.download = `CPF_Audit_${currentOrganization.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        link.download = `CPF_Audit_${selectedOrgData.metadata.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -2541,13 +2541,13 @@ async function exportCurrentOrgXLSX() {
  * Export current organization to PDF
  */
 async function exportCurrentOrgPDF() {
-    if (!currentOrganization) {
+    if (!selectedOrgData) {
         showAlert('No organization selected', 'error');
         return;
     }
 
     try {
-        const orgId = currentOrganization.id;
+        const orgId = selectedOrgData.id;
         const url = `/api/organizations/${orgId}/export/pdf?user=Dashboard User`;
 
         showAlert('Generating PDF export...', 'info');
@@ -2555,7 +2555,7 @@ async function exportCurrentOrgPDF() {
         // Create temporary link and trigger download
         const link = document.createElement('a');
         link.href = url;
-        link.download = `CPF_Audit_${currentOrganization.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+        link.download = `CPF_Audit_${selectedOrgData.metadata.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
