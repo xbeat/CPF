@@ -886,18 +886,36 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                     date: new Date().toISOString().split('T')[0],
                     auditor: selectedOrgData?.metadata?.auditor || '',
                     client: selectedOrgData?.name || '',
-                    status: 'in-progress'
+                    status: 'in-progress',
+                    notes: ''
                 };
                 window.CPFClient.currentData.responses = {};
 
-                // If editing, populate with existing data
-                if (existingAssessment && existingAssessment.raw_data) {
-                    if (existingAssessment.raw_data.metadata) {
-                        window.CPFClient.currentData.metadata = existingAssessment.raw_data.metadata;
+                // If editing, populate with existing data from raw_data.client_conversation
+                if (existingAssessment && existingAssessment.raw_data && existingAssessment.raw_data.client_conversation) {
+                    // Load metadata from client_conversation (CORRECT location!)
+                    if (existingAssessment.raw_data.client_conversation.metadata) {
+                        window.CPFClient.currentData.metadata = {
+                            ...window.CPFClient.currentData.metadata,
+                            ...existingAssessment.raw_data.client_conversation.metadata
+                        };
                     }
-                    if (existingAssessment.raw_data.client_conversation) {
-                        window.CPFClient.currentData.responses = existingAssessment.raw_data.client_conversation.responses || {};
+
+                    // Load notes separately (in case stored separately for compatibility)
+                    if (existingAssessment.raw_data.client_conversation.notes) {
+                        window.CPFClient.currentData.metadata.notes = existingAssessment.raw_data.client_conversation.notes;
                     }
+
+                    // Load responses
+                    if (existingAssessment.raw_data.client_conversation.responses) {
+                        window.CPFClient.currentData.responses = existingAssessment.raw_data.client_conversation.responses;
+                    }
+
+                    console.log('✅ Existing assessment data loaded:', {
+                        metadata: window.CPFClient.currentData.metadata,
+                        responses: Object.keys(window.CPFClient.currentData.responses).length + ' items',
+                        notes: window.CPFClient.currentData.metadata.notes
+                    });
                 }
             }
 
@@ -1128,7 +1146,7 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
 
     // CRITICAL: Reload organization data FIRST to get latest changes
     console.log('🔄 Reloading organization data before viewing details...');
-    await loadOrganizationData(selectedOrgId);
+    await loadOrganizationDetails(selectedOrgId);
 
     const assessment = selectedOrgData.assessments[indicatorId];
     if (!assessment) {
