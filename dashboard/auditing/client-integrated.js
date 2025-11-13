@@ -1390,7 +1390,7 @@ function renderReferenceContent(container, data) {
     data.categories.forEach(category => {
         html += `
             <div class="category-accordion">
-                <div class="category-header" onclick="toggleCategory(${category.id})">
+                <div class="category-header" onclick="window.CPFClient.toggleCategory(${category.id})">
                     <div class="category-title">
                         <span class="category-badge">${category.id}.x</span>
                         <div style="flex: 1;">
@@ -1403,7 +1403,7 @@ function renderReferenceContent(container, data) {
                 <div class="category-body" id="category-${category.id}">
                     <div class="indicator-list">
                         ${category.indicators.map(indicator => `
-                            <div class="indicator-item" onclick="loadIndicatorFromReference('${indicator.id}')" title="Click to load this indicator">
+                            <div class="indicator-item" onclick="window.CPFClient.loadIndicatorFromReference('${indicator.id}')" title="Click to load this indicator">
                                 <span class="indicator-code">${indicator.id}</span>
                                 <span class="indicator-title">${indicator.title}</span>
                             </div>
@@ -1920,6 +1920,8 @@ window.CPFClient = {
     // Modal functions
     showQuickReference: showQuickReference,
     closeQuickReference: closeQuickReference,
+    toggleCategory: toggleCategory,
+    loadIndicatorFromReference: loadIndicatorFromReference,
     showIndicatorDetails: showIndicatorDetails,
     closeIndicatorDetails: closeIndicatorDetails,
 
