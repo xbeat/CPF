@@ -1425,12 +1425,20 @@ function renderReferenceContent(container, data) {
 }
 
 function toggleCategory(categoryId) {
-    const header = event.currentTarget;
     const body = document.getElementById(`category-${categoryId}`);
+    const header = body.previousElementSibling; // Get the category-header element
+    const arrow = header.querySelector('.category-arrow');
 
     // Toggle active state
     header.classList.toggle('active');
     body.classList.toggle('active');
+
+    // Rotate arrow
+    if (body.classList.contains('active')) {
+        arrow.textContent = '▼';
+    } else {
+        arrow.textContent = '▶';
+    }
 }
 
 async function loadIndicatorFromReference(indicatorId) {
