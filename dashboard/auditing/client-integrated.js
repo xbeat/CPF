@@ -495,6 +495,11 @@ function updateResponse(id, value) {
         }
     }
 
+    // Auto-calculate score when responses change (silent, no UI alert)
+    if (currentData.fieldKit && currentData.fieldKit.scoring) {
+        calculateIndicatorScore();
+    }
+
     // Auto-save immediately
     autoSave();
 }
@@ -569,13 +574,22 @@ async function saveToAPI() {
     // Extract red flags as array of strings for dashboard display
     const redFlagsArray = currentScore.details?.red_flags_list?.map(item => item.flag) || [];
 
+    // Calculate dynamic confidence based on conversation completeness
+    // Formula: confidence = 0.5 + (completion_rate * 0.45)
+    // This gives a range of 0.5 (no questions answered) to 0.95 (all questions answered)
+    const completionRate = currentScore.details?.conversation_breakdown?.completion_rate || 0;
+    const calculatedConfidence = 0.5 + (completionRate * 0.45);
+
+    // Round to 2 decimal places
+    const confidence = Math.round(calculatedConfidence * 100) / 100;
+
     // Prepare assessment data for API
     const assessmentData = {
         indicator_id: indicator,
         title: currentData.fieldKit.title || '',
         category: currentData.fieldKit.category || '',
         bayesian_score: currentScore.final_score,
-        confidence: 0.85, // Default confidence level
+        confidence: confidence, // Dynamic confidence based on conversation completeness
         maturity_level: currentScore.maturity_level || 'yellow',
         assessor: currentData.metadata.auditor || 'Client User',
         assessment_date: timestamp,
@@ -594,7 +608,10 @@ async function saveToAPI() {
     console.log('💾 Saving assessment to API:', {
         orgId: organizationContext.orgId,
         indicator,
-        score: currentScore.final_score
+        score: currentScore.final_score,
+        confidence: confidence,
+        maturity_level: currentScore.maturity_level,
+        completion_rate: completionRate
     });
 
     const response = await fetch(`/api/organizations/${organizationContext.orgId}/assessments`, {
