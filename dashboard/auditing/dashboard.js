@@ -1126,6 +1126,10 @@ async function editAssessmentFromModal() {
 async function viewAssessmentDetailsFromEdit(indicatorId) {
     if (!selectedOrgId) return;
 
+    // CRITICAL: Reload organization data FIRST to get latest changes
+    console.log('🔄 Reloading organization data before viewing details...');
+    await loadOrganizationData(selectedOrgId);
+
     const assessment = selectedOrgData.assessments[indicatorId];
     if (!assessment) {
         showAlert('Assessment not found', 'error');
