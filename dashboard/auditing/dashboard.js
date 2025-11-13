@@ -813,9 +813,18 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                         </div>
                     </div>
                 </div>
-                <div class="toolbar" style="justify-content: flex-end;">
-                    <button class="btn btn-success" onclick="window.CPFClient.saveToAPI()" id="save-to-dashboard-btn">💾 Save to Dashboard</button>
-                    <button class="btn btn-secondary" onclick="closeIndicatorModal()">✖️ Close</button>
+                <div class="toolbar" style="justify-content: space-between; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-info" onclick="window.CPFClient.showQuickReference()">📚 Quick Reference</button>
+                        <button class="btn btn-success" onclick="window.CPFClient.showIndicatorDetails()">📄 Indicator Details</button>
+                        <button class="btn btn-light" onclick="document.getElementById('file-input-integrated').click()">📂 Import JSON</button>
+                        <input type="file" id="file-input-integrated" accept=".json" onchange="window.CPFClient.importJSON(event)" style="display: none;">
+                        <button class="btn btn-danger" onclick="if(confirm('Reset all data?')) window.CPFClient.resetAll()" title="Clear all data and reset">🗑️ Reset</button>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-success" onclick="window.CPFClient.saveToAPI()" id="save-to-dashboard-btn">💾 Save to Dashboard</button>
+                        <button class="btn btn-secondary" onclick="closeIndicatorModal()">✖️ Close</button>
+                    </div>
                 </div>
                 <div class="metadata-bar" id="metadata-bar" style="display: none;"></div>
                 <div class="content" id="content">
