@@ -852,13 +852,13 @@ function selectRadioOption(itemId, value) {
         }
     }
 
-    // Auto-save immediately
-    autoSave();
-
-    // Trigger auto-calculation IMMEDIATELY (no lag)
+    // Auto-calculate score when responses change (silent, no UI alert)
     if (currentData.fieldKit && currentData.fieldKit.scoring) {
         calculateIndicatorScore();
     }
+
+    // Auto-save immediately
+    autoSave();
 }
 
 function resetAll() {
