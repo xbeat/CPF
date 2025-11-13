@@ -1039,6 +1039,18 @@ function calculateSimplifiedScore(responses) {
 }
 
 function closeIndicatorModal() {
+    // If we were viewing details from edit mode, return to editing
+    if (editingIndicatorId) {
+        const indicatorToEdit = editingIndicatorId;
+        const assessment = selectedOrgData.assessments[indicatorToEdit];
+        editingIndicatorId = null; // Clear flag
+
+        // Reopen edit form
+        openIntegratedClient(indicatorToEdit, selectedOrgId, assessment);
+        return;
+    }
+
+    // Otherwise, close normally
     document.getElementById('indicatorModal').classList.remove('active');
 
     // Remove fullscreen class when closing
@@ -1122,6 +1134,9 @@ async function editAssessmentFromModal() {
     });
 }
 
+// Store the indicator being edited (to return after viewing details)
+let editingIndicatorId = null;
+
 // View assessment details from edit form
 async function viewAssessmentDetailsFromEdit(indicatorId) {
     if (!selectedOrgId) return;
@@ -1132,7 +1147,10 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
         return;
     }
 
-    // Close current modal and show details
+    // Remember we're editing this indicator
+    editingIndicatorId = indicatorId;
+
+    // Show details (when closed, will return to editing)
     await showAssessmentDetails(indicatorId, assessment);
 }
 
