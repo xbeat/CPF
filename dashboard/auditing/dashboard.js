@@ -657,7 +657,6 @@ async function showAssessmentDetails(indicatorId, assessment) {
         `;
     }
 
-    document.getElementById('editAssessmentBtn').style.display = 'inline-flex';
     document.getElementById('deleteAssessmentBtn').style.display = 'inline-flex';
     document.getElementById('openIntegratedBtn').style.display = 'inline-flex';
 }
@@ -776,7 +775,6 @@ async function openIntegratedVersion() {
         renderIntegratedClientForm(indicatorId, fieldKit, orgId, assessment);
 
         // Hide buttons since we're in the form now
-        document.getElementById('editAssessmentBtn').style.display = 'none';
         document.getElementById('deleteAssessmentBtn').style.display = 'none';
         document.getElementById('openIntegratedBtn').style.display = 'none';
     } catch (error) {
@@ -1015,7 +1013,6 @@ function closeIndicatorModal() {
     const modalContent = document.querySelector('#indicatorModal .modal-content');
     modalContent.classList.remove('fullscreen-client');
 
-    document.getElementById('editAssessmentBtn').style.display = 'none';
     document.getElementById('deleteAssessmentBtn').style.display = 'none';
     document.getElementById('openIntegratedBtn').style.display = 'none';
     selectedIndicatorId = null;
@@ -1047,7 +1044,6 @@ async function editAssessmentFromModal() {
     const content = document.getElementById('indicatorModalContent');
 
     // Show delete button only (hide edit since we're already editing)
-    document.getElementById('editAssessmentBtn').style.display = 'none';
     document.getElementById('deleteAssessmentBtn').style.display = 'inline-block';
     document.getElementById('openIntegratedBtn').style.display = 'none';
 
