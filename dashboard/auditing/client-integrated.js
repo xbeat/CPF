@@ -17,7 +17,8 @@ let currentData = {
         date: new Date().toISOString().split('T')[0],
         auditor: '',
         client: '',
-        status: 'in-progress'
+        status: 'in-progress',
+        notes: ''
     },
     responses: {}
 };
@@ -201,7 +202,8 @@ function importJSON(event) {
                     date: new Date().toISOString().split('T')[0],
                     auditor: '',
                     client: '',
-                    status: 'in-progress'
+                    status: 'in-progress',
+                    notes: ''
                 };
                 currentData.responses = {};
                 renderFieldKit(data);
@@ -248,6 +250,14 @@ function renderFieldKit(data) {
                 <option value="completed" ${currentData.metadata.status === 'completed' ? 'selected' : ''}>Completed</option>
                 <option value="review" ${currentData.metadata.status === 'review' ? 'selected' : ''}>Under Review</option>
             </select>
+        </div>
+        <div class="meta-field" style="grid-column: 1 / -1;">
+            <label>Notes</label>
+            <textarea id="assessment-notes"
+                      placeholder="Assessment notes..."
+                      style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; min-height: 80px; font-family: inherit; font-size: 14px; resize: vertical;"
+                      onchange="window.CPFClient.updateMeta('notes', this.value)"
+                      onblur="window.CPFClient.updateMeta('notes', this.value)">${currentData.metadata.notes || ''}</textarea>
         </div>
     `;
     
@@ -551,6 +561,9 @@ async function saveToAPI() {
     const indicator = currentData.fieldKit.indicator;
     const timestamp = new Date().toISOString();
 
+    // Extract red flags as array of strings for dashboard display
+    const redFlagsArray = currentScore.details?.red_flags_list?.map(item => item.flag) || [];
+
     // Prepare assessment data for API
     const assessmentData = {
         indicator_id: indicator,
@@ -566,9 +579,10 @@ async function saveToAPI() {
             client_conversation: {
                 responses: currentData.responses || {},
                 scores: currentScore,
-                metadata: currentData.metadata
-            },
-            red_flags: currentScore.details?.red_flags_breakdown || {}
+                metadata: currentData.metadata,
+                notes: currentData.metadata.notes || '',
+                red_flags: redFlagsArray
+            }
         }
     };
 
@@ -840,7 +854,8 @@ function resetAll() {
             date: new Date().toISOString().split('T')[0],
             auditor: '',
             client: '',
-            status: 'in-progress'
+            status: 'in-progress',
+            notes: ''
         },
         responses: {},
         score: null
