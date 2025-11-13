@@ -1248,10 +1248,7 @@ function toggleDetailedAnalysis() {
     }
 }
 
-// Auto-calculate score when responses change (optional - real-time)
-// Debounce timer for auto-save to API
-let autoSaveTimer = null;
-
+// Auto-calculate score when responses change (REAL-TIME!)
 function updateResponseWithAutoScore(id, value) {
     updateResponse(id, value);
 
@@ -1259,21 +1256,12 @@ function updateResponseWithAutoScore(id, value) {
     if (currentData.fieldKit && currentData.fieldKit.scoring) {
         calculateIndicatorScore();
 
-        // Auto-save to API after 3 seconds of inactivity (debounced)
-        if (autoSaveTimer) {
-            clearTimeout(autoSaveTimer);
+        // Save IMMEDIATELY to API (real-time, no debounce!)
+        if (organizationContext.orgId && currentScore) {
+            saveToAPI().catch(err => {
+                console.error('Auto-save failed:', err);
+            });
         }
-
-        autoSaveTimer = setTimeout(async () => {
-            if (organizationContext.orgId && currentScore) {
-                console.log('🔄 Auto-saving assessment...');
-                try {
-                    await saveToAPI();
-                } catch (err) {
-                    console.error('Auto-save failed:', err);
-                }
-            }
-        }, 3000);
     }
 }
 
