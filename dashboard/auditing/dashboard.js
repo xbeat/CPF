@@ -1039,18 +1039,6 @@ function calculateSimplifiedScore(responses) {
 }
 
 function closeIndicatorModal() {
-    // If we were viewing details from edit mode, return to editing
-    if (editingIndicatorId) {
-        const indicatorToEdit = editingIndicatorId;
-        const assessment = selectedOrgData.assessments[indicatorToEdit];
-        editingIndicatorId = null; // Clear flag
-
-        // Reopen edit form
-        openIntegratedClient(indicatorToEdit, selectedOrgId, assessment);
-        return;
-    }
-
-    // Otherwise, close normally
     document.getElementById('indicatorModal').classList.remove('active');
 
     // Remove fullscreen class when closing
@@ -1134,10 +1122,7 @@ async function editAssessmentFromModal() {
     });
 }
 
-// Store the indicator being edited (to return after viewing details)
-let editingIndicatorId = null;
-
-// View assessment details from edit form
+// View assessment details from edit form (opens in separate modal)
 async function viewAssessmentDetailsFromEdit(indicatorId) {
     if (!selectedOrgId) return;
 
@@ -1147,11 +1132,89 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
         return;
     }
 
-    // Remember we're editing this indicator
-    editingIndicatorId = indicatorId;
+    // Open details in SEPARATE modal (assessmentDetailsModal)
+    document.getElementById('assessmentDetailsTitle').textContent = `Indicator ${indicatorId} - Assessment Details`;
+    document.getElementById('assessmentDetailsModal').classList.add('active');
 
-    // Show details (when closed, will return to editing)
-    await showAssessmentDetails(indicatorId, assessment);
+    const content = document.getElementById('assessmentDetailsContent');
+    const riskClass = assessment.bayesian_score < 0.33 ? 'risk-low' :
+                        assessment.bayesian_score < 0.66 ? 'risk-medium' : 'risk-high';
+    const riskLabel = assessment.bayesian_score < 0.33 ? '🟢 Low Risk' :
+                        assessment.bayesian_score < 0.66 ? '🟡 Medium Risk' : '🔴 High Risk';
+
+    // Show loading state first
+    content.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+            <p>Loading Field Kit details...</p>
+        </div>
+    `;
+
+    // Try to load Field Kit from GitHub
+    try {
+        const [categoryNum, indicatorNum] = indicatorId.split('.');
+        const categoryName = CATEGORY_MAP[categoryNum];
+        const language = selectedOrgData.metadata.language || 'en-US';
+        const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
+
+        const response = await fetch(url);
+        let fieldKit = null;
+        if (response.ok) {
+            fieldKit = await response.json();
+        }
+
+        // Render full details
+        content.innerHTML = `
+            <div style="display: grid; gap: 20px;">
+                <!-- Assessment Summary -->
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: var(--primary);">${fieldKit?.title || assessment.title || 'Indicator ' + indicatorId}</h4>
+                    <p style="margin: 0; color: var(--text-light); font-size: 14px;">${fieldKit?.category || assessment.category || 'Category'}</p>
+                </div>
+
+                <!-- Risk Stats -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="stat-box">
+                        <div class="stat-label">Risk Score</div>
+                        <div class="stat-value ${riskClass}">${(assessment.bayesian_score * 100).toFixed(1)}%</div>
+                        <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">${riskLabel}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Confidence</div>
+                        <div class="stat-value">${(assessment.confidence * 100).toFixed(1)}%</div>
+                        <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Assessment reliability</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Maturity Level</div>
+                        <div class="stat-value" style="text-transform: uppercase;">${assessment.maturity_level || 'N/A'}</div>
+                        <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Control maturity</div>
+                    </div>
+                </div>
+
+                <!-- Assessment Information -->
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <div style="font-weight: 600; margin-bottom: 10px;">Assessment Information</div>
+                    <div style="display: grid; gap: 8px; font-size: 14px;">
+                        <div><strong>Assessor:</strong> ${assessment.assessor || 'Unknown'}</div>
+                        <div><strong>Assessment Date:</strong> ${new Date(assessment.assessment_date).toLocaleString()}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading Field Kit:', error);
+        content.innerHTML = `
+            <div style="padding: 20px;">
+                <p>⚠️ Could not load full Field Kit details</p>
+                <p style="font-size: 14px; color: var(--text-light);">Showing basic assessment information only.</p>
+            </div>
+        `;
+    }
+}
+
+// Close assessment details modal (returns to edit form which is still open)
+function closeAssessmentDetailsModal() {
+    document.getElementById('assessmentDetailsModal').classList.remove('active');
 }
 
 // Delete assessment from edit form
