@@ -1016,6 +1016,7 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                         <input type="file" id="file-input-integrated" accept=".json" onchange="window.CPFClient.importJSON(event)" style="display: none;">
                         <button class="btn btn-danger" onclick="if(confirm('Reset all data?')) window.CPFClient.resetAll()" title="Clear all data and reset">🗑️ Reset</button>
                         ${isEditMode ? `<button class="btn btn-primary" onclick="viewAssessmentDetailsFromEdit('${indicatorId}')">📋 View Details</button>` : ''}
+                        ${isEditMode ? `<button class="btn btn-warning" onclick="openHistoryModal()">📜 History</button>` : ''}
                         ${isEditMode ? `<button class="btn btn-danger" onclick="deleteAssessmentFromEdit('${indicatorId}')">🗑️ Delete Assessment</button>` : ''}
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
@@ -1554,22 +1555,6 @@ async function openHistoryModalFromDetails() {
 
     // Keep details modal open, just open history on top
     await openHistoryModal();
-}
-
-// Edit assessment from details view
-async function editAssessmentFromDetails() {
-    if (!selectedIndicatorId || !selectedOrgId) {
-        showAlert('No assessment selected', 'error');
-        return;
-    }
-
-    const assessment = selectedOrgData.assessments[selectedIndicatorId];
-
-    // Close details modal
-    closeAssessmentDetailsModal();
-
-    // Reopen in edit mode
-    await openIntegratedClient(selectedIndicatorId, selectedOrgId, assessment);
 }
 
 // Delete assessment from details view
@@ -2585,10 +2570,13 @@ async function exportCurrentOrgXLSX() {
 
         showAlert('Generating XLSX export...', 'info');
 
+        // Get organization name with fallbacks
+        const orgName = (selectedOrgData.metadata?.name || selectedOrgData.name || orgId || 'Organization').replace(/\s/g, '_');
+
         // Create temporary link and trigger download
         const link = document.createElement('a');
         link.href = url;
-        link.download = `CPF_Audit_${selectedOrgData.metadata.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        link.download = `CPF_Audit_${orgName}_${new Date().toISOString().split('T')[0]}.xlsx`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -2617,10 +2605,13 @@ async function exportCurrentOrgPDF() {
 
         showAlert('Generating PDF export...', 'info');
 
+        // Get organization name with fallbacks
+        const orgName = (selectedOrgData.metadata?.name || selectedOrgData.name || orgId || 'Organization').replace(/\s/g, '_');
+
         // Create temporary link and trigger download
         const link = document.createElement('a');
         link.href = url;
-        link.download = `CPF_Audit_${selectedOrgData.metadata.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+        link.download = `CPF_Audit_${orgName}_${new Date().toISOString().split('T')[0]}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
