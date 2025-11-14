@@ -21,6 +21,16 @@ const { execSync } = require('child_process');
 // Import data manager
 const dataManager = require('./lib/dataManager');
 
+// Simulator mode (enabled via environment variable)
+const SIMULATOR_MODE = process.env.SIMULATOR_MODE === 'true';
+let simulator = null;
+
+if (SIMULATOR_MODE) {
+  const { getInstance: getSimulator } = require('./simulator/generators');
+  simulator = getSimulator();
+  console.log('🎭 [Simulator] Mode ENABLED');
+}
+
 const app = express();
 const PORT = 3000;
 
@@ -1171,6 +1181,281 @@ app.post('/api/generate-synthetic', (req, res) => {
 });
 
 // ============================================
+// SIMULATOR API ENDPOINTS
+// ============================================
+
+if (SIMULATOR_MODE && simulator) {
+  /**
+   * GET /api/simulator/status
+   * Get simulator status
+   */
+  app.get('/api/simulator/status', (req, res) => {
+    try {
+      const status = simulator.getStatus();
+
+      // Load sources config
+      const sourcesPath = path.join(__dirname, 'simulator/config/sources.json');
+      const sourcesData = JSON.parse(fs.readFileSync(sourcesPath, 'utf8'));
+      const availableSources = sourcesData.sources
+        .filter(s => s.enabled)
+        .map(s => s.id);
+
+      res.json({
+        enabled: true,
+        ...status,
+        availableSources
+      });
+    } catch (error) {
+      console.error('[Simulator] Error getting status:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * POST /api/simulator/start
+   * Start simulator for organization
+   * Body: { orgId, sources?, scenario?, rate? }
+   */
+  app.post('/api/simulator/start', async (req, res) => {
+    try {
+      const { orgId, sources, scenario, rate, duration } = req.body;
+
+      if (!orgId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field: orgId'
+        });
+      }
+
+      // Verify organization exists
+      if (!dataManager.organizationExists(orgId)) {
+        return res.status(404).json({
+          success: false,
+          error: 'Organization not found',
+          orgId
+        });
+      }
+
+      // Setup callback per salvare assessments generati
+      simulator.setAssessmentsCallback(async (orgId, assessments) => {
+        for (const assessment of assessments) {
+          try {
+            await dataManager.saveAssessment(orgId, assessment, 'SIEM-Simulator');
+          } catch (error) {
+            console.error(`Failed to save assessment for ${orgId}:`, error.message);
+          }
+        }
+      });
+
+      // Start simulator
+      const result = simulator.start(orgId, {
+        sources,
+        scenario: scenario || 'normal',
+        rate: rate || 10,
+        duration: duration || 0
+      });
+
+      console.log(`\n✅ [API] Simulator started for ${orgId}\n`);
+
+      res.json({
+        success: true,
+        message: 'Simulator started',
+        ...result
+      });
+
+    } catch (error) {
+      console.error('[Simulator] Error starting:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * POST /api/simulator/stop
+   * Stop simulator for organization
+   * Body: { orgId }
+   */
+  app.post('/api/simulator/stop', (req, res) => {
+    try {
+      const { orgId } = req.body;
+
+      if (!orgId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field: orgId'
+        });
+      }
+
+      const result = simulator.stop(orgId);
+
+      console.log(`\n✅ [API] Simulator stopped for ${orgId}\n`);
+
+      res.json(result);
+
+    } catch (error) {
+      console.error('[Simulator] Error stopping:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/simulator/sources
+   * List available SIEM/SOC/EDR sources
+   */
+  app.get('/api/simulator/sources', (req, res) => {
+    try {
+      const sourcesPath = path.join(__dirname, 'simulator/config/sources.json');
+      const data = JSON.parse(fs.readFileSync(sourcesPath, 'utf8'));
+
+      res.json({
+        success: true,
+        sources: data.sources.map(s => ({
+          id: s.id,
+          name: s.name,
+          type: s.type,
+          vendor: s.vendor,
+          version: s.version,
+          enabled: s.enabled,
+          description: s.description
+        })),
+        metadata: data.metadata
+      });
+
+    } catch (error) {
+      console.error('[Simulator] Error reading sources:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/simulator/scenarios
+   * List available attack scenarios
+   */
+  app.get('/api/simulator/scenarios', (req, res) => {
+    try {
+      const scenarios = simulator.getAvailableScenarios();
+
+      res.json({
+        success: true,
+        scenarios,
+        count: scenarios.length
+      });
+
+    } catch (error) {
+      console.error('[Simulator] Error reading scenarios:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * POST /api/simulator/scenario
+   * Execute specific scenario
+   * Body: { orgId, scenario, duration?, intensity? }
+   */
+  app.post('/api/simulator/scenario', async (req, res) => {
+    try {
+      const { orgId, scenario, duration, intensity } = req.body;
+
+      if (!orgId || !scenario) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: orgId, scenario'
+        });
+      }
+
+      // Verify organization exists
+      if (!dataManager.organizationExists(orgId)) {
+        return res.status(404).json({
+          success: false,
+          error: 'Organization not found',
+          orgId
+        });
+      }
+
+      // Start simulator with scenario
+      const result = simulator.start(orgId, {
+        scenario,
+        duration: duration || 3600,
+        intensity: intensity || 'high'
+      });
+
+      console.log(`\n🎬 [API] Scenario "${scenario}" started for ${orgId}\n`);
+
+      res.json({
+        success: true,
+        message: `Scenario "${scenario}" started`,
+        ...result
+      });
+
+    } catch (error) {
+      console.error('[Simulator] Error executing scenario:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/simulator/scenario/:orgId
+   * Get scenario report for organization
+   */
+  app.get('/api/simulator/scenario/:orgId', (req, res) => {
+    try {
+      const { orgId } = req.params;
+
+      const report = simulator.getScenarioReport(orgId);
+
+      if (!report) {
+        return res.status(404).json({
+          success: false,
+          error: 'No active scenario for this organization',
+          orgId
+        });
+      }
+
+      res.json({
+        success: true,
+        report
+      });
+
+    } catch (error) {
+      console.error('[Simulator] Error getting scenario report:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  console.log('🔌 [Simulator] API routes registered');
+
+} else {
+  // Simulator disabled - return 503 for simulator endpoints
+  app.all('/api/simulator/*', (req, res) => {
+    res.status(503).json({
+      success: false,
+      error: 'Simulator not enabled',
+      message: 'Set SIMULATOR_MODE=true to enable simulator'
+    });
+  });
+}
+
+// ============================================
 // SERVER START
 // ============================================
 
@@ -1209,8 +1494,22 @@ app.listen(PORT, () => {
   console.log(`        GET    /api/list-exports`);
   console.log(`        POST   /api/save-export`);
   console.log(`        POST   /api/batch-import`);
-  console.log(`        POST   /api/generate-synthetic\n`);
-  console.log('⚙️  Press CTRL+C to stop the server\n');
+  console.log(`        POST   /api/generate-synthetic`);
+
+  if (SIMULATOR_MODE) {
+    console.log(`\n   🎭 Simulator (ENABLED):`)
+    console.log(`        GET    /api/simulator/status`);
+    console.log(`        POST   /api/simulator/start`);
+    console.log(`        POST   /api/simulator/stop`);
+    console.log(`        GET    /api/simulator/sources`);
+    console.log(`        GET    /api/simulator/scenarios`);
+    console.log(`        POST   /api/simulator/scenario`);
+    console.log(`        GET    /api/simulator/scenario/:orgId`);
+  } else {
+    console.log(`\n   🎭 Simulator: DISABLED (set SIMULATOR_MODE=true to enable)`);
+  }
+
+  console.log('\n⚙️  Press CTRL+C to stop the server\n');
 });
 
 // Graceful shutdown
