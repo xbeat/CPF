@@ -83,19 +83,45 @@ function renderOrganizationsList(data) {
         const overallRisk = org.stats?.overall_risk || 0;
         const riskClass = overallRisk > 0.66 ? 'high' :
             overallRisk > 0.33 ? 'medium' : 'low';
+        const riskLabel = overallRisk > 0.66 ? 'High' :
+            overallRisk > 0.33 ? 'Medium' : 'Low';
         const completion = org.stats?.completion_percentage || 0;
         const totalAssessments = org.stats?.total_assessments || 0;
 
+        // Helper function to capitalize first letter
+        const capitalizeFirst = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+
+        // Get language info
+        const language = org.metadata?.language || 'en-US';
+        const languageFlag = language === 'it-IT' ? '🇮🇹' :
+                            language === 'en-US' ? '🇺🇸' :
+                            language === 'de-DE' ? '🇩🇪' :
+                            language === 'fr-FR' ? '🇫🇷' :
+                            language === 'es-ES' ? '🇪🇸' : '🌐';
+
         item.innerHTML = `
-            <div class="org-name">${org.name}</div>
-            <div class="org-meta">
-                <span class="org-industry">${org.industry}</span>
-                <span class="org-risk ${riskClass}">Risk: ${(overallRisk * 100).toFixed(0)}%</span>
+            <div class="org-card-header">
+                <div class="org-name">${org.name}</div>
+                <div class="org-meta">
+                    ${org.industry} • ${capitalizeFirst(org.size)} • ${org.country}
+                </div>
             </div>
-            <div class="org-stats-mini">
-                <div class="stat-mini">
-                    <span class="stat-mini-label">Progress:</span>
-                    <span class="stat-mini-value">${totalAssessments}/100 (${completion}%)</span>
+            <div class="org-stats-detailed">
+                <div class="stat-row">
+                    <span class="stat-label">Language</span>
+                    <span class="stat-value">${languageFlag} ${language}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Assessments</span>
+                    <span class="stat-value">${totalAssessments}/100 (${completion}%)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Risk Level</span>
+                    <span class="stat-value ${riskClass}">${riskLabel} (${(overallRisk * 100).toFixed(0)}%)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Confidence</span>
+                    <span class="stat-value">${org.stats?.confidence ? (org.stats.confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
                 </div>
             </div>
         `;
