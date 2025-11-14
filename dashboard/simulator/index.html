@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPF SIEM/SOC Simulator - Control Dashboard</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-light: #64748b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 2px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #dbeafe;
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Layout */
+        .container {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            background: white;
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            transition: transform 0.3s;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: #f8fafc;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .org-count {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .org-list {
+            padding: 1rem;
+        }
+
+        .org-item {
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .org-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+        }
+
+        .org-item.active {
+            background: #dbeafe;
+            border-color: var(--primary);
+        }
+
+        .org-name {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .org-meta {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .main.collapsed {
+            margin-left: 0;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        /* Empty State */
+        #empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        #empty-state h2 {
+            font-size: 1.5rem;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        #empty-state p {
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }
+
+        /* Simulator Controls */
+        .simulator-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .simulator-status.running {
+            background: #dcfce7;
+        }
+
+        .simulator-status.stopped {
+            background: #fee2e2;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--text-light);
+        }
+
+        .status-indicator.running {
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.stopped {
+            background: var(--danger);
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .toggle-label {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #cbd5e1;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: var(--success);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(30px);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #1d4ed8;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: var(--text);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #cbd5e1;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Grid */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* Loading */
+        #loading {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Event Log */
+        .event-log {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+
+        .event-log-entry {
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+
+        .event-timestamp {
+            color: #94a3b8;
+        }
+
+        /* Checkboxes */
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>🎭 CPF SIEM/SOC Simulator</h1>
+        <div class="header-badge">
+            <span class="status-dot"></span>
+            <span id="header-status">Simulator Ready</span>
+        </div>
+    </div>
+
+    <!-- Container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Organizations</h2>
+                <div class="org-count">
+                    <span id="org-count">0</span> organizations
+                </div>
+            </div>
+            <div class="org-list" id="org-list">
+                <!-- Organizations will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main" id="main">
+            <!-- Loading -->
+            <div id="loading">
+                <div class="spinner"></div>
+                <h2>Loading Simulator...</h2>
+                <p>Initializing SIEM/SOC simulator components</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" style="display: none;">
+                <h2>🚀 Simulator Ready</h2>
+                <p>Select an organization from the sidebar to start simulating SIEM/SOC events</p>
+            </div>
+
+            <!-- Simulator Dashboard -->
+            <div id="simulator-dashboard" style="display: none;">
+                <!-- Status Card -->
+                <div class="card">
+                    <div class="simulator-status" id="simulator-status">
+                        <span class="status-indicator" id="status-indicator"></span>
+                        <div>
+                            <strong id="status-text">Simulator Stopped</strong>
+                            <div style="font-size: 0.875rem; color: var(--text-light);" id="status-detail">
+                                Select a mode and click Start
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls Card -->
+                <div class="card">
+                    <h3 class="card-title">Simulator Controls</h3>
+
+                    <!-- Mode Toggle -->
+                    <div class="toggle-container">
+                        <span class="toggle-label">Mode:</span>
+                        <button class="btn btn-secondary" id="mode-manual">📝 Manual</button>
+                        <button class="btn btn-primary" id="mode-auto">🤖 Automatic</button>
+                    </div>
+
+                    <div class="controls-grid">
+                        <!-- Auto Mode Controls -->
+                        <div id="auto-controls">
+                            <div class="form-group">
+                                <label class="form-label">Scenario</label>
+                                <select id="scenario-select">
+                                    <option value="normal">Normal Operations (Baseline)</option>
+                                    <option value="phishing-campaign">Phishing Campaign</option>
+                                    <option value="ransomware-attack">Ransomware Attack</option>
+                                    <option value="insider-threat">Insider Threat</option>
+                                    <option value="apt-intrusion">APT Intrusion</option>
+                                    <option value="credential-stuffing">Credential Stuffing</option>
+                                    <option value="supply-chain-compromise">Supply Chain Attack</option>
+                                    <option value="ddos-attack">DDoS Attack</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Event Rate (events/sec)</label>
+                                <input type="number" id="rate-input" value="10" min="1" max="100">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Duration (seconds, 0=infinite)</label>
+                                <input type="number" id="duration-input" value="0" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Manual Mode Controls -->
+                        <div id="manual-controls" style="display: none;">
+                            <div class="form-group">
+                                <label class="form-label">Event Type</label>
+                                <select id="event-type-select">
+                                    <option value="phishing_clicked">Phishing Clicked</option>
+                                    <option value="malware_detected">Malware Detected</option>
+                                    <option value="ransomware_activity">Ransomware Activity</option>
+                                    <option value="data_exfiltration">Data Exfiltration</option>
+                                    <option value="privilege_escalation">Privilege Escalation</option>
+                                    <option value="lateral_movement">Lateral Movement</option>
+                                    <option value="brute_force_attack">Brute Force Attack</option>
+                                    <option value="insider_threat_indicator">Insider Threat</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Severity</label>
+                                <select id="severity-select">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Count</label>
+                                <input type="number" id="event-count-input" value="1" min="1" max="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SIEM Sources -->
+                    <div class="form-group">
+                        <label class="form-label">SIEM/EDR Sources</label>
+                        <div class="checkbox-group" id="sources-checkboxes">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button class="btn btn-success" id="start-btn">▶️ Start Simulator</button>
+                        <button class="btn btn-danger" id="stop-btn" disabled>⏹️ Stop Simulator</button>
+                        <button class="btn btn-primary" id="emit-event-btn" style="display: none;">⚡ Emit Event</button>
+                        <button class="btn btn-secondary" onclick="window.open('/dashboard/soc/', '_blank')">
+                            📊 View SOC Dashboard
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistics Card -->
+                <div class="card">
+                    <h3 class="card-title">Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Events Generated</div>
+                            <div class="stat-value" id="stat-events">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Assessments Created</div>
+                            <div class="stat-value" id="stat-assessments">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Uptime</div>
+                            <div class="stat-value" id="stat-uptime">0s</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Current Scenario</div>
+                            <div class="stat-value" id="stat-scenario">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Log Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Event Log</h3>
+                        <button class="btn btn-secondary" onclick="clearEventLog()">Clear</button>
+                    </div>
+                    <div class="event-log" id="event-log">
+                        <div class="event-log-entry">
+                            <span class="event-timestamp">[Ready]</span> Simulator initialized and ready
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="simulator-dashboard.js"></script>
+</body>
+</html>
