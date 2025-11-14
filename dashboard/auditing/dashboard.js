@@ -54,6 +54,16 @@ window.addEventListener('keydown', (event) => {
             case 'historyModal':
                 closeHistoryModal();
                 break;
+            case 'reference-modal':
+                if (window.CPFClient && window.CPFClient.closeQuickReference) {
+                    window.CPFClient.closeQuickReference();
+                }
+                break;
+            case 'indicator-details-modal':
+                if (window.CPFClient && window.CPFClient.closeIndicatorDetails) {
+                    window.CPFClient.closeIndicatorDetails();
+                }
+                break;
         }
     }
 });
@@ -1498,10 +1508,20 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
     console.log('🔄 Reloading organization data before viewing details...');
     await loadOrganizationDetails(selectedOrgId);
 
-    const assessment = selectedOrgData.assessments[indicatorId];
+    let assessment = selectedOrgData.assessments[indicatorId];
+    const isNewAssessment = !assessment;
+
+    // If assessment doesn't exist, create a temporary one with default values
     if (!assessment) {
-        showAlert('Assessment not found', 'error');
-        return;
+        assessment = {
+            bayesian_score: 0,
+            confidence: 0,
+            maturity_level: 'Not assessed',
+            assessor: 'N/A',
+            assessment_date: new Date().toISOString(),
+            title: `Indicator ${indicatorId}`,
+            category: 'N/A'
+        };
     }
 
     // Open details in SEPARATE modal (assessmentDetailsModal)
@@ -1539,6 +1559,13 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
         // Render FULL details with ALL sections
         content.innerHTML = `
             <div style="display: grid; gap: 20px;">
+                ${isNewAssessment ? `
+                <!-- New Assessment Warning -->
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #f39c12;">
+                    <div style="font-weight: 600; color: #856404; margin-bottom: 5px;">ℹ️ Assessment Not Yet Completed</div>
+                    <p style="margin: 0; color: #856404; font-size: 14px;">This indicator has not been assessed yet. Complete the assessment to see risk scores and analysis.</p>
+                </div>
+                ` : ''}
                 <!-- Assessment Summary -->
                 <div>
                     <h4 style="margin: 0 0 10px 0; color: var(--primary);">${fieldKit?.title || assessment.title || 'Indicator ' + indicatorId}</h4>
