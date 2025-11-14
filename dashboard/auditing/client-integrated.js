@@ -239,6 +239,20 @@ function importJSON(event) {
 }
 
 function renderFieldKit(data) {
+    // Detect Bayesian schema (indicators 9.6-9.10)
+    const isBayesianSchema = data.indicator_id && data.quick_assessment && !data.sections;
+
+    if (isBayesianSchema) {
+        alert(`⚠️ Indicator ${data.indicator_id} uses Bayesian schema which is not yet supported by the integrated client.\n\nPlease use the standalone reference tool for this indicator.`);
+        return;
+    }
+
+    // Check for missing sections
+    if (!data.sections || !Array.isArray(data.sections)) {
+        alert(`⚠️ Error: This indicator file is missing the required 'sections' field.\n\nThe file may be corrupted or use an unsupported format.`);
+        return;
+    }
+
     document.getElementById('header').innerHTML = `
         <div class="header-content">
             <h1>Indicator ${data.indicator} Field Kit</h1>
@@ -246,7 +260,7 @@ function renderFieldKit(data) {
             <div class="indicator-badge">${data.category}</div>
         </div>
     `;
-    
+
     const metadataBar = document.getElementById('metadata-bar');
     metadataBar.style.display = 'grid';
     metadataBar.innerHTML = `
@@ -287,31 +301,37 @@ function renderFieldKit(data) {
         html += `
             <div class="section">
                 <div class="section-header">
-                    <div class="section-icon">${section.icon}</div>
+                    <div class="section-icon">${section.icon || '📋'}</div>
                     <div class="section-title">${section.title}</div>
                     ${section.time ? `<div class="section-time">${section.time} minutes</div>` : ''}
                 </div>
         `;
         
-        // Render items principali
-        section.items.forEach((item, iIdx) => {
-            const itemId = `s${sIdx}_i${iIdx}`;
-            html += renderItem(item, itemId);
-        });
-        
-        // Render subsections
-        section.subsections.forEach((sub, subIdx) => {
-            html += `
-                <div class="subsection">
-                    <h3 class="subsection-title">${sub.title}</h3>
-                    <div class="checkbox-list">
-            `;
-            sub.items.forEach((item, iIdx) => {
-                const itemId = `s${sIdx}_sub${subIdx}_i${iIdx}`;
+        // Render items principali (safe check for array)
+        if (section.items && Array.isArray(section.items)) {
+            section.items.forEach((item, iIdx) => {
+                const itemId = `s${sIdx}_i${iIdx}`;
                 html += renderItem(item, itemId);
             });
-            html += `</div></div>`;
-        });
+        }
+
+        // Render subsections (safe check for array)
+        if (section.subsections && Array.isArray(section.subsections)) {
+            section.subsections.forEach((sub, subIdx) => {
+                html += `
+                    <div class="subsection">
+                        <h3 class="subsection-title">${sub.title}</h3>
+                        <div class="checkbox-list">
+                `;
+                if (sub.items && Array.isArray(sub.items)) {
+                    sub.items.forEach((item, iIdx) => {
+                        const itemId = `s${sIdx}_sub${subIdx}_i${iIdx}`;
+                        html += renderItem(item, itemId);
+                    });
+                }
+                html += `</div></div>`;
+            });
+        }
         
         html += `</div>`;
     });
