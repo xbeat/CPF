@@ -1676,7 +1676,12 @@ function clearCategoryFilter() {
 function openCreateOrgModal() {
     editingOrgId = null;
     document.getElementById('orgModalTitle').textContent = 'Create New Organization';
-    document.getElementById('saveOrgBtn').textContent = 'Create Organization';
+
+    // Reset button state
+    const saveBtn = document.getElementById('saveOrgBtn');
+    saveBtn.textContent = 'Create Organization';
+    saveBtn.disabled = false;
+
     document.getElementById('orgForm').reset();
     document.getElementById('orgId').disabled = false;
     document.getElementById('fetchIndicators').parentElement.parentElement.classList.remove('hidden');
@@ -1689,7 +1694,12 @@ function editOrganization(orgId) {
     if (!org) return;
 
     document.getElementById('orgModalTitle').textContent = 'Edit Organization';
-    document.getElementById('saveOrgBtn').textContent = 'Save Changes';
+
+    // Reset button state
+    const saveBtn = document.getElementById('saveOrgBtn');
+    saveBtn.textContent = 'Save Changes';
+    saveBtn.disabled = false;
+
     document.getElementById('orgId').value = org.id;
     document.getElementById('orgId').disabled = true;
     document.getElementById('orgName').value = org.name;
