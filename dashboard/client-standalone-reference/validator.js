@@ -30,7 +30,55 @@ function validateCPFJSON(jsonData) {
     const errors = [];
     const warnings = [];
 
-    // 1. Check root fields
+    // Detect Bayesian network schema (used by 9.6-9.10)
+    const isBayesianSchema = jsonData.hasOwnProperty('indicator_id') &&
+                            jsonData.hasOwnProperty('quick_assessment') &&
+                            !jsonData.hasOwnProperty('sections');
+
+    if (isBayesianSchema) {
+        // Alternative validation for Bayesian network schema
+        const bayesianRequiredFields = ['indicator_id', 'indicator_name', 'category', 'description', 'metadata', 'quick_assessment'];
+        bayesianRequiredFields.forEach(field => {
+            if (!jsonData.hasOwnProperty(field)) {
+                errors.push(`Missing required field: ${field}`);
+            }
+        });
+
+        // Validate indicator_id format
+        if (jsonData.indicator_id && !CPF_SCHEMA_REQUIREMENTS.indicator_pattern.test(jsonData.indicator_id)) {
+            errors.push(`Invalid indicator_id format: ${jsonData.indicator_id}. Expected format: X.Y`);
+        }
+
+        // Validate category
+        if (jsonData.category && !jsonData.category.match(/^\d\.x-[a-z]+$/)) {
+            warnings.push(`Category format "${jsonData.category}" doesn't match expected pattern`);
+        }
+
+        // Validate quick_assessment structure
+        if (jsonData.quick_assessment && jsonData.quick_assessment.questions) {
+            const questions = jsonData.quick_assessment.questions;
+            const weightSum = Object.values(questions).reduce((sum, q) => sum + (q.weight || 0), 0);
+            if (Math.abs(weightSum - 1.0) > 0.01) {
+                warnings.push(`Quick assessment question weights sum to ${weightSum.toFixed(3)}, expected ~1.0`);
+            }
+        }
+
+        return {
+            valid: errors.length === 0,
+            errors: errors,
+            warnings: warnings,
+            summary: {
+                total_checks: 4,
+                errors_found: errors.length,
+                warnings_found: warnings.length,
+                indicator: jsonData.indicator_id,
+                category: jsonData.category,
+                schema_type: 'bayesian'
+            }
+        };
+    }
+
+    // 1. Check root fields (standard schema)
     CPF_SCHEMA_REQUIREMENTS.required_root_fields.forEach(field => {
         if (!jsonData.hasOwnProperty(field)) {
             errors.push(`Missing required field: ${field}`);
@@ -142,19 +190,44 @@ function validateCPFJSON(jsonData) {
             }
         };
 
-        jsonData.interdependencies.amplified_by?.forEach(dep => {
-            validateIndicatorRef(dep.indicator);
-            if (dep.probability && (dep.probability < 0 || dep.probability > 1)) {
-                errors.push(`Probability must be 0-1. Got ${dep.probability} for ${dep.indicator}`);
+        // Support both array format and object format for interdependencies
+        const amplifiedBy = jsonData.interdependencies.amplified_by;
+        if (amplifiedBy) {
+            if (Array.isArray(amplifiedBy)) {
+                // Array format (standard)
+                amplifiedBy.forEach(dep => {
+                    validateIndicatorRef(dep.indicator);
+                    if (dep.probability && (dep.probability < 0 || dep.probability > 1)) {
+                        errors.push(`Probability must be 0-1. Got ${dep.probability} for ${dep.indicator}`);
+                    }
+                    if (dep.factor && dep.factor < 1.0) {
+                        warnings.push(`Amplification factor < 1.0 for ${dep.indicator}. Expected >= 1.0`);
+                    }
+                });
+            } else if (typeof amplifiedBy === 'object' && amplifiedBy.indicators) {
+                // Object format with Bayesian network (advanced format for 9.6-9.10)
+                Object.keys(amplifiedBy.indicators).forEach(key => {
+                    const indicatorId = key.replace('indicator_', '');
+                    validateIndicatorRef(indicatorId);
+                });
             }
-            if (dep.factor && dep.factor < 1.0) {
-                warnings.push(`Amplification factor < 1.0 for ${dep.indicator}. Expected >= 1.0`);
-            }
-        });
+        }
 
-        jsonData.interdependencies.amplifies?.forEach(dep => {
-            validateIndicatorRef(dep.indicator);
-        });
+        const amplifies = jsonData.interdependencies.amplifies;
+        if (amplifies) {
+            if (Array.isArray(amplifies)) {
+                // Array format (standard)
+                amplifies.forEach(dep => {
+                    validateIndicatorRef(dep.indicator);
+                });
+            } else if (typeof amplifies === 'object' && amplifies.indicators) {
+                // Object format with Bayesian network
+                Object.keys(amplifies.indicators).forEach(key => {
+                    const indicatorId = key.replace('indicator_', '');
+                    validateIndicatorRef(indicatorId);
+                });
+            }
+        }
     }
 
     // 8. Validate detection formulas syntax
