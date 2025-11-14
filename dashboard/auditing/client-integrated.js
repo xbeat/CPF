@@ -618,6 +618,9 @@ async function saveToAPI() {
     // Extract red flags as array of strings for dashboard display
     const redFlagsArray = currentScore.details?.red_flags_list?.map(item => item.flag) || [];
 
+    console.log('💾 [SAVE DEBUG] Red flags being saved:', redFlagsArray);
+    console.log('💾 [SAVE DEBUG] currentScore.details.red_flags_list:', currentScore.details?.red_flags_list);
+
     // Calculate dynamic confidence based on conversation completeness
     // Formula: confidence = 0.5 + (completion_rate * 0.45)
     // This gives a range of 0.5 (no questions answered) to 0.95 (all questions answered)
@@ -655,7 +658,9 @@ async function saveToAPI() {
         score: currentScore.final_score,
         confidence: confidence,
         maturity_level: currentScore.maturity_level,
-        completion_rate: completionRate
+        completion_rate: completionRate,
+        red_flags_count: redFlagsArray.length,
+        red_flags: redFlagsArray
     });
 
     const response = await fetch(`/api/organizations/${organizationContext.orgId}/assessments`, {
