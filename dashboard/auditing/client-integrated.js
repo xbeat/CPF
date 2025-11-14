@@ -618,9 +618,6 @@ async function saveToAPI() {
     // Extract red flags as array of strings for dashboard display
     const redFlagsArray = currentScore.details?.red_flags_list?.map(item => item.flag) || [];
 
-    console.log('💾 [SAVE DEBUG] Red flags being saved:', redFlagsArray);
-    console.log('💾 [SAVE DEBUG] currentScore.details.red_flags_list:', currentScore.details?.red_flags_list);
-
     // Calculate dynamic confidence based on conversation completeness
     // Formula: confidence = 0.5 + (completion_rate * 0.45)
     // This gives a range of 0.5 (no questions answered) to 0.95 (all questions answered)
@@ -657,10 +654,7 @@ async function saveToAPI() {
         indicator,
         score: currentScore.final_score,
         confidence: confidence,
-        maturity_level: currentScore.maturity_level,
-        completion_rate: completionRate,
-        red_flags_count: redFlagsArray.length,
-        red_flags: redFlagsArray
+        maturity_level: currentScore.maturity_level
     });
 
     const response = await fetch(`/api/organizations/${organizationContext.orgId}/assessments`, {
@@ -1105,19 +1099,12 @@ function calculateIndicatorScore() {
     // Red flags are items with severity field (critical/high) - works for all languages
     let redFlagsItems = [];
 
-    console.log('🔍 [RED FLAGS DEBUG] Starting red flags detection...');
-    console.log('🔍 [RED FLAGS DEBUG] Total sections:', sections.length);
-
     // Scan ALL sections and subsections to find items with severity
     sections.forEach((section, sIdx) => {
-        console.log(`🔍 [RED FLAGS DEBUG] Section ${sIdx}:`, section.id, '-', section.title);
-
         // Check direct items
         if (section.items && Array.isArray(section.items)) {
-            console.log(`  └─ Section has ${section.items.length} direct items`);
             section.items.forEach((item, iIdx) => {
                 if (item.severity) {
-                    console.log(`    ✅ Found red flag item: ${item.id} - severity: ${item.severity} - impact: ${item.score_impact || item.weight}`);
                     redFlagsItems.push(item);
                 }
             });
@@ -1125,14 +1112,10 @@ function calculateIndicatorScore() {
 
         // Check subsection items
         if (section.subsections && Array.isArray(section.subsections)) {
-            console.log(`  └─ Section has ${section.subsections.length} subsections`);
             section.subsections.forEach((subsection, subIdx) => {
-                console.log(`    └─ Subsection ${subIdx}:`, subsection.title);
                 if (subsection.items && Array.isArray(subsection.items)) {
-                    console.log(`      └─ ${subsection.items.length} items`);
                     subsection.items.forEach((item, iIdx) => {
                         if (item.severity) {
-                            console.log(`        ✅ Found red flag item: ${item.id} - severity: ${item.severity} - impact: ${item.score_impact || item.weight}`);
                             redFlagsItems.push(item);
                         }
                     });
@@ -1141,9 +1124,6 @@ function calculateIndicatorScore() {
         }
     });
 
-    console.log('🔍 [RED FLAGS DEBUG] Total red flags found:', redFlagsItems.length);
-    console.log('🔍 [RED FLAGS DEBUG] Red flag IDs:', redFlagsItems.map(i => i.id));
-
     // Calculate red flags score using item.id from Field Kit
     if (redFlagsItems.length > 0) {
         let totalRedFlagImpact = 0;
@@ -1151,15 +1131,10 @@ function calculateIndicatorScore() {
         redFlagsItems.forEach((item) => {
             // Use the item's ID directly from the Field Kit JSON
             const itemId = item.id;
-            if (!itemId) {
-                console.log('⚠️ [RED FLAGS DEBUG] Item without ID:', item);
-                return; // Skip if no ID
-            }
+            if (!itemId) return; // Skip if no ID
 
             const isChecked = currentData.responses[itemId];
             const impact = item.score_impact || item.weight || 0;
-
-            console.log(`🔍 [RED FLAGS DEBUG] Checking ${itemId}: checked=${isChecked}, impact=${impact}`);
 
             if (isChecked && impact > 0) {
                 totalRedFlagImpact += impact;
@@ -1167,15 +1142,10 @@ function calculateIndicatorScore() {
                     flag: item.label || item.title || item.description,
                     impact: impact
                 });
-                console.log(`  ✅ RED FLAG ACTIVE: ${itemId} - adding ${impact} to score`);
             }
         });
 
         currentScore.red_flags = Math.min(totalRedFlagImpact, 1); // Cap at 1.0
-        console.log('🔍 [RED FLAGS DEBUG] Final red flags score:', currentScore.red_flags);
-        console.log('🔍 [RED FLAGS DEBUG] Active red flags:', currentScore.details.red_flags_list);
-    } else {
-        console.log('⚠️ [RED FLAGS DEBUG] NO RED FLAGS FOUND IN FIELD KIT!');
     }
 
     // 4. CALCULATE FINAL VULNERABILITY SCORE
