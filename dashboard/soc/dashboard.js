@@ -3,6 +3,8 @@ let organizationsData = null;
 let currentOrgId = null;
 let currentOrgLanguage = 'en-US'; // Default language
 let sortDirection = 'desc'; // 'asc' or 'desc'
+let editingOrgId = null;
+let deletingOrgId = null;
 
 // Open sidebar - idempotent (do nothing if already open)
 function openSidebar() {
@@ -242,17 +244,123 @@ function resetFilters() {
     filterAndSortOrganizations();
 }
 
-// Edit organization - redirect to Auditing dashboard for full management
-function editOrganization(orgId) {
-    if (confirm('Edit organization? You will be redirected to the Auditing Dashboard.')) {
-        window.location.href = `../auditing/index.html?edit=${orgId}`;
+// Edit organization - open modal with current data
+async function editOrganization(orgId) {
+    editingOrgId = orgId;
+
+    try {
+        // Fetch full organization data
+        const response = await fetch(`/api/organizations/${orgId}`);
+        if (!response.ok) throw new Error('Failed to load organization');
+
+        const result = await response.json();
+        const org = result.data;
+
+        // Populate form
+        document.getElementById('edit-org-name').value = org.name;
+        document.getElementById('edit-org-industry').value = org.metadata.industry;
+        document.getElementById('edit-org-size').value = org.metadata.size;
+        document.getElementById('edit-org-country').value = org.metadata.country;
+        document.getElementById('edit-org-language').value = org.metadata.language;
+        document.getElementById('edit-org-notes').value = org.metadata.notes || '';
+
+        // Show modal
+        document.getElementById('edit-org-modal').style.display = 'block';
+    } catch (error) {
+        console.error('Error loading organization:', error);
+        alert('Failed to load organization data: ' + error.message);
     }
 }
 
-// Delete organization - redirect to Auditing dashboard for full management
+function closeEditOrgModal() {
+    document.getElementById('edit-org-modal').style.display = 'none';
+    document.getElementById('edit-org-form').reset();
+    editingOrgId = null;
+}
+
+async function saveOrganizationEdit(event) {
+    event.preventDefault();
+
+    if (!editingOrgId) return;
+
+    const data = {
+        name: document.getElementById('edit-org-name').value,
+        metadata: {
+            industry: document.getElementById('edit-org-industry').value,
+            size: document.getElementById('edit-org-size').value,
+            country: document.getElementById('edit-org-country').value.toUpperCase(),
+            language: document.getElementById('edit-org-language').value,
+            notes: document.getElementById('edit-org-notes').value
+        }
+    };
+
+    try {
+        const response = await fetch(`/api/organizations/${editingOrgId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('✅ Organization updated successfully!');
+            closeEditOrgModal();
+            await loadOrganizationsData();
+
+            // If editing currently selected org, reload it
+            if (currentOrgId === editingOrgId) {
+                await loadAndRenderOrganization(editingOrgId);
+            }
+        } else {
+            alert('Failed to update organization: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error updating organization:', error);
+        alert('Failed to update organization: ' + error.message);
+    }
+}
+
+// Delete organization - open confirmation modal
 function deleteOrganization(orgId, orgName) {
-    if (confirm(`Delete organization "${orgName}"? You will be redirected to the Auditing Dashboard.`)) {
-        window.location.href = `../auditing/index.html?delete=${orgId}`;
+    deletingOrgId = orgId;
+    document.getElementById('delete-org-name').textContent = orgName;
+    document.getElementById('delete-org-modal').style.display = 'block';
+}
+
+function closeDeleteOrgModal() {
+    document.getElementById('delete-org-modal').style.display = 'none';
+    deletingOrgId = null;
+}
+
+async function confirmDeleteOrganization() {
+    if (!deletingOrgId) return;
+
+    try {
+        const response = await fetch(`/api/organizations/${deletingOrgId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('✅ Organization deleted successfully!');
+            closeDeleteOrgModal();
+
+            // If deleting currently selected org, clear selection
+            if (currentOrgId === deletingOrgId) {
+                currentOrgId = null;
+                document.getElementById('org-detail').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+            }
+
+            await loadOrganizationsData();
+        } else {
+            alert('Failed to delete organization: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error deleting organization:', error);
+        alert('Failed to delete organization: ' + error.message);
     }
 }
 
