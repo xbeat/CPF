@@ -75,9 +75,14 @@ function renderOrganizationsList(data) {
     orgCount.textContent = data.metadata.total_organizations;
 
     const orgs = data.organizations;
+    orgList.innerHTML = ''; // Clear existing list
+
     orgs.forEach((org) => {
         const item = document.createElement('div');
         item.className = 'org-item';
+        if (currentOrgId === org.id) {
+            item.classList.add('active');
+        }
         item.onclick = () => selectOrganization(org.id);
 
         const overallRisk = org.stats?.overall_risk || 0;
@@ -132,6 +137,78 @@ function renderOrganizationsList(data) {
 
         orgList.appendChild(item);
     });
+}
+
+// Filter and sort organizations based on search and sort criteria
+function filterAndSortOrganizations() {
+    if (!organizationsData) return;
+
+    const searchValue = document.getElementById('org-search').value.toLowerCase().trim();
+    const sortValue = document.getElementById('org-sort').value;
+
+    // Filter organizations
+    let filtered = organizationsData.organizations.filter(org => {
+        if (!searchValue) return true;
+
+        const searchableText = [
+            org.name,
+            org.industry,
+            org.country,
+            org.size
+        ].join(' ').toLowerCase();
+
+        return searchableText.includes(searchValue);
+    });
+
+    // Sort organizations
+    filtered.sort((a, b) => {
+        switch (sortValue) {
+            case 'name':
+                return a.name.localeCompare(b.name);
+
+            case 'risk':
+                return (b.stats?.overall_risk || 0) - (a.stats?.overall_risk || 0);
+
+            case 'completion':
+                return (b.stats?.completion_percentage || 0) - (a.stats?.completion_percentage || 0);
+
+            case 'updated_at':
+                return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
+
+            case 'assessments':
+                return (b.stats?.total_assessments || 0) - (a.stats?.total_assessments || 0);
+
+            case 'industry':
+                return a.industry.localeCompare(b.industry);
+
+            case 'country':
+                return a.country.localeCompare(b.country);
+
+            case 'created_at':
+            default:
+                return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        }
+    });
+
+    // Update count and re-render
+    const orgCount = document.getElementById('org-count');
+    orgCount.textContent = filtered.length;
+
+    const data = {
+        metadata: {
+            total_organizations: filtered.length
+        },
+        organizations: filtered
+    };
+
+    renderOrganizationsList(data);
+}
+
+// Reset all filters to default
+function resetFilters() {
+    document.getElementById('org-search').value = '';
+    document.getElementById('org-sort').value = 'created_at';
+    filterAndSortOrganizations();
 }
 
 async function selectOrganization(orgId) {
