@@ -48,6 +48,32 @@ window.addEventListener('DOMContentLoaded', async () => {
     await loadOrganizationsData();
 });
 
+// Close modals on ESC key
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        // Close indicator modal
+        const indicatorModal = document.getElementById('indicator-modal');
+        if (indicatorModal && indicatorModal.style.display !== 'none') {
+            closeIndicatorModal();
+            return;
+        }
+
+        // Close edit modal
+        const editModal = document.getElementById('edit-org-modal');
+        if (editModal && editModal.style.display !== 'none') {
+            closeEditOrgModal();
+            return;
+        }
+
+        // Close delete modal
+        const deleteModal = document.getElementById('delete-org-modal');
+        if (deleteModal && deleteModal.style.display !== 'none') {
+            closeDeleteOrgModal();
+            return;
+        }
+    }
+});
+
 async function loadOrganizationsData() {
     try {
         const response = await fetch('/api/organizations');
