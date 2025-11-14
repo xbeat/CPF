@@ -13,6 +13,48 @@ document.addEventListener('DOMContentLoaded', () => {
     loadAllData();
 });
 
+// Close modals on ESC key
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        // Check and close each modal
+        const orgModal = document.getElementById('orgModal');
+        if (orgModal && orgModal.classList.contains('active')) {
+            closeOrgModal();
+            return;
+        }
+
+        const deleteModal = document.getElementById('deleteModal');
+        if (deleteModal && deleteModal.classList.contains('active')) {
+            closeDeleteModal();
+            return;
+        }
+
+        const indicatorModal = document.getElementById('indicatorModal');
+        if (indicatorModal && indicatorModal.classList.contains('active')) {
+            closeIndicatorModal();
+            return;
+        }
+
+        const assessmentModal = document.getElementById('assessmentDetailsModal');
+        if (assessmentModal && assessmentModal.classList.contains('active')) {
+            closeAssessmentDetailsModal();
+            return;
+        }
+
+        const trashModal = document.getElementById('trashModal');
+        if (trashModal && trashModal.classList.contains('active')) {
+            closeTrashModal();
+            return;
+        }
+
+        const historyModal = document.getElementById('historyModal');
+        if (historyModal && historyModal.classList.contains('active')) {
+            closeHistoryModal();
+            return;
+        }
+    }
+});
+
 // ===== DATA LOADING =====
 async function loadAllData() {
     try {
