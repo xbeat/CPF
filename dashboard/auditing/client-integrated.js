@@ -310,7 +310,8 @@ function renderFieldKit(data) {
         // Render items principali (safe check for array)
         if (section.items && Array.isArray(section.items)) {
             section.items.forEach((item, iIdx) => {
-                const itemId = `s${sIdx}_i${iIdx}`;
+                // Use item.id from Field Kit if available, otherwise construct ID
+                const itemId = item.id || `s${sIdx}_i${iIdx}`;
                 html += renderItem(item, itemId);
             });
         }
@@ -325,7 +326,8 @@ function renderFieldKit(data) {
                 `;
                 if (sub.items && Array.isArray(sub.items)) {
                     sub.items.forEach((item, iIdx) => {
-                        const itemId = `s${sIdx}_sub${subIdx}_i${iIdx}`;
+                        // Use item.id from Field Kit if available, otherwise construct ID
+                        const itemId = item.id || `s${sIdx}_sub${subIdx}_i${iIdx}`;
                         html += renderItem(item, itemId);
                     });
                 }
@@ -1014,7 +1016,8 @@ function calculateIndicatorScore() {
         let weightedScore = 0;
 
         quickSection.items.forEach((item, idx) => {
-            const itemId = `s0_i${idx}`;
+            // Use item.id from Field Kit if available, otherwise construct ID
+            const itemId = item.id || `s0_i${idx}`;
             const response = currentData.responses[itemId];
             
             if (response && item.options) {
@@ -1040,31 +1043,46 @@ function calculateIndicatorScore() {
 
     // 2. TRACK CONVERSATION COMPLETENESS (informational only, not part of vulnerability score)
     const convSection = sections.find(s => s.id === 'client-conversation');
-    if (convSection && convSection.subsections) {
+    if (convSection) {
         let totalQuestions = 0;
         let answeredQuestions = 0;
 
-        convSection.subsections.forEach((subsection, subIdx) => {
-            if (subsection.items) {
-                subsection.items.forEach((item, iIdx) => {
-                    if (item.type === 'question') {
-                        const itemId = `s1_sub${subIdx}_i${iIdx}`;
+        // Handle both structures: subsections (EN) OR direct items (IT)
+        const processItems = (items, baseId) => {
+            items.forEach((item, iIdx) => {
+                if (item.type === 'question') {
+                    // Use item.id from Field Kit if available, otherwise use baseId
+                    const itemId = item.id || `${baseId}_i${iIdx}`;
 
-                        // Only count follow-ups (main questions don't have input fields, only text)
-                        if (item.followups) {
-                            item.followups.forEach((followup, fIdx) => {
-                                totalQuestions++;
-                                const followupId = `${itemId}_f${fIdx}`;
-                                const followupResponse = currentData.responses[followupId];
-                                if (followupResponse && followupResponse.trim().length > 0) {
-                                    answeredQuestions++;
-                                }
-                            });
-                        }
+                    // Only count follow-ups (main questions don't have input fields, only text)
+                    if (item.followups || item.followup) {
+                        const followups = item.followups || item.followup || [];
+                        followups.forEach((followup, fIdx) => {
+                            totalQuestions++;
+                            const followupId = `${itemId}_f${fIdx}`;
+                            const followupResponse = currentData.responses[followupId];
+                            if (followupResponse && followupResponse.trim().length > 0) {
+                                answeredQuestions++;
+                            }
+                        });
                     }
-                });
-            }
-        });
+                }
+            });
+        };
+
+        // Process subsections if they exist (EN structure)
+        if (convSection.subsections && convSection.subsections.length > 0) {
+            convSection.subsections.forEach((subsection, subIdx) => {
+                if (subsection.items) {
+                    processItems(subsection.items, `s1_sub${subIdx}`);
+                }
+            });
+        }
+
+        // Process direct items if they exist (IT structure)
+        if (convSection.items && convSection.items.length > 0) {
+            processItems(convSection.items, 's1');
+        }
 
         // Conversation completeness (for reference only, NOT part of vulnerability score)
         const completionRate = totalQuestions > 0 ? answeredQuestions / totalQuestions : 0;
@@ -1079,23 +1097,44 @@ function calculateIndicatorScore() {
     }
 
     // 3. CALCULATE RED FLAGS SCORE
-    const redFlagsSubsection = convSection?.subsections?.find(s => s.id === 'red-flags');
-    if (redFlagsSubsection && redFlagsSubsection.items) {
+    // Try to find red flags section (could be a separate section OR a subsection)
+    let redFlagsItems = null;
+
+    // First, try to find as a separate section (Italian structure)
+    const redFlagsSection = sections.find(s => s.id === 'red-flags');
+    if (redFlagsSection && redFlagsSection.items) {
+        redFlagsItems = redFlagsSection.items;
+    }
+
+    // If not found, try as subsection in client-conversation (English structure)
+    if (!redFlagsItems && convSection && convSection.subsections) {
+        const redFlagsSubsection = convSection.subsections.find(s => s.title && s.title.match(/Red Flags|BANDIERE ROSSE/i));
+        if (redFlagsSubsection && redFlagsSubsection.items) {
+            redFlagsItems = redFlagsSubsection.items;
+        }
+    }
+
+    // Calculate red flags score using item.id from Field Kit (not constructed IDs)
+    if (redFlagsItems) {
         let totalRedFlagImpact = 0;
-        
-        redFlagsSubsection.items.forEach((item, iIdx) => {
-            const itemId = `s1_sub3_i${iIdx}`; // Assumendo che red flags sia subsection 3
+
+        redFlagsItems.forEach((item) => {
+            // Use the item's ID directly from the Field Kit JSON
+            const itemId = item.id;
+            if (!itemId) return; // Skip if no ID
+
             const isChecked = currentData.responses[itemId];
-            
-            if (isChecked && item.score_impact) {
-                totalRedFlagImpact += item.score_impact;
+            const impact = item.score_impact || item.weight || 0;
+
+            if (isChecked && impact > 0) {
+                totalRedFlagImpact += impact;
                 currentScore.details.red_flags_list.push({
-                    flag: item.label,
-                    impact: item.score_impact
+                    flag: item.label || item.title || item.description,
+                    impact: impact
                 });
             }
         });
-        
+
         currentScore.red_flags = Math.min(totalRedFlagImpact, 1); // Cap at 1.0
     }
 
