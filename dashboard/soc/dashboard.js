@@ -224,7 +224,8 @@ function convertOrgDataForBayesian(org) {
 
 function renderOrganizationDetail(org) {
     // Save organization language for indicator detail modal
-    currentOrgLanguage = org.language || 'en-US';
+    // Full org object has language in metadata, not at root level
+    currentOrgLanguage = org.metadata?.language || 'en-US';
 
     // Convert API v2.0 format (assessments) to bayesian.js format (indicators)
     const orgDataForBayesian = convertOrgDataForBayesian(org);
