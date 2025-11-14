@@ -940,14 +940,6 @@ async function showAssessmentDetails(indicatorId, assessment) {
                 </div>
                 ` : ''}
 
-                ${(() => {
-                    console.log('🔍 [DISPLAY DEBUG] Assessment red flags check:');
-                    console.log('  - assessment.raw_data:', !!assessment.raw_data);
-                    console.log('  - assessment.raw_data.client_conversation:', !!assessment.raw_data?.client_conversation);
-                    console.log('  - red_flags:', assessment.raw_data?.client_conversation?.red_flags);
-                    console.log('  - red_flags length:', assessment.raw_data?.client_conversation?.red_flags?.length);
-                    return '';
-                })()}
                 ${assessment.raw_data && assessment.raw_data.client_conversation && assessment.raw_data.client_conversation.red_flags && assessment.raw_data.client_conversation.red_flags.length > 0 ? `
                 <div style="background: #fee2e2; padding: 15px; border-radius: 8px; border: 1px solid var(--danger);">
                     <div style="font-weight: 600; margin-bottom: 10px; color: var(--danger);">🚩 Red Flags Identified (${assessment.raw_data.client_conversation.red_flags.length})</div>
@@ -1666,14 +1658,6 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
                 </div>
                 ` : ''}
 
-                ${(() => {
-                    console.log('🔍 [DISPLAY DEBUG 2] Assessment red flags check:');
-                    console.log('  - assessment.raw_data:', !!assessment.raw_data);
-                    console.log('  - assessment.raw_data.client_conversation:', !!assessment.raw_data?.client_conversation);
-                    console.log('  - red_flags:', assessment.raw_data?.client_conversation?.red_flags);
-                    console.log('  - red_flags length:', assessment.raw_data?.client_conversation?.red_flags?.length);
-                    return '';
-                })()}
                 ${assessment.raw_data && assessment.raw_data.client_conversation && assessment.raw_data.client_conversation.red_flags && assessment.raw_data.client_conversation.red_flags.length > 0 ? `
                 <div style="background: #fee2e2; padding: 15px; border-radius: 8px; border: 1px solid var(--danger);">
                     <div style="font-weight: 600; margin-bottom: 10px; color: var(--danger);">🚩 Red Flags Identified (${assessment.raw_data.client_conversation.red_flags.length})</div>
