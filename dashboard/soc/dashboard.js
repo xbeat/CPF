@@ -91,17 +91,17 @@ function renderOrganizationsList(data) {
         // Helper function to capitalize first letter
         const capitalizeFirst = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 
-        // Get country flag
+        // Get country flag using ISO codes
         const country = org.country || 'Unknown';
-        const countryFlag = country === 'Italy' || country === 'Italia' ? '🇮🇹' :
-                           country === 'USA' || country === 'United States' ? '🇺🇸' :
-                           country === 'Germany' || country === 'Germania' ? '🇩🇪' :
-                           country === 'France' || country === 'Francia' ? '🇫🇷' :
-                           country === 'Spain' || country === 'Spagna' ? '🇪🇸' :
-                           country === 'UK' || country === 'United Kingdom' ? '🇬🇧' : '🌐';
+        const countryFlag = country === 'IT' ? '🇮🇹' :
+                           country === 'US' ? '🇺🇸' :
+                           country === 'GB' ? '🇬🇧' :
+                           country === 'DE' ? '🇩🇪' :
+                           country === 'FR' ? '🇫🇷' :
+                           country === 'ES' ? '🇪🇸' : '🌐';
 
-        // Get language info
-        const language = org.metadata?.language || 'en-US';
+        // Get language info (language is at org level, not in metadata)
+        const language = org.language || 'en-US';
 
         item.innerHTML = `
             <div class="org-card-header">
@@ -224,7 +224,7 @@ function convertOrgDataForBayesian(org) {
 
 function renderOrganizationDetail(org) {
     // Save organization language for indicator detail modal
-    currentOrgLanguage = org.metadata?.language || 'en-US';
+    currentOrgLanguage = org.language || 'en-US';
 
     // Convert API v2.0 format (assessments) to bayesian.js format (indicators)
     const orgDataForBayesian = convertOrgDataForBayesian(org);
