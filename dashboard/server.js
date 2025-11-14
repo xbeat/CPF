@@ -21,14 +21,16 @@ const { execSync } = require('child_process');
 // Import data manager
 const dataManager = require('./lib/dataManager');
 
-// Simulator mode (enabled via environment variable)
-const SIMULATOR_MODE = process.env.SIMULATOR_MODE === 'true';
+// Simulator (lazy-loaded on first use)
 let simulator = null;
 
-if (SIMULATOR_MODE) {
-  const { getInstance: getSimulator } = require('./simulator/generators');
-  simulator = getSimulator();
-  console.log('🎭 [Simulator] Mode ENABLED');
+function getSimulator() {
+  if (!simulator) {
+    const { getInstance } = require('./simulator/generators');
+    simulator = getInstance();
+    console.log('🎭 [Simulator] Initialized on-demand');
+  }
+  return simulator;
 }
 
 const app = express();
@@ -1184,14 +1186,14 @@ app.post('/api/generate-synthetic', (req, res) => {
 // SIMULATOR API ENDPOINTS
 // ============================================
 
-if (SIMULATOR_MODE && simulator) {
-  /**
-   * GET /api/simulator/status
-   * Get simulator status
-   */
-  app.get('/api/simulator/status', (req, res) => {
-    try {
-      const status = simulator.getStatus();
+/**
+ * GET /api/simulator/status
+ * Get simulator status
+ */
+app.get('/api/simulator/status', (req, res) => {
+  try {
+    const sim = getSimulator();
+    const status = sim.getStatus();
 
       // Load sources config
       const sourcesPath = path.join(__dirname, 'simulator/config/sources.json');
@@ -1240,7 +1242,8 @@ if (SIMULATOR_MODE && simulator) {
       }
 
       // Setup callback per salvare assessments generati
-      simulator.setAssessmentsCallback(async (orgId, assessments) => {
+      const sim = getSimulator();
+      sim.setAssessmentsCallback(async (orgId, assessments) => {
         for (const assessment of assessments) {
           try {
             await dataManager.saveAssessment(orgId, assessment, 'SIEM-Simulator');
@@ -1251,7 +1254,7 @@ if (SIMULATOR_MODE && simulator) {
       });
 
       // Start simulator
-      const result = simulator.start(orgId, {
+      const result = sim.start(orgId, {
         sources,
         scenario: scenario || 'normal',
         rate: rate || 10,
@@ -1291,7 +1294,8 @@ if (SIMULATOR_MODE && simulator) {
         });
       }
 
-      const result = simulator.stop(orgId);
+      const sim = getSimulator();
+      const result = sim.stop(orgId);
 
       console.log(`\n✅ [API] Simulator stopped for ${orgId}\n`);
 
@@ -1344,7 +1348,8 @@ if (SIMULATOR_MODE && simulator) {
    */
   app.get('/api/simulator/scenarios', (req, res) => {
     try {
-      const scenarios = simulator.getAvailableScenarios();
+      const sim = getSimulator();
+      const scenarios = sim.getAvailableScenarios();
 
       res.json({
         success: true,
@@ -1387,7 +1392,18 @@ if (SIMULATOR_MODE && simulator) {
       }
 
       // Start simulator with scenario
-      const result = simulator.start(orgId, {
+      const sim = getSimulator();
+      sim.setAssessmentsCallback(async (orgId, assessments) => {
+        for (const assessment of assessments) {
+          try {
+            await dataManager.saveAssessment(orgId, assessment, 'SIEM-Simulator');
+          } catch (error) {
+            console.error(`Failed to save assessment for ${orgId}:`, error.message);
+          }
+        }
+      });
+
+      const result = sim.start(orgId, {
         scenario,
         duration: duration || 3600,
         intensity: intensity || 'high'
@@ -1418,7 +1434,8 @@ if (SIMULATOR_MODE && simulator) {
     try {
       const { orgId } = req.params;
 
-      const report = simulator.getScenarioReport(orgId);
+      const sim = getSimulator();
+      const report = sim.getScenarioReport(orgId);
 
       if (!report) {
         return res.status(404).json({
@@ -1442,18 +1459,79 @@ if (SIMULATOR_MODE && simulator) {
     }
   });
 
-  console.log('🔌 [Simulator] API routes registered');
+/**
+ * POST /api/simulator/emit
+ * Emit manual events
+ * Body: { orgId, eventType, severity, count, sources }
+ */
+app.post('/api/simulator/emit', async (req, res) => {
+  try {
+    const { orgId, eventType, severity, count, sources } = req.body;
 
-} else {
-  // Simulator disabled - return 503 for simulator endpoints
-  app.all('/api/simulator/*', (req, res) => {
-    res.status(503).json({
-      success: false,
-      error: 'Simulator not enabled',
-      message: 'Set SIMULATOR_MODE=true to enable simulator'
+    if (!orgId || !eventType) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: orgId, eventType'
+      });
+    }
+
+    // Verify organization exists
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const sim = getSimulator();
+    const SIEMDataGenerator = require('./simulator/generators/siem-data-generator');
+    const CPFAdapter = require('./simulator/adapters/cpf-adapter');
+    const { getInstance: getDenseLoader } = require('./simulator/generators/dense-loader');
+
+    const siemGenerator = new SIEMDataGenerator();
+    const denseLoader = getDenseLoader();
+    const cpfAdapter = new CPFAdapter(denseLoader);
+
+    // Generate events
+    const eventSources = sources && sources.length > 0 ? sources : ['splunk'];
+    const events = [];
+
+    for (let i = 0; i < (count || 1); i++) {
+      const source = eventSources[Math.floor(Math.random() * eventSources.length)];
+      const event = siemGenerator.generateEvent(source, eventType, 'manual', severity || 'medium');
+      events.push(event);
+    }
+
+    // Convert to assessments
+    const assessments = await cpfAdapter.convertEventsToAssessments(events, orgId, 'manual');
+
+    // Save assessments
+    for (const assessment of assessments) {
+      try {
+        await dataManager.saveAssessment(orgId, assessment, 'Manual-Simulator');
+      } catch (error) {
+        console.error(`Failed to save assessment:`, error.message);
+      }
+    }
+
+    console.log(`\n⚡ [API] Emitted ${events.length} manual event(s) for ${orgId}\n`);
+
+    res.json({
+      success: true,
+      message: `Emitted ${events.length} event(s)`,
+      eventsGenerated: events.length,
+      assessmentsCreated: assessments.length
     });
-  });
-}
+
+  } catch (error) {
+    console.error('[Simulator] Error emitting event:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 // ============================================
 // SERVER START
@@ -1469,7 +1547,9 @@ app.listen(PORT, () => {
   console.log(`      → http://localhost:${PORT}/dashboard/auditing/`);
   console.log(`        (Auditing Progress + Risk Analysis Dashboard - with integrated client)`);
   console.log(`      → http://localhost:${PORT}/dashboard/soc/`);
-  console.log(`        (SOC + Bayesian Analysis Dashboard)\n`);
+  console.log(`        (SOC + Bayesian Analysis Dashboard)`);
+  console.log(`      → http://localhost:${PORT}/dashboard/simulator/`);
+  console.log(`        (SIEM/SOC Simulator Control Dashboard)\n`);
   console.log('   📝 Legacy URLs (auto-redirect):');
   console.log(`      → /dashboard/dashboard_auditing.html → /dashboard/auditing/`);
   console.log(`      → /dashboard/dashboard.html → /dashboard/soc/\n`);
@@ -1495,19 +1575,15 @@ app.listen(PORT, () => {
   console.log(`        POST   /api/save-export`);
   console.log(`        POST   /api/batch-import`);
   console.log(`        POST   /api/generate-synthetic`);
-
-  if (SIMULATOR_MODE) {
-    console.log(`\n   🎭 Simulator (ENABLED):`)
-    console.log(`        GET    /api/simulator/status`);
-    console.log(`        POST   /api/simulator/start`);
-    console.log(`        POST   /api/simulator/stop`);
-    console.log(`        GET    /api/simulator/sources`);
-    console.log(`        GET    /api/simulator/scenarios`);
-    console.log(`        POST   /api/simulator/scenario`);
-    console.log(`        GET    /api/simulator/scenario/:orgId`);
-  } else {
-    console.log(`\n   🎭 Simulator: DISABLED (set SIMULATOR_MODE=true to enable)`);
-  }
+  console.log(`\n   🎭 Simulator (Lazy-loaded on first use):`);
+  console.log(`        GET    /api/simulator/status`);
+  console.log(`        POST   /api/simulator/start`);
+  console.log(`        POST   /api/simulator/stop`);
+  console.log(`        POST   /api/simulator/emit`);
+  console.log(`        GET    /api/simulator/sources`);
+  console.log(`        GET    /api/simulator/scenarios`);
+  console.log(`        POST   /api/simulator/scenario`);
+  console.log(`        GET    /api/simulator/scenario/:orgId`);
 
   console.log('\n⚙️  Press CTRL+C to stop the server\n');
 });
