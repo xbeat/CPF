@@ -1079,7 +1079,7 @@ function calculateIndicatorScore() {
     }
 
     // 3. CALCULATE RED FLAGS SCORE
-    const redFlagsSubsection = convSection?.subsections?.find(s => s.title === 'Probing for Red Flags');
+    const redFlagsSubsection = convSection?.subsections?.find(s => s.id === 'red-flags');
     if (redFlagsSubsection && redFlagsSubsection.items) {
         let totalRedFlagImpact = 0;
         
@@ -1386,6 +1386,11 @@ async function showQuickReference() {
     // Show modal immediately
     modal.style.display = 'flex';
 
+    // Add to modal stack
+    if (typeof pushModal === 'function') {
+        pushModal('reference-modal');
+    }
+
     // Load reference guide based on organization language
     // Use organization language if available, otherwise fall back to fieldKit language or default
     const isoLang = organizationContext.language ||
@@ -1517,17 +1522,14 @@ async function loadIndicatorFromReference(indicatorId) {
 function closeQuickReference() {
     const modal = document.getElementById('reference-modal');
     modal.style.display = 'none';
+
+    // Remove from modal stack
+    if (typeof popModal === 'function') {
+        popModal('reference-modal');
+    }
 }
 
-// Close modal with ESC key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        const modal = document.getElementById('reference-modal');
-        if (modal && modal.style.display === 'flex') {
-            closeQuickReference();
-        }
-    }
-});
+// ESC key handling is now managed by the central modal stack in dashboard.js
 
 // ============================================
 // BATCH IMPORT & DASHBOARD INTEGRATION
@@ -1673,6 +1675,11 @@ function showIndicatorDetails() {
 
     content.innerHTML = html;
     modal.style.display = 'flex';
+
+    // Add to modal stack
+    if (typeof pushModal === 'function') {
+        pushModal('indicator-details-modal');
+    }
 }
 
 /**
@@ -1681,6 +1688,11 @@ function showIndicatorDetails() {
 function closeIndicatorDetails() {
     const modal = document.getElementById('indicator-details-modal');
     modal.style.display = 'none';
+
+    // Remove from modal stack
+    if (typeof popModal === 'function') {
+        popModal('indicator-details-modal');
+    }
 }
 
 /**
