@@ -4,15 +4,34 @@ const fs = require('fs');
 const path = require('path');
 
 // Common English words/patterns to detect (excluding technical terms that should stay in English)
+// NOTE: Patterns are balanced to avoid false positives with Italian text
 const ENGLISH_PATTERNS = [
-  /\b(the|The|THE)\s+(?!CEO|CTO|CISO|API|ML|AI|IT)\w+/g,
-  /\b(is|are|was|were|has|have|had|will|would|should|could)\s+\w+/g,
-  /\b(and|or|but|with|from|about|into|during|including)\s+\w+/g,
-  /\b(this|these|that|those|your|our|their)\s+\w+/g,
-  /\b(question|questions|Question|Questions)\b/g,
-  /\b(security|Security|system|System|organization|Organization)\s+(?!assessment|breach|incident)/g,
-  /\b(how|How|what|What|when|When|where|Where|why|Why|which|Which)\s+do(es)?\s+/g,
-  /\b(please|Please|ensure|Ensure|verify|Verify|check|Check|review|Review)\b/g,
+  // Clearly English phrases (high confidence)
+  /\b(Question Title|Question|Title of|Description of)\b/g,
+  /\b(the\s+\w+\s+(is|are|was|were|has|have))\b/gi,
+  /\b(this\s+is|that\s+is|these\s+are|those\s+are)\b/gi,
+  /\b(you\s+can|you\s+should|you\s+must|you\s+will|you\s+need)\b/gi,
+  /\b(we\s+have|we\s+can|we\s+should|we\s+will|we\s+need)\b/gi,
+  /\b(there\s+(is|are|was|were))\b/gi,
+  /\b(how\s+to|what\s+is|what\s+are|when\s+(is|are|was|were)|where\s+(is|are))\b/gi,
+
+  // Question words at start of questions (Italian uses different structures)
+  /^(How|What|When|Where|Why|Which|Who|Does|Do|Did|Is|Are|Was|Were|Has|Have|Had|Can|Could|Should|Would|Will|May|Might)\s+/gm,
+
+  // Common English verbs that don't appear in Italian
+  /\b(ensure|verify|check|review|provide|implement|create|define|establish|maintain)\b/gi,
+  /\b(explain|describe|identify|determine|assess|evaluate|analyze)\b/gi,
+
+  // English modal verbs + actions (rare in Italian)
+  /\b(should\s+be|must\s+be|can\s+be|will\s+be|would\s+be)\b/gi,
+  /\b(has\s+been|have\s+been|had\s+been)\b/gi,
+
+  // Clearly English words (but NOT "note" which is Italian for "known/notes")
+  /\b(required|optional|example|following|previous|next)\b/gi,
+  /\b(security\s+(assessment|breach|incident|training|awareness|policy|procedure))\b/gi,
+
+  // English possessives
+  /\b(your|our|their|his|her)\s+(company|organization|team|system|process|procedure)\b/gi,
 ];
 
 // Words that should remain in English (technical terms, acronyms)
