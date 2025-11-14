@@ -35,6 +35,13 @@ const EXPECTED_STRUCTURE = {
 };
 
 function findEnglishText(obj, path = '', results = []) {
+  // Skip bibliography and technical fields entirely
+  if (path.includes('metadata.research_basis') ||
+      path.includes('metadata.academic_references') ||
+      path.includes('metadata.citations')) {
+    return results;
+  }
+
   if (typeof obj === 'string') {
     // Skip if it's just technical terms
     const cleanText = obj;
