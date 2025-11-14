@@ -280,7 +280,10 @@
           ]
         }
       ],
-      "subsections": []
+      "subsections": [],
+      "scoring_method": "weighted_average",
+      "instructions": "Selezionare UNA opzione per ciascuna domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = SUM(question_score x question_weight) / SUM(question_weight)"
     },
     {
       "title": "CONVERSAZIONE CON IL CLIENTE",
@@ -288,96 +291,191 @@
       "type": "conversation",
       "subsections": [
         {
-          "title": "CONVERSAZIONE APPROFONDITA",
+          "title": "Domande Apertura - finestre di vulnerabilità orarie",
+          "weight": 0.3,
           "items": [
             {
               "type": "question",
-              "number": 6,
-              "id": "q6_incident_correlation",
-              "weight": 0.12,
-              "title": "Correlazione Incidenti Gap Timezone",
-              "question": "Analisi incidenti mostra correlation con timing gap coverage geografici?",
-              "guidance": "Cercare: clustering incidenti durante transizioni timezone, delay response per incident durante ore non-HQ, exploitation gap coverage geografico",
-              "followup": [
-                "Tempo medio response varia significativamente per incident timezone?",
-                "Esistono evidenze attaccanti temporizzano attacchi per gap geografici?",
-                "Worst incidents sperimentati durante quali ore (relative a geography principale)?"
+              "id": "conv_q1",
+              "text": "Come è composto il team di sicurezza durante notti e weekend? Chi ha autorità decisionale?",
+              "scoring_guidance": {
+                "green": "Copertura 24/7 con personale senior in rotazione e autorità decisionale chiara",
+                "yellow": "Copertura notturna ridotta con escalation disponibile ma non immediata",
+                "red": "Copertura minima o nulla fuori orario, con solo reperibilità di bassa priorità"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Che tipo di decisioni richiede escalation durante la notte?",
+                  "evidence_type": "escalation_criteria"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Qual è il tempo medio di risposta per incident off-hours vs business hours?",
+                  "evidence_type": "response_metrics"
+                }
               ]
             },
             {
               "type": "question",
-              "number": 7,
-              "id": "q7_decision_distribution",
-              "weight": 0.05,
-              "title": "Distribuzione Decision Authority Geografica",
-              "question": "Decision authority sicurezza distribuita geograficamente o centralizzata in un timezone?",
-              "guidance": "Valutare: empowerment team locali decisioni security, delay causati da centralizzazione decision-making, business hours dependency approvals",
-              "followup": [
-                "Team APAC possono fare security decisions critiche senza approval EMEA/Americas?",
-                "Quanto delay tipico ottenere security approval da geography differente?",
-                "Esistono decision limits basati su geography vs role?"
+              "id": "conv_q2",
+              "text": "Mi racconti di un incidente di sicurezza che è iniziato o è stato scoperto durante ore notturne o weekend.",
+              "scoring_guidance": {
+                "green": "Esempio di risposta efficace con capacità comparabili a business hours",
+                "yellow": "Esempio di risposta più lenta ma comunque adeguata",
+                "red": "Esempio di risposta significativamente degradata o ritardata fino a business hours"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Come è stata gestita la decision-making durante quell'incidente off-hours?",
+                  "evidence_type": "decision_process"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa è stato migliorato dopo quell'incidente?",
+                  "evidence_type": "improvements"
+                }
               ]
             }
           ]
         },
         {
-          "title": "BANDIERE ROSSE CRITICHE",
+          "title": "Meccanismi Verifica",
+          "weight": 0.25,
           "items": [
             {
-              "type": "red-flag",
-              "number": 8,
-              "id": "rf1_response_delay_geographic",
-              "severity": "critical",
-              "title": "Response Delay Geografico Significativo",
-              "description": "Tempo medio response per incident cross-timezone è 3x+ più lungo vs incident same-timezone HQ",
-              "detection": "Analisi incident response timeline segmentata per geography relativa",
-              "weight": 0.4
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Come viene verificato che la capacità di security monitoring e response sia adeguata 24/7?",
+              "scoring_guidance": {
+                "green": "Testing regolare con red team exercises in orari diversi e analisi delle metriche",
+                "yellow": "Monitoring di base con review occasionale della coverage",
+                "red": "Nessuna verifica sistematica della capacità off-hours"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quando è stata l'ultima esercitazione di security durante orario notturno?",
+                  "evidence_type": "testing_recency"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Fattori Culturali e Psicologici",
+          "weight": 0.3,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Come vengono valutate e compensate le persone che forniscono coverage di sicurezza off-hours?",
+              "scoring_guidance": {
+                "green": "Compensazione equa e riconoscimento esplicito dell'importanza della coverage 24/7",
+                "yellow": "Compensazione presente ma coverage off-hours vista come 'meno importante'",
+                "red": "Compensazione minima o inadeguata, alta turnover nelle posizioni off-hours"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Qual è il turnover del personale assegnato a turni notturni/weekend?",
+                  "evidence_type": "turnover_metrics"
+                }
+              ]
             },
             {
-              "type": "red-flag",
-              "number": 9,
-              "id": "rf2_no_overlap_coverage",
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Che formazione riceve il personale di sicurezza off-hours sui limiti della loro autorità e procedure di escalation?",
+              "scoring_guidance": {
+                "green": "Formazione strutturata con playbook chiari e autorità appropriata",
+                "yellow": "Formazione di base con playbook parziali",
+                "red": "Formazione minima, personale incerto su autorità e escalation"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Esistono playbook specifici per scenari comuni durante off-hours?",
+                  "evidence_type": "playbook_coverage"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Sondaggio per Segnali d'Allarme",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle policy dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "Nessuna copertura security dedicata durante notti/weekend",
               "severity": "critical",
-              "title": "Zero Overlap Coverage Team Geografici",
-              "description": "Nessun overlap tra team geografici, gap coverage 4+ ore ogni 24h",
-              "detection": "Mapping team working hours attraverso tutti timezone",
-              "weight": 0.35
+              "score_impact": 0.18,
+              "subitems": []
             },
             {
-              "type": "red-flag",
-              "number": 10,
-              "id": "rf3_centralized_decisions",
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Di notte abbiamo solo monitoring automatico, senza personale...\"",
               "severity": "high",
-              "title": "Decision-Making Centralizzato Timezone Unico",
-              "description": "Tutte decisioni security critiche richiedono approval da un geography creando delay 8-16h altre timezone",
-              "detection": "Analisi approval workflows e decision authority distribution",
-              "weight": 0.25
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "Personale off-hours senza autorità decisionale per incident response",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "Tempo di risposta off-hours 3x+ più lento che business hours",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Gli incidenti notturni vengono tipicamente gestiti la mattina seguente...\"",
+              "severity": "critical",
+              "score_impact": 0.17,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "Nessun testing di incident response durante orari off-hours",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "Alta turnover del personale assegnato a turni off-hours",
+              "severity": "medium",
+              "score_impact": 0.1,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "Evidenza di attacchi che hanno sfruttato finestre orarie di scarsa coverage",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
             }
           ]
-        },
-        {
-          "title": "Scenari di Rischio",
-          "items": [
-            {
-              "type": "info",
-              "id": "scenario_note",
-              "text": "Gli scenari di rischio specifici per questo indicatore sono documentati nella sezione 'risk_scenarios' dei metadati dell'indicatore."
-            }
-          ],
-          "weight": 0
-        },
-        {
-          "title": "RIEPILOGO SCORING",
-          "items": [
-            {
-              "type": "info",
-              "id": "scoring_note",
-              "text": "Il riepilogo dello scoring viene calcolato automaticamente in base alle risposte fornite nella valutazione rapida e nella conversazione approfondita."
-            }
-          ],
-          "weight": 0
         }
-      ]
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
     }
   ],
   "validation": {
