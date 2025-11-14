@@ -152,6 +152,79 @@ function renderOrganizations() {
     }).join('');
 }
 
+// Filter and sort organizations based on search and sort criteria
+function filterAndSortOrganizations() {
+    if (!organizations || organizations.length === 0) return;
+
+    const searchValue = document.getElementById('org-search').value.toLowerCase().trim();
+    const sortValue = document.getElementById('org-sort').value;
+
+    // Store all organizations if not already stored
+    if (!window.allOrganizations) {
+        window.allOrganizations = [...organizations];
+    }
+
+    // Filter organizations
+    let filtered = window.allOrganizations.filter(org => {
+        if (!searchValue) return true;
+
+        const searchableText = [
+            org.name,
+            org.industry,
+            org.country,
+            org.size
+        ].join(' ').toLowerCase();
+
+        return searchableText.includes(searchValue);
+    });
+
+    // Sort organizations
+    filtered.sort((a, b) => {
+        switch (sortValue) {
+            case 'name':
+                return a.name.localeCompare(b.name);
+
+            case 'risk':
+                return (b.stats?.overall_risk || 0) - (a.stats?.overall_risk || 0);
+
+            case 'completion':
+                return (b.stats?.completion_percentage || 0) - (a.stats?.completion_percentage || 0);
+
+            case 'updated_at':
+                return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
+
+            case 'assessments':
+                return (b.stats?.total_assessments || 0) - (a.stats?.total_assessments || 0);
+
+            case 'industry':
+                return a.industry.localeCompare(b.industry);
+
+            case 'country':
+                return a.country.localeCompare(b.country);
+
+            case 'created_at':
+            default:
+                return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        }
+    });
+
+    // Update global organizations array and re-render
+    organizations = filtered;
+    renderOrganizations();
+}
+
+// Reset all filters to default
+function resetFilters() {
+    // Restore all organizations
+    if (window.allOrganizations) {
+        organizations = [...window.allOrganizations];
+    }
+
+    document.getElementById('org-search').value = '';
+    document.getElementById('org-sort').value = 'created_at';
+    renderOrganizations();
+}
+
 function selectOrganization(orgId) {
     selectedOrgId = orgId;
     renderOrganizations();
