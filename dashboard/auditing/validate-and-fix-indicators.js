@@ -93,7 +93,7 @@ function autoFixIndicator(data, indicatorId) {
 
     // Fix 5: Cap red flags total impact at 1.0
     const convSection = fixed.sections?.find(s => s.id === 'client-conversation');
-    const redFlagsSection = convSection?.subsections?.find(sub => sub.title === 'Probing for Red Flags');
+    const redFlagsSection = convSection?.subsections?.find(sub => sub.id === 'red-flags');
     if (redFlagsSection && redFlagsSection.items) {
         const totalImpact = redFlagsSection.items.reduce((sum, item) => sum + (item.score_impact || 0), 0);
 
