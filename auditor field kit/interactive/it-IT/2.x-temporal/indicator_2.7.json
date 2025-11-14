@@ -14,32 +14,137 @@
   "scoring": {
     "method": "bayesian_weighted",
     "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
-    "weights": {"quick_assessment": 0.4, "conversation_depth": 0.35, "red_flags": 0.25},
-    "maturity_levels": {
-      "green": {"score_range": [0, 0.33], "label": "Bassa Vulnerabilità - Resiliente", "description": "Follow-the-sun security con overlap significativo tra team geografici. Handoff processo strutturati e documentati. Ownership sicurezza chiara 24/7 indipendentemente da fuso orario. Communication tools ottimizzati async collaboration. Leadership inclusiva tutti fusi orari.", "risk_level": "low", "color": "#22c55e"},
-      "yellow": {"score_range": [0.34, 0.66], "label": "Vulnerabilità Moderata - In Sviluppo", "description": "Team global esistono ma coordination incoerente. Qualche overlap geografico ma gap coverage significativi. Handoff attraverso timezone informali. Ownership sicurezza a volte ambigua durante transizioni. Meeting scheduling bias verso headquarters timezone.", "risk_level": "medium", "color": "#eab308"},
-      "red": {"score_range": [0.67, 1.0], "label": "Alta Vulnerabilità - Critica", "description": "Team global con gap coverage estensivi nessun overlap. Nessun processo handoff formale attraverso timezone. Ownership sicurezza ambigua durante ore non-HQ. Communication puramente synchronous favorente un timezone. Decision-making centralizzato in un geography creando delay.", "risk_level": "high", "color": "#ef4444"}
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
     },
-    "question_weights": {"q1_timezone_coverage": 0.20, "q2_handoff_process": 0.18, "q3_ownership_clarity": 0.16, "q4_communication_async": 0.15, "q5_meeting_equity": 0.14, "q6_incident_correlation": 0.12, "q7_decision_distribution": 0.05}
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Follow-the-sun security con overlap significativo tra team geografici. Handoff processo strutturati e documentati. Ownership sicurezza chiara 24/7 indipendentemente da fuso orario. Communication tools ottimizzati async collaboration. Leadership inclusiva tutti fusi orari.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Team global esistono ma coordination incoerente. Qualche overlap geografico ma gap coverage significativi. Handoff attraverso timezone informali. Ownership sicurezza a volte ambigua durante transizioni. Meeting scheduling bias verso headquarters timezone.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Team global con gap coverage estensivi nessun overlap. Nessun processo handoff formale attraverso timezone. Ownership sicurezza ambigua durante ore non-HQ. Communication puramente synchronous favorente un timezone. Decision-making centralizzato in un geography creando delay.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_timezone_coverage": 0.2,
+      "q2_handoff_process": 0.18,
+      "q3_ownership_clarity": 0.16,
+      "q4_communication_async": 0.15,
+      "q5_meeting_equity": 0.14,
+      "q6_incident_correlation": 0.12,
+      "q7_decision_distribution": 0.05
+    }
   },
   "detection_formula": {
     "type": "composite_detection",
     "mathematical_model": {
       "primary": "D_2.7(t) = TimezoneMisalignment(t) × CoverageGap(t) × ResponseDelay(t)",
       "components": {
-        "timezone_misalignment": {"formula": "TM(t) = Σ_i |TZ_team_i - TZ_incident(t)| × W_team_i", "description": "Ponderazione misalignment temporale tra incident timing e team availability"},
-        "coverage_gap": {"formula": "CG(t) = 1 - min(OverlapHours_i,j / 24) over all team pairs (i,j)", "description": "Frazione giorno con gap coverage tra team geografici", "threshold": {"warning": 0.3, "critical": 0.5}},
-        "response_delay": {"formula": "RD(t) = ResponseTime_global(t) / ResponseTime_local", "description": "Ratio response time incident cross-timezone vs same-timezone"}
+        "timezone_misalignment": {
+          "formula": "TM(t) = Σ_i |TZ_team_i - TZ_incident(t)| × W_team_i",
+          "description": "Ponderazione misalignment temporale tra incident timing e team availability"
+        },
+        "coverage_gap": {
+          "formula": "CG(t) = 1 - min(OverlapHours_i,j / 24) over all team pairs (i,j)",
+          "description": "Frazione giorno con gap coverage tra team geografici",
+          "threshold": {
+            "warning": 0.3,
+            "critical": 0.5
+          }
+        },
+        "response_delay": {
+          "formula": "RD(t) = ResponseTime_global(t) / ResponseTime_local",
+          "description": "Ratio response time incident cross-timezone vs same-timezone"
+        }
       }
     }
   },
   "data_sources": {
-    "manual_assessment": {"primary": ["team_location_mapping", "incident_response_timeline", "meeting_schedules", "handoff_documentation"], "evidence_required": ["timezone_coverage_analysis", "incident_response_delay_by_geography", "cross_timezone_handoff_logs", "employee_timezone_distribution"]},
-    "automated_soc": {"required": [{"source": "global_soc_platform", "fields": ["incident_id", "detection_time", "detection_timezone", "primary_responder_timezone", "time_to_acknowledgment", "time_to_containment", "handoff_count", "timestamp"], "retention": "730_days"}]}
+    "manual_assessment": {
+      "primary": [
+        "team_location_mapping",
+        "incident_response_timeline",
+        "meeting_schedules",
+        "handoff_documentation"
+      ],
+      "evidence_required": [
+        "timezone_coverage_analysis",
+        "incident_response_delay_by_geography",
+        "cross_timezone_handoff_logs",
+        "employee_timezone_distribution"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "global_soc_platform",
+          "fields": [
+            "incident_id",
+            "detection_time",
+            "detection_timezone",
+            "primary_responder_timezone",
+            "time_to_acknowledgment",
+            "time_to_containment",
+            "handoff_count",
+            "timestamp"
+          ],
+          "retention": "730_days"
+        }
+      ]
+    }
   },
   "interdependencies": {
-    "amplified_by": [{"indicator": "2.4", "name": "Finestre Transizione Temporale", "probability": 0.90, "factor": 1.7, "description": "Handoff cross-timezone amplifica vulnerabilità transizioni"}, {"indicator": "5.3", "name": "Erosione Vigilanza", "probability": 0.75, "factor": 1.4, "description": "Vigilanza erode durante ore coverage geografica ridotta"}],
-    "amplifies": [{"indicator": "6.3", "name": "Diffusione Responsabilità", "probability": 0.85, "factor": 1.6, "description": "Geographic distribution amplifica diffusione responsabilità"}]
+    "amplified_by": [
+      {
+        "indicator": "2.4",
+        "name": "Finestre Transizione Temporale",
+        "probability": 0.9,
+        "factor": 1.7,
+        "description": "Handoff cross-timezone amplifica vulnerabilità transizioni"
+      },
+      {
+        "indicator": "5.3",
+        "name": "Erosione Vigilanza",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "Vigilanza erode durante ore coverage geografica ridotta"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "6.3",
+        "name": "Diffusione Responsabilità",
+        "probability": 0.85,
+        "factor": 1.6,
+        "description": "Geographic distribution amplifica diffusione responsabilità"
+      }
+    ]
   },
   "sections": [
     {
@@ -53,13 +158,25 @@
           "type": "radio-list",
           "number": 1,
           "id": "q1_timezone_coverage",
-          "weight": 0.20,
+          "weight": 0.2,
           "title": "Coverage Timezone Security",
           "question": "Quanto comprehensive è coverage security operations attraverso tutti fusi orari dove organizzazione opera?",
           "options": [
-            {"value": "continuous", "score": 0, "label": "Continuo - Coverage 24/7 con overlap significativo (4+ ore) tra team geografici"},
-            {"value": "gaps", "score": 0.5, "label": "Gap - Coverage 24/7 ma gap significativi (2-4h) nessun team ownership primaria"},
-            {"value": "limited", "score": 1, "label": "Limitato - Coverage solo durante business hours HQ timezone, gap estensivi altre geografie"}
+            {
+              "value": "continuous",
+              "score": 0,
+              "label": "Continuo - Coverage 24/7 con overlap significativo (4+ ore) tra team geografici"
+            },
+            {
+              "value": "gaps",
+              "score": 0.5,
+              "label": "Gap - Coverage 24/7 ma gap significativi (2-4h) nessun team ownership primaria"
+            },
+            {
+              "value": "limited",
+              "score": 1,
+              "label": "Limitato - Coverage solo durante business hours HQ timezone, gap estensivi altre geografie"
+            }
           ]
         },
         {
@@ -70,9 +187,21 @@
           "title": "Processi Handoff Cross-Timezone",
           "question": "Quanto strutturati sono processi handoff sicurezza tra team geografici attraverso fusi orari?",
           "options": [
-            {"value": "structured", "score": 0, "label": "Strutturati - Protocolli formali handoff cross-timezone con overlap periodo e documentazione"},
-            {"value": "informal", "score": 0.5, "label": "Informali - Handoff avvengono ma senza process standardizzato attraverso geografie"},
-            {"value": "none", "score": 1, "label": "Nessuno - Nessun processo handoff formale, ogni geography opera indipendentemente"}
+            {
+              "value": "structured",
+              "score": 0,
+              "label": "Strutturati - Protocolli formali handoff cross-timezone con overlap periodo e documentazione"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Informali - Handoff avvengono ma senza process standardizzato attraverso geografie"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuno - Nessun processo handoff formale, ogni geography opera indipendentemente"
+            }
           ]
         },
         {
@@ -83,9 +212,21 @@
           "title": "Chiarezza Ownership Sicurezza 24/7",
           "question": "È sempre chiaro quale team geografico ha ownership primaria sicurezza in ogni ora del giorno?",
           "options": [
-            {"value": "always_clear", "score": 0, "label": "Sempre Chiaro - Ownership esplicita 24/7 con escalation path chiari per ogni timezone"},
-            {"value": "sometimes_ambiguous", "score": 0.5, "label": "A Volte Ambiguo - Ownership chiara durante business hours ma unclear durante gap"},
-            {"value": "often_unclear", "score": 1, "label": "Spesso Unclear - Ownership sicurezza frequentemente ambigua, particolarmente durante transizioni"}
+            {
+              "value": "always_clear",
+              "score": 0,
+              "label": "Sempre Chiaro - Ownership esplicita 24/7 con escalation path chiari per ogni timezone"
+            },
+            {
+              "value": "sometimes_ambiguous",
+              "score": 0.5,
+              "label": "A Volte Ambiguo - Ownership chiara durante business hours ma unclear durante gap"
+            },
+            {
+              "value": "often_unclear",
+              "score": 1,
+              "label": "Spesso Unclear - Ownership sicurezza frequentemente ambigua, particolarmente durante transizioni"
+            }
           ]
         },
         {
@@ -96,9 +237,21 @@
           "title": "Communication Tools Async Collaboration",
           "question": "Organizzazione usa communication tools e pratiche ottimizzate per async collaboration cross-timezone?",
           "options": [
-            {"value": "optimized", "score": 0, "label": "Ottimizzate - Tools async collaboration, documentazione comprensiva, context preservation cross-timezone"},
-            {"value": "basic", "score": 0.5, "label": "Base - Tools esistono ma collaboration largamente synchronous favorente un timezone"},
-            {"value": "sync_only", "score": 1, "label": "Solo Sync - Collaboration richiede synchronous communication creando delay cross-timezone"}
+            {
+              "value": "optimized",
+              "score": 0,
+              "label": "Ottimizzate - Tools async collaboration, documentazione comprensiva, context preservation cross-timezone"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Base - Tools esistono ma collaboration largamente synchronous favorente un timezone"
+            },
+            {
+              "value": "sync_only",
+              "score": 1,
+              "label": "Solo Sync - Collaboration richiede synchronous communication creando delay cross-timezone"
+            }
           ]
         },
         {
@@ -109,12 +262,25 @@
           "title": "Equity Meeting Scheduling Cross-Timezone",
           "question": "Meeting security importanti schedulati equitably considerando tutti fusi orari o bias verso HQ?",
           "options": [
-            {"value": "equitable", "score": 0, "label": "Equitable - Meeting rotano timing per includere tutti timezone, recording disponibili"},
-            {"value": "inconsistent", "score": 0.5, "label": "Inconsistente - Qualche sforzo includere timezone ma bias verso HQ timezone"},
-            {"value": "hq_centric", "score": 1, "label": "HQ-Centrico - Meeting sempre durante HQ business hours, altre geografie inconvenient hours"}
+            {
+              "value": "equitable",
+              "score": 0,
+              "label": "Equitable - Meeting rotano timing per includere tutti timezone, recording disponibili"
+            },
+            {
+              "value": "inconsistent",
+              "score": 0.5,
+              "label": "Inconsistente - Qualche sforzo includere timezone ma bias verso HQ timezone"
+            },
+            {
+              "value": "hq_centric",
+              "score": 1,
+              "label": "HQ-Centrico - Meeting sempre durante HQ business hours, altre geografie inconvenient hours"
+            }
           ]
         }
-      ]
+      ],
+      "subsections": []
     },
     {
       "id": "client-conversation",
@@ -151,7 +317,8 @@
             "Esistono decision limits basati su geography vs role?"
           ]
         }
-      ]
+      ],
+      "subsections": []
     },
     {
       "id": "red-flags",
@@ -168,7 +335,7 @@
           "title": "Response Delay Geografico Significativo",
           "description": "Tempo medio response per incident cross-timezone è 3x+ più lungo vs incident same-timezone HQ",
           "detection": "Analisi incident response timeline segmentata per geography relativa",
-          "weight": 0.40
+          "weight": 0.4
         },
         {
           "type": "red-flag",
@@ -190,22 +357,36 @@
           "detection": "Analisi approval workflows e decision authority distribution",
           "weight": 0.25
         }
-      ]
+      ],
+      "subsections": []
     },
     {
       "id": "scoring-summary",
       "icon": "📊",
       "title": "RIEPILOGO SCORING",
       "type": "score-display",
-      "description": "Visualizzazione score finale e raccomandazioni basate su risposte valutazione"
+      "description": "Visualizzazione score finale e raccomandazioni basate su risposte valutazione",
+      "subsections": []
     }
   ],
   "validation": {
     "method": "matthews_correlation_coefficient",
     "success_metrics": [
-      {"metric": "Response Time Equity Cross-Timezone", "formula": "Max variance tempo response incident attraverso timezone", "target": "Ridurre variance a <30% entro 120 giorni"},
-      {"metric": "Coverage Gap Duration", "formula": "Ore totali per giorno con gap coverage team geografici", "target": "Ridurre a <2h entro 90 giorni"},
-      {"metric": "Handoff Success Rate Cross-Timezone", "formula": "Percentuale handoff cross-timezone completanti checklist senza context loss", "target": "Raggiungere 90% entro 60 giorni"}
+      {
+        "metric": "Response Time Equity Cross-Timezone",
+        "formula": "Max variance tempo response incident attraverso timezone",
+        "target": "Ridurre variance a <30% entro 120 giorni"
+      },
+      {
+        "metric": "Coverage Gap Duration",
+        "formula": "Ore totali per giorno con gap coverage team geografici",
+        "target": "Ridurre a <2h entro 90 giorni"
+      },
+      {
+        "metric": "Handoff Success Rate Cross-Timezone",
+        "formula": "Percentuale handoff cross-timezone completanti checklist senza context loss",
+        "target": "Raggiungere 90% entro 60 giorni"
+      }
     ]
   },
   "remediation": {
@@ -225,8 +406,17 @@
           "Standardizzare documentation e communication per facilitate async handoff",
           "Implementare 24/7 escalation path con ownership chiara ogni timezone"
         ],
-        "kpis": ["Coverage continua 24/7 con overlap ≥4h", "Riduzione 70% gap coverage hours", "Riduzione 60% incident response delay cross-timezone"],
-        "tools": ["Global SOC platform", "Handoff management tools", "Real-time dashboards", "Collaboration platforms"],
+        "kpis": [
+          "Coverage continua 24/7 con overlap ≥4h",
+          "Riduzione 70% gap coverage hours",
+          "Riduzione 60% incident response delay cross-timezone"
+        ],
+        "tools": [
+          "Global SOC platform",
+          "Handoff management tools",
+          "Real-time dashboards",
+          "Collaboration platforms"
+        ],
         "cost_estimate": "€100.000 - €300.000"
       },
       {
@@ -244,8 +434,17 @@
           "Implementare decision log tracking chi, cosa, quando, perché per accountability distributed",
           "Training team su best practice async collaboration efficace"
         ],
-        "kpis": ["90% decisioni security documentate comprehensively", "Riduzione 50% communication round-trips cross-timezone", "Miglioramento 60% context preservation handoff"],
-        "tools": ["Async collaboration platforms", "Knowledge management systems", "Meeting recording tools", "Decision tracking software"],
+        "kpis": [
+          "90% decisioni security documentate comprehensively",
+          "Riduzione 50% communication round-trips cross-timezone",
+          "Miglioramento 60% context preservation handoff"
+        ],
+        "tools": [
+          "Async collaboration platforms",
+          "Knowledge management systems",
+          "Meeting recording tools",
+          "Decision tracking software"
+        ],
         "cost_estimate": "€40.000 - €100.000"
       },
       {
@@ -264,8 +463,16 @@
           "Implement post-decision review process vs pre-decision approval per decisions time-sensitive",
           "Leadership messaging supportante empowerment geografico e trust distributed team"
         ],
-        "kpis": ["80% decisioni security eseguibili locally senza cross-timezone approval", "Riduzione 75% decision delay causati da geography", "Miglioramento 50% incident containment time cross-timezone"],
-        "tools": ["Decision authority frameworks", "Playbook automation", "Escalation management systems"],
+        "kpis": [
+          "80% decisioni security eseguibili locally senza cross-timezone approval",
+          "Riduzione 75% decision delay causati da geography",
+          "Miglioramento 50% incident containment time cross-timezone"
+        ],
+        "tools": [
+          "Decision authority frameworks",
+          "Playbook automation",
+          "Escalation management systems"
+        ],
         "cost_estimate": "€30.000 - €75.000"
       }
     ]
@@ -288,9 +495,20 @@
         "Delay investigation mentre EMEA team familiarizes con situation",
         "Attaccanti completano objective durante finestra delay totale 6-8h"
       ],
-      "indicators": ["Attività malevola clustering durante gap coverage geografico", "Delay response incident cross-timezone significativamente più lungo", "Evidenza attaccante awareness SOC geography e schedule", "Movimento laterale rapido durante finestre transizione timezone"],
-      "cpe_mapping": ["CPE:2.3:*:temporal_exploitation:timezone_gap:*"],
-      "mitre_attack": ["T1071 - Application Layer Protocol", "T1570 - Lateral Tool Transfer", "T1041 - Exfiltration Over C2 Channel"]
+      "indicators": [
+        "Attività malevola clustering durante gap coverage geografico",
+        "Delay response incident cross-timezone significativamente più lungo",
+        "Evidenza attaccante awareness SOC geography e schedule",
+        "Movimento laterale rapido durante finestre transizione timezone"
+      ],
+      "cpe_mapping": [
+        "CPE:2.3:*:temporal_exploitation:timezone_gap:*"
+      ],
+      "mitre_attack": [
+        "T1071 - Application Layer Protocol",
+        "T1570 - Lateral Tool Transfer",
+        "T1041 - Exfiltration Over C2 Channel"
+      ]
     },
     {
       "id": "scenario_2",
@@ -309,9 +527,19 @@
         "Wire transfer completato a account attaccante",
         "Fraud scoperto quando APAC executive inizia day shift 8h dopo"
       ],
-      "indicators": ["Richieste finanziarie urgenti cross-timezone durante non-business hours origine", "Timing exploitation differenza timezone per impede verification", "Pressure completare transaction before origine geography available", "Reluctance disturb executive durante loro notte per verification"],
-      "cpe_mapping": ["CPE:2.3:*:social_engineering:bec_timezone_exploitation:*"],
-      "mitre_attack": ["T1566.002 - Phishing: Spearphishing Link", "T1534 - Internal Spearphishing"]
+      "indicators": [
+        "Richieste finanziarie urgenti cross-timezone durante non-business hours origine",
+        "Timing exploitation differenza timezone per impede verification",
+        "Pressure completare transaction before origine geography available",
+        "Reluctance disturb executive durante loro notte per verification"
+      ],
+      "cpe_mapping": [
+        "CPE:2.3:*:social_engineering:bec_timezone_exploitation:*"
+      ],
+      "mitre_attack": [
+        "T1566.002 - Phishing: Spearphishing Link",
+        "T1534 - Internal Spearphishing"
+      ]
     }
   ],
   "metadata": {
