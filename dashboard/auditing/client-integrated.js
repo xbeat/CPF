@@ -110,29 +110,50 @@ const LANGUAGES = [
     { code: 'DE', iso: 'de-DE', label: 'Deutsch' }
 ];
 
-async function loadJSON() {
-    // Priority order: manual input field > dropdowns > prompt
+async function loadJSON(indicatorId = null, languageOverride = null) {
+    // Priority order:
+    // 1. Parameter indicatorId (from Quick Reference or dashboard)
+    // 2. Manual input field
+    // 3. Dropdowns (standalone mode)
+    // 4. Prompt (fallback)
+
     const manualInput = document.getElementById('indicator-input');
     const langSelect = document.getElementById('lang-select');
     const categorySelect = document.getElementById('category-select');
     const indicatorSelect = document.getElementById('indicator-select');
 
     let input;
+    let isoLang;
 
-    // 1. Check manual input field first (highest priority)
-    if (manualInput && manualInput.value.trim()) {
+    // Determine language: use override, then organization context, then UI select, then default
+    if (languageOverride) {
+        isoLang = languageOverride;
+    } else if (organizationContext.language) {
+        isoLang = organizationContext.language;
+    } else if (langSelect) {
+        const lang = langSelect.value;
+        isoLang = LANG_MAP[lang.toUpperCase()] || 'en-US';
+    } else {
+        isoLang = 'en-US';
+    }
+
+    // 1. Use parameter if provided (from Quick Reference or dashboard)
+    if (indicatorId) {
+        input = indicatorId;
+    }
+    // 2. Check manual input field
+    else if (manualInput && manualInput.value.trim()) {
         input = manualInput.value.trim();
         // Clear the input field after use
         manualInput.value = '';
     }
-    // 2. Use dropdown values if manual input is empty
-    else if (langSelect && categorySelect && indicatorSelect) {
-        const lang = langSelect.value;
+    // 3. Use dropdown values if manual input is empty
+    else if (categorySelect && indicatorSelect) {
         const category = categorySelect.value;
         const indicator = indicatorSelect.value;
-        input = `${category}.${indicator}-${lang}`;
+        input = `${category}.${indicator}`;
     }
-    // 3. Fallback to prompt (backward compatibility)
+    // 4. Fallback to prompt (backward compatibility)
     else {
         input = prompt('Enter indicator (format: X.Y-LANG or X.Y for en-US)\nExamples: 1.3-IT, 2.1-EN, 1.3');
         if (!input) return;
@@ -146,10 +167,11 @@ async function loadJSON() {
 
         if (indicatorMatch) {
             const indicator = `${indicatorMatch[1]}.${indicatorMatch[2]}`;
-            const lang = indicatorMatch[3] || 'EN';
 
-            // Map language code to ISO format
-            const isoLang = LANG_MAP[lang.toUpperCase()] || 'en-US';
+            // If language was specified in the input, use it
+            if (indicatorMatch[3]) {
+                isoLang = LANG_MAP[indicatorMatch[3].toUpperCase()] || isoLang;
+            }
 
             // Get category info
             const categoryNum = indicatorMatch[1];
@@ -161,7 +183,7 @@ async function loadJSON() {
 
             // Construct local URL for multilingual structure
             fetchUrl = `/auditor-field-kit/interactive/${isoLang}/${categoryNum}.x-${categoryName}/indicator_${indicator}.json`;
-            console.log('Loading from:', fetchUrl);
+            console.log('Loading from:', fetchUrl, 'Language:', isoLang);
         }
 
         const response = await fetch(fetchUrl);
@@ -1344,10 +1366,11 @@ async function showQuickReference() {
     // Show modal immediately
     modal.style.display = 'flex';
 
-    // Load reference guide based on selected language
-    const langSelect = document.getElementById('lang-select');
-    const lang = langSelect ? langSelect.value : 'EN';
-    const isoLang = LANG_MAP[lang] || 'en-US';
+    // Load reference guide based on organization language
+    // Use organization language if available, otherwise fall back to fieldKit language or default
+    const isoLang = organizationContext.language ||
+                   currentData?.fieldKit?.language ||
+                   'en-US';
 
     // If data is already loaded AND language hasn't changed, just display it
     if (referenceData && loadedLanguage === isoLang) {
@@ -1457,11 +1480,7 @@ async function loadIndicatorFromReference(indicatorId) {
 
     console.log('🔧 Parsed:', { category, indicator });
 
-    // Get current language
-    const langSelect = document.getElementById('lang-select');
-    const lang = langSelect ? langSelect.value : 'EN';
-
-    // Update UI controls
+    // Update UI controls if they exist (for standalone mode)
     const categorySelect = document.getElementById('category-select');
     const indicatorSelect = document.getElementById('indicator-select');
 
@@ -1471,8 +1490,8 @@ async function loadIndicatorFromReference(indicatorId) {
     // Close modal
     closeQuickReference();
 
-    // Load the indicator (AWAIT it!)
-    await loadJSON();
+    // Load the indicator with correct language from organizationContext
+    await loadJSON(indicatorId);
 }
 
 function closeQuickReference() {
