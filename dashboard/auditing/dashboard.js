@@ -7,50 +7,53 @@ let deletingOrgId = null;
 let selectedIndicatorId = null;
 let categoryFilter = null;
 let sortDirection = 'desc'; // 'asc' or 'desc'
+let modalStack = []; // Track open modals in order
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
     loadAllData();
 });
 
-// Close modals on ESC key
+// Modal stack management
+function pushModal(modalId) {
+    if (!modalStack.includes(modalId)) {
+        modalStack.push(modalId);
+    }
+}
+
+function popModal(modalId) {
+    const index = modalStack.indexOf(modalId);
+    if (index > -1) {
+        modalStack.splice(index, 1);
+    }
+}
+
+// Close modals on ESC key - always close the most recently opened modal
 window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-        // Check and close each modal
-        const orgModal = document.getElementById('orgModal');
-        if (orgModal && orgModal.classList.contains('active')) {
-            closeOrgModal();
-            return;
-        }
+    if (event.key === 'Escape' && modalStack.length > 0) {
+        // Get the most recently opened modal (last in stack)
+        const topModal = modalStack[modalStack.length - 1];
 
-        const deleteModal = document.getElementById('deleteModal');
-        if (deleteModal && deleteModal.classList.contains('active')) {
-            closeDeleteModal();
-            return;
-        }
-
-        const indicatorModal = document.getElementById('indicatorModal');
-        if (indicatorModal && indicatorModal.classList.contains('active')) {
-            closeIndicatorModal();
-            return;
-        }
-
-        const assessmentModal = document.getElementById('assessmentDetailsModal');
-        if (assessmentModal && assessmentModal.classList.contains('active')) {
-            closeAssessmentDetailsModal();
-            return;
-        }
-
-        const trashModal = document.getElementById('trashModal');
-        if (trashModal && trashModal.classList.contains('active')) {
-            closeTrashModal();
-            return;
-        }
-
-        const historyModal = document.getElementById('historyModal');
-        if (historyModal && historyModal.classList.contains('active')) {
-            closeHistoryModal();
-            return;
+        // Close it based on its ID
+        switch (topModal) {
+            case 'orgModal':
+                closeOrgModal();
+                break;
+            case 'deleteModal':
+                closeDeleteModal();
+                break;
+            case 'indicatorModal':
+                closeIndicatorModal();
+                break;
+            case 'assessmentDetailsModal':
+                closeAssessmentDetailsModal();
+                break;
+            case 'trashModal':
+                closeTrashModal();
+                break;
+            case 'historyModal':
+                closeHistoryModal();
+                break;
         }
     }
 });
@@ -799,6 +802,7 @@ async function openIndicatorDetail(indicatorId, orgId) {
 async function showAssessmentDetails(indicatorId, assessment) {
     document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Assessment Details`;
     document.getElementById('indicatorModal').classList.add('active');
+    pushModal('indicatorModal');
 
     const content = document.getElementById('indicatorModalContent');
     const riskClass = assessment.bayesian_score < 0.33 ? 'risk-low' :
@@ -1016,6 +1020,7 @@ async function openIntegratedClient(indicatorId, orgId, existingAssessment = nul
     const isEditMode = !!existingAssessment;
     document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - ${isEditMode ? 'Edit' : 'New'} Assessment`;
     document.getElementById('indicatorModal').classList.add('active');
+    pushModal('indicatorModal');
 
     // Add fullscreen class for client modal
     const modalContent = document.querySelector('#indicatorModal .modal-content');
@@ -1080,6 +1085,7 @@ async function openIntegratedVersion() {
     // Reopen with integrated form
     document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - ${assessment ? 'Edit' : 'New'} Assessment (INTEGRATED)`;
     document.getElementById('indicatorModal').classList.add('active');
+    pushModal('indicatorModal');
 
     // Add fullscreen class for client modal
     const modalContent = document.querySelector('#indicatorModal .modal-content');
@@ -1411,6 +1417,7 @@ function closeIndicatorModal() {
     document.getElementById('deleteAssessmentBtn').style.display = 'none';
     document.getElementById('openIntegratedBtn').style.display = 'none';
     selectedIndicatorId = null;
+    popModal('indicatorModal');
 }
 
 // Callback functions for client integration
@@ -1442,6 +1449,7 @@ async function editAssessmentFromModal() {
     // Open OLD CLIENT in IFRAME
     document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Edit Assessment (IFRAME)`;
     document.getElementById('indicatorModal').classList.add('active');
+    pushModal('indicatorModal');
 
     // Add fullscreen class for client modal
     const modalContent = document.querySelector('#indicatorModal .modal-content');
@@ -1499,6 +1507,7 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
     // Open details in SEPARATE modal (assessmentDetailsModal)
     document.getElementById('assessmentDetailsTitle').textContent = `Indicator ${indicatorId} - Assessment Details`;
     document.getElementById('assessmentDetailsModal').classList.add('active');
+    pushModal('assessmentDetailsModal');
 
     const content = document.getElementById('assessmentDetailsContent');
     const riskClass = assessment.bayesian_score < 0.33 ? 'risk-low' :
@@ -1688,6 +1697,7 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
 // Close assessment details modal (returns to edit form which is still open)
 function closeAssessmentDetailsModal() {
     document.getElementById('assessmentDetailsModal').classList.remove('active');
+    popModal('assessmentDetailsModal');
 }
 
 // Open history modal from assessment details
@@ -1830,6 +1840,7 @@ function openCreateOrgModal() {
     document.getElementById('orgId').disabled = false;
     document.getElementById('fetchIndicators').parentElement.parentElement.classList.remove('hidden');
     document.getElementById('orgModal').classList.add('active');
+    pushModal('orgModal');
 }
 
 function editOrganization(orgId) {
@@ -1854,6 +1865,7 @@ function editOrganization(orgId) {
     // Note: we'd need to fetch full org data to get notes
     document.getElementById('fetchIndicators').parentElement.parentElement.classList.add('hidden');
     document.getElementById('orgModal').classList.add('active');
+    pushModal('orgModal');
 }
 
 async function saveOrganization(event) {
@@ -2010,6 +2022,7 @@ function deleteOrganization(orgId, orgName) {
     deletingOrgId = orgId;
     document.getElementById('deleteOrgName').textContent = orgName;
     document.getElementById('deleteModal').classList.add('active');
+    pushModal('deleteModal');
 }
 
 async function confirmDelete() {
@@ -2046,11 +2059,13 @@ async function confirmDelete() {
 function closeOrgModal() {
     document.getElementById('orgModal').classList.remove('active');
     document.getElementById('fetchProgress').classList.add('hidden');
+    popModal('orgModal');
 }
 
 function closeDeleteModal() {
     document.getElementById('deleteModal').classList.remove('active');
     deletingOrgId = null;
+    popModal('deleteModal');
 }
 
 // ===== TABS =====
@@ -2461,6 +2476,7 @@ async function loadTrashCount() {
 
 async function openTrashModal() {
     document.getElementById('trashModal').classList.add('active');
+    pushModal('trashModal');
 
     try {
         const response = await fetch('/api/trash');
@@ -2528,6 +2544,7 @@ async function openTrashModal() {
 
 function closeTrashModal() {
     document.getElementById('trashModal').classList.remove('active');
+    popModal('trashModal');
 }
 
 async function restoreFromTrash(orgId) {
@@ -2597,6 +2614,7 @@ async function openHistoryModal() {
     currentHistoryIndicatorId = selectedIndicatorId;
 
     document.getElementById('historyModal').classList.add('active');
+    pushModal('historyModal');
     document.getElementById('historyModalTitle').textContent = `📜 Version History - ${selectedIndicatorId}`;
 
     try {
@@ -2672,6 +2690,7 @@ function closeHistoryModal() {
     document.getElementById('historyModal').classList.remove('active');
     currentHistoryOrgId = null;
     currentHistoryIndicatorId = null;
+    popModal('historyModal');
 }
 
 async function revertToVersion(versionNumber) {
