@@ -177,17 +177,12 @@ function filterAndSortOrganizations() {
         window.allOrganizations = [...organizations];
     }
 
-    // Filter organizations - improved accuracy
+    // Filter organizations - search by name only
     let filtered = window.allOrganizations.filter(org => {
         if (!searchValue) return true;
 
-        // Search in each field separately for better accuracy
-        const nameMatch = org.name.toLowerCase().includes(searchValue);
-        const industryMatch = org.industry.toLowerCase().includes(searchValue);
-        const countryMatch = org.country.toLowerCase().includes(searchValue);
-        const sizeMatch = org.size.toLowerCase().includes(searchValue);
-
-        return nameMatch || industryMatch || countryMatch || sizeMatch;
+        // Search only in organization name
+        return org.name.toLowerCase().includes(searchValue);
     });
 
     // Sort organizations with direction support
