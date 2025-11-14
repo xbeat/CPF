@@ -5,6 +5,7 @@ let currentOrgLanguage = 'en-US'; // Default language
 let sortDirection = 'desc'; // 'asc' or 'desc'
 let editingOrgId = null;
 let deletingOrgId = null;
+let modalStack = []; // Track open modals in order
 
 // Open sidebar - idempotent (do nothing if already open)
 function openSidebar() {
@@ -48,28 +49,37 @@ window.addEventListener('DOMContentLoaded', async () => {
     await loadOrganizationsData();
 });
 
-// Close modals on ESC key
+// Modal stack management
+function pushModal(modalId) {
+    if (!modalStack.includes(modalId)) {
+        modalStack.push(modalId);
+    }
+}
+
+function popModal(modalId) {
+    const index = modalStack.indexOf(modalId);
+    if (index > -1) {
+        modalStack.splice(index, 1);
+    }
+}
+
+// Close modals on ESC key - always close the most recently opened modal
 window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-        // Close indicator modal
-        const indicatorModal = document.getElementById('indicator-modal');
-        if (indicatorModal && indicatorModal.style.display !== 'none') {
-            closeIndicatorModal();
-            return;
-        }
+    if (event.key === 'Escape' && modalStack.length > 0) {
+        // Get the most recently opened modal (last in stack)
+        const topModal = modalStack[modalStack.length - 1];
 
-        // Close edit modal
-        const editModal = document.getElementById('edit-org-modal');
-        if (editModal && editModal.style.display !== 'none') {
-            closeEditOrgModal();
-            return;
-        }
-
-        // Close delete modal
-        const deleteModal = document.getElementById('delete-org-modal');
-        if (deleteModal && deleteModal.style.display !== 'none') {
-            closeDeleteOrgModal();
-            return;
+        // Close it based on its ID
+        switch (topModal) {
+            case 'indicator-modal':
+                closeIndicatorModal();
+                break;
+            case 'edit-org-modal':
+                closeEditOrgModal();
+                break;
+            case 'delete-org-modal':
+                closeDeleteOrgModal();
+                break;
         }
     }
 });
@@ -292,6 +302,7 @@ async function editOrganization(orgId) {
 
         // Show modal
         document.getElementById('edit-org-modal').style.display = 'block';
+        pushModal('edit-org-modal');
     } catch (error) {
         console.error('Error loading organization:', error);
         alert('Failed to load organization data: ' + error.message);
@@ -302,6 +313,7 @@ function closeEditOrgModal() {
     document.getElementById('edit-org-modal').style.display = 'none';
     document.getElementById('edit-org-form').reset();
     editingOrgId = null;
+    popModal('edit-org-modal');
 }
 
 async function saveOrganizationEdit(event) {
@@ -352,11 +364,13 @@ function deleteOrganization(orgId, orgName) {
     deletingOrgId = orgId;
     document.getElementById('delete-org-name').textContent = orgName;
     document.getElementById('delete-org-modal').style.display = 'block';
+    pushModal('delete-org-modal');
 }
 
 function closeDeleteOrgModal() {
     document.getElementById('delete-org-modal').style.display = 'none';
     deletingOrgId = null;
+    popModal('delete-org-modal');
 }
 
 async function confirmDeleteOrganization() {
@@ -645,6 +659,7 @@ async function showIndicatorDetail(id, indicator) {
     `;
 
     modal.style.display = 'block';
+    pushModal('indicator-modal');
 
     try {
         // Construct GitHub URL using current organization language
@@ -781,12 +796,13 @@ async function showIndicatorDetail(id, indicator) {
 
 function closeIndicatorModal() {
     document.getElementById('indicator-modal').style.display = 'none';
+    popModal('indicator-modal');
 }
 
 // Close modal on outside click
 window.onclick = function (event) {
     const modal = document.getElementById('indicator-modal');
     if (event.target == modal) {
-        modal.style.display = 'none';
+        closeIndicatorModal();
     }
 };
