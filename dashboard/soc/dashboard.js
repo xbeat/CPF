@@ -1,6 +1,7 @@
 // Global state
 let organizationsData = null;
 let currentOrgId = null;
+let currentOrgLanguage = 'en-US'; // Default language
 
 // Open sidebar - idempotent (do nothing if already open)
 function openSidebar() {
@@ -192,6 +193,9 @@ function convertOrgDataForBayesian(org) {
 }
 
 function renderOrganizationDetail(org) {
+    // Save organization language for indicator detail modal
+    currentOrgLanguage = org.metadata?.language || 'en-US';
+
     // Convert API v2.0 format (assessments) to bayesian.js format (indicators)
     const orgDataForBayesian = convertOrgDataForBayesian(org);
 
@@ -356,12 +360,12 @@ async function showIndicatorDetail(id, indicator) {
     modal.style.display = 'block';
 
     try {
-        // Construct GitHub URL
+        // Construct GitHub URL using current organization language
         const [categoryNum, indicatorNum] = id.split('.');
         const categoryName = CATEGORY_MAP[categoryNum];
-        const url = `https://raw.githubusercontent.com/xbeat/CPF/main/auditor%20field%20kit/interactive/en-US/${categoryNum}.x-${categoryName}/indicator_${id}.json`;
+        const url = `https://raw.githubusercontent.com/xbeat/CPF/main/auditor%20field%20kit/interactive/${currentOrgLanguage}/${categoryNum}.x-${categoryName}/indicator_${id}.json`;
 
-        console.log('Fetching Quick Reference from:', url);
+        console.log('Fetching Quick Reference from:', url, '(Language:', currentOrgLanguage + ')');
 
         const response = await fetch(url);
         if (!response.ok) {
