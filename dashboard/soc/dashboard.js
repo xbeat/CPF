@@ -91,25 +91,29 @@ function renderOrganizationsList(data) {
         // Helper function to capitalize first letter
         const capitalizeFirst = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 
+        // Get country flag
+        const country = org.country || 'Unknown';
+        const countryFlag = country === 'Italy' || country === 'Italia' ? '🇮🇹' :
+                           country === 'USA' || country === 'United States' ? '🇺🇸' :
+                           country === 'Germany' || country === 'Germania' ? '🇩🇪' :
+                           country === 'France' || country === 'Francia' ? '🇫🇷' :
+                           country === 'Spain' || country === 'Spagna' ? '🇪🇸' :
+                           country === 'UK' || country === 'United Kingdom' ? '🇬🇧' : '🌐';
+
         // Get language info
         const language = org.metadata?.language || 'en-US';
-        const languageFlag = language === 'it-IT' ? '🇮🇹' :
-                            language === 'en-US' ? '🇺🇸' :
-                            language === 'de-DE' ? '🇩🇪' :
-                            language === 'fr-FR' ? '🇫🇷' :
-                            language === 'es-ES' ? '🇪🇸' : '🌐';
 
         item.innerHTML = `
             <div class="org-card-header">
                 <div class="org-name">${org.name}</div>
                 <div class="org-meta">
-                    ${org.industry} • ${capitalizeFirst(org.size)} • ${org.country}
+                    ${org.industry} • ${capitalizeFirst(org.size)} • ${countryFlag} ${org.country}
                 </div>
             </div>
             <div class="org-stats-detailed">
                 <div class="stat-row">
                     <span class="stat-label">Language</span>
-                    <span class="stat-value">${languageFlag} ${language}</span>
+                    <span class="stat-value">${language}</span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Assessments</span>
