@@ -9,6 +9,16 @@
  * Output:
  * - /dashboard/data/organizations_index.json
  * - /dashboard/data/organizations/org-demo-001.json (x5)
+ *
+ * Behavior:
+ * - ADDS new organizations without overwriting existing ones
+ * - SKIPS organizations with duplicate IDs
+ * - Preserves existing organizations in the database
+ *
+ * Reset/Clean Start:
+ * To delete all demo data and start fresh, remove these files/folders:
+ *   rm -f dashboard/data/organizations_index.json
+ *   rm -rf dashboard/data/organizations/
  */
 
 const fs = require('fs');
@@ -358,21 +368,46 @@ async function generateDemoOrganizations() {
   ensureDirectoryExists(DATA_DIR);
   ensureDirectoryExists(ORGS_DIR);
 
-  const organizationsIndex = {
-    metadata: {
-      version: '2.0',
-      last_updated: new Date().toISOString(),
-      total_organizations: DEMO_ORGANIZATIONS.length
-    },
-    organizations: []
-  };
+  // Load existing index or create new one
+  let organizationsIndex;
+  if (fs.existsSync(INDEX_FILE)) {
+    console.log('📂 Loading existing organizations index...');
+    const existingData = fs.readFileSync(INDEX_FILE, 'utf8');
+    organizationsIndex = JSON.parse(existingData);
+    console.log(`   Found ${organizationsIndex.organizations.length} existing organizations\n`);
+  } else {
+    console.log('📂 Creating new organizations index...\n');
+    organizationsIndex = {
+      metadata: {
+        version: '2.0',
+        last_updated: new Date().toISOString(),
+        total_organizations: 0
+      },
+      organizations: []
+    };
+  }
+
+  // Create a map of existing organizations by ID for quick lookup
+  const existingOrgsMap = new Map();
+  for (const org of organizationsIndex.organizations) {
+    existingOrgsMap.set(org.id, org);
+  }
 
   let totalAssessments = 0;
+  let addedCount = 0;
+  let skippedCount = 0;
 
   // Generate each organization
   for (const orgConfig of DEMO_ORGANIZATIONS) {
-    console.log(`\n📊 Generating: ${orgConfig.name}`);
+    console.log(`\n📊 Processing: ${orgConfig.name}`);
     console.log('-'.repeat(60));
+
+    // Check if organization already exists
+    if (existingOrgsMap.has(orgConfig.id)) {
+      console.log(`   ⏭️  SKIPPED: Organization "${orgConfig.id}" already exists`);
+      skippedCount++;
+      continue;
+    }
 
     const orgData = generateOrganization(orgConfig);
 
@@ -402,6 +437,7 @@ async function generateDemoOrganizations() {
     };
 
     organizationsIndex.organizations.push(indexEntry);
+    addedCount++;
 
     const numAssessments = orgData.aggregates.completion.assessed_indicators;
     totalAssessments += numAssessments;
@@ -414,6 +450,10 @@ async function generateDemoOrganizations() {
     console.log(`      - Avg Confidence: ${orgData.aggregates.overall_confidence}`);
   }
 
+  // Update index metadata
+  organizationsIndex.metadata.last_updated = new Date().toISOString();
+  organizationsIndex.metadata.total_organizations = organizationsIndex.organizations.length;
+
   // Save index file
   writeJsonFile(INDEX_FILE, organizationsIndex);
   console.log(`\n✓ Saved index: ${INDEX_FILE}`);
@@ -422,9 +462,13 @@ async function generateDemoOrganizations() {
   console.log('\n' + '='.repeat(60));
   console.log('\n✅ Generation completed!\n');
   console.log(`📊 Summary:`);
-  console.log(`   - Organizations created: ${DEMO_ORGANIZATIONS.length}`);
-  console.log(`   - Total assessments: ${totalAssessments}`);
-  console.log(`   - Average per org: ${Math.round(totalAssessments / DEMO_ORGANIZATIONS.length)}`);
+  console.log(`   - Organizations added: ${addedCount}`);
+  console.log(`   - Organizations skipped (already exist): ${skippedCount}`);
+  console.log(`   - Total organizations in database: ${organizationsIndex.organizations.length}`);
+  console.log(`   - New assessments generated: ${totalAssessments}`);
+  if (addedCount > 0) {
+    console.log(`   - Average assessments per new org: ${Math.round(totalAssessments / addedCount)}`);
+  }
   console.log();
 
   // Display table
