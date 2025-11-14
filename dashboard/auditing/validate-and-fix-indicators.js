@@ -92,19 +92,39 @@ function autoFixIndicator(data, indicatorId) {
     }
 
     // Fix 5: Cap red flags total impact at 1.0
-    const convSection = fixed.sections?.find(s => s.id === 'client-conversation');
-    const redFlagsSection = convSection?.subsections?.find(sub => sub.id === 'red-flags');
-    if (redFlagsSection && redFlagsSection.items) {
-        const totalImpact = redFlagsSection.items.reduce((sum, item) => sum + (item.score_impact || 0), 0);
+    // Red flags are identified by severity field (works for all languages)
+    let redFlagsItems = [];
+
+    // Scan all sections and subsections for items with severity
+    fixed.sections?.forEach(section => {
+        if (section.items) {
+            section.items.forEach(item => {
+                if (item.severity) redFlagsItems.push(item);
+            });
+        }
+        if (section.subsections) {
+            section.subsections.forEach(sub => {
+                if (sub.items) {
+                    sub.items.forEach(item => {
+                        if (item.severity) redFlagsItems.push(item);
+                    });
+                }
+            });
+        }
+    });
+
+    if (redFlagsItems.length > 0) {
+        const totalImpact = redFlagsItems.reduce((sum, item) => sum + (item.score_impact || item.weight || 0), 0);
 
         if (totalImpact > 1.0) {
             // Scale down all impacts proportionally
             const scale = 1.0 / totalImpact;
-            redFlagsSection.items.forEach(item => {
-                if (item.score_impact) {
-                    const oldImpact = item.score_impact;
-                    item.score_impact = item.score_impact * scale;
-                    changes.push(`Scaled red flag "${item.label}": ${oldImpact.toFixed(3)} → ${item.score_impact.toFixed(3)}`);
+            redFlagsItems.forEach(item => {
+                const impactField = item.score_impact !== undefined ? 'score_impact' : 'weight';
+                if (item[impactField]) {
+                    const oldImpact = item[impactField];
+                    item[impactField] = item[impactField] * scale;
+                    changes.push(`Scaled red flag "${item.label || item.title}": ${oldImpact.toFixed(3)} → ${item[impactField].toFixed(3)}`);
                 }
             });
         }
