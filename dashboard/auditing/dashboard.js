@@ -120,6 +120,9 @@ function renderOrganizations() {
         const riskLabel = org.stats.overall_risk < 0.3 ? '🟢 Low' :
                             org.stats.overall_risk < 0.7 ? '🟡 Medium' : '🔴 High';
 
+        // Format creation date
+        const createdDate = org.created_at ? new Date(org.created_at).toLocaleDateString() : 'N/A';
+
         return `
             <div class="org-card ${selectedOrgId === org.id ? 'selected' : ''}" onclick="selectOrganization('${org.id}')">
                 <div class="org-card-header">
@@ -135,6 +138,10 @@ function renderOrganizations() {
                     </div>
                 </div>
                 <div class="org-card-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Created</span>
+                        <span class="stat-value">${createdDate}</span>
+                    </div>
                     <div class="stat-row">
                         <span class="stat-label">Industry</span>
                         <span class="stat-value">${org.industry}</span>

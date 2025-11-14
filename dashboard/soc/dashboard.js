@@ -109,14 +109,27 @@ function renderOrganizationsList(data) {
         // Get language info (language is at org level, not in metadata)
         const language = org.language || 'en-US';
 
+        // Format creation date
+        const createdDate = org.created_at ? new Date(org.created_at).toLocaleDateString() : 'N/A';
+
         item.innerHTML = `
             <div class="org-card-header">
-                <div class="org-name">${org.name}</div>
-                <div class="org-meta">
-                    ${org.industry} • ${capitalizeFirst(org.size)} • ${countryFlag} ${org.country}
+                <div style="flex: 1; min-width: 0;">
+                    <div class="org-name">${org.name}</div>
+                    <div class="org-meta">
+                        ${org.industry} • ${capitalizeFirst(org.size)} • ${countryFlag} ${org.country}
+                    </div>
+                </div>
+                <div class="org-card-actions" onclick="event.stopPropagation()">
+                    <button class="icon-btn" onclick="editOrganization('${org.id}')" title="Edit">✏️</button>
+                    <button class="icon-btn" onclick="deleteOrganization('${org.id}', '${org.name.replace(/'/g, "\\'")}')" title="Delete">🗑️</button>
                 </div>
             </div>
             <div class="org-stats-detailed">
+                <div class="stat-row">
+                    <span class="stat-label">Created</span>
+                    <span class="stat-value">${createdDate}</span>
+                </div>
                 <div class="stat-row">
                     <span class="stat-label">Language</span>
                     <span class="stat-value">${language}</span>
@@ -227,6 +240,20 @@ function resetFilters() {
     sortDirection = 'desc';
     document.getElementById('sort-direction').textContent = '⬇️';
     filterAndSortOrganizations();
+}
+
+// Edit organization - redirect to Auditing dashboard for full management
+function editOrganization(orgId) {
+    if (confirm('Edit organization? You will be redirected to the Auditing Dashboard.')) {
+        window.location.href = `../auditing/index.html?edit=${orgId}`;
+    }
+}
+
+// Delete organization - redirect to Auditing dashboard for full management
+function deleteOrganization(orgId, orgName) {
+    if (confirm(`Delete organization "${orgName}"? You will be redirected to the Auditing Dashboard.`)) {
+        window.location.href = `../auditing/index.html?delete=${orgId}`;
+    }
 }
 
 async function selectOrganization(orgId) {
