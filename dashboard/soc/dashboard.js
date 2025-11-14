@@ -2,6 +2,7 @@
 let organizationsData = null;
 let currentOrgId = null;
 let currentOrgLanguage = 'en-US'; // Default language
+let sortDirection = 'desc'; // 'asc' or 'desc'
 
 // Open sidebar - idempotent (do nothing if already open)
 function openSidebar() {
@@ -139,6 +140,14 @@ function renderOrganizationsList(data) {
     });
 }
 
+// Toggle sort direction
+function toggleSortDirection() {
+    sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+    const btn = document.getElementById('sort-direction');
+    btn.textContent = sortDirection === 'desc' ? '⬇️' : '⬆️';
+    filterAndSortOrganizations();
+}
+
 // Filter and sort organizations based on search and sort criteria
 function filterAndSortOrganizations() {
     if (!organizationsData) return;
@@ -146,48 +155,60 @@ function filterAndSortOrganizations() {
     const searchValue = document.getElementById('org-search').value.toLowerCase().trim();
     const sortValue = document.getElementById('org-sort').value;
 
-    // Filter organizations
+    // Filter organizations - improved accuracy
     let filtered = organizationsData.organizations.filter(org => {
         if (!searchValue) return true;
 
-        const searchableText = [
-            org.name,
-            org.industry,
-            org.country,
-            org.size
-        ].join(' ').toLowerCase();
+        // Search in each field separately for better accuracy
+        const nameMatch = org.name.toLowerCase().includes(searchValue);
+        const industryMatch = org.industry.toLowerCase().includes(searchValue);
+        const countryMatch = org.country.toLowerCase().includes(searchValue);
+        const sizeMatch = org.size.toLowerCase().includes(searchValue);
 
-        return searchableText.includes(searchValue);
+        return nameMatch || industryMatch || countryMatch || sizeMatch;
     });
 
-    // Sort organizations
+    // Sort organizations with direction support
     filtered.sort((a, b) => {
+        let result = 0;
+
         switch (sortValue) {
             case 'name':
-                return a.name.localeCompare(b.name);
+                result = a.name.localeCompare(b.name);
+                break;
 
             case 'risk':
-                return (b.stats?.overall_risk || 0) - (a.stats?.overall_risk || 0);
+                result = (a.stats?.overall_risk || 0) - (b.stats?.overall_risk || 0);
+                break;
 
             case 'completion':
-                return (b.stats?.completion_percentage || 0) - (a.stats?.completion_percentage || 0);
+                result = (a.stats?.completion_percentage || 0) - (b.stats?.completion_percentage || 0);
+                break;
 
             case 'updated_at':
-                return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
+                result = new Date(a.updated_at || 0) - new Date(b.updated_at || 0);
+                break;
 
             case 'assessments':
-                return (b.stats?.total_assessments || 0) - (a.stats?.total_assessments || 0);
+                result = (a.stats?.total_assessments || 0) - (b.stats?.total_assessments || 0);
+                break;
 
             case 'industry':
-                return a.industry.localeCompare(b.industry);
+                result = a.industry.localeCompare(b.industry);
+                break;
 
             case 'country':
-                return a.country.localeCompare(b.country);
+                result = a.country.localeCompare(b.country);
+                break;
 
             case 'created_at':
             default:
-                return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+                result = new Date(a.created_at || 0) - new Date(b.created_at || 0);
+                break;
         }
+
+        // Apply sort direction
+        return sortDirection === 'desc' ? -result : result;
     });
 
     // Update count and re-render
@@ -208,6 +229,8 @@ function filterAndSortOrganizations() {
 function resetFilters() {
     document.getElementById('org-search').value = '';
     document.getElementById('org-sort').value = 'created_at';
+    sortDirection = 'desc';
+    document.getElementById('sort-direction').textContent = '⬇️';
     filterAndSortOrganizations();
 }
 
