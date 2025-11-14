@@ -1015,8 +1015,8 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                         <button class="btn btn-light" onclick="document.getElementById('file-input-integrated').click()">📂 Import JSON</button>
                         <input type="file" id="file-input-integrated" accept=".json" onchange="window.CPFClient.importJSON(event)" style="display: none;">
                         <button class="btn btn-danger" onclick="if(confirm('Reset all data?')) window.CPFClient.resetAll()" title="Clear all data and reset">🗑️ Reset</button>
-                        ${isEditMode ? `<button class="btn btn-primary" onclick="viewAssessmentDetailsFromEdit('${indicatorId}')">📋 View Details</button>` : ''}
-                        ${isEditMode ? `<button class="btn btn-warning" onclick="openHistoryModal()">📜 History</button>` : ''}
+                        <button class="btn btn-primary" onclick="viewAssessmentDetailsFromEdit('${indicatorId}')">📋 View Details</button>
+                        <button class="btn btn-warning" onclick="openHistoryModal()">📜 History</button>
                         ${isEditMode ? `<button class="btn btn-danger" onclick="deleteAssessmentFromEdit('${indicatorId}')">🗑️ Delete Assessment</button>` : ''}
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
