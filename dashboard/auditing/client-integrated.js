@@ -1097,25 +1097,36 @@ function calculateIndicatorScore() {
     }
 
     // 3. CALCULATE RED FLAGS SCORE
-    // Try to find red flags section (could be a separate section OR a subsection)
-    let redFlagsItems = null;
+    // Red flags are items with severity field (critical/high) - works for all languages
+    let redFlagsItems = [];
 
-    // First, try to find as a separate section (Italian structure)
-    const redFlagsSection = sections.find(s => s.id === 'red-flags');
-    if (redFlagsSection && redFlagsSection.items) {
-        redFlagsItems = redFlagsSection.items;
-    }
-
-    // If not found, try as subsection in client-conversation (English structure)
-    if (!redFlagsItems && convSection && convSection.subsections) {
-        const redFlagsSubsection = convSection.subsections.find(s => s.title && s.title.match(/Red Flags|BANDIERE ROSSE/i));
-        if (redFlagsSubsection && redFlagsSubsection.items) {
-            redFlagsItems = redFlagsSubsection.items;
+    // Scan ALL sections and subsections to find items with severity
+    sections.forEach(section => {
+        // Check direct items
+        if (section.items && Array.isArray(section.items)) {
+            section.items.forEach(item => {
+                if (item.severity) {
+                    redFlagsItems.push(item);
+                }
+            });
         }
-    }
 
-    // Calculate red flags score using item.id from Field Kit (not constructed IDs)
-    if (redFlagsItems) {
+        // Check subsection items
+        if (section.subsections && Array.isArray(section.subsections)) {
+            section.subsections.forEach(subsection => {
+                if (subsection.items && Array.isArray(subsection.items)) {
+                    subsection.items.forEach(item => {
+                        if (item.severity) {
+                            redFlagsItems.push(item);
+                        }
+                    });
+                }
+            });
+        }
+    });
+
+    // Calculate red flags score using item.id from Field Kit
+    if (redFlagsItems.length > 0) {
         let totalRedFlagImpact = 0;
 
         redFlagsItems.forEach((item) => {
