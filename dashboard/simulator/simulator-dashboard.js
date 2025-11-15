@@ -547,6 +547,23 @@ function resetFilters() {
     filterAndSortOrganizations();
 }
 
+// Sidebar open/close functions
+function openSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const openBtn = document.getElementById('sidebarOpenBtn');
+
+    sidebar.classList.remove('hidden');
+    openBtn.style.display = 'none';
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const openBtn = document.getElementById('sidebarOpenBtn');
+
+    sidebar.classList.add('hidden');
+    openBtn.style.display = 'inline-flex';
+}
+
 // Auto-refresh organizations every 30 seconds
 setInterval(async () => {
     if (document.getElementById('empty-state').style.display !== 'none') {
