@@ -373,24 +373,27 @@ function renderRiskSummary(org) {
 
 function renderProgressMatrix(org) {
     const matrix = document.getElementById('progressMatrix');
+    const filterDiv = document.getElementById('progressFilter');
     const assessments = org.assessments || {};
 
-    let html = '';
-
-    // Show filter info if active
+    // Render filter info if active
     if (categoryFilter) {
         const categoryNames = {
             '1': 'Authority-Based', '2': 'Temporal-Based', '3': 'Social-Based', '4': 'Affective-Based',
             '5': 'Cognitive-Based', '6': 'Group-Based', '7': 'Stress-Based', '8': 'Unconscious-Based',
             '9': 'AI-Enhanced', '10': 'Convergent'
         };
-        html += `
-            <div style="background: var(--primary); color: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-                <div>🔍 Filter active: Category ${categoryFilter} - ${categoryNames[categoryFilter]}</div>
-                <button onclick="clearCategoryFilter()" class="btn btn-small" style="background: white; color: var(--primary);">Clear Filter</button>
+        filterDiv.innerHTML = `
+            <div class="filter-active">
+                <div class="filter-text">🔍 Filter active: Category ${categoryFilter} - ${categoryNames[categoryFilter]}</div>
+                <button onclick="clearCategoryFilter()" class="filter-clear-btn">Clear Filter</button>
             </div>
         `;
+    } else {
+        filterDiv.innerHTML = '';
     }
+
+    let html = '';
 
     // Data rows (10x10 grid, no headers like SOC)
     for (let cat = 1; cat <= 10; cat++) {
