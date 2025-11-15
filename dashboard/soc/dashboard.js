@@ -961,7 +961,7 @@ function setMatrixZoom(matrixType, zoomLevel) {
     }
 
     // Remove all zoom classes
-    matrixElement.classList.remove('zoom-100', 'zoom-50', 'zoom-33');
+    matrixElement.classList.remove('zoom-100', 'zoom-75', 'zoom-50');
 
     // Add the new zoom class
     matrixElement.classList.add(`zoom-${zoomLevel}`);
