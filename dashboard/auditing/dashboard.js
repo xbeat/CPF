@@ -295,6 +295,9 @@ function renderAssessmentDetails() {
     renderRiskHeatmap(org);
     renderSecurityRadarChart(org);
     renderPrioritizationTable(org);
+
+    // Restore zoom preferences
+    restoreMatrixZoom();
 }
 
 function renderProgressSummary(org) {
@@ -2756,4 +2759,58 @@ async function exportCurrentOrgPDF() {
         console.error('Error exporting PDF:', error);
         showAlert(`Failed to export PDF: ${error.message}`, 'error');
     }
+}
+
+/**
+ * Set matrix zoom level
+ * @param {string} matrixType - Type of matrix ('progress', 'risk')
+ * @param {number} zoomLevel - Zoom percentage (100, 50, 33)
+ */
+function setMatrixZoom(matrixType, zoomLevel) {
+    let matrixElement;
+    let buttonsContainer;
+
+    // Get the correct matrix element based on type
+    if (matrixType === 'progress') {
+        matrixElement = document.getElementById('progressMatrix');
+        buttonsContainer = document.querySelector('#progressTab .zoom-controls');
+    } else if (matrixType === 'risk') {
+        matrixElement = document.getElementById('riskHeatmap');
+        buttonsContainer = document.querySelector('#riskTab .zoom-controls');
+    }
+
+    if (!matrixElement || !buttonsContainer) {
+        console.error('Matrix element or buttons container not found');
+        return;
+    }
+
+    // Remove all zoom classes
+    matrixElement.classList.remove('zoom-100', 'zoom-50', 'zoom-33');
+
+    // Add the new zoom class
+    matrixElement.classList.add(`zoom-${zoomLevel}`);
+
+    // Update button states
+    const buttons = buttonsContainer.querySelectorAll('.zoom-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent === `${zoomLevel}%`) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Save zoom preference in localStorage
+    localStorage.setItem(`matrix-zoom-${matrixType}`, zoomLevel);
+}
+
+/**
+ * Restore zoom level from localStorage
+ */
+function restoreMatrixZoom() {
+    ['progress', 'risk'].forEach(matrixType => {
+        const savedZoom = localStorage.getItem(`matrix-zoom-${matrixType}`);
+        if (savedZoom) {
+            setMatrixZoom(matrixType, parseInt(savedZoom));
+        }
+    });
 }
