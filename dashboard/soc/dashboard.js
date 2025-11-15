@@ -2,6 +2,10 @@
 let organizationsData = null;
 let currentOrgId = null;
 let currentOrgLanguage = 'en-US'; // Default language
+let sortDirection = 'desc'; // 'asc' or 'desc'
+let editingOrgId = null;
+let deletingOrgId = null;
+let modalStack = []; // Track open modals in order
 
 // Open sidebar - idempotent (do nothing if already open)
 function openSidebar() {
@@ -45,6 +49,41 @@ window.addEventListener('DOMContentLoaded', async () => {
     await loadOrganizationsData();
 });
 
+// Modal stack management
+function pushModal(modalId) {
+    if (!modalStack.includes(modalId)) {
+        modalStack.push(modalId);
+    }
+}
+
+function popModal(modalId) {
+    const index = modalStack.indexOf(modalId);
+    if (index > -1) {
+        modalStack.splice(index, 1);
+    }
+}
+
+// Close modals on ESC key - always close the most recently opened modal
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modalStack.length > 0) {
+        // Get the most recently opened modal (last in stack)
+        const topModal = modalStack[modalStack.length - 1];
+
+        // Close it based on its ID
+        switch (topModal) {
+            case 'indicator-modal':
+                closeIndicatorModal();
+                break;
+            case 'edit-org-modal':
+                closeEditOrgModal();
+                break;
+            case 'delete-org-modal':
+                closeDeleteOrgModal();
+                break;
+        }
+    }
+});
+
 async function loadOrganizationsData() {
     try {
         const response = await fetch('/api/organizations');
@@ -75,9 +114,14 @@ function renderOrganizationsList(data) {
     orgCount.textContent = data.metadata.total_organizations;
 
     const orgs = data.organizations;
+    orgList.innerHTML = ''; // Clear existing list
+
     orgs.forEach((org) => {
         const item = document.createElement('div');
         item.className = 'org-item';
+        if (currentOrgId === org.id) {
+            item.classList.add('active');
+        }
         item.onclick = () => selectOrganization(org.id);
 
         const overallRisk = org.stats?.overall_risk || 0;
@@ -103,14 +147,27 @@ function renderOrganizationsList(data) {
         // Get language info (language is at org level, not in metadata)
         const language = org.language || 'en-US';
 
+        // Format creation date
+        const createdDate = org.created_at ? new Date(org.created_at).toLocaleDateString() : 'N/A';
+
         item.innerHTML = `
             <div class="org-card-header">
-                <div class="org-name">${org.name}</div>
-                <div class="org-meta">
-                    ${org.industry} • ${capitalizeFirst(org.size)} • ${countryFlag} ${org.country}
+                <div style="flex: 1; min-width: 0;">
+                    <div class="org-name">${org.name}</div>
+                    <div class="org-meta">
+                        ${org.industry} • ${capitalizeFirst(org.size)} • ${countryFlag} ${org.country}
+                    </div>
+                </div>
+                <div class="org-card-actions" onclick="event.stopPropagation()">
+                    <button class="icon-btn" onclick="editOrganization('${org.id}')" title="Edit">✏️</button>
+                    <button class="icon-btn" onclick="deleteOrganization('${org.id}', '${org.name.replace(/'/g, "\\'")}')" title="Delete">🗑️</button>
                 </div>
             </div>
             <div class="org-stats-detailed">
+                <div class="stat-row">
+                    <span class="stat-label">Created</span>
+                    <span class="stat-value">${createdDate}</span>
+                </div>
                 <div class="stat-row">
                     <span class="stat-label">Language</span>
                     <span class="stat-value">${language}</span>
@@ -125,13 +182,226 @@ function renderOrganizationsList(data) {
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Confidence</span>
-                    <span class="stat-value">${org.stats?.confidence ? (org.stats.confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
+                    <span class="stat-value">${org.stats?.avg_confidence ? (org.stats.avg_confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
                 </div>
             </div>
         `;
 
         orgList.appendChild(item);
     });
+}
+
+// Toggle sort direction
+function toggleSortDirection() {
+    sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+    const btn = document.getElementById('sort-direction');
+    btn.textContent = sortDirection === 'desc' ? '⬇️' : '⬆️';
+    filterAndSortOrganizations();
+}
+
+// Filter and sort organizations based on search and sort criteria
+function filterAndSortOrganizations() {
+    if (!organizationsData) return;
+
+    const searchValue = document.getElementById('org-search').value.toLowerCase().trim();
+    const sortValue = document.getElementById('org-sort').value;
+
+    // Filter organizations - search by name only
+    let filtered = organizationsData.organizations.filter(org => {
+        if (!searchValue) return true;
+
+        // Search only in organization name
+        return org.name.toLowerCase().includes(searchValue);
+    });
+
+    // Sort organizations with direction support
+    filtered.sort((a, b) => {
+        let result = 0;
+
+        switch (sortValue) {
+            case 'name':
+                result = a.name.localeCompare(b.name);
+                break;
+
+            case 'risk':
+                result = (a.stats?.overall_risk || 0) - (b.stats?.overall_risk || 0);
+                break;
+
+            case 'completion':
+                result = (a.stats?.completion_percentage || 0) - (b.stats?.completion_percentage || 0);
+                break;
+
+            case 'updated_at':
+                result = new Date(a.updated_at || 0) - new Date(b.updated_at || 0);
+                break;
+
+            case 'assessments':
+                result = (a.stats?.total_assessments || 0) - (b.stats?.total_assessments || 0);
+                break;
+
+            case 'industry':
+                result = a.industry.localeCompare(b.industry);
+                break;
+
+            case 'country':
+                result = a.country.localeCompare(b.country);
+                break;
+
+            case 'created_at':
+            default:
+                result = new Date(a.created_at || 0) - new Date(b.created_at || 0);
+                break;
+        }
+
+        // Apply sort direction
+        return sortDirection === 'desc' ? -result : result;
+    });
+
+    // Update count and re-render
+    const orgCount = document.getElementById('org-count');
+    orgCount.textContent = filtered.length;
+
+    const data = {
+        metadata: {
+            total_organizations: filtered.length
+        },
+        organizations: filtered
+    };
+
+    renderOrganizationsList(data);
+}
+
+// Reset all filters to default
+function resetFilters() {
+    document.getElementById('org-search').value = '';
+    document.getElementById('org-sort').value = 'created_at';
+    sortDirection = 'desc';
+    document.getElementById('sort-direction').textContent = '⬇️';
+    filterAndSortOrganizations();
+}
+
+// Edit organization - open modal with current data
+async function editOrganization(orgId) {
+    editingOrgId = orgId;
+
+    try {
+        // Fetch full organization data
+        const response = await fetch(`/api/organizations/${orgId}`);
+        if (!response.ok) throw new Error('Failed to load organization');
+
+        const result = await response.json();
+        const org = result.data;
+
+        // Populate form
+        document.getElementById('edit-org-name').value = org.name;
+        document.getElementById('edit-org-industry').value = org.metadata.industry;
+        document.getElementById('edit-org-size').value = org.metadata.size;
+        document.getElementById('edit-org-country').value = org.metadata.country;
+        document.getElementById('edit-org-language').value = org.metadata.language;
+        document.getElementById('edit-org-notes').value = org.metadata.notes || '';
+
+        // Show modal
+        document.getElementById('edit-org-modal').style.display = 'block';
+        pushModal('edit-org-modal');
+    } catch (error) {
+        console.error('Error loading organization:', error);
+        alert('Failed to load organization data: ' + error.message);
+    }
+}
+
+function closeEditOrgModal() {
+    document.getElementById('edit-org-modal').style.display = 'none';
+    document.getElementById('edit-org-form').reset();
+    editingOrgId = null;
+    popModal('edit-org-modal');
+}
+
+async function saveOrganizationEdit(event) {
+    event.preventDefault();
+
+    if (!editingOrgId) return;
+
+    const data = {
+        name: document.getElementById('edit-org-name').value,
+        metadata: {
+            industry: document.getElementById('edit-org-industry').value,
+            size: document.getElementById('edit-org-size').value,
+            country: document.getElementById('edit-org-country').value.toUpperCase(),
+            language: document.getElementById('edit-org-language').value,
+            notes: document.getElementById('edit-org-notes').value
+        }
+    };
+
+    try {
+        const response = await fetch(`/api/organizations/${editingOrgId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('✅ Organization updated successfully!');
+            closeEditOrgModal();
+            await loadOrganizationsData();
+
+            // If editing currently selected org, reload it
+            if (currentOrgId === editingOrgId) {
+                await loadAndRenderOrganization(editingOrgId);
+            }
+        } else {
+            alert('Failed to update organization: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error updating organization:', error);
+        alert('Failed to update organization: ' + error.message);
+    }
+}
+
+// Delete organization - open confirmation modal
+function deleteOrganization(orgId, orgName) {
+    deletingOrgId = orgId;
+    document.getElementById('delete-org-name').textContent = orgName;
+    document.getElementById('delete-org-modal').style.display = 'block';
+    pushModal('delete-org-modal');
+}
+
+function closeDeleteOrgModal() {
+    document.getElementById('delete-org-modal').style.display = 'none';
+    deletingOrgId = null;
+    popModal('delete-org-modal');
+}
+
+async function confirmDeleteOrganization() {
+    if (!deletingOrgId) return;
+
+    try {
+        const response = await fetch(`/api/organizations/${deletingOrgId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('✅ Organization deleted successfully!');
+            closeDeleteOrgModal();
+
+            // If deleting currently selected org, clear selection
+            if (currentOrgId === deletingOrgId) {
+                currentOrgId = null;
+                document.getElementById('org-detail').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+            }
+
+            await loadOrganizationsData();
+        } else {
+            alert('Failed to delete organization: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error deleting organization:', error);
+        alert('Failed to delete organization: ' + error.message);
+    }
 }
 
 async function selectOrganization(orgId) {
@@ -389,6 +659,7 @@ async function showIndicatorDetail(id, indicator) {
     `;
 
     modal.style.display = 'block';
+    pushModal('indicator-modal');
 
     try {
         // Construct GitHub URL using current organization language
@@ -525,12 +796,13 @@ async function showIndicatorDetail(id, indicator) {
 
 function closeIndicatorModal() {
     document.getElementById('indicator-modal').style.display = 'none';
+    popModal('indicator-modal');
 }
 
 // Close modal on outside click
 window.onclick = function (event) {
     const modal = document.getElementById('indicator-modal');
     if (event.target == modal) {
-        modal.style.display = 'none';
+        closeIndicatorModal();
     }
 };
