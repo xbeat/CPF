@@ -80,14 +80,71 @@ function renderOrganizationsList() {
     organizations.forEach(org => {
         const item = document.createElement('div');
         item.className = 'org-item';
+        if (currentOrgId === org.id) {
+            item.classList.add('active');
+        }
         item.onclick = () => selectOrganization(org.id);
 
-        const riskPct = Math.round((org.stats?.overall_risk || 0) * 100);
+        const overallRisk = org.stats?.overall_risk || 0;
+        const riskClass = overallRisk > 0.66 ? 'high' :
+            overallRisk > 0.33 ? 'medium' : 'low';
+        const riskLabel = overallRisk > 0.66 ? 'High' :
+            overallRisk > 0.33 ? 'Medium' : 'Low';
+        const completion = org.stats?.completion_percentage || 0;
+        const totalAssessments = org.stats?.total_assessments || 0;
+
+        // Helper function to capitalize first letter
+        const capitalizeFirst = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+
+        // Get country flag using ISO codes
+        const country = org.country || 'Unknown';
+        const countryFlag = country === 'IT' ? '🇮🇹' :
+                           country === 'US' ? '🇺🇸' :
+                           country === 'GB' ? '🇬🇧' :
+                           country === 'DE' ? '🇩🇪' :
+                           country === 'FR' ? '🇫🇷' :
+                           country === 'ES' ? '🇪🇸' : '🌐';
+
+        // Get language info
+        const language = org.language || 'en-US';
+
+        // Format creation date
+        const createdDate = org.created_at ? new Date(org.created_at).toLocaleDateString() : 'N/A';
 
         item.innerHTML = `
-            <div class="org-name">${org.name}</div>
-            <div class="org-meta">
-                ${org.industry} • ${org.country} • Risk: ${riskPct}%
+            <div class="org-card-header">
+                <div style="flex: 1; min-width: 0;">
+                    <div class="org-name">${org.name}</div>
+                    <div class="org-meta">
+                        ${org.industry} • ${capitalizeFirst(org.size)} • ${countryFlag} ${org.country}
+                    </div>
+                </div>
+                <div class="org-card-actions" onclick="event.stopPropagation()">
+                    <button class="icon-btn" onclick="editOrganization('${org.id}')" title="Edit">✏️</button>
+                    <button class="icon-btn" onclick="deleteOrganization('${org.id}', '${org.name.replace(/'/g, "\\'")}')" title="Delete">🗑️</button>
+                </div>
+            </div>
+            <div class="org-stats-detailed">
+                <div class="stat-row">
+                    <span class="stat-label">Created</span>
+                    <span class="stat-value">${createdDate}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Language</span>
+                    <span class="stat-value">${language}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Assessments</span>
+                    <span class="stat-value">${totalAssessments}/100 (${completion}%)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Risk Level</span>
+                    <span class="stat-value ${riskClass}">${riskLabel} (${(overallRisk * 100).toFixed(0)}%)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Confidence</span>
+                    <span class="stat-value">${org.stats?.avg_confidence ? (org.stats.avg_confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
+                </div>
             </div>
         `;
 
@@ -562,6 +619,106 @@ function closeSidebar() {
 
     sidebar.classList.add('hidden');
     openBtn.style.display = 'inline-flex';
+}
+
+// Edit/Delete Organization Functions
+let editingOrgId = null;
+let deletingOrgId = null;
+
+function editOrganization(orgId) {
+    editingOrgId = orgId;
+    const org = organizations.find(o => o.id === orgId);
+    if (!org) return;
+
+    document.getElementById('edit-org-name').value = org.name;
+    document.getElementById('edit-org-industry').value = org.industry;
+    document.getElementById('edit-org-size').value = org.size;
+    document.getElementById('edit-org-country').value = org.country;
+    document.getElementById('edit-org-language').value = org.language;
+
+    document.getElementById('edit-org-modal').style.display = 'block';
+}
+
+function closeEditOrgModal() {
+    document.getElementById('edit-org-modal').style.display = 'none';
+    editingOrgId = null;
+}
+
+async function saveOrganizationEdit(event) {
+    event.preventDefault();
+
+    if (!editingOrgId) return;
+
+    const orgData = {
+        name: document.getElementById('edit-org-name').value.trim(),
+        industry: document.getElementById('edit-org-industry').value,
+        size: document.getElementById('edit-org-size').value,
+        country: document.getElementById('edit-org-country').value.trim().toUpperCase(),
+        language: document.getElementById('edit-org-language').value
+    };
+
+    try {
+        const response = await fetch(`/api/organizations/${editingOrgId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orgData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            logEvent(`Organization updated: ${orgData.name}`);
+            closeEditOrgModal();
+            await loadOrganizations();
+        } else {
+            alert(`Error: ${result.error || 'Failed to update organization'}`);
+        }
+    } catch (error) {
+        console.error('Error updating organization:', error);
+        alert('Failed to update organization');
+    }
+}
+
+function deleteOrganization(orgId, orgName) {
+    deletingOrgId = orgId;
+    document.getElementById('delete-org-name').textContent = orgName;
+    document.getElementById('delete-org-modal').style.display = 'block';
+}
+
+function closeDeleteOrgModal() {
+    document.getElementById('delete-org-modal').style.display = 'none';
+    deletingOrgId = null;
+}
+
+async function confirmDeleteOrganization() {
+    if (!deletingOrgId) return;
+
+    try {
+        const response = await fetch(`/api/organizations/${deletingOrgId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            logEvent(`Organization deleted`);
+            closeDeleteOrgModal();
+
+            // If deleting currently selected org, clear selection
+            if (currentOrgId === deletingOrgId) {
+                currentOrgId = null;
+                document.getElementById('simulator-dashboard').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+            }
+
+            await loadOrganizations();
+        } else {
+            alert(`Error: ${result.error || 'Failed to delete organization'}`);
+        }
+    } catch (error) {
+        console.error('Error deleting organization:', error);
+        alert('Failed to delete organization');
+    }
 }
 
 // Auto-refresh organizations every 30 seconds
