@@ -44,7 +44,9 @@ const io = new Server(server, {
   cors: {
     origin: '*',
     methods: ['GET', 'POST']
-  }
+  },
+  serveClient: true,
+  path: '/socket.io/'
 });
 
 // Global Socket.io instance (accessible by other modules)

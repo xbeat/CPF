@@ -2757,3 +2757,73 @@ async function exportCurrentOrgPDF() {
         showAlert(`Failed to export PDF: ${error.message}`, 'error');
     }
 }
+
+// ============================================================================
+// WEBSOCKET - REAL-TIME UPDATES
+// ============================================================================
+
+let socket = null;
+
+/**
+ * Setup WebSocket connection for real-time indicator updates
+ */
+function setupWebSocket(orgId) {
+    // Disconnect existing socket
+    if (socket) {
+        socket.disconnect();
+    }
+
+    // Only connect if Socket.io is available
+    if (typeof io === 'undefined') {
+        console.warn('Socket.io not available, real-time updates disabled');
+        return;
+    }
+
+    // Connect to Socket.io server
+    socket = io();
+
+    socket.on('connect', () => {
+        console.log('✅ WebSocket connected - Real-time updates enabled');
+
+        // Subscribe to organization updates
+        socket.emit('subscribe', orgId);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('❌ WebSocket disconnected');
+    });
+
+    socket.on('indicator_update', (data) => {
+        console.log('📊 Real-time indicator update received:', data);
+
+        // Only process updates for the currently selected organization
+        if (data.orgId === selectedOrgId && data.assessment) {
+            // Update the indicator using the existing function
+            updateAssessmentRealtime(data.indicatorId, data.assessment);
+
+            // Show notification
+            const trendSymbol = data.trend === 'up' ? '↑' : data.trend === 'down' ? '↓' : '';
+            showAlert(`Updated ${data.indicatorId}: ${Math.round(data.newScore * 100)}% ${trendSymbol}`, 'info', 3000);
+        }
+    });
+
+    socket.on('error', (error) => {
+        console.error('WebSocket error:', error);
+    });
+}
+
+/**
+ * Modified selectOrganization to setup WebSocket
+ */
+const originalSelectOrganization = window.selectOrganization || selectOrganization;
+if (typeof selectOrganization === 'function') {
+    // Wrap the original function
+    const _originalSelectOrganization = selectOrganization;
+    selectOrganization = async function(orgId) {
+        // Call original function
+        await _originalSelectOrganization(orgId);
+
+        // Setup WebSocket for this organization
+        setupWebSocket(orgId);
+    };
+}
