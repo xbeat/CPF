@@ -7,7 +7,7 @@ let deletingOrgId = null;
 let selectedIndicatorId = null;
 let categoryFilter = null;
 let sortDirection = 'desc'; // 'asc' or 'desc'
-let modalStack = []; // Track open modals in order
+// Note: modalStack is now in ui-utils.js as window.modalStack
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -19,9 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Close modals on ESC key - always close the most recently opened modal
 window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && modalStack.length > 0) {
+    if (event.key === 'Escape' && window.modalStack && window.modalStack.length > 0) {
         // Get the most recently opened modal (last in stack)
-        const topModal = modalStack[modalStack.length - 1];
+        const topModal = window.modalStack[window.modalStack.length - 1];
 
         // Close it based on its ID
         switch (topModal) {

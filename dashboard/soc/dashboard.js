@@ -5,7 +5,7 @@ let currentOrgLanguage = 'en-US'; // Default language
 let sortDirection = 'desc'; // 'asc' or 'desc'
 let editingOrgId = null;
 let deletingOrgId = null;
-let modalStack = []; // Track open modals in order
+// Note: modalStack is now in ui-utils.js as window.modalStack
 let securityRadarChartInstance = null; // Global chart instance to allow updates
 
 // Note: openSidebar() and closeSidebar() are now in shared/ui-utils.js
@@ -20,9 +20,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 // Close modals on ESC key - always close the most recently opened modal
 window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && modalStack.length > 0) {
+    if (event.key === 'Escape' && window.modalStack && window.modalStack.length > 0) {
         // Get the most recently opened modal (last in stack)
-        const topModal = modalStack[modalStack.length - 1];
+        const topModal = window.modalStack[window.modalStack.length - 1];
 
         // Close it based on its ID
         switch (topModal) {
