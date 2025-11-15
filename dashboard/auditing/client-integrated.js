@@ -343,10 +343,6 @@ function renderFieldKit(data) {
     document.getElementById('action-bar').innerHTML = `
         <div style="display: flex; gap: 15px;">
             <button class="btn btn-secondary" onclick="window.CPFClient.saveData()">💾 Save</button>
-            <button class="btn btn-warning" onclick="window.CPFClient.calculateIndicatorScore()">🧮 Calculate Score</button>
-            <button class="btn btn-info" onclick="window.CPFClient.validateCurrentJSON()">✓ Validate</button>
-        </div>
-        <div style="display: flex; gap: 15px;">
             <button class="btn btn-success" onclick="window.CPFClient.exportData()">📥 Export</button>
             <button class="btn btn-primary" onclick="window.CPFClient.generateReport()">📊 Report</button>
         </div>
@@ -1406,20 +1402,24 @@ function updateResponseWithAutoScore(id, value) {
 // ============================================
 // JSON VALIDATION
 // ============================================
-function validateCurrentJSON() {
-    if (!currentData.fieldKit) {
-        alert('No JSON loaded');
-        return;
-    }
-    
-    const result = validateJSONFile(currentData.fieldKit);
-    
-    if (result.valid) {
-        alert(`✅ JSON is valid!\n\n${result.warnings.length} warnings found (check console for details)`);
-    } else {
-        alert(`❌ JSON has ${result.errors.length} errors!\n\nCheck console for details.`);
-    }
-}
+// NOTE: Validation functionality removed from UI to avoid confusion
+// If you need to validate Field Kit JSON files, use the standalone validator script:
+// Run: node dashboard/auditing/scripts/validate-fieldkit.js <path-to-json>
+//
+// function validateCurrentJSON() {
+//     if (!currentData.fieldKit) {
+//         alert('No JSON loaded');
+//         return;
+//     }
+//
+//     const result = validateJSONFile(currentData.fieldKit);
+//
+//     if (result.valid) {
+//         alert(`✅ JSON is valid!\n\n${result.warnings.length} warnings found (check console for details)`);
+//     } else {
+//         alert(`❌ JSON has ${result.errors.length} errors!\n\nCheck console for details.`);
+//     }
+// }
 
 // ============================================
 // QUICK REFERENCE GUIDE SYSTEM
@@ -2023,10 +2023,10 @@ window.CPFClient = {
     toggleCategory: toggleCategory,
     loadIndicatorFromReference: loadIndicatorFromReference,
     showIndicatorDetails: showIndicatorDetails,
-    closeIndicatorDetails: closeIndicatorDetails,
+    closeIndicatorDetails: closeIndicatorDetails
 
-    // Validation
-    validateCurrentJSON: validateCurrentJSON
+    // Validation removed - use standalone script instead
+    // validateCurrentJSON: validateCurrentJSON
 };
 
 })(); // End of IIFE wrapper
