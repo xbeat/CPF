@@ -107,9 +107,9 @@ function refreshData() {
 // ===== RENDERING =====
 function renderOrganizations() {
     const grid = document.getElementById('organizationsGrid');
-    const countEl = document.getElementById('orgCount');
+    const countEl = document.getElementById('org-count');
 
-    countEl.textContent = `${organizations.length} organization${organizations.length !== 1 ? 's' : ''}`;
+    countEl.textContent = organizations.length;
 
     if (organizations.length === 0) {
         grid.innerHTML = `
