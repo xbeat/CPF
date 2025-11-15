@@ -5,44 +5,9 @@ let currentOrgLanguage = 'en-US'; // Default language
 let sortDirection = 'desc'; // 'asc' or 'desc'
 let editingOrgId = null;
 let deletingOrgId = null;
-let modalStack = []; // Track open modals in order
+// Note: modalStack is now in ui-utils.js as window.modalStack
 
-// Open sidebar - idempotent (do nothing if already open)
-function openSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const main = document.getElementById('dashboardMain');
-    const openBtn = document.getElementById('sidebarOpenBtn');
-
-    // If already open, do nothing
-    if (!sidebar.classList.contains('sidebar-hidden')) {
-        return;
-    }
-
-    // Remove hidden class and collapsed state
-    sidebar.classList.remove('sidebar-hidden');
-    main.classList.remove('sidebar-collapsed');
-
-    // Hide open button
-    if (openBtn) {
-        openBtn.style.display = 'none';
-    }
-}
-
-// Close sidebar
-function closeSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const main = document.getElementById('dashboardMain');
-    const openBtn = document.getElementById('sidebarOpenBtn');
-
-    // Hide sidebar and mark main as collapsed
-    sidebar.classList.add('sidebar-hidden');
-    main.classList.add('sidebar-collapsed');
-
-    // Show open button
-    if (openBtn) {
-        openBtn.style.display = 'inline-flex';
-    }
-}
+// Note: openSidebar() and closeSidebar() are now in shared/ui-utils.js
 
 // Load data on page load
 window.addEventListener('DOMContentLoaded', async () => {
@@ -50,24 +15,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Modal stack management
-function pushModal(modalId) {
-    if (!modalStack.includes(modalId)) {
-        modalStack.push(modalId);
-    }
-}
-
-function popModal(modalId) {
-    const index = modalStack.indexOf(modalId);
-    if (index > -1) {
-        modalStack.splice(index, 1);
-    }
-}
+// Note: pushModal() and popModal() are now in shared/ui-utils.js
 
 // Close modals on ESC key - always close the most recently opened modal
 window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && modalStack.length > 0) {
+    if (event.key === 'Escape' && window.modalStack && window.modalStack.length > 0) {
         // Get the most recently opened modal (last in stack)
-        const topModal = modalStack[modalStack.length - 1];
+        const topModal = window.modalStack[window.modalStack.length - 1];
 
         // Close it based on its ID
         switch (topModal) {

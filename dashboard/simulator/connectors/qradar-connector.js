@@ -11,62 +11,27 @@ class QRadarConnector extends BaseConnector {
     super('qradar', config);
     this.apiUrl = config.apiUrl || 'https://qradar.example.com';
     this.apiToken = config.apiToken;
-    this.mode = config.mode || 'simulation';
   }
 
-  async connect() {
-    if (this.mode === 'simulation') {
-      this.connected = true;
-      this.log('info', '🎭 Connected (Simulation Mode)');
-      return { success: true, mode: 'simulation' };
-    }
+  // ===== HOOK IMPLEMENTATIONS (vendor-specific logic only) =====
 
-    try {
-      this.validateConfig(['apiUrl', 'apiToken']);
-      // TODO: Test QRadar API connection
-      // GET /api/help/versions
-      this.connected = true;
-      this.log('info', '✅ Connected to IBM QRadar');
-      return { success: true, mode: 'production' };
-    } catch (error) {
-      this.handleError(error, 'connect');
-      throw error;
-    }
+  async _connectProduction() {
+    this.validateConfig(['apiUrl', 'apiToken']);
+    // TODO: Test QRadar API connection
+    // GET /api/help/versions
   }
 
-  async fetchEvents(filters = {}) {
-    if (!this.connected) throw new Error('Not connected to QRadar');
-    if (this.mode === 'simulation') return [];
-
-    try {
-      // TODO: Implementare
-      // GET /api/siem/offenses - Offenses (security events)
-      // GET /api/ariel/searches - AQL queries
-      const results = [];
-      this.updateStats('eventsReceived', results.length);
-      return results.map(event => this.normalizeEvent(event));
-    } catch (error) {
-      this.handleError(error, 'fetchEvents');
-      throw error;
-    }
+  async _fetchEventsProduction(filters) {
+    // TODO: Implementare
+    // GET /api/siem/offenses - Offenses (security events)
+    // GET /api/ariel/searches - AQL queries
+    return []; // Return raw events (base class will normalize)
   }
 
-  async sendEvent(event) {
-    if (!this.connected) throw new Error('Not connected to QRadar');
-    if (this.mode === 'simulation') {
-      this.updateStats('eventsSent');
-      return { success: true, mode: 'simulation' };
-    }
-
-    try {
-      // TODO: Implementare
-      // POST /api/siem/offenses/{offense_id}/notes
-      this.updateStats('eventsSent');
-      return { success: true, mode: 'production' };
-    } catch (error) {
-      this.handleError(error, 'sendEvent');
-      throw error;
-    }
+  async _sendEventProduction(event) {
+    // TODO: Implementare
+    // POST /api/siem/offenses/{offense_id}/notes
+    return {}; // Return vendor-specific result
   }
 
   normalizeEvent(qradarEvent) {
