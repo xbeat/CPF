@@ -1,10 +1,12 @@
 // Global State
 let organizations = [];
+let organizationsData = null;
 let currentOrgId = null;
 let simulatorRunning = false;
 let mode = 'auto'; // 'auto' or 'manual'
 let statusInterval = null;
 let selectedSources = ['splunk', 'qradar', 'sentinel', 'crowdstrike'];
+let sortDirection = 'desc'; // 'asc' or 'desc'
 
 // Initialize on page load
 window.addEventListener('DOMContentLoaded', async () => {
@@ -45,6 +47,7 @@ async function loadOrganizations() {
 
         const data = await response.json();
         organizations = data.organizations || [];
+        organizationsData = data;
 
         document.getElementById('org-count').textContent = organizations.length;
 
@@ -459,6 +462,89 @@ function formatDuration(seconds) {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     return `${hours}h ${mins}m`;
+}
+
+// Toggle sort direction
+function toggleSortDirection() {
+    sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+    const btn = document.getElementById('sort-direction');
+    btn.textContent = sortDirection === 'desc' ? '⬇️' : '⬆️';
+    filterAndSortOrganizations();
+}
+
+// Filter and sort organizations based on search and sort criteria
+function filterAndSortOrganizations() {
+    if (!organizationsData) return;
+
+    const searchValue = document.getElementById('org-search').value.toLowerCase().trim();
+    const sortValue = document.getElementById('org-sort').value;
+
+    // Filter organizations - search by name only
+    let filtered = organizationsData.organizations.filter(org => {
+        if (!searchValue) return true;
+
+        // Search only in organization name
+        return org.name.toLowerCase().includes(searchValue);
+    });
+
+    // Sort organizations with direction support
+    filtered.sort((a, b) => {
+        let result = 0;
+
+        switch (sortValue) {
+            case 'name':
+                result = a.name.localeCompare(b.name);
+                break;
+
+            case 'risk':
+                result = (a.stats?.overall_risk || 0) - (b.stats?.overall_risk || 0);
+                break;
+
+            case 'completion':
+                result = (a.stats?.completion_percentage || 0) - (b.stats?.completion_percentage || 0);
+                break;
+
+            case 'updated_at':
+                result = new Date(a.updated_at || 0) - new Date(b.updated_at || 0);
+                break;
+
+            case 'assessments':
+                result = (a.stats?.total_assessments || 0) - (b.stats?.total_assessments || 0);
+                break;
+
+            case 'industry':
+                result = a.industry.localeCompare(b.industry);
+                break;
+
+            case 'country':
+                result = a.country.localeCompare(b.country);
+                break;
+
+            case 'created_at':
+            default:
+                result = new Date(a.created_at || 0) - new Date(b.created_at || 0);
+                break;
+        }
+
+        // Apply sort direction
+        return sortDirection === 'desc' ? -result : result;
+    });
+
+    // Update count
+    document.getElementById('org-count').textContent = filtered.length;
+
+    // Update organizations array and re-render
+    organizations = filtered;
+    renderOrganizationsList();
+}
+
+// Reset all filters to default
+function resetFilters() {
+    document.getElementById('org-search').value = '';
+    document.getElementById('org-sort').value = 'created_at';
+    sortDirection = 'desc';
+    document.getElementById('sort-direction').textContent = '⬇️';
+    filterAndSortOrganizations();
 }
 
 // Auto-refresh organizations every 30 seconds
