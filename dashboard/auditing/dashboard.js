@@ -106,71 +106,92 @@ function refreshData() {
 
 // ===== RENDERING =====
 function renderOrganizations() {
-    const grid = document.getElementById('organizationsGrid');
+    const orgList = document.getElementById('org-list');
     const countEl = document.getElementById('org-count');
 
     countEl.textContent = organizations.length;
 
     if (organizations.length === 0) {
-        grid.innerHTML = `
-            <div class="empty-state" style="grid-column: 1 / -1;">
-                <div class="empty-state-icon">📊</div>
-                <h3 class="empty-state-title">No Organizations Yet</h3>
-                <p class="empty-state-text">Create your first organization to start tracking assessments</p>
-                <button class="btn btn-primary" onclick="openCreateOrgModal()">➕ Create Organization</button>
+        orgList.innerHTML = `
+            <div style="padding: 1rem; text-align: center; color: var(--text-light);">
+                <p>No organizations found</p>
             </div>
         `;
         return;
     }
 
-    grid.innerHTML = organizations.map(org => {
-        const riskClass = org.stats.overall_risk < 0.3 ? 'risk-low' :
-                            org.stats.overall_risk < 0.7 ? 'risk-medium' : 'risk-high';
-        const riskLabel = org.stats.overall_risk < 0.3 ? '🟢 Low' :
-                            org.stats.overall_risk < 0.7 ? '🟡 Medium' : '🔴 High';
+    orgList.innerHTML = '';
+
+    organizations.forEach(org => {
+        const item = document.createElement('div');
+        item.className = 'org-item';
+        if (selectedOrgId === org.id) {
+            item.classList.add('active');
+        }
+        item.onclick = () => selectOrganization(org.id);
+
+        const overallRisk = org.stats?.overall_risk || 0;
+        const riskClass = overallRisk > 0.66 ? 'high' :
+            overallRisk > 0.33 ? 'medium' : 'low';
+        const riskLabel = overallRisk > 0.66 ? 'High' :
+            overallRisk > 0.33 ? 'Medium' : 'Low';
+        const completion = org.stats?.completion_percentage || 0;
+        const totalAssessments = org.stats?.total_assessments || 0;
+
+        // Get country flag using ISO codes
+        const country = org.country || 'Unknown';
+        const countryFlag = country === 'IT' ? '🇮🇹' :
+                           country === 'US' ? '🇺🇸' :
+                           country === 'GB' ? '🇬🇧' :
+                           country === 'DE' ? '🇩🇪' :
+                           country === 'FR' ? '🇫🇷' :
+                           country === 'ES' ? '🇪🇸' : '🌐';
+
+        // Get language info
+        const language = org.language || 'en-US';
 
         // Format creation date
         const createdDate = org.created_at ? new Date(org.created_at).toLocaleDateString() : 'N/A';
 
-        return `
-            <div class="org-card ${selectedOrgId === org.id ? 'selected' : ''}" onclick="selectOrganization('${org.id}')">
-                <div class="org-card-header">
-                    <div>
-                        <h3 class="org-card-title">${escapeHtml(org.name)}</h3>
-                        <div class="org-card-meta">
-                            ${org.industry} • ${capitalizeFirst(org.size)} • ${org.country}
-                        </div>
-                    </div>
-                    <div class="org-card-actions" onclick="event.stopPropagation()">
-                        <button class="icon-btn" onclick="editOrganization('${org.id}')" title="Edit">✏️</button>
-                        <button class="icon-btn" onclick="deleteOrganization('${org.id}', '${escapeHtml(org.name)}')" title="Delete">🗑️</button>
+        item.innerHTML = `
+            <div class="org-card-header">
+                <div style="flex: 1; min-width: 0;">
+                    <div class="org-name">${escapeHtml(org.name)}</div>
+                    <div class="org-meta">
+                        ${org.industry} • ${capitalizeFirst(org.size)} • ${countryFlag} ${org.country}
                     </div>
                 </div>
-                <div class="org-card-stats">
-                    <div class="stat-row">
-                        <span class="stat-label">Created</span>
-                        <span class="stat-value">${createdDate}</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Industry</span>
-                        <span class="stat-value">${org.industry}</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Assessments</span>
-                        <span class="stat-value">${org.stats.total_assessments}/100 (${org.stats.completion_percentage}%)</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Risk</span>
-                        <span class="stat-value ${riskClass}">${riskLabel}</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Confidence</span>
-                        <span class="stat-value">${org.stats?.avg_confidence ? (org.stats.avg_confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
-                    </div>
+                <div class="org-card-actions" onclick="event.stopPropagation()">
+                    <button class="icon-btn" onclick="editOrganization('${org.id}')" title="Edit">✏️</button>
+                    <button class="icon-btn" onclick="deleteOrganization('${org.id}', '${escapeHtml(org.name)}')" title="Delete">🗑️</button>
+                </div>
+            </div>
+            <div class="org-stats-detailed">
+                <div class="stat-row">
+                    <span class="stat-label">Created</span>
+                    <span class="stat-value">${createdDate}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Language</span>
+                    <span class="stat-value">${language}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Assessments</span>
+                    <span class="stat-value">${totalAssessments}/100 (${completion}%)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Risk Level</span>
+                    <span class="stat-value ${riskClass}">${riskLabel} (${(overallRisk * 100).toFixed(0)}%)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Confidence</span>
+                    <span class="stat-value">${org.stats?.avg_confidence ? (org.stats.avg_confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
                 </div>
             </div>
         `;
-    }).join('');
+
+        orgList.appendChild(item);
+    });
 }
 
 // Toggle sort direction
