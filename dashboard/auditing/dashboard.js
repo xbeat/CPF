@@ -2850,6 +2850,8 @@ if (typeof selectOrganization === 'function') {
         // Setup WebSocket for this organization
         setupWebSocket(orgId);
     };
+}
+
 /**
  * Set matrix zoom level
  * @param {string} matrixType - Type of matrix ('progress', 'risk')
