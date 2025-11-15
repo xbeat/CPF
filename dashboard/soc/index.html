@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CPF Dashboard - SOC + Bayesian Analysis</title>
     <link rel="stylesheet" href="../shared/styles.css">
+    <link rel="stylesheet" href="../auditing/styles.css">
 </head>
 <body>
     <div class="dashboard-container">
         <!-- Header -->
-        <header class="dashboard-header">
+        <header class="dashboard-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%) !important;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <a href="../index.html" style="display: inline-block; color: white; text-decoration: none; opacity: 0.9; margin-bottom: 10px; font-size: 14px; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">
@@ -44,6 +45,30 @@
                             <polyline points="15 18 9 12 15 6"></polyline>
                         </svg>
                     </button>
+                </div>
+                <!-- Search and Sort Controls -->
+                <div class="org-controls">
+                    <div class="search-box">
+                        <input type="text" id="org-search" class="search-input" placeholder="🔍 Search organizations..." oninput="filterAndSortOrganizations()">
+                    </div>
+                    <div class="controls-row">
+                        <select id="org-sort" class="sort-select" onchange="filterAndSortOrganizations()">
+                            <option value="created_at">📅 Date Created</option>
+                            <option value="name">🔤 Name</option>
+                            <option value="risk">⚠️ Risk Score</option>
+                            <option value="completion">📊 Completion %</option>
+                            <option value="updated_at">🔄 Last Updated</option>
+                            <option value="assessments">📝 Assessments</option>
+                            <option value="industry">🏢 Industry</option>
+                            <option value="country">🌍 Country</option>
+                        </select>
+                        <button id="sort-direction" class="sort-direction-btn" onclick="toggleSortDirection()" title="Toggle sort direction">
+                            ⬇️
+                        </button>
+                        <button id="reset-filters" class="reset-btn" onclick="resetFilters()" title="Reset all filters">
+                            🔄
+                        </button>
+                    </div>
                 </div>
                 <div id="org-list" class="org-list">
                     <!-- Populated by JS -->
@@ -168,6 +193,86 @@
             <h2 id="modal-indicator-title">Indicator X.Y</h2>
             <div id="modal-indicator-body">
                 <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Organization Modal -->
+    <div id="edit-org-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">✏️ Edit Organization</h3>
+                <span class="modal-close" onclick="closeEditOrgModal()">&times;</span>
+            </div>
+            <form id="edit-org-form" onsubmit="saveOrganizationEdit(event)">
+                <div class="form-group">
+                    <label class="form-label">Organization Name <span class="required">*</span></label>
+                    <input type="text" id="edit-org-name" class="form-input" required placeholder="ACME Corporation">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Industry <span class="required">*</span></label>
+                    <select id="edit-org-industry" class="form-select" required>
+                        <option value="">Select industry...</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Retail">Retail</option>
+                        <option value="Education">Education</option>
+                        <option value="Manufacturing">Manufacturing</option>
+                        <option value="Government">Government</option>
+                        <option value="Energy">Energy</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Size <span class="required">*</span></label>
+                    <select id="edit-org-size" class="form-select" required>
+                        <option value="">Select size...</option>
+                        <option value="small">Small (&lt;50 employees)</option>
+                        <option value="medium">Medium (50-500 employees)</option>
+                        <option value="enterprise">Enterprise (&gt;500 employees)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Country <span class="required">*</span></label>
+                    <input type="text" id="edit-org-country" class="form-input" required maxlength="2" placeholder="US" style="text-transform: uppercase;">
+                    <div class="form-helper">ISO 3166-1 alpha-2 code (2 letters, e.g., US, IT, GB)</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Language <span class="required">*</span></label>
+                    <select id="edit-org-language" class="form-select" required>
+                        <option value="en-US">English (US)</option>
+                        <option value="it-IT">Italian (IT)</option>
+                        <option value="es-ES">Spanish (ES)</option>
+                        <option value="fr-FR">French (FR)</option>
+                        <option value="de-DE">German (DE)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea id="edit-org-notes" class="form-textarea" placeholder="Additional notes..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditOrgModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-org-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title">⚠️ Delete Organization</h3>
+                <span class="modal-close" onclick="closeDeleteOrgModal()">&times;</span>
+            </div>
+            <p>Are you sure you want to delete <strong id="delete-org-name"></strong>?</p>
+            <p style="color: var(--danger); font-size: 14px;">This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeDeleteOrgModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDeleteOrganization()">Delete</button>
             </div>
         </div>
     </div>

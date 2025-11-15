@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPF - SOC/SIEM Integration Documentation</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --bg-gray: #f9fafb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            font-size: 42px;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 18px;
+            color: var(--text-light);
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-size: 14px;
+            color: var(--text-light);
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .section h2 {
+            font-size: 32px;
+            color: var(--primary);
+            margin-bottom: 20px;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .section h3 {
+            font-size: 24px;
+            color: var(--secondary);
+            margin: 30px 0 15px 0;
+        }
+
+        .section p {
+            line-height: 1.8;
+            color: var(--text);
+            margin-bottom: 15px;
+        }
+
+        .paper-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .paper-card {
+            background: var(--bg-gray);
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .paper-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left-color: var(--accent);
+        }
+
+        .paper-card h4 {
+            font-size: 18px;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .paper-card p {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-bottom: 15px;
+        }
+
+        .paper-card .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .tag {
+            background: var(--primary-light);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .tag.bayesian { background: #8b5cf6; }
+        .tag.soc { background: #ec4899; }
+        .tag.ai { background: #10b981; }
+        .tag.math { background: #f59e0b; }
+
+        .download-btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .download-btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid var(--warning);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h4 {
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+
+        .highlight-box p {
+            color: #78350f;
+        }
+
+        .toc {
+            background: var(--bg-gray);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .toc h3 {
+            font-size: 20px;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .toc li:last-child {
+            border-bottom: none;
+        }
+
+        .toc a {
+            color: var(--text);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: var(--primary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-box .number {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-box .label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: white;
+            color: var(--primary);
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/dashboard/" class="back-btn">← Torna alla Dashboard</a>
+
+        <div class="header">
+            <div class="breadcrumb">
+                <a href="/dashboard/">Dashboard</a> /
+                <a href="/dashboard/soc/">SOC Integration</a> /
+                <span>Documentation</span>
+            </div>
+            <h1>🔐 SOC/SIEM/SOAR Integration Papers</h1>
+            <p class="subtitle">Documentazione Completa: Framework Bayesiano, AI Threat Detection, Mathematical Formalization</p>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="number">150+</div>
+                    <div class="label">Paper & Documenti</div>
+                </div>
+                <div class="stat-box" style="background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);">
+                    <div class="number">10</div>
+                    <div class="label">Categorie CPF</div>
+                </div>
+                <div class="stat-box" style="background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);">
+                    <div class="number">73-81%</div>
+                    <div class="label">Prediction Accuracy</div>
+                </div>
+                <div class="stat-box" style="background: linear-gradient(135deg, #10b981 0%, #34d399 100%);">
+                    <div class="number">48-72h</div>
+                    <div class="label">Lead Time</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="toc">
+                <h3>📑 Indice dei Contenuti</h3>
+                <ul>
+                    <li><a href="#comprehensive-paper">Paper Completo di Integrazione SOC</a></li>
+                    <li><a href="#bayesian">Framework Bayesiano e Reti Bayesiane</a></li>
+                    <li><a href="#soc-integration">Integrazione SOC/SIEM/SOAR</a></li>
+                    <li><a href="#ai-llm">AI e LLM per Threat Detection</a></li>
+                    <li><a href="#math-formalization">Formalizzazione Matematica (10 Categorie)</a></li>
+                    <li><a href="#theoretical">Paper Teorici Framework CPF</a></li>
+                    <li><a href="#validation">Validazione e Ricerca Empirica</a></li>
+                    <li><a href="#code">Implementazione Codice</a></li>
+                </ul>
+            </div>
+
+            <div class="highlight-box">
+                <h4>🎯 Paper Principale - Integrazione Completa</h4>
+                <p><strong>Nuovo Paper Comprensivo</strong>: Abbiamo creato un documento completo che integra teoria bayesiana, math formalization, generazione eventi, LLM threat detection e integrazione SOC. Questo paper unifica tutti i concetti in un'unica risorsa di riferimento.</p>
+                <a href="./CPF_SOC_SIEM_Integration_Comprehensive_Paper.html" class="download-btn" style="background: #f59e0b; margin-top: 10px;">📄 Visualizza Paper Completo</a>
+            </div>
+        </div>
+
+        <!-- Framework Bayesiano -->
+        <div class="section" id="bayesian">
+            <h2>🧮 Framework Bayesiano e Reti Bayesiane</h2>
+            <p>La rete bayesiana è il cuore matematico dell'integrazione SOC, permettendo di inferire stati psicologici da dati SIEM e correlare eventi machine con assessment umani.</p>
+
+            <div class="paper-grid">
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag bayesian">Bayesian</span>
+                        <span class="tag soc">SOC</span>
+                    </div>
+                    <h4>Bayesian Cross-Indicator Inference for Cybersecurity Psychology Assessment</h4>
+                    <p>Paper centrale che descrive l'architettura bayesiana per integrare dati SOC machine con auditing umano. Include CPD (Conditional Probability Distributions) calibrate su ricerca psicologica.</p>
+                    <a href="../../docs/papers/Bayesian_Cross_Indicator_Inference_for_Cybersecurity_Psychology_Assessment__Integrating_SOC_Machine_Data_with_Human_Auditing.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag bayesian">Bayesian</span>
+                        <span class="tag">Code</span>
+                    </div>
+                    <h4>From Theory to Code: Implementing Bayesian Cybersecurity Analysis in Python</h4>
+                    <p>Guida pratica con codice Python eseguibile per implementare il modello bayesiano CPF. Include esempi di inferenza, convergence analysis e prediction.</p>
+                    <a href="#code" class="download-btn">Vai al Codice</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag bayesian">Bayesian</span>
+                        <span class="tag">JavaScript</span>
+                    </div>
+                    <h4>Bayesian.js - Frontend Implementation</h4>
+                    <p>Implementazione JavaScript della rete bayesiana per dashboard SOC. Include merge SOC+Human, category dependencies, convergence calculator.</p>
+                    <a href="../bayesian.js" class="download-btn" target="_blank">Visualizza Codice</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Integrazione SOC/SIEM -->
+        <div class="section" id="soc-integration">
+            <h2>🔄 Integrazione SOC/SIEM/SOAR</h2>
+            <p>L'integrazione trasforma dati grezzi di vulnerability management in intelligenza psicologica organizzativa, rilevando pattern inconsci che precedono gli incidenti di sicurezza.</p>
+
+            <div class="paper-grid">
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag soc">SOC</span>
+                        <span class="tag">Technical</span>
+                    </div>
+                    <h4>CPF SOC Implementation Technical Paper 2025</h4>
+                    <p>Paper tecnico completo sull'architettura di integrazione SOC. Include extraction da Qualys/Tenable/Rapid7, pattern detection engine, priority adjustment.</p>
+                    <a href="/cpf-soc-integration/papers/CPF_SOC_Implementation_Technical_Paper_2025.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag soc">SOC</span>
+                        <span class="tag">Guide</span>
+                    </div>
+                    <h4>CPF Technical Integration Guide</h4>
+                    <p>Guida pratica per MSP/MSSP: API endpoints, data flow, esempi di codice, deployment instructions. 725 righe di documentazione tecnica.</p>
+                    <a href="/cpf-soc-integration/docs/cpf_technical_integration.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag soc">SOC</span>
+                        <span class="tag">Psychology</span>
+                    </div>
+                    <h4>CPF Psychological Inference Paper</h4>
+                    <p>Metodologia per inferire stati psicologici organizzativi da dati di vulnerabilità. Mapping da pattern CVE a teorie psicoanalitiche (Klein, Bion, Freud).</p>
+                    <a href="/cpf-soc-integration/docs/cpf_psychological_inference_paper.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag soc">SOC</span>
+                        <span class="tag">Examples</span>
+                    </div>
+                    <h4>CPF Pattern Examples List</h4>
+                    <p>50+ esempi concreti di pattern detection: Manic Defense, Splitting, Repetition Compulsion, Temporal Vulnerabilities, Cognitive Overload. Con dati realistici.</p>
+                    <a href="/cpf-soc-integration/docs/cpf_pattern_examples_list.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag soc">SOC</span>
+                        <span class="tag">Whitepaper</span>
+                    </div>
+                    <h4>CPF Vulnerability Whitepaper</h4>
+                    <p>Paper su come CPF rivela vulnerabilità nascoste che CVSS tradizionale non cattura. Include casi studio SolarWinds, Colonial Pipeline, Uber.</p>
+                    <a href="/cpf-soc-integration/docs/cpf_vulnerability_whitepaper.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag soc">SOC</span>
+                        <span class="tag">Overview</span>
+                    </div>
+                    <h4>CPF Integration Descriptive</h4>
+                    <p>Overview architetturale alto livello per decision makers. Spiega value proposition, ROI (3,957% primo anno), architettura multi-layer.</p>
+                    <a href="/cpf-soc-integration/docs/cpf_integration_descriptive.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI e LLM -->
+        <div class="section" id="ai-llm">
+            <h2>🤖 AI e LLM per Threat Detection Psicologica</h2>
+            <p>Small Language Models specializzati per rilevare minacce psicologiche in testi (email, chat, ticket). Architettura multi-head con 10 categorie CPF, privacy differenziale, edge deployment.</p>
+
+            <div class="paper-grid">
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag ai">AI/LLM</span>
+                        <span class="tag">Foundational</span>
+                    </div>
+                    <h4>A Method for Quantifying Human Risk and a Blueprint for LLM Integration</h4>
+                    <p>Paper fondamentale (710 pagine) su quantificazione del rischio umano e architettura LLM. Include RAG, vector DB, privacy safeguards, convergence detection.</p>
+                    <a href="/AI/A_Method_for_Quantifying_Human_Risk_and_a_Blueprint_for_LLM_Integration.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag ai">AI/LLM</span>
+                        <span class="tag">Architecture</span>
+                    </div>
+                    <h4>CPF-SLM: A Privacy-Preserving Small Language Model</h4>
+                    <p>Architettura CPF-SLM completa. Base models: Phi-3-mini (3.8B), multi-head classifier, differential privacy (ε < 1.0). Performance: 92% F1-score, 12ms inference.</p>
+                    <a href="/AI/CPF_slm_paper.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag ai">AI/LLM</span>
+                        <span class="tag">Implementation</span>
+                    </div>
+                    <h4>CPF SML Implementation Guide</h4>
+                    <p>Guida implementativa completa (149K, 493 pages). Framework-Guided Attention, knowledge distillation, quantization, codice Python funzionante.</p>
+                    <a href="/AI/CPF_SML_implementation_guide.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag ai">AI/LLM</span>
+                        <span class="tag">Deployment</span>
+                    </div>
+                    <h4>CPF Deployment Tutorial - Local & Cloud</h4>
+                    <p>Tutorial deployment passo-passo: Docker, Streamlit, HuggingFace Spaces, Railway. Include configurazioni, troubleshooting, monitoring.</p>
+                    <a href="/AI/CPF Deployment Tutorial - Local & Cloud.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag ai">AI/LLM</span>
+                        <span class="tag">Quickstart</span>
+                    </div>
+                    <h4>Enhanced CPF Quickstart (0-3 giorni)</h4>
+                    <p>Setup rapido per rapid prototyping. Google Colab integration, synthetic data generation, HuggingFace model loading.</p>
+                    <a href="/AI/Enhanced_CPF_Quickstart.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag ai">AI/LLM</span>
+                        <span class="tag">On-Premise</span>
+                    </div>
+                    <h4>Operationalizing CPF On-premise SLM</h4>
+                    <p>Implementazione on-premise con privacy differenziale, aggregazione dati, compliance GDPR. Per enterprises con requisiti data sovereignty.</p>
+                    <a href="/AI/Operationalizing_CPF_Onpremise_SLM.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag ai">AI/LLM</span>
+                        <span class="tag">Vulnerabilities</span>
+                    </div>
+                    <h4>CPF AI-Specific Psychological Vulnerabilities</h4>
+                    <p>Paper sulle vulnerabilità psicologiche AI-specifiche: antropomorfizzazione, automation bias, AI hallucination acceptance, uncanny valley effects.</p>
+                    <a href="/CPF_AI_Specific_Psychological_Vulnerabilities.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag ai">AI/LLM</span>
+                        <span class="tag">Emerging</span>
+                    </div>
+                    <h4>2025 Agentic AI Systems - Taxonomy of Failure Modes</h4>
+                    <p>Analisi emerging threats 2025: sistemi AI agentici, failure modes, vulnerabilità multi-agent. Include whitepaper completo.</p>
+                    <a href="/emerging-threats-cpf/2025-agentic-ai-systems/2025_agentic_ai_systems.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formalizzazione Matematica -->
+        <div class="section" id="math-formalization">
+            <h2>∑ Formalizzazione Matematica (10 Categorie CPF)</h2>
+            <p>Serie completa di 10 paper che formalizzano matematicamente ciascuna categoria del framework CPF. Ogni paper include modelli stocastici, distribuzioni probabilistiche, validazione empirica.</p>
+
+            <div class="paper-grid">
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag math">Math</span>
+                        <span class="tag">Cat 1</span>
+                    </div>
+                    <h4>Paper 1: Authority-Based Vulnerabilities</h4>
+                    <p>Formalizzazione Milgram compliance, authority gradient, diffusion of responsibility. Modello: P(compliance | authority) calibrato su Milgram 1974 (65% compliance).</p>
+                    <a href="/math-formalization/CPF_Mathematical_Formalization_Series___Paper_1__Authority_Based_Vulnerabilities.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag math">Math</span>
+                        <span class="tag">Cat 2</span>
+                    </div>
+                    <h4>Paper 2: Temporal Vulnerabilities</h4>
+                    <p>Stress decay esponenziale, temporal windows (Friday fade), deadline pressure. Formula: stress(t) = intensity × exp(-recovery_rate × Δt).</p>
+                    <a href="/math-formalization/CPF_Mathematical_Formalization_Series___Paper_2__Temporal_Vulnerabilities.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag math">Math</span>
+                        <span class="tag">Cat 3</span>
+                    </div>
+                    <h4>Paper 3: Social Influence Vulnerabilities</h4>
+                    <p>Cialdini principles formalizzati: social proof (87%), reciprocity (76%), commitment escalation. Modelli Beta distribution calibrati.</p>
+                    <a href="/math-formalization/CPF_Mathematical_Formalization_Series___Paper_3__Social_Influence_Vulnerabilities.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag math">Math</span>
+                        <span class="tag">Cat 4</span>
+                    </div>
+                    <h4>Paper 4: Affective Vulnerabilities</h4>
+                    <p>Emotional states e decision quality. Fear-based impulsive decisions, anger-driven aggression, anxiety-triggered errors. LeDoux amygdala activation models.</p>
+                    <a href="/math-formalization/CPF_Mathematical_Formalization_Series___Paper_4__Affective_Vulnerabilities.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag math">Math</span>
+                        <span class="tag">Cat 5</span>
+                    </div>
+                    <h4>Paper 5: Cognitive Overload Vulnerabilities</h4>
+                    <p>Alert fatigue, decision fatigue, information overload. Kahneman System 1/2 formalization. Error rate: baseline × (1 + cognitive_load × 3.2).</p>
+                    <a href="/math-formalization/CPF_Mathematical_Formalization_Series___Paper_5__Cognitive_Overload_Vulnerabilities.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag math">Math</span>
+                        <span class="tag">Cat 6</span>
+                    </div>
+                    <h4>Paper 6: Group Dynamic Vulnerabilities</h4>
+                    <p>Bion's basic assumptions formalizzati: work group, dependency, fight-flight, pairing. Groupthink, diffusion of responsibility, bystander effect.</p>
+                    <a href="/math-formalization/CPF_Mathematical_Formalization_Series___Paper_6__Group_Dynamic_Vulnerabilities.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag math">Math</span>
+                        <span class="tag">Cat 7</span>
+                    </div>
+                    <h4>Paper 7: Stress Response Vulnerabilities</h4>
+                    <p>Selye stress model, cortisol effects, fight-flight-freeze-fawn. Stress contagion cascades, burnout probability (42% under chronic stress).</p>
+                    <a href="/math-formalization/CPF_Mathematical_Formalization_Series___Paper_7__Stress_Response_Vulnerabilities.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag math">Math</span>
+                        <span class="tag">Cat 8</span>
+                    </div>
+                    <h4>Paper 8: Unconscious Process Vulnerabilities</h4>
+                    <p>Shadow projection, repetition compulsion, defense mechanisms. Klein object relations, transference/countertransference, symbolic equations.</p>
+                    <a href="/math-formalization/CPF_Mathematical_Formalization_Series___Paper_8__Unconscious_Process_Vulnerabilities.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag math">Math</span>
+                        <span class="tag">Cat 9</span>
+                    </div>
+                    <h4>Paper 9: AI-Specific Bias Vulnerabilities</h4>
+                    <p>Automation bias, AI hallucination acceptance, anthropomorphization effects. Algorithm aversion paradox, ML opacity trust models.</p>
+                    <a href="/math-formalization/CPF_Mathematical_Formalization_Series___Paper_9__AI_Specific_Bias_Vulnerabilities.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag math">Math</span>
+                        <span class="tag">Cat 10</span>
+                    </div>
+                    <h4>Paper 10: Critical Convergent States</h4>
+                    <p>Convergence analysis: quando 3+ vulnerabilità si allineano. Risk multiplier: 6.3x (critical), 3.8x (high), 2.5x (moderate). Perfect storm conditions.</p>
+                    <a href="/math-formalization/CPF_Mathematical_Formalization_Series___Paper_10__Critical_Convergent_States.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paper Teorici -->
+        <div class="section" id="theoretical">
+            <h2>📖 Paper Teorici Framework CPF</h2>
+            <p>Fondamenti teorici del Cybersecurity Psychology Framework. Include taxonomy completa, position papers, vision papers, integration frameworks.</p>
+
+            <div class="paper-grid">
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Theory</span>
+                        <span class="tag">Foundational</span>
+                    </div>
+                    <h4>The Cybersecurity Psychology Framework - Taxonomy Complete</h4>
+                    <p>Paper fondamentale con tassonomia completa delle 10 categorie CPF e 100 indicatori. Versione accademica formale.</p>
+                    <a href="/The_Cybersecurity_Psychology_Framework__Taxonomy_Complete__academic_prose_.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Theory</span>
+                        <span class="tag">ACM</span>
+                    </div>
+                    <h4>CPF Taxonomy - ACM Format</h4>
+                    <p>Versione formattata per Association for Computing Machinery. Include abstract, references, academic citations.</p>
+                    <a href="/Association_for_Computing_Machinery__ACM____The_Cybersecurity_Psychology_Framework__Taxonomy_Complete__academic_prose_.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Theory</span>
+                        <span class="tag">IEEE</span>
+                    </div>
+                    <h4>CPF Framework - IEEE T-SMC Systems Version</h4>
+                    <p>Versione per IEEE Transactions on Systems, Man, and Cybernetics. Focus su systems perspective e human factors.</p>
+                    <a href="/CPF_Framework___IEEE_T_SMC_Systems_Version.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Theory</span>
+                        <span class="tag">Position</span>
+                    </div>
+                    <h4>CPF Position Paper</h4>
+                    <p>Position paper che argomenta la necessità di un framework psicologico per cybersecurity. Include stato dell'arte, gap analysis, value proposition.</p>
+                    <a href="/CPF_position_paper.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Theory</span>
+                        <span class="tag">Vision</span>
+                    </div>
+                    <h4>CPF Vision Paper - The Future of Cybersecurity</h4>
+                    <p>Vision paper sul futuro della cybersecurity: shift da reactive a predictive, da technical a psychological, da individual a systemic.</p>
+                    <a href="/CPF_Vision_Paper___The_Future_of_Cybersecurity.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Theory</span>
+                        <span class="tag">Whitepaper</span>
+                    </div>
+                    <h4>CPF Bridging Psychology & Cybersecurity Whitepaper</h4>
+                    <p>Whitepaper che spiega come CPF collega discipline psicologiche (psicoanalisi, psicologia sociale, cognitiva) con cybersecurity operativa.</p>
+                    <a href="/CPF_Bridging_Psychology_Cybersecurity_Whitepaper.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Theory</span>
+                        <span class="tag">Implementation</span>
+                    </div>
+                    <h4>CPF Implementation Companion - Dense Foundation Paper</h4>
+                    <p>Paper denso con fondamenti teorici per implementatori. Include psychological theories, security models, integration patterns.</p>
+                    <a href="/CPF_Implementation_Companion___Dense_Foundation_Paper.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Theory</span>
+                        <span class="tag">Technical</span>
+                    </div>
+                    <h4>CPF Comprehensive Technical Paper</h4>
+                    <p>Paper tecnico comprensivo con architettura completa, data models, algorithms, validation methodology.</p>
+                    <a href="/CPF_Comprehensive_Technical_Paper.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Validazione -->
+        <div class="section" id="validation">
+            <h2>✅ Validazione e Ricerca Empirica</h2>
+            <p>Studi di validazione empirica, retrospective analysis di incidenti reali, ricerca settoriale specifica (finanza, sanità, infrastrutture critiche).</p>
+
+            <div class="paper-grid">
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Validation</span>
+                        <span class="tag">Empirical</span>
+                    </div>
+                    <h4>Empirical Validation Study</h4>
+                    <p>Studio di validazione empirica su dataset reali. Include metriche di performance, comparison con baseline, statistical significance tests.</p>
+                    <a href="/research/Empirical_Validation_Study.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Validation</span>
+                        <span class="tag">Retrospective</span>
+                    </div>
+                    <h4>CPF Retrospective Analysis Paper</h4>
+                    <p>Analisi retrospettiva di incidenti famosi: SolarWinds, Colonial Pipeline, Uber, LastPass, MOVEit. Mostra come CPF li avrebbe predetti.</p>
+                    <a href="/CPF_Retrospective_Analysis_Paper.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Validation</span>
+                        <span class="tag">Industrial</span>
+                    </div>
+                    <h4>CPF Industrial Validation Research Paper</h4>
+                    <p>Validazione industriale con dati da aziende pilota. Include ROI analysis (3,957% primo anno), operational metrics, customer testimonials.</p>
+                    <a href="/CPF_Industrial_Validation_Research_Paper.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Validation</span>
+                        <span class="tag">NIST</span>
+                    </div>
+                    <h4>NIST CSF Integration Study</h4>
+                    <p>Studio su integrazione con NIST Cybersecurity Framework. Mapping CPF indicators a NIST functions (Identify, Protect, Detect, Respond, Recover).</p>
+                    <a href="/research/NIST_CSF_Integration_Study.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Validation</span>
+                        <span class="tag">NIST/OWASP</span>
+                    </div>
+                    <h4>CPF NIST-OWASP Integration Framework</h4>
+                    <p>Framework di integrazione con NIST e OWASP Top 10. Mostra come vulnerabilità tecniche OWASP correlano con vulnerabilità psicologiche CPF.</p>
+                    <a href="/CPF_NIST_OWASP_Integration_Framework.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Research</span>
+                        <span class="tag">Banking</span>
+                    </div>
+                    <h4>Banking & Financial Services CPF</h4>
+                    <p>Ricerca settoriale per banche e finanza. Include regulatory compliance (SOX, PCI-DSS), high-pressure trading environments, fraud detection.</p>
+                    <a href="/research/Banking_Financial_Services_CPF.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Research</span>
+                        <span class="tag">Healthcare</span>
+                    </div>
+                    <h4>Healthcare-Specific CPF Implementation</h4>
+                    <p>Implementazione CPF per sanità. HIPAA compliance, patient data protection, clinical decision fatigue, emergency department stress.</p>
+                    <a href="/research/Healthcare_Specific_CPF_Implementation.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Research</span>
+                        <span class="tag">Critical Infra</span>
+                    </div>
+                    <h4>Critical Infrastructure CPF</h4>
+                    <p>CPF per infrastrutture critiche (energia, trasporti, acqua). Include SCADA security, shift work vulnerabilities, high-consequence errors.</p>
+                    <a href="/research/Critical_Infrastructure_CPF.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Research</span>
+                        <span class="tag">Telecom</span>
+                    </div>
+                    <h4>Telecom & Digital Services CPF</h4>
+                    <p>CPF per telecomunicazioni. 24/7 operations, customer data at scale, rapid incident response, NOC/SOC coordination.</p>
+                    <a href="/research/Telecom_Digital_Services_CPF.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Research</span>
+                        <span class="tag">Education</span>
+                    </div>
+                    <h4>University & Education CPF</h4>
+                    <p>CPF per università ed education. Student data protection, research confidentiality, decentralized IT, faculty autonomy challenges.</p>
+                    <a href="/research/University_Education_CPF.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Research</span>
+                        <span class="tag">Defense</span>
+                    </div>
+                    <h4>Military & Defense CPF Application</h4>
+                    <p>Applicazione CPF a contesti militari. Classified information handling, chain of command vulnerabilities, combat stress, insider threats.</p>
+                    <a href="/research/Military_Defense_CPF_Application.pdf" class="download-btn" target="_blank">Scarica PDF</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Codice e Implementazione -->
+        <div class="section" id="code">
+            <h2>💻 Implementazione Codice</h2>
+            <p>Codice eseguibile per tutti i componenti del framework: modelli bayesiani, pattern detectors, SOC integration, dashboard, generatori di dati sintetici.</p>
+
+            <div class="paper-grid">
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Code</span>
+                        <span class="tag bayesian">Bayesian</span>
+                    </div>
+                    <h4>bayesian_model.py</h4>
+                    <p>Implementazione completa del modello bayesiano CPF in Python. Include rete con 21 relazioni causali, CPD calibrate, inferenza con Variable Elimination.</p>
+                    <a href="/cpf-validation/src/bayesian_model.py" class="download-btn" target="_blank">Visualizza Codice</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Code</span>
+                        <span class="tag soc">SOC</span>
+                    </div>
+                    <h4>Pattern Detection Engine</h4>
+                    <p>Engine per rilevare 5+ pattern psicologici da dati di vulnerabilità: Manic Defense, Splitting, Repetition Compulsion, Temporal, Cognitive Overload.</p>
+                    <a href="/cpf-soc-integration/src/pattern_engine.py" class="download-btn" target="_blank">Visualizza Codice</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Code</span>
+                        <span class="tag soc">SOC</span>
+                    </div>
+                    <h4>Data Extractors (Qualys/Tenable/Rapid7)</h4>
+                    <p>Extractors per 3 scanner di vulnerabilità: Qualys API, Tenable Export API, Rapid7 REST API. Normalizzazione e merge CVE.</p>
+                    <a href="/cpf-soc-integration/src/extractors.py" class="download-btn" target="_blank">Visualizza Codice</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Code</span>
+                        <span class="tag">Generation</span>
+                    </div>
+                    <h4>Synthetic Data Generator</h4>
+                    <p">Generatore di dati sintetici con stress events, behavioral patterns, security incidents. Include Milgram, Kahneman, Bion, Cialdini calibrations.</p>
+                    <a href="/cpf-validation/src/synthetic_generator.py" class="download-btn" target="_blank">Visualizza Codice</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Code</span>
+                        <span class="tag">Dashboard</span>
+                    </div>
+                    <h4>SOC Dashboard (JavaScript)</h4>
+                    <p>Dashboard SOC completa con convergence chart, 10x10 indicator grid, organization management, bayesian analysis visualization.</p>
+                    <a href="../dashboard.js" class="download-btn" target="_blank">Visualizza Codice</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Code</span>
+                        <span class="tag ai">AI/ML</span>
+                    </div>
+                    <h4>CPF Risk Model (TensorFlow/Keras)</h4>
+                    <p>Modello ML con LSTM + Multi-Head Attention per predire 100 indicatori CPF da time-series vulnerability data.</p>
+                    <a href="/cpf-soc-integration/src/ml-models/cpf_risk_model.py" class="download-btn" target="_blank">Visualizza Codice</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Code</span>
+                        <span class="tag">SIEM</span>
+                    </div>
+                    <h4>SIEM Correlation Rules (Splunk SPL)</h4>
+                    <p>Regole di correlazione SIEM per rilevare indicatori CPF da log. Esempio: CPF [1.1] Authority Compliance detection da email logs.</p>
+                    <a href="/cpf-soc-integration/src/correlation-rules/cpf_authority_detection.spl" class="download-btn" target="_blank">Visualizza Codice</a>
+                </div>
+
+                <div class="paper-card">
+                    <div class="tags">
+                        <span class="tag">Code</span>
+                        <span class="tag ai">Notebook</span>
+                    </div>
+                    <h4>CPF3 SML.ipynb (Google Colab)</h4>
+                    <p>Jupyter Notebook per training completo del modello SLM. Include synthetic data generation, fine-tuning, evaluation, deployment.</p>
+                    <a href="/AI/CPF3_SML.ipynb" class="download-btn" target="_blank">Apri Notebook</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="section">
+            <h2>📬 Risorse Aggiuntive</h2>
+            <p><strong>Live Demo</strong>: <a href="https://huggingface.co/spaces/CPF3-org/cpf-poc-demo" target="_blank">HuggingFace Spaces Demo</a></p>
+            <p><strong>Model Repository</strong>: <a href="https://huggingface.co/CPF3-org/cpf-poc-model" target="_blank">HuggingFace Model</a></p>
+            <p><strong>Google Colab Notebook</strong>: <a href="https://colab.research.google.com/drive/1fUpjTILbM_1wX7aEGeb0X-uomKlqj0OL" target="_blank">Colab Link</a></p>
+            <p><strong>Framework Website</strong>: <a href="https://cpf3.org" target="_blank">cpf3.org</a></p>
+            <p><strong>GitHub Repository</strong>: <a href="https://github.com/xbeat/CPF" target="_blank">github.com/xbeat/CPF</a></p>
+
+            <div class="highlight-box" style="margin-top: 30px;">
+                <h4>📧 Contatti</h4>
+                <p><strong>Autore</strong>: Giuseppe Canale, CISSP</p>
+                <p><strong>Email</strong>: g.canale@cpf3.org</p>
+                <p><strong>ORCID</strong>: 0009-0007-3263-6897</p>
+                <p><strong>Licenza</strong>: MIT License (2025)</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Track download clicks
+        document.querySelectorAll('.download-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const paperName = this.closest('.paper-card')?.querySelector('h4')?.textContent || 'Unknown';
+                console.log('📥 Downloaded:', paperName);
+            });
+        });
+    </script>
+</body>
+</html>

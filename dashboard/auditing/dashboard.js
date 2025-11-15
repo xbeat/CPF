@@ -6,10 +6,66 @@ let editingOrgId = null;
 let deletingOrgId = null;
 let selectedIndicatorId = null;
 let categoryFilter = null;
+let sortDirection = 'desc'; // 'asc' or 'desc'
+let modalStack = []; // Track open modals in order
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
     loadAllData();
+});
+
+// Modal stack management
+function pushModal(modalId) {
+    if (!modalStack.includes(modalId)) {
+        modalStack.push(modalId);
+    }
+}
+
+function popModal(modalId) {
+    const index = modalStack.indexOf(modalId);
+    if (index > -1) {
+        modalStack.splice(index, 1);
+    }
+}
+
+// Close modals on ESC key - always close the most recently opened modal
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modalStack.length > 0) {
+        // Get the most recently opened modal (last in stack)
+        const topModal = modalStack[modalStack.length - 1];
+
+        // Close it based on its ID
+        switch (topModal) {
+            case 'orgModal':
+                closeOrgModal();
+                break;
+            case 'deleteModal':
+                closeDeleteModal();
+                break;
+            case 'indicatorModal':
+                closeIndicatorModal();
+                break;
+            case 'assessmentDetailsModal':
+                closeAssessmentDetailsModal();
+                break;
+            case 'trashModal':
+                closeTrashModal();
+                break;
+            case 'historyModal':
+                closeHistoryModal();
+                break;
+            case 'reference-modal':
+                if (window.CPFClient && window.CPFClient.closeQuickReference) {
+                    window.CPFClient.closeQuickReference();
+                }
+                break;
+            case 'indicator-details-modal':
+                if (window.CPFClient && window.CPFClient.closeIndicatorDetails) {
+                    window.CPFClient.closeIndicatorDetails();
+                }
+                break;
+        }
+    }
 });
 
 // ===== DATA LOADING =====
@@ -119,6 +175,9 @@ function renderOrganizations() {
         const riskLabel = org.stats.overall_risk < 0.3 ? '🟢 Low' :
                             org.stats.overall_risk < 0.7 ? '🟡 Medium' : '🔴 High';
 
+        // Format creation date
+        const createdDate = org.created_at ? new Date(org.created_at).toLocaleDateString() : 'N/A';
+
         return `
             <div class="org-card ${selectedOrgId === org.id ? 'selected' : ''}" onclick="selectOrganization('${org.id}')">
                 <div class="org-card-header">
@@ -135,6 +194,10 @@ function renderOrganizations() {
                 </div>
                 <div class="org-card-stats">
                     <div class="stat-row">
+                        <span class="stat-label">Created</span>
+                        <span class="stat-value">${createdDate}</span>
+                    </div>
+                    <div class="stat-row">
                         <span class="stat-label">Industry</span>
                         <span class="stat-value">${org.industry}</span>
                     </div>
@@ -146,10 +209,104 @@ function renderOrganizations() {
                         <span class="stat-label">Risk</span>
                         <span class="stat-value ${riskClass}">${riskLabel}</span>
                     </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Confidence</span>
+                        <span class="stat-value">${org.stats?.avg_confidence ? (org.stats.avg_confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
+                    </div>
                 </div>
             </div>
         `;
     }).join('');
+}
+
+// Toggle sort direction
+function toggleSortDirection() {
+    sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+    const btn = document.getElementById('sort-direction');
+    btn.textContent = sortDirection === 'desc' ? '⬇️' : '⬆️';
+    filterAndSortOrganizations();
+}
+
+// Filter and sort organizations based on search and sort criteria
+function filterAndSortOrganizations() {
+    if (!organizations || organizations.length === 0) return;
+
+    const searchValue = document.getElementById('org-search').value.toLowerCase().trim();
+    const sortValue = document.getElementById('org-sort').value;
+
+    // Store all organizations if not already stored
+    if (!window.allOrganizations) {
+        window.allOrganizations = [...organizations];
+    }
+
+    // Filter organizations - search by name only
+    let filtered = window.allOrganizations.filter(org => {
+        if (!searchValue) return true;
+
+        // Search only in organization name
+        return org.name.toLowerCase().includes(searchValue);
+    });
+
+    // Sort organizations with direction support
+    filtered.sort((a, b) => {
+        let result = 0;
+
+        switch (sortValue) {
+            case 'name':
+                result = a.name.localeCompare(b.name);
+                break;
+
+            case 'risk':
+                result = (a.stats?.overall_risk || 0) - (b.stats?.overall_risk || 0);
+                break;
+
+            case 'completion':
+                result = (a.stats?.completion_percentage || 0) - (b.stats?.completion_percentage || 0);
+                break;
+
+            case 'updated_at':
+                result = new Date(a.updated_at || 0) - new Date(b.updated_at || 0);
+                break;
+
+            case 'assessments':
+                result = (a.stats?.total_assessments || 0) - (b.stats?.total_assessments || 0);
+                break;
+
+            case 'industry':
+                result = a.industry.localeCompare(b.industry);
+                break;
+
+            case 'country':
+                result = a.country.localeCompare(b.country);
+                break;
+
+            case 'created_at':
+            default:
+                result = new Date(a.created_at || 0) - new Date(b.created_at || 0);
+                break;
+        }
+
+        // Apply sort direction
+        return sortDirection === 'desc' ? -result : result;
+    });
+
+    // Update global organizations array and re-render
+    organizations = filtered;
+    renderOrganizations();
+}
+
+// Reset all filters to default
+function resetFilters() {
+    // Restore all organizations
+    if (window.allOrganizations) {
+        organizations = [...window.allOrganizations];
+    }
+
+    document.getElementById('org-search').value = '';
+    document.getElementById('org-sort').value = 'created_at';
+    sortDirection = 'desc';
+    document.getElementById('sort-direction').textContent = '⬇️';
+    renderOrganizations();
 }
 
 function selectOrganization(orgId) {
@@ -655,6 +812,7 @@ async function openIndicatorDetail(indicatorId, orgId) {
 async function showAssessmentDetails(indicatorId, assessment) {
     document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Assessment Details`;
     document.getElementById('indicatorModal').classList.add('active');
+    pushModal('indicatorModal');
 
     const content = document.getElementById('indicatorModalContent');
     const riskClass = assessment.bayesian_score < 0.33 ? 'risk-low' :
@@ -872,6 +1030,7 @@ async function openIntegratedClient(indicatorId, orgId, existingAssessment = nul
     const isEditMode = !!existingAssessment;
     document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - ${isEditMode ? 'Edit' : 'New'} Assessment`;
     document.getElementById('indicatorModal').classList.add('active');
+    pushModal('indicatorModal');
 
     // Add fullscreen class for client modal
     const modalContent = document.querySelector('#indicatorModal .modal-content');
@@ -936,6 +1095,7 @@ async function openIntegratedVersion() {
     // Reopen with integrated form
     document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - ${assessment ? 'Edit' : 'New'} Assessment (INTEGRATED)`;
     document.getElementById('indicatorModal').classList.add('active');
+    pushModal('indicatorModal');
 
     // Add fullscreen class for client modal
     const modalContent = document.querySelector('#indicatorModal .modal-content');
@@ -1267,6 +1427,7 @@ function closeIndicatorModal() {
     document.getElementById('deleteAssessmentBtn').style.display = 'none';
     document.getElementById('openIntegratedBtn').style.display = 'none';
     selectedIndicatorId = null;
+    popModal('indicatorModal');
 }
 
 // Callback functions for client integration
@@ -1298,6 +1459,7 @@ async function editAssessmentFromModal() {
     // Open OLD CLIENT in IFRAME
     document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Edit Assessment (IFRAME)`;
     document.getElementById('indicatorModal').classList.add('active');
+    pushModal('indicatorModal');
 
     // Add fullscreen class for client modal
     const modalContent = document.querySelector('#indicatorModal .modal-content');
@@ -1346,15 +1508,26 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
     console.log('🔄 Reloading organization data before viewing details...');
     await loadOrganizationDetails(selectedOrgId);
 
-    const assessment = selectedOrgData.assessments[indicatorId];
+    let assessment = selectedOrgData.assessments[indicatorId];
+    const isNewAssessment = !assessment;
+
+    // If assessment doesn't exist, create a temporary one with default values
     if (!assessment) {
-        showAlert('Assessment not found', 'error');
-        return;
+        assessment = {
+            bayesian_score: 0,
+            confidence: 0,
+            maturity_level: 'Not assessed',
+            assessor: 'N/A',
+            assessment_date: new Date().toISOString(),
+            title: `Indicator ${indicatorId}`,
+            category: 'N/A'
+        };
     }
 
     // Open details in SEPARATE modal (assessmentDetailsModal)
     document.getElementById('assessmentDetailsTitle').textContent = `Indicator ${indicatorId} - Assessment Details`;
     document.getElementById('assessmentDetailsModal').classList.add('active');
+    pushModal('assessmentDetailsModal');
 
     const content = document.getElementById('assessmentDetailsContent');
     const riskClass = assessment.bayesian_score < 0.33 ? 'risk-low' :
@@ -1386,6 +1559,13 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
         // Render FULL details with ALL sections
         content.innerHTML = `
             <div style="display: grid; gap: 20px;">
+                ${isNewAssessment ? `
+                <!-- New Assessment Warning -->
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #f39c12;">
+                    <div style="font-weight: 600; color: #856404; margin-bottom: 5px;">ℹ️ Assessment Not Yet Completed</div>
+                    <p style="margin: 0; color: #856404; font-size: 14px;">This indicator has not been assessed yet. Complete the assessment to see risk scores and analysis.</p>
+                </div>
+                ` : ''}
                 <!-- Assessment Summary -->
                 <div>
                     <h4 style="margin: 0 0 10px 0; color: var(--primary);">${fieldKit?.title || assessment.title || 'Indicator ' + indicatorId}</h4>
@@ -1544,6 +1724,7 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
 // Close assessment details modal (returns to edit form which is still open)
 function closeAssessmentDetailsModal() {
     document.getElementById('assessmentDetailsModal').classList.remove('active');
+    popModal('assessmentDetailsModal');
 }
 
 // Open history modal from assessment details
@@ -1686,6 +1867,7 @@ function openCreateOrgModal() {
     document.getElementById('orgId').disabled = false;
     document.getElementById('fetchIndicators').parentElement.parentElement.classList.remove('hidden');
     document.getElementById('orgModal').classList.add('active');
+    pushModal('orgModal');
 }
 
 function editOrganization(orgId) {
@@ -1710,6 +1892,7 @@ function editOrganization(orgId) {
     // Note: we'd need to fetch full org data to get notes
     document.getElementById('fetchIndicators').parentElement.parentElement.classList.add('hidden');
     document.getElementById('orgModal').classList.add('active');
+    pushModal('orgModal');
 }
 
 async function saveOrganization(event) {
@@ -1866,6 +2049,7 @@ function deleteOrganization(orgId, orgName) {
     deletingOrgId = orgId;
     document.getElementById('deleteOrgName').textContent = orgName;
     document.getElementById('deleteModal').classList.add('active');
+    pushModal('deleteModal');
 }
 
 async function confirmDelete() {
@@ -1902,11 +2086,13 @@ async function confirmDelete() {
 function closeOrgModal() {
     document.getElementById('orgModal').classList.remove('active');
     document.getElementById('fetchProgress').classList.add('hidden');
+    popModal('orgModal');
 }
 
 function closeDeleteModal() {
     document.getElementById('deleteModal').classList.remove('active');
     deletingOrgId = null;
+    popModal('deleteModal');
 }
 
 // ===== TABS =====
@@ -2317,6 +2503,7 @@ async function loadTrashCount() {
 
 async function openTrashModal() {
     document.getElementById('trashModal').classList.add('active');
+    pushModal('trashModal');
 
     try {
         const response = await fetch('/api/trash');
@@ -2384,6 +2571,7 @@ async function openTrashModal() {
 
 function closeTrashModal() {
     document.getElementById('trashModal').classList.remove('active');
+    popModal('trashModal');
 }
 
 async function restoreFromTrash(orgId) {
@@ -2453,6 +2641,7 @@ async function openHistoryModal() {
     currentHistoryIndicatorId = selectedIndicatorId;
 
     document.getElementById('historyModal').classList.add('active');
+    pushModal('historyModal');
     document.getElementById('historyModalTitle').textContent = `📜 Version History - ${selectedIndicatorId}`;
 
     try {
@@ -2528,6 +2717,7 @@ function closeHistoryModal() {
     document.getElementById('historyModal').classList.remove('active');
     currentHistoryOrgId = null;
     currentHistoryIndicatorId = null;
+    popModal('historyModal');
 }
 
 async function revertToVersion(versionNumber) {
