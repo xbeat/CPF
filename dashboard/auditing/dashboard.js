@@ -2394,21 +2394,88 @@ function getMaturityLevel(score) {
     return 1;
 }
 
-// Reset compile form
-function resetCompileForm() {
-    currentIndicatorData = null;
-    currentIndicatorId = null;
+// Reset Assessment - Clears all form values and saves empty assessment
+async function resetCompileForm() {
+    if (!currentIndicatorId) {
+        showAlert('No indicator loaded to reset', 'warning');
+        return;
+    }
 
-    document.getElementById('compileFormContainer').style.display = 'none';
-    document.getElementById('compileEmptyState').style.display = 'block';
-    document.getElementById('scoreDisplay').style.display = 'none';
+    if (!selectedOrganization) {
+        showAlert('No organization selected', 'warning');
+        return;
+    }
 
-    document.getElementById('compileFormContent').innerHTML = '';
+    // Confirm before resetting
+    if (!confirm('⚠️ This will clear all values in this assessment and save it as empty.\n\nAre you sure you want to continue?')) {
+        return;
+    }
+
+    // Clear all form field values
     document.getElementById('compile-assessor').value = '';
     document.getElementById('compile-date').value = '';
     document.getElementById('compile-confidence').value = '0.7';
 
-    showAlert('Form reset', 'info');
+    // Clear form content (all questions/answers)
+    const formContent = document.getElementById('compileFormContent');
+    if (formContent) {
+        // Reset all inputs in the form
+        const inputs = formContent.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+        });
+    }
+
+    // Hide score display
+    document.getElementById('scoreDisplay').style.display = 'none';
+
+    // Create empty assessment data
+    const emptyAssessment = {
+        indicator_id: currentIndicatorId,
+        title: currentIndicatorData?.title || '',
+        category: currentIndicatorData?.category || '',
+        bayesian_score: 0,
+        confidence: 0.7,
+        maturity_level: 'green',
+        assessor: '',
+        assessment_date: new Date().toISOString(),
+        raw_data: {
+            quick_assessment: {},
+            client_conversation: {
+                responses: {},
+                notes: ''
+            }
+        }
+    };
+
+    try {
+        // Save empty assessment to organization
+        const response = await fetch(`/api/organizations/${selectedOrganization}/assessments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(emptyAssessment)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert('Assessment reset and saved as empty', 'success');
+
+            // Reload organization to reflect changes
+            setTimeout(() => {
+                loadOrganization(selectedOrganization);
+            }, 1000);
+        } else {
+            showAlert('Failed to save empty assessment: ' + result.error, 'error');
+        }
+    } catch (error) {
+        console.error('Error saving empty assessment:', error);
+        showAlert('Failed to save empty assessment: ' + error.message, 'error');
+    }
 }
 
 // Initialize compile tab on organization selection

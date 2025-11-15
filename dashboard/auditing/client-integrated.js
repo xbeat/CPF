@@ -343,9 +343,6 @@ function renderFieldKit(data) {
     document.getElementById('action-bar').innerHTML = `
         <div style="display: flex; gap: 15px;">
             <button class="btn btn-secondary" onclick="window.CPFClient.saveData()">💾 Save</button>
-            <button class="btn btn-warning" onclick="window.CPFClient.calculateIndicatorScore()">🧮 Calculate Score</button>
-        </div>
-        <div style="display: flex; gap: 15px;">
             <button class="btn btn-success" onclick="window.CPFClient.exportData()">📥 Export</button>
             <button class="btn btn-primary" onclick="window.CPFClient.generateReport()">📊 Report</button>
         </div>
