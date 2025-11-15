@@ -106,71 +106,92 @@ function refreshData() {
 
 // ===== RENDERING =====
 function renderOrganizations() {
-    const grid = document.getElementById('organizationsGrid');
-    const countEl = document.getElementById('orgCount');
+    const orgList = document.getElementById('org-list');
+    const countEl = document.getElementById('org-count');
 
-    countEl.textContent = `${organizations.length} organization${organizations.length !== 1 ? 's' : ''}`;
+    countEl.textContent = organizations.length;
 
     if (organizations.length === 0) {
-        grid.innerHTML = `
-            <div class="empty-state" style="grid-column: 1 / -1;">
-                <div class="empty-state-icon">📊</div>
-                <h3 class="empty-state-title">No Organizations Yet</h3>
-                <p class="empty-state-text">Create your first organization to start tracking assessments</p>
-                <button class="btn btn-primary" onclick="openCreateOrgModal()">➕ Create Organization</button>
+        orgList.innerHTML = `
+            <div style="padding: 1rem; text-align: center; color: var(--text-light);">
+                <p>No organizations found</p>
             </div>
         `;
         return;
     }
 
-    grid.innerHTML = organizations.map(org => {
-        const riskClass = org.stats.overall_risk < 0.3 ? 'risk-low' :
-                            org.stats.overall_risk < 0.7 ? 'risk-medium' : 'risk-high';
-        const riskLabel = org.stats.overall_risk < 0.3 ? '🟢 Low' :
-                            org.stats.overall_risk < 0.7 ? '🟡 Medium' : '🔴 High';
+    orgList.innerHTML = '';
+
+    organizations.forEach(org => {
+        const item = document.createElement('div');
+        item.className = 'org-item';
+        if (selectedOrgId === org.id) {
+            item.classList.add('active');
+        }
+        item.onclick = () => selectOrganization(org.id);
+
+        const overallRisk = org.stats?.overall_risk || 0;
+        const riskClass = overallRisk > 0.66 ? 'high' :
+            overallRisk > 0.33 ? 'medium' : 'low';
+        const riskLabel = overallRisk > 0.66 ? 'High' :
+            overallRisk > 0.33 ? 'Medium' : 'Low';
+        const completion = org.stats?.completion_percentage || 0;
+        const totalAssessments = org.stats?.total_assessments || 0;
+
+        // Get country flag using ISO codes
+        const country = org.country || 'Unknown';
+        const countryFlag = country === 'IT' ? '🇮🇹' :
+                           country === 'US' ? '🇺🇸' :
+                           country === 'GB' ? '🇬🇧' :
+                           country === 'DE' ? '🇩🇪' :
+                           country === 'FR' ? '🇫🇷' :
+                           country === 'ES' ? '🇪🇸' : '🌐';
+
+        // Get language info
+        const language = org.language || 'en-US';
 
         // Format creation date
         const createdDate = org.created_at ? new Date(org.created_at).toLocaleDateString() : 'N/A';
 
-        return `
-            <div class="org-card ${selectedOrgId === org.id ? 'selected' : ''}" onclick="selectOrganization('${org.id}')">
-                <div class="org-card-header">
-                    <div>
-                        <h3 class="org-card-title">${escapeHtml(org.name)}</h3>
-                        <div class="org-card-meta">
-                            ${org.industry} • ${capitalizeFirst(org.size)} • ${org.country}
-                        </div>
-                    </div>
-                    <div class="org-card-actions" onclick="event.stopPropagation()">
-                        <button class="icon-btn" onclick="editOrganization('${org.id}')" title="Edit">✏️</button>
-                        <button class="icon-btn" onclick="deleteOrganization('${org.id}', '${escapeHtml(org.name)}')" title="Delete">🗑️</button>
+        item.innerHTML = `
+            <div class="org-card-header">
+                <div style="flex: 1; min-width: 0;">
+                    <div class="org-name">${escapeHtml(org.name)}</div>
+                    <div class="org-meta">
+                        ${org.industry} • ${capitalizeFirst(org.size)} • ${countryFlag} ${org.country}
                     </div>
                 </div>
-                <div class="org-card-stats">
-                    <div class="stat-row">
-                        <span class="stat-label">Created</span>
-                        <span class="stat-value">${createdDate}</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Industry</span>
-                        <span class="stat-value">${org.industry}</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Assessments</span>
-                        <span class="stat-value">${org.stats.total_assessments}/100 (${org.stats.completion_percentage}%)</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Risk</span>
-                        <span class="stat-value ${riskClass}">${riskLabel}</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Confidence</span>
-                        <span class="stat-value">${org.stats?.avg_confidence ? (org.stats.avg_confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
-                    </div>
+                <div class="org-card-actions" onclick="event.stopPropagation()">
+                    <button class="icon-btn" onclick="editOrganization('${org.id}')" title="Edit">✏️</button>
+                    <button class="icon-btn" onclick="deleteOrganization('${org.id}', '${escapeHtml(org.name)}')" title="Delete">🗑️</button>
+                </div>
+            </div>
+            <div class="org-stats-detailed">
+                <div class="stat-row">
+                    <span class="stat-label">Created</span>
+                    <span class="stat-value">${createdDate}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Language</span>
+                    <span class="stat-value">${language}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Assessments</span>
+                    <span class="stat-value">${totalAssessments}/100 (${completion}%)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Risk Level</span>
+                    <span class="stat-value ${riskClass}">${riskLabel} (${(overallRisk * 100).toFixed(0)}%)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Confidence</span>
+                    <span class="stat-value">${org.stats?.avg_confidence ? (org.stats.avg_confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
                 </div>
             </div>
         `;
-    }).join('');
+
+        orgList.appendChild(item);
+    });
 }
 
 // Toggle sort direction
@@ -295,6 +316,9 @@ function renderAssessmentDetails() {
     renderRiskHeatmap(org);
     renderSecurityRadarChart(org);
     renderPrioritizationTable(org);
+
+    // Restore zoom preferences
+    restoreMatrixZoom();
 }
 
 function renderProgressSummary(org) {
@@ -349,38 +373,32 @@ function renderRiskSummary(org) {
 
 function renderProgressMatrix(org) {
     const matrix = document.getElementById('progressMatrix');
+    const filterDiv = document.getElementById('progressFilter');
     const assessments = org.assessments || {};
 
-    let html = '';
-
-    // Show filter info if active
+    // Render filter info if active
     if (categoryFilter) {
         const categoryNames = {
             '1': 'Authority-Based', '2': 'Temporal-Based', '3': 'Social-Based', '4': 'Affective-Based',
             '5': 'Cognitive-Based', '6': 'Group-Based', '7': 'Stress-Based', '8': 'Unconscious-Based',
             '9': 'AI-Enhanced', '10': 'Convergent'
         };
-        html += `
-            <div style="background: var(--primary); color: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-                <div>🔍 Filter active: Category ${categoryFilter} - ${categoryNames[categoryFilter]}</div>
-                <button onclick="clearCategoryFilter()" class="btn btn-small" style="background: white; color: var(--primary);">Clear Filter</button>
+        filterDiv.innerHTML = `
+            <div class="filter-active">
+                <div class="filter-text">🔍 Filter active: Category ${categoryFilter} - ${categoryNames[categoryFilter]}</div>
+                <button onclick="clearCategoryFilter()" class="filter-clear-btn">Clear Filter</button>
             </div>
         `;
+    } else {
+        filterDiv.innerHTML = '';
     }
 
-    // Header row
-    html += '<div class="matrix-cell header" style="font-size: 11px;">CAT</div>';
-    for (let i = 1; i <= 10; i++) {
-        html += `<div class="matrix-cell header">${i}</div>`;
-    }
+    let html = '';
 
-    // Data rows
+    // Data rows (10x10 grid, no headers like SOC)
     for (let cat = 1; cat <= 10; cat++) {
         const catKey = cat.toString();
         const isFiltered = categoryFilter && categoryFilter !== catKey;
-        const rowStyle = isFiltered ? 'opacity: 0.3;' : '';
-
-        html += `<div class="matrix-cell header" style="${rowStyle}">${cat}</div>`;
 
         for (let ind = 1; ind <= 10; ind++) {
             const indicatorId = `${cat}.${ind}`;
@@ -413,7 +431,7 @@ function renderProgressMatrix(org) {
                         title="${title}"
                         style="${cellStyle}"
                         onclick="${onclickHandler}">
-                    ${ind}
+                    ${indicatorId}
                 </div>
             `;
         }
@@ -1124,14 +1142,11 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                         <button class="btn btn-info" onclick="window.CPFClient.showQuickReference()">📚 Quick Reference</button>
                         <button class="btn btn-success" onclick="window.CPFClient.showIndicatorDetails()">📄 Indicator Details</button>
                         <button class="btn btn-info" onclick="window.CPFClient.toggleDetailedAnalysis()">📊 Show/Hide Analysis</button>
-                        <button class="btn btn-warning" onclick="window.CPFClient.calculateIndicatorScore()">🧮 Calculate Score</button>
-                        <button class="btn btn-warning" onclick="window.CPFClient.validateCurrentJSON()">🔍 Validate</button>
                         <button class="btn btn-light" onclick="document.getElementById('file-input-integrated').click()">📂 Import JSON</button>
                         <input type="file" id="file-input-integrated" accept=".json" onchange="window.CPFClient.importJSON(event)" style="display: none;">
                         <button class="btn btn-danger" onclick="if(confirm('Reset all data?')) window.CPFClient.resetAll()" title="Clear all data and reset">🗑️ Reset</button>
                         <button class="btn btn-primary" onclick="viewAssessmentDetailsFromEdit('${indicatorId}')">📋 View Details</button>
                         <button class="btn btn-warning" onclick="openHistoryModal()">📜 History</button>
-                        ${isEditMode ? `<button class="btn btn-danger" onclick="deleteAssessmentFromEdit('${indicatorId}')">🗑️ Delete Assessment</button>` : ''}
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <span id="auto-save-status" style="color: #4CAF50; font-size: 14px; display: none;">✓ Auto-saved</span>
@@ -1728,60 +1743,6 @@ async function deleteAssessmentFromDetails() {
 }
 
 // Delete assessment from edit form
-async function deleteAssessmentFromEdit(indicatorId) {
-    if (!selectedOrgId) return;
-
-    if (!confirm(`Are you sure you want to delete the assessment for indicator ${indicatorId}?`)) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/organizations/${selectedOrgId}/assessments/${indicatorId}`, {
-            method: 'DELETE'
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showAlert('Assessment deleted successfully', 'success');
-            closeIndicatorModal();
-            await loadOrganizationDetails(selectedOrgId);
-        } else {
-            showAlert('Failed to delete assessment: ' + result.error, 'error');
-        }
-    } catch (error) {
-        console.error('Error deleting assessment:', error);
-        showAlert('Failed to delete assessment: ' + error.message, 'error');
-    }
-}
-
-async function deleteAssessmentFromModal() {
-    if (!selectedIndicatorId || !selectedOrgId) return;
-
-    if (!confirm(`Are you sure you want to delete the assessment for indicator ${selectedIndicatorId}?`)) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/organizations/${selectedOrgId}/assessments/${selectedIndicatorId}`, {
-            method: 'DELETE'
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showAlert('Assessment deleted successfully', 'success');
-            closeIndicatorModal();
-            await loadOrganizationDetails(selectedOrgId);
-        } else {
-            showAlert('Failed to delete assessment: ' + result.error, 'error');
-        }
-    } catch (error) {
-        console.error('Error deleting assessment:', error);
-        showAlert('Failed to delete assessment: ' + error.message, 'error');
-    }
-}
-
 function filterByCategory(categoryId) {
     // Toggle filter
     if (categoryFilter === categoryId) {
@@ -2376,21 +2337,84 @@ function getMaturityLevel(score) {
     return 1;
 }
 
-// Reset compile form
-function resetCompileForm() {
-    currentIndicatorData = null;
-    currentIndicatorId = null;
+// Reset Assessment - Clears all form values and saves empty assessment
+async function resetCompileForm() {
+    if (!currentIndicatorId) {
+        showAlert('No indicator loaded to reset', 'warning');
+        return;
+    }
 
-    document.getElementById('compileFormContainer').style.display = 'none';
-    document.getElementById('compileEmptyState').style.display = 'block';
-    document.getElementById('scoreDisplay').style.display = 'none';
+    if (!selectedOrganization) {
+        showAlert('No organization selected', 'warning');
+        return;
+    }
 
-    document.getElementById('compileFormContent').innerHTML = '';
+    // Confirm before resetting
+    if (!confirm('⚠️ This will clear all values in this assessment and save it as empty.\n\nAre you sure you want to continue?')) {
+        return;
+    }
+
+    // Clear all form field values
     document.getElementById('compile-assessor').value = '';
     document.getElementById('compile-date').value = '';
     document.getElementById('compile-confidence').value = '0.7';
 
-    showAlert('Form reset', 'info');
+    // Clear form content (all questions/answers)
+    const formContent = document.getElementById('compileFormContent');
+    if (formContent) {
+        // Reset all inputs in the form
+        const inputs = formContent.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else {
+                input.value = '';
+            }
+        });
+    }
+
+    // Hide score display
+    document.getElementById('scoreDisplay').style.display = 'none';
+
+    // Create empty assessment data
+    const emptyAssessment = {
+        indicator_id: currentIndicatorId,
+        title: currentIndicatorData?.title || '',
+        category: currentIndicatorData?.category || '',
+        bayesian_score: 0,
+        confidence: 0.7,
+        maturity_level: 'green',
+        assessor: '',
+        assessment_date: new Date().toISOString(),
+        raw_data: {
+            quick_assessment: {},
+            client_conversation: {
+                responses: {},
+                notes: ''
+            }
+        }
+    };
+
+    try {
+        // Save empty assessment to organization
+        const response = await fetch(`/api/organizations/${selectedOrganization}/assessments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(emptyAssessment)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert('✅ Assessment cleared and saved', 'success');
+            // Form remains open with empty fields
+        } else {
+            showAlert('Failed to save empty assessment: ' + result.error, 'error');
+        }
+    } catch (error) {
+        console.error('Error saving empty assessment:', error);
+        showAlert('Failed to save empty assessment: ' + error.message, 'error');
+    }
 }
 
 // Initialize compile tab on organization selection
@@ -2826,4 +2850,56 @@ if (typeof selectOrganization === 'function') {
         // Setup WebSocket for this organization
         setupWebSocket(orgId);
     };
+/**
+ * Set matrix zoom level
+ * @param {string} matrixType - Type of matrix ('progress', 'risk')
+ * @param {number} zoomLevel - Zoom percentage (100, 50, 33)
+ */
+function setMatrixZoom(matrixType, zoomLevel) {
+    let matrixElement;
+    let buttonsContainer;
+
+    // Get the correct matrix element based on type
+    if (matrixType === 'progress') {
+        matrixElement = document.getElementById('progressMatrix');
+        buttonsContainer = document.querySelector('#progressTab .zoom-controls');
+    } else if (matrixType === 'risk') {
+        matrixElement = document.getElementById('riskHeatmap');
+        buttonsContainer = document.querySelector('#riskTab .zoom-controls');
+    }
+
+    if (!matrixElement || !buttonsContainer) {
+        console.error('Matrix element or buttons container not found');
+        return;
+    }
+
+    // Remove all zoom classes
+    matrixElement.classList.remove('zoom-100', 'zoom-75', 'zoom-50');
+
+    // Add the new zoom class
+    matrixElement.classList.add(`zoom-${zoomLevel}`);
+
+    // Update button states
+    const buttons = buttonsContainer.querySelectorAll('.zoom-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent === `${zoomLevel}%`) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Save zoom preference in localStorage
+    localStorage.setItem(`matrix-zoom-${matrixType}`, zoomLevel);
+}
+
+/**
+ * Restore zoom level from localStorage
+ */
+function restoreMatrixZoom() {
+    ['progress', 'risk'].forEach(matrixType => {
+        const savedZoom = localStorage.getItem(`matrix-zoom-${matrixType}`);
+        if (savedZoom) {
+            setMatrixZoom(matrixType, parseInt(savedZoom));
+        }
+    });
 }
