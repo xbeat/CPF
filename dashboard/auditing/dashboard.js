@@ -371,19 +371,10 @@ function renderProgressMatrix(org) {
         `;
     }
 
-    // Header row
-    html += '<div class="matrix-cell header" style="font-size: 11px;">CAT</div>';
-    for (let i = 1; i <= 10; i++) {
-        html += `<div class="matrix-cell header">${i}</div>`;
-    }
-
-    // Data rows
+    // Data rows (10x10 grid, no headers like SOC)
     for (let cat = 1; cat <= 10; cat++) {
         const catKey = cat.toString();
         const isFiltered = categoryFilter && categoryFilter !== catKey;
-        const rowStyle = isFiltered ? 'opacity: 0.3;' : '';
-
-        html += `<div class="matrix-cell header" style="${rowStyle}">${cat}</div>`;
 
         for (let ind = 1; ind <= 10; ind++) {
             const indicatorId = `${cat}.${ind}`;
@@ -416,7 +407,7 @@ function renderProgressMatrix(org) {
                         title="${title}"
                         style="${cellStyle}"
                         onclick="${onclickHandler}">
-                    ${ind}
+                    ${indicatorId}
                 </div>
             `;
         }
