@@ -5,45 +5,10 @@ let currentOrgLanguage = 'en-US'; // Default language
 let sortDirection = 'desc'; // 'asc' or 'desc'
 let editingOrgId = null;
 let deletingOrgId = null;
-let modalStack = []; // Track open modals in order
+// Note: modalStack is now in ui-utils.js as window.modalStack
 let securityRadarChartInstance = null; // Global chart instance to allow updates
 
-// Open sidebar - idempotent (do nothing if already open)
-function openSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const main = document.getElementById('dashboardMain');
-    const openBtn = document.getElementById('sidebarOpenBtn');
-
-    // If already open, do nothing
-    if (!sidebar.classList.contains('sidebar-hidden')) {
-        return;
-    }
-
-    // Remove hidden class and collapsed state
-    sidebar.classList.remove('sidebar-hidden');
-    main.classList.remove('sidebar-collapsed');
-
-    // Hide open button
-    if (openBtn) {
-        openBtn.style.display = 'none';
-    }
-}
-
-// Close sidebar
-function closeSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const main = document.getElementById('dashboardMain');
-    const openBtn = document.getElementById('sidebarOpenBtn');
-
-    // Hide sidebar and mark main as collapsed
-    sidebar.classList.add('sidebar-hidden');
-    main.classList.add('sidebar-collapsed');
-
-    // Show open button
-    if (openBtn) {
-        openBtn.style.display = 'inline-flex';
-    }
-}
+// Note: openSidebar() and closeSidebar() are now in shared/ui-utils.js
 
 // Load data on page load
 window.addEventListener('DOMContentLoaded', async () => {
@@ -51,24 +16,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Modal stack management
-function pushModal(modalId) {
-    if (!modalStack.includes(modalId)) {
-        modalStack.push(modalId);
-    }
-}
-
-function popModal(modalId) {
-    const index = modalStack.indexOf(modalId);
-    if (index > -1) {
-        modalStack.splice(index, 1);
-    }
-}
+// Note: pushModal() and popModal() are now in shared/ui-utils.js
 
 // Close modals on ESC key - always close the most recently opened modal
 window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && modalStack.length > 0) {
+    if (event.key === 'Escape' && window.modalStack && window.modalStack.length > 0) {
         // Get the most recently opened modal (last in stack)
-        const topModal = modalStack[modalStack.length - 1];
+        const topModal = window.modalStack[window.modalStack.length - 1];
 
         // Close it based on its ID
         switch (topModal) {
@@ -536,6 +490,9 @@ function renderOrganizationDetail(org) {
 
     // Render indicator grid
     renderIndicatorGrid(orgDataForBayesian.indicators);
+
+    // Restore zoom preferences
+    restoreMatrixZoom();
 }
 
 function renderCategoryHeatmap(categories) {
@@ -982,3 +939,52 @@ window.onclick = function (event) {
         closeIndicatorModal();
     }
 };
+
+/**
+ * Set matrix zoom level
+ * @param {string} matrixType - Type of matrix ('indicator')
+ * @param {number} zoomLevel - Zoom percentage (100, 50, 33)
+ */
+function setMatrixZoom(matrixType, zoomLevel) {
+    let matrixElement;
+    let buttonsContainer;
+
+    // Get the correct matrix element based on type
+    if (matrixType === 'indicator') {
+        matrixElement = document.getElementById('indicator-grid');
+        buttonsContainer = document.querySelector('.section .zoom-controls');
+    }
+
+    if (!matrixElement || !buttonsContainer) {
+        console.error('Matrix element or buttons container not found');
+        return;
+    }
+
+    // Remove all zoom classes
+    matrixElement.classList.remove('zoom-100', 'zoom-75', 'zoom-50');
+
+    // Add the new zoom class
+    matrixElement.classList.add(`zoom-${zoomLevel}`);
+
+    // Update button states
+    const buttons = buttonsContainer.querySelectorAll('.zoom-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent === `${zoomLevel}%`) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Save zoom preference in localStorage
+    localStorage.setItem(`matrix-zoom-${matrixType}`, zoomLevel);
+}
+
+/**
+ * Restore zoom level from localStorage
+ */
+function restoreMatrixZoom() {
+    const savedZoom = localStorage.getItem('matrix-zoom-indicator');
+    if (savedZoom) {
+        setMatrixZoom('indicator', parseInt(savedZoom));
+    }
+}

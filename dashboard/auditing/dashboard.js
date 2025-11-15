@@ -7,7 +7,7 @@ let deletingOrgId = null;
 let selectedIndicatorId = null;
 let categoryFilter = null;
 let sortDirection = 'desc'; // 'asc' or 'desc'
-let modalStack = []; // Track open modals in order
+// Note: modalStack is now in ui-utils.js as window.modalStack
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,24 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Modal stack management
-function pushModal(modalId) {
-    if (!modalStack.includes(modalId)) {
-        modalStack.push(modalId);
-    }
-}
-
-function popModal(modalId) {
-    const index = modalStack.indexOf(modalId);
-    if (index > -1) {
-        modalStack.splice(index, 1);
-    }
-}
+// Note: pushModal() and popModal() are now in shared/ui-utils.js
 
 // Close modals on ESC key - always close the most recently opened modal
 window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && modalStack.length > 0) {
+    if (event.key === 'Escape' && window.modalStack && window.modalStack.length > 0) {
         // Get the most recently opened modal (last in stack)
-        const topModal = modalStack[modalStack.length - 1];
+        const topModal = window.modalStack[window.modalStack.length - 1];
 
         // Close it based on its ID
         switch (topModal) {
@@ -113,49 +102,14 @@ function refreshData() {
 }
 
 // ===== SIDEBAR FUNCTIONS =====
-// Open sidebar - idempotent (do nothing if already open)
-function openSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const main = document.getElementById('dashboardMain');
-    const openBtn = document.getElementById('sidebarOpenBtn');
-
-    // If already open, do nothing
-    if (!sidebar.classList.contains('sidebar-hidden')) {
-        return;
-    }
-
-    // Remove hidden class and collapsed state
-    sidebar.classList.remove('sidebar-hidden');
-    main.classList.remove('sidebar-collapsed');
-
-    // Hide open button
-    if (openBtn) {
-        openBtn.style.display = 'none';
-    }
-}
-
-// Close sidebar
-function closeSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const main = document.getElementById('dashboardMain');
-    const openBtn = document.getElementById('sidebarOpenBtn');
-
-    // Hide sidebar and mark main as collapsed
-    sidebar.classList.add('sidebar-hidden');
-    main.classList.add('sidebar-collapsed');
-
-    // Show open button
-    if (openBtn) {
-        openBtn.style.display = 'inline-flex';
-    }
-}
+// Note: openSidebar() and closeSidebar() are now in shared/ui-utils.js
 
 // ===== RENDERING =====
 function renderOrganizations() {
     const grid = document.getElementById('organizationsGrid');
-    const countEl = document.getElementById('orgCount');
+    const countEl = document.getElementById('org-count');
 
-    countEl.textContent = `${organizations.length} organization${organizations.length !== 1 ? 's' : ''}`;
+    countEl.textContent = organizations.length;
 
     if (organizations.length === 0) {
         grid.innerHTML = `
@@ -341,6 +295,9 @@ function renderAssessmentDetails() {
     renderRiskHeatmap(org);
     renderSecurityRadarChart(org);
     renderPrioritizationTable(org);
+
+    // Restore zoom preferences
+    restoreMatrixZoom();
 }
 
 function renderProgressSummary(org) {
@@ -2118,28 +2075,7 @@ function switchTab(tabName) {
 }
 
 // ===== UTILITIES =====
-function showAlert(message, type = 'info') {
-    const container = document.getElementById('alertContainer');
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type}`;
-    alert.textContent = message;
-
-    container.appendChild(alert);
-
-    setTimeout(() => {
-        alert.remove();
-    }, 5000);
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function capitalizeFirst(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
+// Note: showAlert(), escapeHtml(), capitalizeFirst() are now in shared/ui-utils.js
 
 // ===== COMPILE ASSESSMENT FUNCTIONS =====
 
@@ -2823,4 +2759,58 @@ async function exportCurrentOrgPDF() {
         console.error('Error exporting PDF:', error);
         showAlert(`Failed to export PDF: ${error.message}`, 'error');
     }
+}
+
+/**
+ * Set matrix zoom level
+ * @param {string} matrixType - Type of matrix ('progress', 'risk')
+ * @param {number} zoomLevel - Zoom percentage (100, 50, 33)
+ */
+function setMatrixZoom(matrixType, zoomLevel) {
+    let matrixElement;
+    let buttonsContainer;
+
+    // Get the correct matrix element based on type
+    if (matrixType === 'progress') {
+        matrixElement = document.getElementById('progressMatrix');
+        buttonsContainer = document.querySelector('#progressTab .zoom-controls');
+    } else if (matrixType === 'risk') {
+        matrixElement = document.getElementById('riskHeatmap');
+        buttonsContainer = document.querySelector('#riskTab .zoom-controls');
+    }
+
+    if (!matrixElement || !buttonsContainer) {
+        console.error('Matrix element or buttons container not found');
+        return;
+    }
+
+    // Remove all zoom classes
+    matrixElement.classList.remove('zoom-100', 'zoom-75', 'zoom-50');
+
+    // Add the new zoom class
+    matrixElement.classList.add(`zoom-${zoomLevel}`);
+
+    // Update button states
+    const buttons = buttonsContainer.querySelectorAll('.zoom-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent === `${zoomLevel}%`) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Save zoom preference in localStorage
+    localStorage.setItem(`matrix-zoom-${matrixType}`, zoomLevel);
+}
+
+/**
+ * Restore zoom level from localStorage
+ */
+function restoreMatrixZoom() {
+    ['progress', 'risk'].forEach(matrixType => {
+        const savedZoom = localStorage.getItem(`matrix-zoom-${matrixType}`);
+        if (savedZoom) {
+            setMatrixZoom(matrixType, parseInt(savedZoom));
+        }
+    });
 }
