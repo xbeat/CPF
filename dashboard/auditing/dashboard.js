@@ -1147,7 +1147,6 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                         <button class="btn btn-danger" onclick="if(confirm('Reset all data?')) window.CPFClient.resetAll()" title="Clear all data and reset">🗑️ Reset</button>
                         <button class="btn btn-primary" onclick="viewAssessmentDetailsFromEdit('${indicatorId}')">📋 View Details</button>
                         <button class="btn btn-warning" onclick="openHistoryModal()">📜 History</button>
-                        ${isEditMode ? `<button class="btn btn-danger" onclick="deleteAssessmentFromEdit('${indicatorId}')">🗑️ Delete Assessment</button>` : ''}
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <span id="auto-save-status" style="color: #4CAF50; font-size: 14px; display: none;">✓ Auto-saved</span>
@@ -1744,60 +1743,6 @@ async function deleteAssessmentFromDetails() {
 }
 
 // Delete assessment from edit form
-async function deleteAssessmentFromEdit(indicatorId) {
-    if (!selectedOrgId) return;
-
-    if (!confirm(`Are you sure you want to delete the assessment for indicator ${indicatorId}?`)) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/organizations/${selectedOrgId}/assessments/${indicatorId}`, {
-            method: 'DELETE'
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showAlert('Assessment deleted successfully', 'success');
-            closeIndicatorModal();
-            await loadOrganizationDetails(selectedOrgId);
-        } else {
-            showAlert('Failed to delete assessment: ' + result.error, 'error');
-        }
-    } catch (error) {
-        console.error('Error deleting assessment:', error);
-        showAlert('Failed to delete assessment: ' + error.message, 'error');
-    }
-}
-
-async function deleteAssessmentFromModal() {
-    if (!selectedIndicatorId || !selectedOrgId) return;
-
-    if (!confirm(`Are you sure you want to delete the assessment for indicator ${selectedIndicatorId}?`)) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/organizations/${selectedOrgId}/assessments/${selectedIndicatorId}`, {
-            method: 'DELETE'
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showAlert('Assessment deleted successfully', 'success');
-            closeIndicatorModal();
-            await loadOrganizationDetails(selectedOrgId);
-        } else {
-            showAlert('Failed to delete assessment: ' + result.error, 'error');
-        }
-    } catch (error) {
-        console.error('Error deleting assessment:', error);
-        showAlert('Failed to delete assessment: ' + error.message, 'error');
-    }
-}
-
 function filterByCategory(categoryId) {
     // Toggle filter
     if (categoryFilter === categoryId) {
@@ -2461,12 +2406,8 @@ async function resetCompileForm() {
         const result = await response.json();
 
         if (result.success) {
-            showAlert('Assessment reset and saved as empty', 'success');
-
-            // Reload organization to reflect changes
-            setTimeout(() => {
-                loadOrganization(selectedOrganization);
-            }, 1000);
+            showAlert('✅ Assessment cleared and saved', 'success');
+            // Form remains open with empty fields
         } else {
             showAlert('Failed to save empty assessment: ' + result.error, 'error');
         }
