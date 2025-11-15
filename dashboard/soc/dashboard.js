@@ -1074,6 +1074,9 @@ function updateOverallRiskDisplay(aggregates) {
     if (riskLabelElement) {
         riskLabelElement.textContent = riskLabel;
         riskLabelElement.className = `risk-badge ${riskClass}`;
+    }
+}
+
 /**
  * Set matrix zoom level
  * @param {string} matrixType - Type of matrix ('indicator')
