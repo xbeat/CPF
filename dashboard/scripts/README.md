@@ -1,6 +1,6 @@
 # CPF Dashboard Scripts
 
-Questa cartella contiene script utili per la gestione dei dati della dashboard CPF.
+Script utili per la gestione dei dati della dashboard CPF.
 
 ## 📄 Script Disponibili
 
@@ -47,99 +47,62 @@ rm -rf dashboard/data/organizations/
 
 ---
 
-### 2. `generate_field_kit_assessments.js`
+### 2. `validate-and-fix-indicators.js`
 
-Genera assessment realistici (100 indicatori) pronti per l'import nella dashboard.
-
-**Uso:**
-```bash
-node dashboard/scripts/generate_field_kit_assessments.js
-```
-
-**Funzionalità:**
-- Genera 100 Field Kit assessment completi (tutti gli indicatori 1.1 - 10.10)
-- Usa profili di industry per generare score realistici
-- Applica bias basati sulla dimensione dell'organizzazione
-- Simula risposte a Quick Assessment e Client Conversation
-
-**Profili Industry:**
-- **Technology**: Alta pressione temporale, stress elevato
-- **Finance**: Alta autorità, rigidità temporale, stress moderato
-- **Healthcare**: Massima autorità, stress molto elevato
-- **Manufacturing**: Dinamiche di gruppo forti
-- **Retail**: Alta pressione sociale
-
-**Output:**
-- File JSON export pronti per batch import
-- Ogni file contiene assessment completo con raw_data
-
----
-
-### 3. `generate_synthetic_data.js`
-
-Genera dati sintetici combinando assessment SOC e Human per testing avanzato.
+Valida e corregge automaticamente problemi comuni nei Field Kit JSON.
 
 **Uso:**
 ```bash
-node dashboard/scripts/generate_synthetic_data.js
+# Valida tutti gli indicatori
+node dashboard/scripts/validate-and-fix-indicators.js
+
+# Valida solo una lingua specifica
+node dashboard/scripts/validate-and-fix-indicators.js --lang en-US
+
+# Valida e correggi automaticamente
+node dashboard/scripts/validate-and-fix-indicators.js --fix
+
+# Valida solo una categoria
+node dashboard/scripts/validate-and-fix-indicators.js --category 1
 ```
 
-**Funzionalità:**
-- Crea 8 organizzazioni con dati storici (30 giorni)
-- Simula assessment SOC giornalieri
-- Simula audit umani settimanali
-- Genera trend realistici e drift analysis
+**Cosa Valida:**
+- ✅ Campi obbligatori (indicator, title, category, sections)
+- ✅ Formato indicator ID (X.Y)
+- ✅ Struttura sezioni e items
+- ✅ Scoring configuration e maturity levels
+- ✅ Quick Assessment options e scores
+- ✅ Red flags configuration
 
-**Configurazione:**
-```javascript
-CONFIG = {
-  num_organizations: 8,
-  days_history: 30,
-  soc_frequency_days: 1,      // SOC assessa ogni giorno
-  human_frequency_days: 7      // Human audit settimanale
-}
-```
+**Auto-Fix Applicati:**
+- 🔧 Corregge indicator ID sbagliato
+- 🔧 Normalizza scoring weights a somma 1.0
+- 🔧 Normalizza question weights a somma 1.0
+- 🔧 Aggiunge score di default (0.5) a opzioni senza score
+- 🔧 Clamp score a range 0.0-1.0
+- 🔧 Cap red flags total impact a 1.0
+- 🔧 Aggiunge maturity levels mancanti
 
 **Output:**
 ```
-/dashboard/data/organizations.json    # File unico con tutte le org + storico
+📊 Validation Report:
+  ✅ Valid: 95 indicators
+  ⚠️  Warnings: 3 indicators
+  ❌ Errors: 2 indicators
+
+🔧 Auto-fixes applied: 12
+  - Normalized weights: 5
+  - Added default scores: 4
+  - Clamped scores: 3
 ```
 
----
-
-### 4. `batch_import.js`
-
-Importa Field Kit export nella dashboard e genera report di progresso.
-
-**Uso:**
+**Opzioni:**
 ```bash
-node dashboard/scripts/batch_import.js <folder_path>
-```
-
-**Esempio:**
-```bash
-node dashboard/scripts/batch_import.js ./field_kit_exports/
-```
-
-**Funzionalità:**
-- Scansiona cartella per file `*dashboard_export*.json`
-- Valida struttura dei file export
-- Importa assessment nella dashboard
-- Genera `auditing_results.json` con statistiche
-
-**Validazione:**
-- Verifica presenza di `organization_id`
-- Verifica presenza di `indicator_id`
-- Verifica presenza di `indicator_data`
-- Skip file non validi con warning
-
-**Output:**
-```
-/dashboard/data/auditing_results.json    # Report di import con:
-  - Lista assessment importati
-  - Statistiche per organizzazione
-  - Completion rate
-  - Errori e warning
+--lang <code>       # Valida solo una lingua (en-US, it-IT, etc.)
+--category <num>    # Valida solo una categoria (1-10)
+--fix               # Applica correzioni automatiche
+--verbose           # Output dettagliato
+--dry-run           # Simula fix senza salvare
 ```
 
 ---
@@ -152,8 +115,6 @@ Tutti gli script richiedono **Node.js** installato.
 # Verifica versione Node.js
 node --version    # Richiede >= 14.x
 ```
-
-Nessuna dipendenza npm necessaria - usano solo moduli Node.js nativi.
 
 ---
 
@@ -172,43 +133,43 @@ node dashboard/server.js
 open http://localhost:3000/dashboard/auditing/
 ```
 
-### Generazione Dati di Test Avanzati
+### Validazione e Fix Field Kit
 
 ```bash
-# 1. Genera dati sintetici SOC + Human
-node dashboard/scripts/generate_synthetic_data.js
+# 1. Valida tutti gli indicatori
+node dashboard/scripts/validate-and-fix-indicators.js
 
-# 2. Genera Field Kit assessments realistici
-node dashboard/scripts/generate_field_kit_assessments.js
+# 2. Applica correzioni automatiche
+node dashboard/scripts/validate-and-fix-indicators.js --fix
 
-# 3. Import batch (se hai export esterni)
-node dashboard/scripts/batch_import.js ./exports/
+# 3. Valida solo una lingua
+node dashboard/scripts/validate-and-fix-indicators.js --lang it-IT --fix
 ```
 
 ---
 
 ## ⚠️ Note Importanti
 
-1. **Preservazione Dati**: `generate_demo_organizations.js` NON sovrascrive organizzazioni esistenti - aggiunge solo nuove
-2. **Language Field**: Tutte le organizzazioni generate hanno il campo `metadata.language` correttamente impostato
-3. **File-based Storage**: Il sistema usa JSON files, NON PostgreSQL (che è disponibile ma non attivo)
-4. **Backup**: Prima di rigenerare dati, fai backup della cartella `/dashboard/data/`
+1. **Preservazione Dati**: `generate_demo_organizations.js` NON sovrascrive organizzazioni esistenti
+2. **Language Field**: Campo `metadata.language` sempre presente nelle org generate
+3. **Auto-Fix Safety**: `validate-and-fix-indicators.js` crea backup prima di modificare
+4. **File-based Storage**: Sistema usa JSON files, NON PostgreSQL
 
 ---
 
 ## 🐛 Troubleshooting
 
 **Problema: "Field Kit not found"**
-- **Causa**: Gli indicatori per quella lingua non esistono nel repository
-- **Soluzione**: Verifica che esistano i file in `/auditor-field-kit/interactive/{language}/`
+- **Causa**: Indicatori per quella lingua non esistono
+- **Soluzione**: Verifica path `/auditor-field-kit/interactive/{language}/`
 
 **Problema: Assessment non salvati**
-- **Causa**: Manca il campo `language` nell'organizzazione
-- **Soluzione**: Le organizzazioni generate da `generate_demo_organizations.js` hanno già il campo corretto
+- **Causa**: Manca campo `language` nell'organizzazione
+- **Soluzione**: Organizzazioni da `generate_demo_organizations.js` hanno già il campo
 
-**Problema: Organizzazioni duplicate**
-- **Causa**: ID già esistente
-- **Soluzione**: Lo script skippa automaticamente organizzazioni con ID duplicati
+**Problema: Score calculation failed**
+- **Causa**: Pesi di scoring non sommano a 1.0
+- **Soluzione**: Esegui `validate-and-fix-indicators.js --fix`
 
 ---
 

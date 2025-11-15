@@ -1142,8 +1142,6 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                         <button class="btn btn-info" onclick="window.CPFClient.showQuickReference()">📚 Quick Reference</button>
                         <button class="btn btn-success" onclick="window.CPFClient.showIndicatorDetails()">📄 Indicator Details</button>
                         <button class="btn btn-info" onclick="window.CPFClient.toggleDetailedAnalysis()">📊 Show/Hide Analysis</button>
-                        <button class="btn btn-warning" onclick="window.CPFClient.calculateIndicatorScore()">🧮 Calculate Score</button>
-                        <button class="btn btn-warning" onclick="window.CPFClient.validateCurrentJSON()">🔍 Validate</button>
                         <button class="btn btn-light" onclick="document.getElementById('file-input-integrated').click()">📂 Import JSON</button>
                         <input type="file" id="file-input-integrated" accept=".json" onchange="window.CPFClient.importJSON(event)" style="display: none;">
                         <button class="btn btn-danger" onclick="if(confirm('Reset all data?')) window.CPFClient.resetAll()" title="Clear all data and reset">🗑️ Reset</button>
