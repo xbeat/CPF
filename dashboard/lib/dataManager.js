@@ -610,6 +610,22 @@ function saveAssessment(orgId, assessmentData, user = 'System') {
     confidence: assessmentData.confidence
   }, user);
 
+  // Emit WebSocket event for real-time dashboard update
+  if (global.io) {
+    const category = indicatorId.split('.')[0];
+    global.io.to(`org:${orgId}`).emit('indicator_update', {
+      orgId,
+      indicatorId,
+      category,
+      assessment: assessmentData,
+      previousScore,
+      newScore: assessmentData.bayesian_score,
+      trend: previousScore !== null ? (assessmentData.bayesian_score > previousScore ? 'up' : assessmentData.bayesian_score < previousScore ? 'down' : 'stable') : null,
+      aggregates: orgData.aggregates,
+      timestamp: new Date().toISOString()
+    });
+  }
+
   return orgData;
 }
 
