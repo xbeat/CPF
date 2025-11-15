@@ -496,6 +496,9 @@ function renderOrganizationDetail(org) {
 
     // Render indicator grid
     renderIndicatorGrid(orgDataForBayesian.indicators);
+
+    // Restore zoom preferences
+    restoreMatrixZoom();
 }
 
 function renderCategoryHeatmap(categories) {
@@ -1071,5 +1074,51 @@ function updateOverallRiskDisplay(aggregates) {
     if (riskLabelElement) {
         riskLabelElement.textContent = riskLabel;
         riskLabelElement.className = `risk-badge ${riskClass}`;
+/**
+ * Set matrix zoom level
+ * @param {string} matrixType - Type of matrix ('indicator')
+ * @param {number} zoomLevel - Zoom percentage (100, 50, 33)
+ */
+function setMatrixZoom(matrixType, zoomLevel) {
+    let matrixElement;
+    let buttonsContainer;
+
+    // Get the correct matrix element based on type
+    if (matrixType === 'indicator') {
+        matrixElement = document.getElementById('indicator-grid');
+        buttonsContainer = document.querySelector('.section .zoom-controls');
+    }
+
+    if (!matrixElement || !buttonsContainer) {
+        console.error('Matrix element or buttons container not found');
+        return;
+    }
+
+    // Remove all zoom classes
+    matrixElement.classList.remove('zoom-100', 'zoom-75', 'zoom-50');
+
+    // Add the new zoom class
+    matrixElement.classList.add(`zoom-${zoomLevel}`);
+
+    // Update button states
+    const buttons = buttonsContainer.querySelectorAll('.zoom-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent === `${zoomLevel}%`) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Save zoom preference in localStorage
+    localStorage.setItem(`matrix-zoom-${matrixType}`, zoomLevel);
+}
+
+/**
+ * Restore zoom level from localStorage
+ */
+function restoreMatrixZoom() {
+    const savedZoom = localStorage.getItem('matrix-zoom-indicator');
+    if (savedZoom) {
+        setMatrixZoom('indicator', parseInt(savedZoom));
     }
 }
