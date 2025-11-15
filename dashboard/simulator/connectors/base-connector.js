@@ -10,6 +10,7 @@ class BaseConnector {
     this.sourceId = sourceId;
     this.config = config;
     this.connected = false;
+    this.mode = config.mode || 'simulation'; // 'simulation' | 'production'
     this.stats = {
       eventsReceived: 0,
       eventsSent: 0,
@@ -18,13 +19,32 @@ class BaseConnector {
     };
   }
 
+  // ===== TEMPLATE METHODS (common logic for all connectors) =====
+
   /**
    * Connetti al SIEM/SOC/EDR
+   * Template method - implements common connection logic
    * Dev Mode: Setup simulazione
-   * Prod Mode: Connessione reale al sistema
+   * Prod Mode: Connessione reale al sistema (calls _connectProduction)
    */
   async connect() {
-    throw new Error('connect() must be implemented by subclass');
+    if (this.mode === 'simulation') {
+      // Simulation mode - no real connection
+      this.connected = true;
+      this.log('info', '🎭 Connected (Simulation Mode)');
+      return { success: true, mode: 'simulation' };
+    }
+
+    // Production mode - delegate to vendor-specific implementation
+    try {
+      await this._connectProduction();
+      this.connected = true;
+      this.log('info', `✅ Connected to ${this.sourceId}`);
+      return { success: true, mode: 'production' };
+    } catch (error) {
+      this.handleError(error, 'connect');
+      throw error;
+    }
   }
 
   /**
@@ -32,7 +52,7 @@ class BaseConnector {
    */
   async disconnect() {
     this.connected = false;
-    console.log(`🔌 [${this.sourceId}] Disconnected`);
+    this.log('info', `🔌 Disconnected`);
   }
 
   /**
@@ -44,26 +64,93 @@ class BaseConnector {
 
   /**
    * Fetch eventi dal sistema
+   * Template method - implements common fetch logic
    * Dev Mode: Non usato (generiamo eventi)
-   * Prod Mode: Query eventi reali
+   * Prod Mode: Query eventi reali (calls _fetchEventsProduction)
    *
    * @param {Object} filters - Filtri (timeRange, eventTypes, severity, etc)
    * @returns {Array} Eventi
    */
   async fetchEvents(filters = {}) {
-    throw new Error('fetchEvents() must be implemented by subclass');
+    if (!this.connected) {
+      throw new Error(`Not connected to ${this.sourceId}`);
+    }
+
+    if (this.mode === 'simulation') {
+      this.log('warn', 'fetchEvents() not used in simulation mode');
+      return [];
+    }
+
+    try {
+      const results = await this._fetchEventsProduction(filters);
+      this.updateStats('eventsReceived', results.length);
+      return results.map(event => this.normalizeEvent(event));
+    } catch (error) {
+      this.handleError(error, 'fetchEvents');
+      throw error;
+    }
   }
 
   /**
    * Invia evento al sistema
+   * Template method - implements common send logic
    * Dev Mode: Non usato
-   * Prod Mode: Crea alert/ticket/case nel SIEM
+   * Prod Mode: Crea alert/ticket/case nel SIEM (calls _sendEventProduction)
    *
    * @param {Object} event - Evento da inviare
    * @returns {Object} Risultato
    */
   async sendEvent(event) {
-    throw new Error('sendEvent() must be implemented by subclass');
+    if (!this.connected) {
+      throw new Error(`Not connected to ${this.sourceId}`);
+    }
+
+    if (this.mode === 'simulation') {
+      this.updateStats('eventsSent');
+      return { success: true, mode: 'simulation' };
+    }
+
+    try {
+      const result = await this._sendEventProduction(event);
+      this.updateStats('eventsSent');
+      return { success: true, mode: 'production', result };
+    } catch (error) {
+      this.handleError(error, 'sendEvent');
+      throw error;
+    }
+  }
+
+  // ===== HOOK METHODS (must be implemented by subclasses) =====
+
+  /**
+   * Production connection logic - vendor specific
+   * Subclasses must implement this method
+   * @protected
+   */
+  async _connectProduction() {
+    throw new Error('_connectProduction() must be implemented by subclass');
+  }
+
+  /**
+   * Production fetch events logic - vendor specific
+   * Subclasses must implement this method
+   * @protected
+   * @param {Object} filters - Filtri eventi
+   * @returns {Array} Eventi raw (will be normalized by base class)
+   */
+  async _fetchEventsProduction(filters) {
+    throw new Error('_fetchEventsProduction() must be implemented by subclass');
+  }
+
+  /**
+   * Production send event logic - vendor specific
+   * Subclasses must implement this method
+   * @protected
+   * @param {Object} event - Evento da inviare
+   * @returns {Object} Risultato vendor-specific
+   */
+  async _sendEventProduction(event) {
+    throw new Error('_sendEventProduction() must be implemented by subclass');
   }
 
   /**

@@ -15,18 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Modal stack management
-function pushModal(modalId) {
-    if (!modalStack.includes(modalId)) {
-        modalStack.push(modalId);
-    }
-}
-
-function popModal(modalId) {
-    const index = modalStack.indexOf(modalId);
-    if (index > -1) {
-        modalStack.splice(index, 1);
-    }
-}
+// Note: pushModal() and popModal() are now in shared/ui-utils.js
 
 // Close modals on ESC key - always close the most recently opened modal
 window.addEventListener('keydown', (event) => {
@@ -113,42 +102,7 @@ function refreshData() {
 }
 
 // ===== SIDEBAR FUNCTIONS =====
-// Open sidebar - idempotent (do nothing if already open)
-function openSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const main = document.getElementById('dashboardMain');
-    const openBtn = document.getElementById('sidebarOpenBtn');
-
-    // If already open, do nothing
-    if (!sidebar.classList.contains('sidebar-hidden')) {
-        return;
-    }
-
-    // Remove hidden class and collapsed state
-    sidebar.classList.remove('sidebar-hidden');
-    main.classList.remove('sidebar-collapsed');
-
-    // Hide open button
-    if (openBtn) {
-        openBtn.style.display = 'none';
-    }
-}
-
-// Close sidebar
-function closeSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const main = document.getElementById('dashboardMain');
-    const openBtn = document.getElementById('sidebarOpenBtn');
-
-    // Hide sidebar and mark main as collapsed
-    sidebar.classList.add('sidebar-hidden');
-    main.classList.add('sidebar-collapsed');
-
-    // Show open button
-    if (openBtn) {
-        openBtn.style.display = 'inline-flex';
-    }
-}
+// Note: openSidebar() and closeSidebar() are now in shared/ui-utils.js
 
 // ===== RENDERING =====
 function renderOrganizations() {
@@ -2118,28 +2072,7 @@ function switchTab(tabName) {
 }
 
 // ===== UTILITIES =====
-function showAlert(message, type = 'info') {
-    const container = document.getElementById('alertContainer');
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type}`;
-    alert.textContent = message;
-
-    container.appendChild(alert);
-
-    setTimeout(() => {
-        alert.remove();
-    }, 5000);
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function capitalizeFirst(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
+// Note: showAlert(), escapeHtml(), capitalizeFirst() are now in shared/ui-utils.js
 
 // ===== COMPILE ASSESSMENT FUNCTIONS =====
 
