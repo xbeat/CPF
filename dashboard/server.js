@@ -17,6 +17,8 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
+const http = require('http');
+const { Server } = require('socket.io');
 
 // Import data manager
 const dataManager = require('./lib/dataManager');
@@ -35,6 +37,38 @@ function getSimulator() {
 
 const app = express();
 const PORT = 3000;
+
+// Create HTTP server and attach Socket.io
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Global Socket.io instance (accessible by other modules)
+global.io = io;
+
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log(`🔌 [WebSocket] Client connected: ${socket.id}`);
+
+  socket.on('disconnect', () => {
+    console.log(`🔌 [WebSocket] Client disconnected: ${socket.id}`);
+  });
+
+  // Allow clients to subscribe to specific organizations
+  socket.on('subscribe', (orgId) => {
+    socket.join(`org:${orgId}`);
+    console.log(`🔌 [WebSocket] Client ${socket.id} subscribed to org:${orgId}`);
+  });
+
+  socket.on('unsubscribe', (orgId) => {
+    socket.leave(`org:${orgId}`);
+    console.log(`🔌 [WebSocket] Client ${socket.id} unsubscribed from org:${orgId}`);
+  });
+});
 
 // Middleware
 app.use(cors());
@@ -1537,11 +1571,12 @@ app.post('/api/simulator/emit', async (req, res) => {
 // SERVER START
 // ============================================
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log('\n╔════════════════════════════════════════════════════════════╗');
   console.log('║          🛡️  CPF Dashboard Server v2.0 - RUNNING           ║');
   console.log('╚════════════════════════════════════════════════════════════╝\n');
-  console.log(`📡 Server listening on: http://localhost:${PORT}\n`);
+  console.log(`📡 Server listening on: http://localhost:${PORT}`);
+  console.log(`🔌 WebSocket server ready\n`);
   console.log('📂 Available endpoints:\n');
   console.log('   🌐 Dashboards:');
   console.log(`      → http://localhost:${PORT}/dashboard/auditing/`);

@@ -372,6 +372,9 @@ async function selectOrganization(orgId) {
     document.getElementById('empty-state').style.display = 'none';
     document.getElementById('org-detail').style.display = 'block';
 
+    // Setup WebSocket for real-time updates
+    setupWebSocket(orgId);
+
     // Fetch and render organization analysis
     await loadAndRenderOrganization(orgId);
 }
@@ -451,6 +454,9 @@ function renderOrganizationDetail(org) {
     // Save organization language for indicator detail modal
     // Full org object has language in metadata, not at root level
     currentOrgLanguage = org.metadata?.language || 'en-US';
+
+    // Save current org data for WebSocket updates
+    currentOrgData = org;
 
     // Convert API v2.0 format (assessments) to bayesian.js format (indicators)
     const orgDataForBayesian = convertOrgDataForBayesian(org);
@@ -936,3 +942,134 @@ window.onclick = function (event) {
         closeIndicatorModal();
     }
 };
+
+// ============================================================================
+// WEBSOCKET - REAL-TIME UPDATES
+// ============================================================================
+
+let socket = null;
+let currentOrgData = null;
+
+/**
+ * Setup WebSocket connection for real-time indicator updates
+ */
+function setupWebSocket(orgId) {
+    // Disconnect existing socket
+    if (socket) {
+        socket.disconnect();
+    }
+
+    // Connect to Socket.io server
+    socket = io();
+
+    socket.on('connect', () => {
+        console.log('✅ WebSocket connected - Real-time updates enabled');
+
+        // Subscribe to organization updates
+        socket.emit('subscribe', orgId);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('❌ WebSocket disconnected');
+    });
+
+    socket.on('indicator_update', (data) => {
+        console.log('📊 Real-time indicator update received:', data);
+
+        // Only process updates for the currently selected organization
+        if (data.orgId === currentOrgId) {
+            // Update the specific indicator cell in the grid
+            updateIndicatorCell(data.indicatorId, data.assessment, data.trend);
+
+            // Update aggregates if provided
+            if (data.aggregates && currentOrgData) {
+                currentOrgData.aggregates = data.aggregates;
+                // Update overall risk display
+                updateOverallRiskDisplay(data.aggregates);
+            }
+        }
+    });
+
+    socket.on('error', (error) => {
+        console.error('WebSocket error:', error);
+    });
+}
+
+/**
+ * Update a single indicator cell in real-time
+ */
+function updateIndicatorCell(indicatorId, assessment, trend) {
+    // Find the tile in the grid
+    const tiles = document.querySelectorAll('.indicator-tile');
+    let targetTile = null;
+
+    for (const tile of tiles) {
+        if (tile.textContent.includes(indicatorId)) {
+            targetTile = tile;
+            break;
+        }
+    }
+
+    if (!targetTile) {
+        console.warn(`Could not find tile for indicator ${indicatorId}`);
+        return;
+    }
+
+    const risk = assessment.bayesian_score;
+    const riskClass = risk > 0.66 ? 'high' : risk > 0.33 ? 'medium' : 'low';
+    const percentage = Math.round(risk * 100);
+
+    // Remove old risk classes
+    targetTile.classList.remove('high', 'medium', 'low', 'missing');
+
+    // Add new risk class
+    targetTile.classList.add(riskClass);
+
+    // Update content with trend indicator
+    let trendSymbol = '';
+    let trendText = '';
+    if (trend === 'up') {
+        trendSymbol = '<span style="color: #fca5a5; font-size: 0.8em;">↑</span>';
+        trendText = ' (increasing)';
+    } else if (trend === 'down') {
+        trendSymbol = '<span style="color: rgba(255,255,255,0.8); font-size: 0.8em;">↓</span>';
+        trendText = ' (decreasing)';
+    }
+
+    targetTile.innerHTML = `${indicatorId}${trendSymbol}`;
+    targetTile.title = `Indicator ${indicatorId}: ${percentage}%${trendText}`;
+    targetTile.style.cursor = 'pointer';
+    targetTile.style.opacity = '1';
+
+    // Update click handler with new assessment data
+    const indicator = {
+        current_bayesian: risk,
+        soc_values: assessment.raw_data?.soc_values || [],
+        human_values: assessment.raw_data?.human_values || [],
+        last_updated: new Date().toISOString()
+    };
+    targetTile.onclick = () => showIndicatorDetail(indicatorId, indicator);
+
+    console.log(`✅ Updated cell ${indicatorId}: ${percentage}% (${riskClass}) ${trend || ''}`);
+}
+
+/**
+ * Update overall risk display
+ */
+function updateOverallRiskDisplay(aggregates) {
+    const overallRisk = aggregates.overall_risk || 0;
+    const riskClass = overallRisk > 0.66 ? 'high' : overallRisk > 0.33 ? 'medium' : 'low';
+    const riskLabel = overallRisk > 0.66 ? 'High Risk' : overallRisk > 0.33 ? 'Medium Risk' : 'Low Risk';
+
+    const riskValueElement = document.getElementById('risk-value');
+    const riskLabelElement = document.getElementById('risk-label');
+
+    if (riskValueElement) {
+        riskValueElement.textContent = `${Math.round(overallRisk * 100)}%`;
+    }
+
+    if (riskLabelElement) {
+        riskLabelElement.textContent = riskLabel;
+        riskLabelElement.className = `risk-badge ${riskClass}`;
+    }
+}
