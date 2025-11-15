@@ -693,6 +693,8 @@ function setupWebSocket(orgId) {
         console.error('WebSocket error:', error);
         logEvent(`WebSocket error: ${error}`, 'error');
     });
+}
+
 // Toggle sort direction
 function toggleSortDirection() {
     sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
