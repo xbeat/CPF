@@ -168,6 +168,15 @@ function selectOrganization(orgId) {
     const org = organizations.find(o => o.id === orgId);
     logEvent(`Selected organization: ${org.name}`);
 
+    // Initialize CPF Matrix
+    initializeMatrix();
+
+    // Load organization data and populate matrix
+    loadOrganizationData(orgId);
+
+    // Setup WebSocket for real-time updates
+    setupWebSocket(orgId);
+
     // Check if simulator is running for this org
     checkSimulatorStatus();
 }
@@ -521,6 +530,169 @@ function formatDuration(seconds) {
     return `${hours}h ${mins}m`;
 }
 
+// ============================================================================
+// CPF MATRIX (10x10) - REAL-TIME VISUALIZATION
+// ============================================================================
+
+let socket = null;
+let matrixData = {};
+
+/**
+ * Initialize CPF Matrix with 100 cells (10x10)
+ */
+function initializeMatrix() {
+    const matrixContainer = document.getElementById('cpf-matrix');
+    matrixContainer.innerHTML = '';
+
+    // Generate 10x10 grid (categories 1-10, indicators 1-10)
+    for (let category = 1; category <= 10; category++) {
+        for (let indicator = 1; indicator <= 10; indicator++) {
+            const indicatorId = `${category}.${indicator}`;
+            const cell = document.createElement('div');
+            cell.className = 'matrix-cell risk-missing';
+            cell.id = `cell-${indicatorId.replace('.', '-')}`;
+            cell.innerHTML = `${indicatorId}<span class="trend-indicator"></span>`;
+            cell.title = `Indicator ${indicatorId}`;
+
+            matrixContainer.appendChild(cell);
+        }
+    }
+
+    logEvent('Matrix initialized (100 indicators)');
+}
+
+/**
+ * Load organization data and populate matrix
+ */
+async function loadOrganizationData(orgId) {
+    try {
+        const response = await fetch(`/api/organizations/${orgId}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const result = await response.json();
+        const orgData = result.data;
+
+        // Store matrix data
+        matrixData = orgData.assessments || {};
+
+        // Update all cells
+        updateAllCells();
+
+        logEvent(`Loaded data for ${orgData.name} (${Object.keys(matrixData).length} indicators)`);
+
+    } catch (error) {
+        console.error('Error loading organization data:', error);
+        logEvent(`Error loading data: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Update all matrix cells based on current data
+ */
+function updateAllCells() {
+    for (let category = 1; category <= 10; category++) {
+        for (let indicator = 1; indicator <= 10; indicator++) {
+            const indicatorId = `${category}.${indicator}`;
+            const assessment = matrixData[indicatorId];
+            updateCell(indicatorId, assessment, null);
+        }
+    }
+}
+
+/**
+ * Update single matrix cell
+ */
+function updateCell(indicatorId, assessment, trend) {
+    const cellId = `cell-${indicatorId.replace('.', '-')}`;
+    const cell = document.getElementById(cellId);
+    if (!cell) return;
+
+    // Remove all risk classes
+    cell.classList.remove('risk-low', 'risk-medium', 'risk-high', 'risk-missing');
+
+    // Get trend indicator element
+    const trendIndicator = cell.querySelector('.trend-indicator');
+
+    if (!assessment || assessment.bayesian_score === undefined) {
+        // No data
+        cell.classList.add('risk-missing');
+        trendIndicator.textContent = '';
+        cell.title = `Indicator ${indicatorId} - No data`;
+        return;
+    }
+
+    const score = assessment.bayesian_score;
+    const percentage = Math.round(score * 100);
+
+    // Determine risk level (fixed thresholds)
+    let riskClass;
+    if (score < 0.33) {
+        riskClass = 'risk-low';
+    } else if (score < 0.66) {
+        riskClass = 'risk-medium';
+    } else {
+        riskClass = 'risk-high';
+    }
+
+    cell.classList.add(riskClass);
+
+    // Update trend indicator
+    if (trend === 'up') {
+        trendIndicator.textContent = '↑';
+        trendIndicator.className = 'trend-indicator trend-up';
+    } else if (trend === 'down') {
+        trendIndicator.textContent = '↓';
+        trendIndicator.className = 'trend-indicator trend-down';
+    } else {
+        trendIndicator.textContent = '';
+    }
+
+    cell.title = `Indicator ${indicatorId} - Risk: ${percentage}% ${trend ? (trend === 'up' ? '(increasing)' : '(decreasing)') : ''}`;
+}
+
+/**
+ * Setup WebSocket connection for real-time updates
+ */
+function setupWebSocket(orgId) {
+    // Disconnect existing socket
+    if (socket) {
+        socket.disconnect();
+    }
+
+    // Connect to Socket.io server
+    socket = io();
+
+    socket.on('connect', () => {
+        console.log('✅ WebSocket connected');
+        logEvent('Real-time updates enabled (WebSocket)', 'success');
+
+        // Subscribe to organization updates
+        socket.emit('subscribe', orgId);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('❌ WebSocket disconnected');
+        logEvent('Real-time updates disconnected', 'warning');
+    });
+
+    socket.on('indicator_update', (data) => {
+        console.log('📊 Indicator update received:', data);
+
+        // Update local data
+        if (data.orgId === currentOrgId) {
+            matrixData[data.indicatorId] = data.assessment;
+
+            // Update cell with trend
+            updateCell(data.indicatorId, data.assessment, data.trend);
+
+            logEvent(`Updated ${data.indicatorId}: ${Math.round(data.newScore * 100)}% ${data.trend === 'up' ? '↑' : data.trend === 'down' ? '↓' : ''}`);
+        }
+    });
+
+    socket.on('error', (error) => {
+        console.error('WebSocket error:', error);
+        logEvent(`WebSocket error: ${error}`, 'error');
+    });
 // Toggle sort direction
 function toggleSortDirection() {
     sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
