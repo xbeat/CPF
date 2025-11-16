@@ -573,7 +573,11 @@ function initializeMatrix() {
             const cell = document.createElement('div');
             cell.className = 'matrix-cell risk-missing';
             cell.id = `cell-${indicatorId.replace('.', '-')}`;
-            cell.innerHTML = `${indicatorId}<span class="trend-indicator"></span>`;
+            cell.innerHTML = `
+                <div class="cell-id" style="font-weight: 600; font-size: 11px;">${indicatorId}</div>
+                <div class="cell-value" style="font-size: 10px; margin-top: 2px; opacity: 0.9;"></div>
+                <span class="trend-indicator"></span>
+            `;
             cell.title = `Indicator ${indicatorId}`;
 
             matrixContainer.appendChild(cell);
@@ -656,10 +660,14 @@ function updateCell(indicatorId, assessment, trend) {
         }
     }
 
+    // Get value display element
+    const valueDiv = cell.querySelector('.cell-value');
+
     if (score === null) {
         // No SOC data available
         cell.classList.add('risk-missing');
         trendIndicator.textContent = '';
+        valueDiv.textContent = '';
         cell.title = `Indicator ${indicatorId} - No SOC data`;
         return;
     }
@@ -677,6 +685,9 @@ function updateCell(indicatorId, assessment, trend) {
     }
 
     cell.classList.add(riskClass);
+
+    // Update percentage value display
+    valueDiv.textContent = `${percentage}%`;
 
     // Update trend indicator
     if (calculatedTrend === 'up') {

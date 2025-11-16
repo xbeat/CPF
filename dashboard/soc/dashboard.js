@@ -795,18 +795,22 @@ function renderIndicatorGrid(indicators) {
             const tile = document.createElement('div');
 
             if (indicator) {
-                // Indicator exists - show with risk color
+                // Indicator exists - show with risk color and percentage
                 const risk = indicator.current_bayesian;
                 const riskClass = risk > 0.66 ? 'high' : risk > 0.33 ? 'medium' : 'low';
+                const percentage = (risk * 100).toFixed(0);
 
                 tile.className = `indicator-tile ${riskClass}`;
-                tile.textContent = id;
-                tile.title = `Indicator ${id}: ${(risk * 100).toFixed(0)}%`;
+                tile.innerHTML = `
+                    <div style="font-weight: 600; font-size: 11px;">${id}</div>
+                    <div style="font-size: 10px; margin-top: 2px; opacity: 0.9;">${percentage}%</div>
+                `;
+                tile.title = `Indicator ${id}: ${percentage}%`;
                 tile.onclick = () => showIndicatorDetail(id, indicator);
             } else {
                 // Indicator missing - show gray placeholder
                 tile.className = 'indicator-tile missing';
-                tile.textContent = id;
+                tile.innerHTML = `<div style="font-weight: 600; font-size: 11px;">${id}</div>`;
                 tile.title = `Indicator ${id}: No data`;
                 tile.style.cursor = 'default';
                 tile.style.opacity = '0.4';
@@ -1065,7 +1069,7 @@ function updateIndicatorCell(indicatorId, assessment, trend) {
     // Add new risk class
     targetTile.classList.add(riskClass);
 
-    // Update content with trend indicator
+    // Update content with percentage and trend indicator
     let trendSymbol = '';
     let trendText = '';
     if (trend === 'up') {
@@ -1076,7 +1080,10 @@ function updateIndicatorCell(indicatorId, assessment, trend) {
         trendText = ' (decreasing)';
     }
 
-    targetTile.innerHTML = `${indicatorId}${trendSymbol}`;
+    targetTile.innerHTML = `
+        <div style="font-weight: 600; font-size: 11px;">${indicatorId}${trendSymbol}</div>
+        <div style="font-size: 10px; margin-top: 2px; opacity: 0.9;">${percentage}%</div>
+    `;
     targetTile.title = `Indicator ${indicatorId}: ${percentage}%${trendText}`;
     targetTile.style.cursor = 'pointer';
     targetTile.style.opacity = '1';
