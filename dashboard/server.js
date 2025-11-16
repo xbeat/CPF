@@ -54,21 +54,14 @@ global.io = io;
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
-  console.log(`🔌 [WebSocket] Client connected: ${socket.id}`);
+  socket.on('disconnect', () => {});
 
-  socket.on('disconnect', () => {
-    console.log(`🔌 [WebSocket] Client disconnected: ${socket.id}`);
-  });
-
-  // Allow clients to subscribe to specific organizations
   socket.on('subscribe', (orgId) => {
     socket.join(`org:${orgId}`);
-    console.log(`🔌 [WebSocket] Client ${socket.id} subscribed to org:${orgId}`);
   });
 
   socket.on('unsubscribe', (orgId) => {
     socket.leave(`org:${orgId}`);
-    console.log(`🔌 [WebSocket] Client ${socket.id} unsubscribed from org:${orgId}`);
   });
 });
 
