@@ -30,6 +30,7 @@ function getSimulator() {
   if (!simulator) {
     const { getInstance } = require('./simulator/generators');
     simulator = getInstance();
+    console.log('🎭 [Simulator] Initialized on-demand');
   }
   return simulator;
 }
@@ -1004,9 +1005,11 @@ app.get('/api/get-export', (req, res) => {
       });
     }
 
+    console.log(`\n🔍 [API] Looking for assessment: org_id=${org_id}, indicator_id=${indicator_id}`);
 
     // Check if organization exists
     if (!dataManager.organizationExists(org_id)) {
+      console.log(`   ❌ Organization not found: ${org_id}\n`);
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -1020,6 +1023,7 @@ app.get('/api/get-export', (req, res) => {
 
     // Check if assessment exists for this indicator
     if (!orgData.assessments || !orgData.assessments[indicator_id]) {
+      console.log(`   ❌ Assessment not found for indicator: ${indicator_id}\n`);
       return res.status(404).json({
         success: false,
         error: 'Assessment not found',
@@ -1030,6 +1034,7 @@ app.get('/api/get-export', (req, res) => {
 
     const assessment = orgData.assessments[indicator_id];
 
+    console.log(`   ✅ Assessment loaded for ${indicator_id}\n`);
 
     // Format response to match expected structure from client
     const exportData = {
@@ -1062,6 +1067,7 @@ app.post('/api/batch-import', (req, res) => {
   try {
     const folderPath = req.body.folderPath || path.join(__dirname, '../field_kit_exports');
 
+    console.log(`\n🔧 [API] Batch import requested for: ${folderPath}`);
 
     if (!fs.existsSync(folderPath)) {
       return res.status(400).json({
@@ -1082,16 +1088,19 @@ app.post('/api/batch-import', (req, res) => {
       });
     }
 
+    console.log(`   Found ${files.length} export files`);
 
     const scriptPath = path.join(__dirname, 'scripts/batch_import.js');
     const command = `node "${scriptPath}" "${folderPath}"`;
 
+    console.log(`   Executing: ${command}`);
 
     const output = execSync(command, {
       encoding: 'utf8',
       cwd: __dirname
     });
 
+    console.log(`   ✅ Import completed successfully\n`);
 
     res.json({
       success: true,
@@ -1138,6 +1147,7 @@ app.post('/api/save-export', (req, res) => {
     const exportsPath = path.join(__dirname, '../field_kit_exports');
     if (!fs.existsSync(exportsPath)) {
       fs.mkdirSync(exportsPath, { recursive: true });
+      console.log(`✅ Created field_kit_exports directory`);
     }
 
     const timestamp = Date.now();
@@ -1146,6 +1156,9 @@ app.post('/api/save-export', (req, res) => {
 
     fs.writeFileSync(filePath, JSON.stringify(exportData, null, 2), 'utf8');
 
+    console.log(`\n📥 [API] Saved export: ${filename}`);
+    console.log(`   Organization: ${exportData.organization_name || exportData.organization_id}`);
+    console.log(`   Indicator: ${exportData.indicator_id}\n`);
 
     res.json({
       success: true,
@@ -1172,6 +1185,7 @@ app.post('/api/save-export', (req, res) => {
  */
 app.post('/api/generate-synthetic', (req, res) => {
   try {
+    console.log('\n🔧 [API] Generating synthetic Field Kit assessments...');
 
     const scriptPath = path.join(__dirname, 'scripts/generate_field_kit_assessments.js');
 
@@ -1180,6 +1194,7 @@ app.post('/api/generate-synthetic', (req, res) => {
       cwd: __dirname
     });
 
+    console.log('   ✅ Synthetic data generated\n');
 
     res.json({
       success: true,
@@ -1277,6 +1292,7 @@ app.get('/api/simulator/status', (req, res) => {
         duration: duration || 0
       });
 
+      console.log(`\n✅ [API] Simulator started for ${orgId}\n`);
 
       res.json({
         success: true,
@@ -1312,6 +1328,7 @@ app.get('/api/simulator/status', (req, res) => {
       const sim = getSimulator();
       const result = sim.stop(orgId);
 
+      console.log(`\n✅ [API] Simulator stopped for ${orgId}\n`);
 
       res.json(result);
 
@@ -1423,6 +1440,7 @@ app.get('/api/simulator/status', (req, res) => {
         intensity: intensity || 'high'
       });
 
+      console.log(`\n🎬 [API] Scenario "${scenario}" started for ${orgId}\n`);
 
       res.json({
         success: true,
@@ -1528,6 +1546,7 @@ app.post('/api/simulator/emit', async (req, res) => {
       }
     }
 
+    console.log(`\n⚡ [API] Emitted ${events.length} manual event(s) for ${orgId}\n`);
 
     res.json({
       success: true,
@@ -1555,6 +1574,62 @@ server.listen(PORT, () => {
   console.log('╚════════════════════════════════════════════════════════════╝\n');
   console.log(`📡 Server listening on: http://localhost:${PORT}`);
   console.log(`🔌 WebSocket server ready\n`);
+  console.log('📂 Available endpoints:\n');
+  console.log('   🌐 Dashboards:');
+  console.log(`      → http://localhost:${PORT}/dashboard/auditing/`);
+  console.log(`        (Auditing Progress + Risk Analysis Dashboard - with integrated client)`);
+  console.log(`      → http://localhost:${PORT}/dashboard/soc/`);
+  console.log(`        (SOC + Bayesian Analysis Dashboard)`);
+  console.log(`      → http://localhost:${PORT}/dashboard/simulator/`);
+  console.log(`        (SIEM/SOC Simulator Control Dashboard)\n`);
+  console.log('   📝 Legacy URLs (auto-redirect):');
+  console.log(`      → /dashboard/dashboard_auditing.html → /dashboard/auditing/`);
+  console.log(`      → /dashboard/dashboard.html → /dashboard/soc/\n`);
+  console.log('   🔌 API Endpoints (v2.0 - JSON Storage):');
+  console.log(`      Organizations:`);
+  console.log(`        GET    /api/organizations`);
+  console.log(`        GET    /api/organizations/:orgId`);
+  console.log(`        POST   /api/organizations`);
+  console.log(`        PUT    /api/organizations/:orgId`);
+  console.log(`        DELETE /api/organizations/:orgId`);
+  console.log(`      Assessments:`);
+  console.log(`        GET    /api/organizations/:orgId/assessments`);
+  console.log(`        GET    /api/organizations/:orgId/assessments/:indicatorId`);
+  console.log(`        POST   /api/organizations/:orgId/assessments`);
+  console.log(`        DELETE /api/organizations/:orgId/assessments/:indicatorId`);
+  console.log(`      Aggregates:`);
+  console.log(`        GET    /api/organizations/:orgId/aggregates`);
+  console.log(`        POST   /api/organizations/:orgId/recalculate`);
+  console.log(`        GET    /api/organizations/:orgId/missing`);
+  console.log(`      Trash & Restore:`);
+  console.log(`        GET    /api/trash`);
+  console.log(`        POST   /api/organizations/:orgId/restore`);
+  console.log(`        DELETE /api/organizations/:orgId/permanent`);
+  console.log(`        POST   /api/trash/cleanup`);
+  console.log(`      Audit Log:`);
+  console.log(`        GET    /api/audit-log`);
+  console.log(`      Versioning:`);
+  console.log(`        GET    /api/organizations/:orgId/assessments/:indicatorId/history`);
+  console.log(`        POST   /api/organizations/:orgId/assessments/:indicatorId/revert`);
+  console.log(`      Exports:`);
+  console.log(`        GET    /api/organizations/:orgId/export/xlsx`);
+  console.log(`        GET    /api/organizations/:orgId/export/pdf`);
+  console.log(`      Simulator:`);
+  console.log(`        GET    /api/simulator/status`);
+  console.log(`        POST   /api/simulator/start`);
+  console.log(`        POST   /api/simulator/stop`);
+  console.log(`        GET    /api/simulator/sources`);
+  console.log(`        GET    /api/simulator/scenarios`);
+  console.log(`        POST   /api/simulator/scenario`);
+  console.log(`        GET    /api/simulator/scenario/:orgId`);
+  console.log(`        POST   /api/simulator/emit`);
+  console.log(`      Legacy (Field Kit):`);
+  console.log(`        GET    /api/auditing-results`);
+  console.log(`        GET    /api/list-exports`);
+  console.log(`        GET    /api/get-export`);
+  console.log(`        POST   /api/batch-import`);
+  console.log(`        POST   /api/save-export`);
+  console.log(`        POST   /api/generate-synthetic\n`);
 });
 
 // Graceful shutdown
