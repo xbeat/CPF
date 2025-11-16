@@ -667,6 +667,56 @@ function deleteAssessment(orgId, indicatorId, user = 'System') {
   return orgData;
 }
 
+/**
+ * Save SOC indicator value to separate file
+ */
+function saveSocIndicator(orgId, assessmentData) {
+  const orgData = readOrganization(orgId);
+  const indicatorId = assessmentData.indicator_id;
+
+  // Normalize organization name for filename
+  const normalizedOrgName = orgData.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')  // Replace non-alphanumeric with dash
+    .replace(/^-|-$/g, '');        // Remove leading/trailing dashes
+
+  const socFilePath = path.join(ORGS_DIR, `${normalizedOrgName}-soc.json`);
+
+  // Read existing SOC file or create new one
+  let socData;
+  if (fs.existsSync(socFilePath)) {
+    socData = readJsonFile(socFilePath);
+  } else {
+    socData = {
+      org_id: orgId,
+      org_name: orgData.name,
+      indicators: {}
+    };
+  }
+
+  // Ensure org_id and org_name are always up to date
+  socData.org_id = orgId;
+  socData.org_name = orgData.name;
+
+  // Get previous value if exists
+  const previousValue = socData.indicators[indicatorId]
+    ? socData.indicators[indicatorId].value
+    : null;
+
+  // Save new indicator value
+  socData.indicators[indicatorId] = {
+    indicator_id: indicatorId,
+    value: assessmentData.bayesian_score,
+    previous_value: previousValue,
+    last_updated: new Date().toISOString()
+  };
+
+  // Write SOC file
+  writeJsonFile(socFilePath, socData);
+
+  return socData;
+}
+
 // ============================================================================
 // Aggregates Calculation
 // ============================================================================
@@ -1098,6 +1148,7 @@ module.exports = {
   saveAssessment,
   getAssessment,
   deleteAssessment,
+  saveSocIndicator,
 
   // Assessment versioning
   saveAssessmentVersion,
