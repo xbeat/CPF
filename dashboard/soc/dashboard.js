@@ -802,8 +802,8 @@ function renderIndicatorGrid(indicators) {
 
                 tile.className = `indicator-tile ${riskClass}`;
                 tile.innerHTML = `
-                    <div style="font-weight: 700; font-size: 13px; margin-bottom: 4px;">${id}</div>
-                    <div style="font-weight: 600; font-size: 16px;">${percentage}%</div>
+                    <div style="font-weight: 700; font-size: 13px; display: block;">${id}</div>
+                    <div style="font-weight: 600; font-size: 16px; display: block; margin-top: 4px;">${percentage}%</div>
                 `;
                 tile.title = `Indicator ${id}: ${percentage}%`;
                 tile.onclick = () => showIndicatorDetail(id, indicator);
@@ -1081,8 +1081,8 @@ function updateIndicatorCell(indicatorId, assessment, trend) {
     }
 
     targetTile.innerHTML = `
-        <div style="font-weight: 700; font-size: 13px; margin-bottom: 4px;">${indicatorId}${trendSymbol}</div>
-        <div style="font-weight: 600; font-size: 16px;">${percentage}%</div>
+        <div style="font-weight: 700; font-size: 13px; display: block;">${indicatorId}${trendSymbol}</div>
+        <div style="font-weight: 600; font-size: 16px; display: block; margin-top: 4px;">${percentage}%</div>
     `;
     targetTile.title = `Indicator ${indicatorId}: ${percentage}%${trendText}`;
     targetTile.style.cursor = 'pointer';
