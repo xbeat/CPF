@@ -36,37 +36,29 @@ Built on validated research from:
 ## 📂 Repository Structure
 
 ```
-CPF-ISO-Standards/
+CPF-Standards-Documentation/
 │
-├── Core-Standards/
-│   ├── CPF-27001-Requirements.tex          (20 pages)  ✅
-│   ├── CPF-Scoring-and-Maturity-Model.tex  (50 pages)  ✅
-│   ├── CPF-Certification-Scheme.tex        (15 pages)  🚧
-│   ├── CPF-Audit-Guidelines.tex            (30 pages)  📝
-│   ├── CPF-Annex-A-Mapping.tex             (15 pages)  📝
-│   └── CPF-Quick-Start-Guide.tex           (12 pages)  📝
+├── en-US/                                   (English Documentation)
+│   ├── CPF 27001 Requirements.tex          (20 pages)  ✅
+│   ├── CPF Scoring and Maturity Model v1.0.tex  (50 pages)  ✅
+│   ├── CPF-Certification-Scheme.tex        (15 pages)  ✅
+│   ├── CPF Audit Guidelines v1.0.tex       (30 pages)  ✅
+│   ├── CPF Annex A - Control Mapping Guide.tex  (15 pages)  ✅
+│   ├── CPF Quick Start Guide - Get Started in 90 Days.tex  (12 pages)  ✅
+│   ├── Training/                           (4 training blueprints)
+│   ├── Licensing Agreement/                (5 licensing documents)
+│   └── README.md
 │
-├── Assessment-Tools/
-│   ├── Field-Kits/                         (100 rapid assessment kits)
-│   ├── Operational-Guides/                 (100 detailed guides)
-│   ├── Foundation-Papers/                  (100 theory papers)
-│   └── Domain-Deep-Dives/                  (10 comprehensive analyses)
-│
-├── Templates/
-│   ├── Assessment-Worksheets/
-│   ├── Intervention-Playbooks/
-│   ├── Audit-Checklists/
-│   └── ROI-Calculators/
-│
-├── Case-Studies/
-│   ├── Financial-Services/
-│   ├── Healthcare/
-│   └── Technology/
-│
-├── Research/
-│   ├── The-Cybersecurity-Psychology-Framework.pdf  (Foundation paper)
-│   ├── Validation-Studies/
-│   └── Pilot-Reports/
+├── it-IT/                                   (Italian Documentation)
+│   ├── CPF 27001 Requisiti.tex             (20 pages)  ✅
+│   ├── CPF Modello di Score e Maturità v1.0.tex  (50 pages)  ✅
+│   ├── CPF-Schema-di-Certificazione.tex    (15 pages)  ✅
+│   ├── CPF Linee Guida di Audit v1.0.tex   (30 pages)  ✅
+│   ├── CPF Annex A - Guida alla Mappatura dei Controlli.tex  (15 pages)  ✅
+│   ├── CPF Guida di Avvio Rapido - Inizia in 90 Giorni.tex  (12 pages)  ✅
+│   ├── Training/                           (4 progetti di formazione)
+│   ├── Licensing Agreement/                (5 documenti di licenza)
+│   └── README.md
 │
 └── README.md                                (This file)
 ```
@@ -76,6 +68,19 @@ CPF-ISO-Standards/
 - ✅ Complete
 - 🚧 In progress
 - 📝 Planned
+
+## 🌐 Available Languages
+
+The CPF Standards Documentation is available in the following languages:
+
+- **English (en-US)** - Original documentation
+- **Italian (it-IT)** - Complete translation of all standards and materials
+
+Each language directory contains:
+- 6 core standard documents
+- 4 training blueprints
+- 5 licensing agreements
+- Language-specific README
 
 ------
 
