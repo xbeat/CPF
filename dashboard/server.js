@@ -1599,40 +1599,29 @@ server.listen(PORT, () => {
   console.log(`        DELETE /api/organizations/:orgId/assessments/:indicatorId`);
   console.log(`      Aggregates:`);
   console.log(`        GET    /api/organizations/:orgId/aggregates`);
-  console.log(`        POST   /api/organizations/:orgId/recalculate`);
   console.log(`        GET    /api/organizations/:orgId/missing`);
-  console.log(`      Trash & Restore:`);
-  console.log(`        GET    /api/trash`);
-  console.log(`        POST   /api/organizations/:orgId/restore`);
-  console.log(`        DELETE /api/organizations/:orgId/permanent`);
-  console.log(`        POST   /api/trash/cleanup`);
-  console.log(`      Audit Log:`);
-  console.log(`        GET    /api/audit-log`);
-  console.log(`      Versioning:`);
-  console.log(`        GET    /api/organizations/:orgId/assessments/:indicatorId/history`);
-  console.log(`        POST   /api/organizations/:orgId/assessments/:indicatorId/revert`);
-  console.log(`      Exports:`);
-  console.log(`        GET    /api/organizations/:orgId/export/xlsx`);
-  console.log(`        GET    /api/organizations/:orgId/export/pdf`);
-  console.log(`      Simulator:`);
+  console.log(`        POST   /api/organizations/:orgId/recalculate`);
+  console.log(`      Legacy (backward compatibility):`);
+  console.log(`        GET    /api/auditing-results`);
+  console.log(`        GET    /api/list-exports`);
+  console.log(`        POST   /api/save-export`);
+  console.log(`        POST   /api/batch-import`);
+  console.log(`        POST   /api/generate-synthetic`);
+  console.log(`\n   🎭 Simulator (Lazy-loaded on first use):`);
   console.log(`        GET    /api/simulator/status`);
   console.log(`        POST   /api/simulator/start`);
   console.log(`        POST   /api/simulator/stop`);
+  console.log(`        POST   /api/simulator/emit`);
   console.log(`        GET    /api/simulator/sources`);
   console.log(`        GET    /api/simulator/scenarios`);
   console.log(`        POST   /api/simulator/scenario`);
   console.log(`        GET    /api/simulator/scenario/:orgId`);
-  console.log(`        POST   /api/simulator/emit`);
-  console.log(`      Legacy (Field Kit):`);
-  console.log(`        GET    /api/auditing-results`);
-  console.log(`        GET    /api/list-exports`);
-  console.log(`        GET    /api/get-export`);
-  console.log(`        POST   /api/batch-import`);
-  console.log(`        POST   /api/save-export`);
-  console.log(`        POST   /api/generate-synthetic\n`);
+
+  console.log('\n⚙️  Press CTRL+C to stop the server\n');
 });
 
 // Graceful shutdown
 process.on('SIGINT', () => {
+  console.log('\n\n👋 Server shutting down gracefully...\n');
   process.exit(0);
 });
