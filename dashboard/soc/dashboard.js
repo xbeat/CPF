@@ -818,15 +818,15 @@ function renderIndicatorGrid(indicators) {
 
                 tile.className = `indicator-tile ${riskClass}`;
                 tile.innerHTML = `
-                    <div style="font-weight: 600; font-size: 11px;">${id}</div>
-                    <div style="font-size: 10px; margin-top: 2px; opacity: 0.9;">${percentage}%</div>
+                    <div style="font-weight: 700; font-size: 13px; margin-bottom: 4px;">${id}</div>
+                    <div style="font-weight: 600; font-size: 16px;">${percentage}%</div>
                 `;
                 tile.title = `Indicator ${id}: ${percentage}%`;
                 tile.onclick = () => showIndicatorDetail(id, indicator);
             } else {
                 // Indicator missing - show gray placeholder
                 tile.className = 'indicator-tile missing';
-                tile.innerHTML = `<div style="font-weight: 600; font-size: 11px;">${id}</div>`;
+                tile.innerHTML = `<div style="font-weight: 600; font-size: 13px;">${id}</div>`;
                 tile.title = `Indicator ${id}: No data`;
                 tile.style.cursor = 'default';
                 tile.style.opacity = '0.4';
@@ -1097,8 +1097,8 @@ function updateIndicatorCell(indicatorId, assessment, trend) {
     }
 
     targetTile.innerHTML = `
-        <div style="font-weight: 600; font-size: 11px;">${indicatorId}${trendSymbol}</div>
-        <div style="font-size: 10px; margin-top: 2px; opacity: 0.9;">${percentage}%</div>
+        <div style="font-weight: 700; font-size: 13px; margin-bottom: 4px;">${indicatorId}${trendSymbol}</div>
+        <div style="font-weight: 600; font-size: 16px;">${percentage}%</div>
     `;
     targetTile.title = `Indicator ${indicatorId}: ${percentage}%${trendText}`;
     targetTile.style.cursor = 'pointer';
