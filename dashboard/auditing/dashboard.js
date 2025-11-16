@@ -1201,7 +1201,7 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <button class="btn btn-info" onclick="window.CPFClient.showQuickReference()">📚 Quick Reference</button>
                         <button class="btn btn-info" onclick="window.CPFClient.toggleDetailedAnalysis()">📊 Show/Hide Analysis</button>
-                        <button class="btn btn-light" onclick="document.getElementById('file-input-integrated').click()">📂 Import JSON</button>
+                        <button class="btn btn-light" onclick="document.getElementById('file-input-integrated').click()">📂 Import Data</button>
                         <input type="file" id="file-input-integrated" accept=".json" onchange="window.CPFClient.importJSON(event)" style="display: none;">
                         <button class="btn btn-danger" onclick="if(confirm('Reset all data?')) window.CPFClient.resetAll()" title="Clear all data and reset">🗑️ Reset</button>
                         <button class="btn btn-primary" onclick="viewAssessmentDetailsFromEdit('${indicatorId}')">📋 View Details</button>
@@ -1209,10 +1209,9 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <span id="auto-save-status" style="color: #4CAF50; font-size: 14px; display: none;">✓ Auto-saved</span>
-                        <button class="btn btn-secondary" onclick="window.CPFClient.saveData()">💾 Save Local</button>
+                        <button class="btn btn-secondary" onclick="window.CPFClient.saveData()">💾 Save</button>
                         <button class="btn btn-success" onclick="window.CPFClient.exportData()">💾 Export Data</button>
                         <button class="btn btn-primary" onclick="window.CPFClient.generateReport()">📊 Report</button>
-                        <button class="btn btn-success" onclick="window.CPFClient.saveToAPI()" id="save-to-dashboard-btn">💾 Save Assessment</button>
                         <button class="btn btn-secondary" onclick="closeIndicatorModal()">Close</button>
                     </div>
                 </div>
@@ -2418,7 +2417,7 @@ function getMaturityLevel(score) {
     return 1;
 }
 
-// Reset Assessment - Clears all form values and saves empty assessment
+// Reset Assessment - Clears all form values and deletes assessment (makes indicator gray)
 async function resetCompileForm() {
     if (!currentIndicatorId) {
         showAlert('No indicator loaded to reset', 'warning');
@@ -2430,15 +2429,14 @@ async function resetCompileForm() {
         return;
     }
 
-    // Confirm before resetting
-    if (!confirm('⚠️ This will clear all values in this assessment and save it as empty.\n\nAre you sure you want to continue?')) {
-        return;
-    }
-
     // Clear all form field values
-    document.getElementById('compile-assessor').value = '';
-    document.getElementById('compile-date').value = '';
-    document.getElementById('compile-confidence').value = '0.7';
+    const assessorField = document.getElementById('compile-assessor');
+    const dateField = document.getElementById('compile-date');
+    const confidenceField = document.getElementById('compile-confidence');
+
+    if (assessorField) assessorField.value = '';
+    if (dateField) dateField.value = '';
+    if (confidenceField) confidenceField.value = '0.7';
 
     // Clear form content (all questions/answers)
     const formContent = document.getElementById('compileFormContent');
@@ -2454,47 +2452,53 @@ async function resetCompileForm() {
         });
     }
 
-    // Hide score display
-    document.getElementById('scoreDisplay').style.display = 'none';
+    // Also reset CPFClient data if available
+    if (window.CPFClient && window.CPFClient.currentData) {
+        window.CPFClient.currentData.responses = {};
+        window.CPFClient.currentData.metadata = {
+            date: new Date().toISOString().split('T')[0],
+            auditor: '',
+            client: '',
+            status: 'in-progress',
+            notes: ''
+        };
+    }
 
-    // Create empty assessment data
-    const emptyAssessment = {
-        indicator_id: currentIndicatorId,
-        title: currentIndicatorData?.title || '',
-        category: currentIndicatorData?.category || '',
-        bayesian_score: 0,
-        confidence: 0.7,
-        maturity_level: 'green',
-        assessor: '',
-        assessment_date: new Date().toISOString(),
-        raw_data: {
-            quick_assessment: {},
-            client_conversation: {
-                responses: {},
-                notes: ''
-            }
-        }
-    };
+    // Hide score display
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    if (scoreDisplay) scoreDisplay.style.display = 'none';
+
+    // Remove score bar if exists
+    const scoreBar = document.getElementById('score-bar');
+    if (scoreBar) scoreBar.style.display = 'none';
 
     try {
-        // Save empty assessment to organization
-        const response = await fetch(`/api/organizations/${selectedOrganization}/assessments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(emptyAssessment)
+        // DELETE the assessment to make indicator gray in matrix
+        const response = await fetch(`/api/organizations/${selectedOrganization}/assessments/${currentIndicatorId}`, {
+            method: 'DELETE'
         });
 
         const result = await response.json();
 
         if (result.success) {
-            showAlert('✅ Assessment cleared and saved', 'success');
+            showAlert('✅ Assessment reset - indicator is now unassessed', 'success');
+
+            // Refresh the matrix to show gray indicator
+            if (selectedOrgData) {
+                await renderOrganizationDetails(selectedOrganization);
+            }
             // Form remains open with empty fields
         } else {
-            showAlert('Failed to save empty assessment: ' + result.error, 'error');
+            // If assessment doesn't exist, that's OK - it's already "reset"
+            if (result.error && result.error.includes('not found')) {
+                showAlert('✅ Assessment reset', 'success');
+            } else {
+                showAlert('Failed to reset assessment: ' + result.error, 'error');
+            }
         }
     } catch (error) {
-        console.error('Error saving empty assessment:', error);
-        showAlert('Failed to save empty assessment: ' + error.message, 'error');
+        console.error('Error resetting assessment:', error);
+        showAlert('Failed to reset assessment: ' + error.message, 'error');
     }
 }
 
