@@ -1026,7 +1026,12 @@ function calculateIndicatorScore() {
         maturity_level: 'green',
         details: {
             quick_assessment_breakdown: [],
-            conversation_breakdown: [],
+            conversation_breakdown: {
+                total_questions: 0,
+                answered_questions: 0,
+                completion_rate: 0,
+                is_informational: true
+            },
             red_flags_list: []
         }
     };

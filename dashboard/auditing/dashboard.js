@@ -1203,7 +1203,7 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                         <button class="btn btn-info" onclick="window.CPFClient.toggleDetailedAnalysis()">📊 Show/Hide Analysis</button>
                         <button class="btn btn-light" onclick="document.getElementById('file-input-integrated').click()">📂 Import Data</button>
                         <input type="file" id="file-input-integrated" accept=".json" onchange="window.CPFClient.importJSON(event)" style="display: none;">
-                        <button class="btn btn-danger" onclick="if(confirm('Reset all data?')) window.CPFClient.resetAll()" title="Clear all data and reset">🗑️ Reset</button>
+                        <button class="btn btn-danger" onclick="resetCompileForm()" title="Reset assessment">🗑️ Reset</button>
                         <button class="btn btn-primary" onclick="viewAssessmentDetailsFromEdit('${indicatorId}')">📋 View Details</button>
                         <button class="btn btn-warning" onclick="openHistoryModal()">📜 History</button>
                     </div>
