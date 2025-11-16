@@ -316,13 +316,55 @@ function filterAuditingAssessments(org) {
 
     // Ricalcola aggregati solo per assessments filtrati
     const assessmentCount = Object.keys(filtered.assessments).length;
+
+    // Ricalcola aggregati per categoria
+    const byCategory = {};
+    for (const [indicatorId, assessment] of Object.entries(filtered.assessments)) {
+        const categoryNum = indicatorId.split('.')[0];
+
+        if (!byCategory[categoryNum]) {
+            byCategory[categoryNum] = {
+                total_assessments: 0,
+                total_score: 0,
+                total_confidence: 0,
+                completion_percentage: 0
+            };
+        }
+
+        byCategory[categoryNum].total_assessments++;
+        byCategory[categoryNum].total_score += assessment.bayesian_score || 0;
+        byCategory[categoryNum].total_confidence += assessment.confidence || 0;
+    }
+
+    // Calcola medie per ogni categoria
+    for (const [catNum, catData] of Object.entries(byCategory)) {
+        catData.avg_score = catData.total_score / catData.total_assessments;
+        catData.avg_confidence = catData.total_confidence / catData.total_assessments;
+        catData.completion_percentage = (catData.total_assessments / 10) * 100;
+    }
+
+    // Calcola overall risk
+    let totalRisk = 0;
+    let totalConfidence = 0;
+    let categoryCount = Object.keys(byCategory).length;
+
+    for (const catData of Object.values(byCategory)) {
+        totalRisk += catData.avg_score;
+        totalConfidence += catData.avg_confidence;
+    }
+
+    const overallRisk = categoryCount > 0 ? totalRisk / categoryCount : 0;
+    const overallConfidence = categoryCount > 0 ? totalConfidence / categoryCount : 0;
+
     filtered.aggregates = {
-        ...org.aggregates,
         completion: {
             total_indicators: 100,
             assessed_indicators: assessmentCount,
             percentage: (assessmentCount / 100) * 100
-        }
+        },
+        by_category: byCategory,
+        overall_risk: overallRisk,
+        overall_confidence: overallConfidence
     };
 
     return filtered;
@@ -435,10 +477,9 @@ function renderProgressMatrix(org) {
             const indicatorId = `${cat}.${ind}`;
             const assessment = assessments[indicatorId];
 
-            // IMPORTANTE: Considera completato SOLO se ha human_values (auditor manuale)
-            // Ignora assessments che hanno solo soc_values (dal simulatore)
-            const hasHumanValues = assessment?.raw_data?.human_values?.length > 0;
-            const completed = !!assessment && hasHumanValues;
+            // Gli assessments sono già filtrati da filterAuditingAssessments
+            // quindi qui consideriamo solo se l'assessment esiste
+            const completed = !!assessment;
 
             let cellClass = '';
             let riskLevel = 'Not assessed';
