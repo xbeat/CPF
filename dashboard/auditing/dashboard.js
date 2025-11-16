@@ -1154,7 +1154,7 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                         <button class="btn btn-success" onclick="window.CPFClient.exportData()">💾 Export Data</button>
                         <button class="btn btn-primary" onclick="window.CPFClient.generateReport()">📊 Report</button>
                         <button class="btn btn-success" onclick="window.CPFClient.saveToAPI()" id="save-to-dashboard-btn">💾 Save Assessment</button>
-                        <button class="btn btn-secondary" onclick="closeIndicatorModal()">✖️ Close</button>
+                        <button class="btn btn-secondary" onclick="closeIndicatorModal()">Close</button>
                     </div>
                 </div>
                 <div class="metadata-bar" id="metadata-bar" style="display: none;"></div>
