@@ -298,14 +298,45 @@ function selectOrganization(orgId) {
     document.getElementById('assessmentSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+/**
+ * Filtra assessments per mostrare SOLO quelli con human_values (auditor manuale)
+ * Ignora assessments con solo soc_values (dal simulatore)
+ */
+function filterAuditingAssessments(org) {
+    const filtered = { ...org };
+    filtered.assessments = {};
+
+    // Filtra assessments - prendi solo quelli con human_values
+    for (const [indicatorId, assessment] of Object.entries(org.assessments || {})) {
+        const hasHumanValues = assessment?.raw_data?.human_values?.length > 0;
+        if (hasHumanValues) {
+            filtered.assessments[indicatorId] = assessment;
+        }
+    }
+
+    // Ricalcola aggregati solo per assessments filtrati
+    const assessmentCount = Object.keys(filtered.assessments).length;
+    filtered.aggregates = {
+        ...org.aggregates,
+        completion: {
+            total_indicators: 100,
+            assessed_indicators: assessmentCount,
+            percentage: (assessmentCount / 100) * 100
+        }
+    };
+
+    return filtered;
+}
+
 function renderAssessmentDetails() {
     if (!selectedOrgData) return;
 
-    const org = selectedOrgData;
+    // IMPORTANTE: Filtra SOLO assessments con human_values (auditor)
+    const org = filterAuditingAssessments(selectedOrgData);
 
     // Update titles
-    document.getElementById('progressTitle').textContent = `${org.name} - Assessment Progress Matrix`;
-    document.getElementById('riskTitle').textContent = `${org.name} - Risk Analysis by Category`;
+    document.getElementById('progressTitle').textContent = `${selectedOrgData.name} - Assessment Progress Matrix`;
+    document.getElementById('riskTitle').textContent = `${selectedOrgData.name} - Risk Analysis by Category`;
 
     // Render summaries
     renderProgressSummary(org);
@@ -403,7 +434,11 @@ function renderProgressMatrix(org) {
         for (let ind = 1; ind <= 10; ind++) {
             const indicatorId = `${cat}.${ind}`;
             const assessment = assessments[indicatorId];
-            const completed = !!assessment;
+
+            // IMPORTANTE: Considera completato SOLO se ha human_values (auditor manuale)
+            // Ignora assessments che hanno solo soc_values (dal simulatore)
+            const hasHumanValues = assessment?.raw_data?.human_values?.length > 0;
+            const completed = !!assessment && hasHumanValues;
 
             let cellClass = '';
             let riskLevel = 'Not assessed';
