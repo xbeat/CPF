@@ -290,9 +290,11 @@ function selectOrganization(orgId) {
     loadOrganizationDetails(orgId);
     document.getElementById('assessmentSection').classList.remove('hidden');
 
-    // Show export buttons
-    document.getElementById('exportXLSXBtn').style.display = 'inline-block';
-    document.getElementById('exportPDFBtn').style.display = 'inline-block';
+    // Show export buttons (if they exist)
+    const xlsxBtn = document.getElementById('exportXLSXBtn');
+    const pdfBtn = document.getElementById('exportPDFBtn');
+    if (xlsxBtn) xlsxBtn.style.display = 'inline-block';
+    if (pdfBtn) pdfBtn.style.display = 'inline-block';
 
     // Scroll to assessment section
     document.getElementById('assessmentSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2509,18 +2511,20 @@ async function loadTrashCount() {
             const count = data.count;
             const badge = document.getElementById('trashCount');
 
-            if (count > 0) {
-                badge.textContent = count;
-                badge.style.display = 'inline-block';
-                badge.style.marginLeft = '5px';
-                badge.style.background = 'var(--danger)';
-                badge.style.color = 'white';
-                badge.style.padding = '2px 8px';
-                badge.style.borderRadius = '12px';
-                badge.style.fontSize = '11px';
-                badge.style.fontWeight = '600';
-            } else {
-                badge.style.display = 'none';
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                    badge.style.marginLeft = '5px';
+                    badge.style.background = 'var(--danger)';
+                    badge.style.color = 'white';
+                    badge.style.padding = '2px 8px';
+                    badge.style.borderRadius = '12px';
+                    badge.style.fontSize = '11px';
+                    badge.style.fontWeight = '600';
+                } else {
+                    badge.style.display = 'none';
+                }
             }
         }
     } catch (error) {
