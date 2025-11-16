@@ -194,16 +194,17 @@ async function loadSocData(orgId) {
             socData = result.data;
             console.log(`✅ SOC data loaded for ${orgId}:`, socData);
             // Re-render matrix with SOC data
-            if (organizationsData) {
-                populateMatrixWithAssessments(organizationsData.assessments || {});
-            }
+            updateAllCells();
         } else {
-            console.log(`ℹ️  No SOC data found for ${orgId}`);
+            console.log(`ℹ️  No SOC data found for ${orgId}:`, result.message);
             socData = null;
+            // Clear matrix since no SOC data available
+            updateAllCells();
         }
     } catch (error) {
         console.error('Error loading SOC data:', error);
         socData = null;
+        updateAllCells();
     }
 }
 
@@ -726,8 +727,8 @@ function setupWebSocket(orgId) {
 
     socket.on('indicator_update', (data) => {
         if (data.orgId === currentOrgId) {
-            matrixData[data.indicatorId] = data.assessment;
-            updateCell(data.indicatorId, data.assessment, data.trend);
+            // Reload SOC data to get latest values
+            loadSocData(currentOrgId);
             logEvent(`${data.indicatorId}: ${Math.round(data.newScore * 100)}% ${data.trend === 'up' ? '↑' : data.trend === 'down' ? '↓' : ''}`);
         }
     });
