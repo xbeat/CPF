@@ -732,8 +732,6 @@ function saveSocIndicator(orgId, assessmentData) {
       source: 'soc',
       timestamp: new Date().toISOString()
     });
-
-    console.log(`[WebSocket] Emitted SOC indicator_update for ${indicatorId} to org:${orgId} (${(assessmentData.bayesian_score * 100).toFixed(0)}% ${trend || ''})`);
   }
 
   return socData;
