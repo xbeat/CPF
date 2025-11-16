@@ -2417,36 +2417,20 @@ function getMaturityLevel(score) {
     return 1;
 }
 
-// Reset Assessment - Clears all form values and deletes assessment (makes indicator gray)
+// Reset Assessment - Clears form and saves empty values
 async function resetCompileForm() {
-    if (!currentIndicatorId) {
-        showAlert('No indicator loaded to reset', 'warning');
+    if (!currentIndicatorId || !selectedOrganization) {
         return;
     }
 
-    if (!selectedOrganization) {
-        showAlert('No organization selected', 'warning');
+    // Single confirm dialog
+    if (!confirm('Reset this assessment?')) {
         return;
     }
 
-    // Confirm before resetting
-    if (!confirm('⚠️ This will clear all values in this assessment and reset it.\n\nAre you sure you want to continue?')) {
-        return;
-    }
-
-    // Clear all form field values
-    const assessorField = document.getElementById('compile-assessor');
-    const dateField = document.getElementById('compile-date');
-    const confidenceField = document.getElementById('compile-confidence');
-
-    if (assessorField) assessorField.value = '';
-    if (dateField) dateField.value = '';
-    if (confidenceField) confidenceField.value = '0.7';
-
-    // Clear form content (all questions/answers)
+    // Clear all form inputs
     const formContent = document.getElementById('compileFormContent');
     if (formContent) {
-        // Reset all inputs in the form
         const inputs = formContent.querySelectorAll('input, select, textarea');
         inputs.forEach(input => {
             if (input.type === 'checkbox' || input.type === 'radio') {
@@ -2457,7 +2441,15 @@ async function resetCompileForm() {
         });
     }
 
-    // Also reset CPFClient data if available
+    // Reset metadata fields
+    const assessorField = document.getElementById('compile-assessor');
+    const dateField = document.getElementById('compile-date');
+    const confidenceField = document.getElementById('compile-confidence');
+    if (assessorField) assessorField.value = '';
+    if (dateField) dateField.value = '';
+    if (confidenceField) confidenceField.value = '0.7';
+
+    // Reset CPFClient data
     if (window.CPFClient && window.CPFClient.currentData) {
         window.CPFClient.currentData.responses = {};
         window.CPFClient.currentData.metadata = {
@@ -2467,43 +2459,47 @@ async function resetCompileForm() {
             status: 'in-progress',
             notes: ''
         };
+        window.CPFClient.currentData.score = null;
     }
 
-    // Hide score display
+    // Hide score displays
     const scoreDisplay = document.getElementById('scoreDisplay');
     if (scoreDisplay) scoreDisplay.style.display = 'none';
-
-    // Remove score bar if exists
     const scoreBar = document.getElementById('score-bar');
     if (scoreBar) scoreBar.style.display = 'none';
 
-    try {
-        // DELETE the assessment to make indicator gray in matrix
-        const response = await fetch(`/api/organizations/${selectedOrganization}/assessments/${currentIndicatorId}`, {
-            method: 'DELETE'
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showAlert('✅ Assessment reset - indicator is now unassessed', 'success');
-
-            // Refresh the matrix to show gray indicator
-            if (selectedOrgData) {
-                await renderOrganizationDetails(selectedOrganization);
-            }
-            // Form remains open with empty fields
-        } else {
-            // If assessment doesn't exist, that's OK - it's already "reset"
-            if (result.error && result.error.includes('not found')) {
-                showAlert('✅ Assessment reset', 'success');
-            } else {
-                showAlert('Failed to reset assessment: ' + result.error, 'error');
+    // Save empty assessment
+    const emptyAssessment = {
+        indicator_id: currentIndicatorId,
+        title: currentIndicatorData?.title || '',
+        category: currentIndicatorData?.category || '',
+        bayesian_score: 0,
+        confidence: 0.7,
+        maturity_level: 'green',
+        assessor: '',
+        assessment_date: new Date().toISOString(),
+        raw_data: {
+            quick_assessment: {},
+            client_conversation: {
+                responses: {},
+                notes: ''
             }
         }
+    };
+
+    try {
+        await fetch(`/api/organizations/${selectedOrganization}/assessments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(emptyAssessment)
+        });
+
+        // Refresh matrix
+        if (selectedOrgData) {
+            await renderOrganizationDetails(selectedOrganization);
+        }
     } catch (error) {
-        console.error('Error resetting assessment:', error);
-        showAlert('Failed to reset assessment: ' + error.message, 'error');
+        console.error('Error saving reset:', error);
     }
 }
 
