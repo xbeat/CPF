@@ -23,14 +23,14 @@ const { Server } = require('socket.io');
 // Import data manager
 const dataManager = require('./lib/dataManager');
 
-// Simulator (lazy-loaded on first use)
+// SOC (lazy-loaded on first use)
 let simulator = null;
 
 function getSimulator() {
   if (!simulator) {
     const { getInstance } = require('./simulator/generators');
     simulator = getInstance();
-    console.log('🎭 [Simulator] Initialized on-demand');
+    console.log('🎭 [SOC] Initialized on-demand');
   }
   return simulator;
 }
@@ -1239,7 +1239,7 @@ app.get('/api/simulator/status', (req, res) => {
         availableSources
       });
     } catch (error) {
-      console.error('[Simulator] Error getting status:', error.message);
+      console.error('[SOC] Error getting status:', error.message);
       res.status(500).json({
         success: false,
         error: error.message
@@ -1249,7 +1249,7 @@ app.get('/api/simulator/status', (req, res) => {
 
   /**
    * POST /api/simulator/start
-   * Start simulator for organization
+   * Start SOC for organization
    * Body: { orgId, sources?, scenario?, rate? }
    */
   app.post('/api/simulator/start', async (req, res) => {
@@ -1272,14 +1272,14 @@ app.get('/api/simulator/status', (req, res) => {
         });
       }
 
-      // Setup callback per salvare assessments generati
+      // Setup callback per salvare assessments generati nel file SOC
       const sim = getSimulator();
       sim.setAssessmentsCallback(async (orgId, assessments) => {
         for (const assessment of assessments) {
           try {
-            await dataManager.saveAssessment(orgId, assessment, 'SIEM-Simulator');
+            await dataManager.saveSocIndicator(orgId, assessment);
           } catch (error) {
-            console.error(`Failed to save assessment for ${orgId}:`, error.message);
+            console.error(`Failed to save SOC indicator for ${orgId}:`, error.message);
           }
         }
       });
@@ -1292,16 +1292,16 @@ app.get('/api/simulator/status', (req, res) => {
         duration: duration || 0
       });
 
-      console.log(`\n✅ [API] Simulator started for ${orgId}\n`);
+      console.log(`\n✅ [API] SOC started for ${orgId}\n`);
 
       res.json({
         success: true,
-        message: 'Simulator started',
+        message: 'SOC started',
         ...result
       });
 
     } catch (error) {
-      console.error('[Simulator] Error starting:', error.message);
+      console.error('[SOC] Error starting:', error.message);
       res.status(500).json({
         success: false,
         error: error.message
@@ -1311,7 +1311,7 @@ app.get('/api/simulator/status', (req, res) => {
 
   /**
    * POST /api/simulator/stop
-   * Stop simulator for organization
+   * Stop SOC for organization
    * Body: { orgId }
    */
   app.post('/api/simulator/stop', (req, res) => {
@@ -1328,12 +1328,12 @@ app.get('/api/simulator/status', (req, res) => {
       const sim = getSimulator();
       const result = sim.stop(orgId);
 
-      console.log(`\n✅ [API] Simulator stopped for ${orgId}\n`);
+      console.log(`\n✅ [API] SOC stopped for ${orgId}\n`);
 
       res.json(result);
 
     } catch (error) {
-      console.error('[Simulator] Error stopping:', error.message);
+      console.error('[SOC] Error stopping:', error.message);
       res.status(500).json({
         success: false,
         error: error.message
@@ -1365,7 +1365,7 @@ app.get('/api/simulator/status', (req, res) => {
       });
 
     } catch (error) {
-      console.error('[Simulator] Error reading sources:', error.message);
+      console.error('[SOC] Error reading sources:', error.message);
       res.status(500).json({
         success: false,
         error: error.message
