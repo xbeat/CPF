@@ -594,13 +594,13 @@ async function loadOrganizationData(orgId) {
         const result = await response.json();
         const orgData = result.data;
 
-        // Store matrix data
-        matrixData = orgData.assessments || {};
+        // NON caricare assessments - la simulator dashboard usa SOLO dati SOC
+        matrixData = {}; // Empty - non usiamo i dati di auditing
 
-        // Update all cells
+        // Update all cells (verranno popolate dai dati SOC quando disponibili)
         updateAllCells();
 
-        logEvent(`Loaded data for ${orgData.name} (${Object.keys(matrixData).length} indicators)`);
+        logEvent(`Organization ${orgData.name} selected - waiting for SOC data`);
 
     } catch (error) {
         console.error('Error loading organization data:', error);
@@ -635,15 +635,13 @@ function updateCell(indicatorId, assessment, trend) {
     // Get trend indicator element
     const trendIndicator = cell.querySelector('.trend-indicator');
 
-    // PRIORITY: Check SOC data first, then fallback to assessment
+    // SIMULATOR DASHBOARD: Usa SOLO dati SOC (no fallback a assessment)
     const socIndicator = socData?.indicators?.[indicatorId];
     let score = null;
-    let dataSource = 'none';
     let calculatedTrend = trend;
 
     if (socIndicator && socIndicator.value !== undefined) {
         score = socIndicator.value;
-        dataSource = 'soc';
 
         // Calculate trend from SOC previous_value if not provided
         if (!calculatedTrend && socIndicator.previous_value !== null && socIndicator.previous_value !== undefined) {
@@ -656,16 +654,13 @@ function updateCell(indicatorId, assessment, trend) {
                 calculatedTrend = 'stable';
             }
         }
-    } else if (assessment && assessment.bayesian_score !== undefined) {
-        score = assessment.bayesian_score;
-        dataSource = 'assessment';
     }
 
     if (score === null) {
-        // No data
+        // No SOC data available
         cell.classList.add('risk-missing');
         trendIndicator.textContent = '';
-        cell.title = `Indicator ${indicatorId} - No data`;
+        cell.title = `Indicator ${indicatorId} - No SOC data`;
         return;
     }
 
@@ -694,8 +689,7 @@ function updateCell(indicatorId, assessment, trend) {
         trendIndicator.textContent = '';
     }
 
-    const sourceLabel = dataSource === 'soc' ? ' [SOC]' : dataSource === 'assessment' ? ' [Manual]' : '';
-    cell.title = `Indicator ${indicatorId} - Risk: ${percentage}%${sourceLabel} ${calculatedTrend ? (calculatedTrend === 'up' ? '(increasing)' : calculatedTrend === 'down' ? '(decreasing)' : '(stable)') : ''}`;
+    cell.title = `Indicator ${indicatorId} - Risk: ${percentage}% [SOC] ${calculatedTrend ? (calculatedTrend === 'up' ? '(increasing)' : calculatedTrend === 'down' ? '(decreasing)' : '(stable)') : ''}`;
 }
 
 /**
