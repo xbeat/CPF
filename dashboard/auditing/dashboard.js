@@ -299,17 +299,17 @@ function selectOrganization(orgId) {
 }
 
 /**
- * Filtra assessments per mostrare SOLO quelli con human_values (auditor manuale)
- * Ignora assessments con solo soc_values (dal simulatore)
+ * Filtra e prepara assessments per la dashboard auditing
+ * Mostra tutti gli assessments completati (con bayesian_score)
  */
 function filterAuditingAssessments(org) {
     const filtered = { ...org };
     filtered.assessments = {};
 
-    // Filtra assessments - prendi solo quelli con human_values
+    // Filtra assessments - prendi solo quelli completi (con bayesian_score)
     for (const [indicatorId, assessment] of Object.entries(org.assessments || {})) {
-        const hasHumanValues = assessment?.raw_data?.human_values?.length > 0;
-        if (hasHumanValues) {
+        const isComplete = assessment && typeof assessment.bayesian_score === 'number';
+        if (isComplete) {
             filtered.assessments[indicatorId] = assessment;
         }
     }
