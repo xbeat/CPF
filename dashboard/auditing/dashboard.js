@@ -299,17 +299,19 @@ function selectOrganization(orgId) {
 }
 
 /**
- * Filtra e prepara assessments per la dashboard auditing
- * Mostra tutti gli assessments completati (con bayesian_score)
+ * Filtra assessments per mostrare SOLO quelli con human_values (auditor manuale)
+ * Ignora assessments con solo soc_values (dal simulatore)
+ * La dashboard AUDITING deve mostrare solo valutazioni manuali dell'auditor
  */
 function filterAuditingAssessments(org) {
     const filtered = { ...org };
     filtered.assessments = {};
 
-    // Filtra assessments - prendi solo quelli completi (con bayesian_score)
+    // Filtra assessments - prendi SOLO quelli con human_values (auditor manuale)
     for (const [indicatorId, assessment] of Object.entries(org.assessments || {})) {
-        const isComplete = assessment && typeof assessment.bayesian_score === 'number';
-        if (isComplete) {
+        const hasHumanValues = assessment?.raw_data?.human_values &&
+                               assessment.raw_data.human_values.length > 0;
+        if (hasHumanValues) {
             filtered.assessments[indicatorId] = assessment;
         }
     }
@@ -498,7 +500,8 @@ function renderProgressMatrix(org) {
                 }
             }
 
-            const title = completed ? `${indicatorId} - ${riskLevel} (${(assessment.bayesian_score * 100).toFixed(1)}%)` : `${indicatorId} - Not assessed`;
+            const riskPercent = completed ? (assessment.bayesian_score * 100).toFixed(1) : '';
+            const title = completed ? `${indicatorId} - ${riskLevel} (${riskPercent}%)` : `${indicatorId} - Not assessed`;
             const cellStyle = isFiltered ? 'opacity: 0.3; cursor: default;' : '';
 
             const onclickHandler = isFiltered ? '' : `openIndicatorDetail('${indicatorId}', '${org.id}')`;
@@ -507,7 +510,8 @@ function renderProgressMatrix(org) {
                         title="${title}"
                         style="${cellStyle}"
                         onclick="${onclickHandler}">
-                    ${indicatorId}
+                    <div style="font-weight: 600; font-size: 11px;">${indicatorId}</div>
+                    ${completed ? `<div style="font-size: 10px; margin-top: 2px; opacity: 0.9;">${riskPercent}%</div>` : ''}
                 </div>
             `;
         }
