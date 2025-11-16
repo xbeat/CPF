@@ -714,6 +714,28 @@ function saveSocIndicator(orgId, assessmentData) {
   // Write SOC file
   writeJsonFile(socFilePath, socData);
 
+  // Emit WebSocket event for real-time dashboard update
+  if (global.io) {
+    const category = indicatorId.split('.')[0];
+    const trend = previousValue !== null
+      ? (assessmentData.bayesian_score > previousValue ? 'up' : assessmentData.bayesian_score < previousValue ? 'down' : 'stable')
+      : null;
+
+    global.io.to(`org:${orgId}`).emit('indicator_update', {
+      orgId,
+      indicatorId,
+      category,
+      assessment: assessmentData,
+      previousScore: previousValue,
+      newScore: assessmentData.bayesian_score,
+      trend,
+      source: 'soc',
+      timestamp: new Date().toISOString()
+    });
+
+    console.log(`[WebSocket] Emitted SOC indicator_update for ${indicatorId} to org:${orgId} (${(assessmentData.bayesian_score * 100).toFixed(0)}% ${trend || ''})`);
+  }
+
   return socData;
 }
 
