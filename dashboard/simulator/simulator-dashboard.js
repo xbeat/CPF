@@ -417,35 +417,31 @@ function updateSimulatorStatus(running) {
     const statusText = document.getElementById('status-text');
     const statusDetail = document.getElementById('status-detail');
     const headerStatus = document.getElementById('header-status');
-
     const startBtn = document.getElementById('start-btn');
     const stopBtn = document.getElementById('stop-btn');
+
+    if (!statusDiv || !indicator || !statusText || !statusDetail || !startBtn || !stopBtn) return;
 
     if (running) {
         statusDiv.classList.add('running');
         statusDiv.classList.remove('stopped');
         indicator.classList.add('running');
         indicator.classList.remove('stopped');
-
         statusText.textContent = 'Simulator Running';
         statusDetail.textContent = mode === 'auto' ?
-            `Automatic mode: ${document.getElementById('scenario-select').value}` :
+            `Automatic mode: ${document.getElementById('scenario-select')?.value || 'unknown'}` :
             'Manual mode: Use "Emit Event" button';
-        headerStatus.textContent = 'Simulator Active';
-
+        if (headerStatus) headerStatus.textContent = 'Simulator Active';
         startBtn.disabled = true;
         stopBtn.disabled = false;
-
     } else {
         statusDiv.classList.add('stopped');
         statusDiv.classList.remove('running');
         indicator.classList.add('stopped');
         indicator.classList.remove('running');
-
         statusText.textContent = 'Simulator Stopped';
         statusDetail.textContent = 'Select a mode and click Start';
-        headerStatus.textContent = 'Simulator Ready';
-
+        if (headerStatus) headerStatus.textContent = 'Simulator Ready';
         startBtn.disabled = false;
         stopBtn.disabled = true;
     }
@@ -663,35 +659,24 @@ function setupWebSocket(orgId) {
     socket = io();
 
     socket.on('connect', () => {
-        console.log('✅ WebSocket connected');
-        logEvent('Real-time updates enabled (WebSocket)', 'success');
-
-        // Subscribe to organization updates
+        logEvent('Real-time updates enabled', 'success');
         socket.emit('subscribe', orgId);
     });
 
     socket.on('disconnect', () => {
-        console.log('❌ WebSocket disconnected');
-        logEvent('Real-time updates disconnected', 'warning');
+        logEvent('Disconnected', 'warning');
     });
 
     socket.on('indicator_update', (data) => {
-        console.log('📊 Indicator update received:', data);
-
-        // Update local data
         if (data.orgId === currentOrgId) {
             matrixData[data.indicatorId] = data.assessment;
-
-            // Update cell with trend
             updateCell(data.indicatorId, data.assessment, data.trend);
-
-            logEvent(`Updated ${data.indicatorId}: ${Math.round(data.newScore * 100)}% ${data.trend === 'up' ? '↑' : data.trend === 'down' ? '↓' : ''}`);
+            logEvent(`${data.indicatorId}: ${Math.round(data.newScore * 100)}% ${data.trend === 'up' ? '↑' : data.trend === 'down' ? '↓' : ''}`);
         }
     });
 
     socket.on('error', (error) => {
-        console.error('WebSocket error:', error);
-        logEvent(`WebSocket error: ${error}`, 'error');
+        logEvent(`Error: ${error}`, 'error');
     });
 }
 
