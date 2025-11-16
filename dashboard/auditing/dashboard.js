@@ -885,15 +885,49 @@ async function showAssessmentDetails(indicatorId, assessment) {
                 </div>
                 ` : ''}
 
+                ${fieldKit && fieldKit.description && fieldKit.description.psychological_basis ? `
+                <!-- Psychological Basis -->
+                <div style="background: #e0e7ff; padding: 15px; border-radius: 8px; border-left: 4px solid #6366f1;">
+                    <h4 style="margin: 0 0 10px 0; color: #4338ca;">🧠 Psychological Basis</h4>
+                    <p style="margin: 0; line-height: 1.6; color: #1e1b4b;">${fieldKit.description.psychological_basis}</p>
+                </div>
+                ` : ''}
+
+                ${fieldKit && fieldKit.scoring && fieldKit.scoring.maturity_levels ? `
+                <!-- Maturity Levels -->
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: var(--primary);">📊 Maturity Levels</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        ${Object.entries(fieldKit.scoring.maturity_levels).map(([level, data]) => {
+                            const bgColor = level === 'green' ? '#d4edda' : level === 'yellow' ? '#fff3cd' : '#f8d7da';
+                            const textColor = level === 'green' ? '#155724' : level === 'yellow' ? '#856404' : '#721c24';
+                            return '<div style="background: ' + bgColor + '; padding: 15px; border-radius: 8px;">' +
+                                '<h5 style="margin: 0 0 10px 0; color: ' + textColor + '; text-transform: capitalize;">' +
+                                    level + ' (' + (data.score_range ? data.score_range.join(' - ') : 'N/A') + ')' +
+                                '</h5>' +
+                                '<p style="margin: 0; font-size: 14px; color: ' + textColor + '; line-height: 1.5;">' +
+                                    (data.description || 'No description') +
+                                '</p>' +
+                            '</div>';
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
                 ${fieldKit && fieldKit.risk_scenarios && fieldKit.risk_scenarios.length > 0 ? `
                 <!-- Risk Scenarios -->
-                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
-                    <h4 style="margin: 0 0 10px 0; color: var(--warning);">⚠️ Risk Scenarios</h4>
-                    ${fieldKit.risk_scenarios.slice(0, 3).map((scenario, idx) => `
-                        <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
-                            <strong>${scenario.title || 'Scenario ' + (idx + 1)}</strong>
-                            <p style="margin: 5px 0 0 0;">${scenario.description || ''}</p>
-                            ${scenario.likelihood ? `<small style="color: var(--text-light);">Likelihood: ${scenario.likelihood}</small>` : ''}
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: #856404;">🔥 Risk Scenarios</h4>
+                    ${fieldKit.risk_scenarios.map((scenario, idx) => `
+                        <div style="background: #fff3cd; padding: 20px; border-left: 4px solid #f39c12; margin-bottom: 15px; border-radius: 6px;">
+                            <h5 style="margin: 0 0 10px 0; color: #856404; font-size: 16px;">
+                                ${scenario.title || 'Scenario ' + (idx + 1)}
+                            </h5>
+                            <p style="margin: 0 0 10px 0; line-height: 1.6; color: #856404;">
+                                ${scenario.description || ''}
+                            </p>
+                            ${scenario.likelihood ? '<p style="margin: 0; font-size: 14px;"><strong>Likelihood:</strong> ' + scenario.likelihood + '</p>' : ''}
+                            ${scenario.impact ? '<p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Impact:</strong> ' + scenario.impact + '</p>' : ''}
                         </div>
                     `).join('')}
                 </div>
@@ -1155,7 +1189,6 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                 <div class="toolbar" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <button class="btn btn-info" onclick="window.CPFClient.showQuickReference()">📚 Quick Reference</button>
-                        <button class="btn btn-success" onclick="window.CPFClient.showIndicatorDetails()">📄 Indicator Details</button>
                         <button class="btn btn-info" onclick="window.CPFClient.toggleDetailedAnalysis()">📊 Show/Hide Analysis</button>
                         <button class="btn btn-light" onclick="document.getElementById('file-input-integrated').click()">📂 Import JSON</button>
                         <input type="file" id="file-input-integrated" accept=".json" onchange="window.CPFClient.importJSON(event)" style="display: none;">
@@ -1195,18 +1228,6 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                 </div>
             </div>
 
-            <!-- Indicator Details Modal -->
-            <div id="indicator-details-modal" class="cpf-client modal" style="display: none;" onclick="if(event.target.id==='indicator-details-modal') window.CPFClient.closeIndicatorDetails()">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2 id="indicator-details-title">📄 Indicator Details</h2>
-                        <button class="modal-close" onclick="window.CPFClient.closeIndicatorDetails()">✕</button>
-                    </div>
-                    <div class="modal-body" id="indicator-details-content">
-                        <p style="text-align: center; color: #7f8c8d; padding: 40px;">No indicator loaded</p>
-                    </div>
-                </div>
-            </div>
         </div>
     `;
 
@@ -1604,15 +1625,49 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
                 </div>
                 ` : ''}
 
+                ${fieldKit && fieldKit.description && fieldKit.description.psychological_basis ? `
+                <!-- Psychological Basis -->
+                <div style="background: #e0e7ff; padding: 15px; border-radius: 8px; border-left: 4px solid #6366f1;">
+                    <h4 style="margin: 0 0 10px 0; color: #4338ca;">🧠 Psychological Basis</h4>
+                    <p style="margin: 0; line-height: 1.6; color: #1e1b4b;">${fieldKit.description.psychological_basis}</p>
+                </div>
+                ` : ''}
+
+                ${fieldKit && fieldKit.scoring && fieldKit.scoring.maturity_levels ? `
+                <!-- Maturity Levels -->
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: var(--primary);">📊 Maturity Levels</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        ${Object.entries(fieldKit.scoring.maturity_levels).map(([level, data]) => {
+                            const bgColor = level === 'green' ? '#d4edda' : level === 'yellow' ? '#fff3cd' : '#f8d7da';
+                            const textColor = level === 'green' ? '#155724' : level === 'yellow' ? '#856404' : '#721c24';
+                            return '<div style="background: ' + bgColor + '; padding: 15px; border-radius: 8px;">' +
+                                '<h5 style="margin: 0 0 10px 0; color: ' + textColor + '; text-transform: capitalize;">' +
+                                    level + ' (' + (data.score_range ? data.score_range.join(' - ') : 'N/A') + ')' +
+                                '</h5>' +
+                                '<p style="margin: 0; font-size: 14px; color: ' + textColor + '; line-height: 1.5;">' +
+                                    (data.description || 'No description') +
+                                '</p>' +
+                            '</div>';
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
                 ${fieldKit && fieldKit.risk_scenarios && fieldKit.risk_scenarios.length > 0 ? `
                 <!-- Risk Scenarios -->
-                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
-                    <h4 style="margin: 0 0 10px 0; color: var(--warning);">⚠️ Risk Scenarios</h4>
-                    ${fieldKit.risk_scenarios.slice(0, 3).map((scenario, idx) => `
-                        <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
-                            <strong>${scenario.title || 'Scenario ' + (idx + 1)}</strong>
-                            <p style="margin: 5px 0 0 0;">${scenario.description || ''}</p>
-                            ${scenario.likelihood ? `<small style="color: var(--text-light);">Likelihood: ${scenario.likelihood}</small>` : ''}
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: #856404;">🔥 Risk Scenarios</h4>
+                    ${fieldKit.risk_scenarios.map((scenario, idx) => `
+                        <div style="background: #fff3cd; padding: 20px; border-left: 4px solid #f39c12; margin-bottom: 15px; border-radius: 6px;">
+                            <h5 style="margin: 0 0 10px 0; color: #856404; font-size: 16px;">
+                                ${scenario.title || 'Scenario ' + (idx + 1)}
+                            </h5>
+                            <p style="margin: 0 0 10px 0; line-height: 1.6; color: #856404;">
+                                ${scenario.description || ''}
+                            </p>
+                            ${scenario.likelihood ? '<p style="margin: 0; font-size: 14px;"><strong>Likelihood:</strong> ' + scenario.likelihood + '</p>' : ''}
+                            ${scenario.impact ? '<p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Impact:</strong> ' + scenario.impact + '</p>' : ''}
                         </div>
                     `).join('')}
                 </div>
