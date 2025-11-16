@@ -1710,7 +1710,7 @@ app.post('/api/simulator/emit', async (req, res) => {
 
 server.listen(PORT, () => {
   console.log('\n╔════════════════════════════════════════════════════════════╗');
-  console.log('║          🛡️  CPF Dashboard Server v2.0 - RUNNING           ║');
+  console.log('║          🛡️  CPF Dashboard Server v2.0 - RUNNING            ║');
   console.log('╚════════════════════════════════════════════════════════════╝\n');
   console.log(`📡 Server listening on: http://localhost:${PORT}`);
   console.log(`🔌 WebSocket server ready\n`);
