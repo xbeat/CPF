@@ -541,6 +541,11 @@ Consulting firms or professional services organizations that provide CPF-related
 
 ---
 
+## Available Languages
+
+- **English (en-US)** - This directory
+- **Italian (it-IT)** - Complete translation available in `../../it-IT/Licensing Agreement/`
+
 ## License
 
 This documentation is part of the CPF Certification Scheme.

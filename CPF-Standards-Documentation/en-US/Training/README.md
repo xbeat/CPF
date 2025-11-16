@@ -349,6 +349,11 @@ Courses map to:
 - Assessment Templates and Tools
 - Privacy Implementation Guides
 
+## Available Languages
+
+- **English (en-US)** - This directory
+- **Italian (it-IT)** - Complete translation available in `../../it-IT/Training/`
+
 ## License and Usage
 
 These training blueprints are proprietary to CPF3. Distribution is restricted to:
