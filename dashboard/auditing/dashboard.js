@@ -2429,6 +2429,11 @@ async function resetCompileForm() {
         return;
     }
 
+    // Confirm before resetting
+    if (!confirm('⚠️ This will clear all values in this assessment and reset it.\n\nAre you sure you want to continue?')) {
+        return;
+    }
+
     // Clear all form field values
     const assessorField = document.getElementById('compile-assessor');
     const dateField = document.getElementById('compile-date');
