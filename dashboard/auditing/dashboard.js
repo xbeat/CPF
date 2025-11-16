@@ -299,19 +299,22 @@ function selectOrganization(orgId) {
 }
 
 /**
- * Filtra assessments per mostrare SOLO quelli con human_values (auditor manuale)
- * Ignora assessments con solo soc_values (dal simulatore)
- * La dashboard AUDITING deve mostrare solo valutazioni manuali dell'auditor
+ * Filtra assessments per mostrare SOLO quelli manuali dell'auditor
+ * Ignora assessments dal simulatore SOC
+ * La dashboard AUDITING deve mostrare solo valutazioni manuali
  */
 function filterAuditingAssessments(org) {
     const filtered = { ...org };
     filtered.assessments = {};
 
-    // Filtra assessments - prendi SOLO quelli con human_values (auditor manuale)
+    // Filtra assessments - prendi SOLO quelli manuali (NON dal simulatore)
+    // Il client salva con raw_data.client_conversation
+    // Il simulator salva con raw_data.source = 'simulator'
     for (const [indicatorId, assessment] of Object.entries(org.assessments || {})) {
-        const hasHumanValues = assessment?.raw_data?.human_values &&
-                               assessment.raw_data.human_values.length > 0;
-        if (hasHumanValues) {
+        // ESCLUDI se è esplicitamente dal simulatore
+        const isFromSimulator = assessment?.raw_data?.source === 'simulator';
+
+        if (!isFromSimulator) {
             filtered.assessments[indicatorId] = assessment;
         }
     }
