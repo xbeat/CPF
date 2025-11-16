@@ -80,14 +80,71 @@ function renderOrganizationsList() {
     organizations.forEach(org => {
         const item = document.createElement('div');
         item.className = 'org-item';
+        if (currentOrgId === org.id) {
+            item.classList.add('active');
+        }
         item.onclick = () => selectOrganization(org.id);
 
-        const riskPct = Math.round((org.stats?.overall_risk || 0) * 100);
+        const overallRisk = org.stats?.overall_risk || 0;
+        const riskClass = overallRisk > 0.66 ? 'high' :
+            overallRisk > 0.33 ? 'medium' : 'low';
+        const riskLabel = overallRisk > 0.66 ? 'High' :
+            overallRisk > 0.33 ? 'Medium' : 'Low';
+        const completion = org.stats?.completion_percentage || 0;
+        const totalAssessments = org.stats?.total_assessments || 0;
+
+        // Helper function to capitalize first letter
+        const capitalizeFirst = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+
+        // Get country flag using ISO codes
+        const country = org.country || 'Unknown';
+        const countryFlag = country === 'IT' ? '🇮🇹' :
+                           country === 'US' ? '🇺🇸' :
+                           country === 'GB' ? '🇬🇧' :
+                           country === 'DE' ? '🇩🇪' :
+                           country === 'FR' ? '🇫🇷' :
+                           country === 'ES' ? '🇪🇸' : '🌐';
+
+        // Get language info
+        const language = org.language || 'en-US';
+
+        // Format creation date
+        const createdDate = org.created_at ? new Date(org.created_at).toLocaleDateString() : 'N/A';
 
         item.innerHTML = `
-            <div class="org-name">${org.name}</div>
-            <div class="org-meta">
-                ${org.industry} • ${org.country} • Risk: ${riskPct}%
+            <div class="org-card-header">
+                <div style="flex: 1; min-width: 0;">
+                    <div class="org-name">${org.name}</div>
+                    <div class="org-meta">
+                        ${org.industry} • ${capitalizeFirst(org.size)} • ${countryFlag} ${org.country}
+                    </div>
+                </div>
+                <div class="org-card-actions" onclick="event.stopPropagation()">
+                    <button class="icon-btn" onclick="editOrganization('${org.id}')" title="Edit">✏️</button>
+                    <button class="icon-btn" onclick="deleteOrganization('${org.id}', '${org.name.replace(/'/g, "\\'")}')" title="Delete">🗑️</button>
+                </div>
+            </div>
+            <div class="org-stats-detailed">
+                <div class="stat-row">
+                    <span class="stat-label">Created</span>
+                    <span class="stat-value">${createdDate}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Language</span>
+                    <span class="stat-value">${language}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Assessments</span>
+                    <span class="stat-value">${totalAssessments}/100 (${completion}%)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Risk Level</span>
+                    <span class="stat-value ${riskClass}">${riskLabel} (${(overallRisk * 100).toFixed(0)}%)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Confidence</span>
+                    <span class="stat-value">${org.stats?.avg_confidence ? (org.stats.avg_confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
+                </div>
             </div>
         `;
 
@@ -110,6 +167,15 @@ function selectOrganization(orgId) {
 
     const org = organizations.find(o => o.id === orgId);
     logEvent(`Selected organization: ${org.name}`);
+
+    // Initialize CPF Matrix
+    initializeMatrix();
+
+    // Load organization data and populate matrix
+    loadOrganizationData(orgId);
+
+    // Setup WebSocket for real-time updates
+    setupWebSocket(orgId);
 
     // Check if simulator is running for this org
     checkSimulatorStatus();
@@ -351,35 +417,31 @@ function updateSimulatorStatus(running) {
     const statusText = document.getElementById('status-text');
     const statusDetail = document.getElementById('status-detail');
     const headerStatus = document.getElementById('header-status');
-
     const startBtn = document.getElementById('start-btn');
     const stopBtn = document.getElementById('stop-btn');
+
+    if (!statusDiv || !indicator || !statusText || !statusDetail || !startBtn || !stopBtn) return;
 
     if (running) {
         statusDiv.classList.add('running');
         statusDiv.classList.remove('stopped');
         indicator.classList.add('running');
         indicator.classList.remove('stopped');
-
         statusText.textContent = 'Simulator Running';
         statusDetail.textContent = mode === 'auto' ?
-            `Automatic mode: ${document.getElementById('scenario-select').value}` :
+            `Automatic mode: ${document.getElementById('scenario-select')?.value || 'unknown'}` :
             'Manual mode: Use "Emit Event" button';
-        headerStatus.textContent = 'Simulator Active';
-
+        if (headerStatus) headerStatus.textContent = 'Simulator Active';
         startBtn.disabled = true;
         stopBtn.disabled = false;
-
     } else {
         statusDiv.classList.add('stopped');
         statusDiv.classList.remove('running');
         indicator.classList.add('stopped');
         indicator.classList.remove('running');
-
         statusText.textContent = 'Simulator Stopped';
         statusDetail.textContent = 'Select a mode and click Start';
-        headerStatus.textContent = 'Simulator Ready';
-
+        if (headerStatus) headerStatus.textContent = 'Simulator Ready';
         startBtn.disabled = false;
         stopBtn.disabled = true;
     }
@@ -462,6 +524,160 @@ function formatDuration(seconds) {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     return `${hours}h ${mins}m`;
+}
+
+// ============================================================================
+// CPF MATRIX (10x10) - REAL-TIME VISUALIZATION
+// ============================================================================
+
+let socket = null;
+let matrixData = {};
+
+/**
+ * Initialize CPF Matrix with 100 cells (10x10)
+ */
+function initializeMatrix() {
+    const matrixContainer = document.getElementById('cpf-matrix');
+    matrixContainer.innerHTML = '';
+
+    // Generate 10x10 grid (categories 1-10, indicators 1-10)
+    for (let category = 1; category <= 10; category++) {
+        for (let indicator = 1; indicator <= 10; indicator++) {
+            const indicatorId = `${category}.${indicator}`;
+            const cell = document.createElement('div');
+            cell.className = 'matrix-cell risk-missing';
+            cell.id = `cell-${indicatorId.replace('.', '-')}`;
+            cell.innerHTML = `${indicatorId}<span class="trend-indicator"></span>`;
+            cell.title = `Indicator ${indicatorId}`;
+
+            matrixContainer.appendChild(cell);
+        }
+    }
+
+    logEvent('Matrix initialized (100 indicators)');
+}
+
+/**
+ * Load organization data and populate matrix
+ */
+async function loadOrganizationData(orgId) {
+    try {
+        const response = await fetch(`/api/organizations/${orgId}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const result = await response.json();
+        const orgData = result.data;
+
+        // Store matrix data
+        matrixData = orgData.assessments || {};
+
+        // Update all cells
+        updateAllCells();
+
+        logEvent(`Loaded data for ${orgData.name} (${Object.keys(matrixData).length} indicators)`);
+
+    } catch (error) {
+        console.error('Error loading organization data:', error);
+        logEvent(`Error loading data: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Update all matrix cells based on current data
+ */
+function updateAllCells() {
+    for (let category = 1; category <= 10; category++) {
+        for (let indicator = 1; indicator <= 10; indicator++) {
+            const indicatorId = `${category}.${indicator}`;
+            const assessment = matrixData[indicatorId];
+            updateCell(indicatorId, assessment, null);
+        }
+    }
+}
+
+/**
+ * Update single matrix cell
+ */
+function updateCell(indicatorId, assessment, trend) {
+    const cellId = `cell-${indicatorId.replace('.', '-')}`;
+    const cell = document.getElementById(cellId);
+    if (!cell) return;
+
+    // Remove all risk classes
+    cell.classList.remove('risk-low', 'risk-medium', 'risk-high', 'risk-missing');
+
+    // Get trend indicator element
+    const trendIndicator = cell.querySelector('.trend-indicator');
+
+    if (!assessment || assessment.bayesian_score === undefined) {
+        // No data
+        cell.classList.add('risk-missing');
+        trendIndicator.textContent = '';
+        cell.title = `Indicator ${indicatorId} - No data`;
+        return;
+    }
+
+    const score = assessment.bayesian_score;
+    const percentage = Math.round(score * 100);
+
+    // Determine risk level (fixed thresholds)
+    let riskClass;
+    if (score < 0.33) {
+        riskClass = 'risk-low';
+    } else if (score < 0.66) {
+        riskClass = 'risk-medium';
+    } else {
+        riskClass = 'risk-high';
+    }
+
+    cell.classList.add(riskClass);
+
+    // Update trend indicator
+    if (trend === 'up') {
+        trendIndicator.textContent = '↑';
+        trendIndicator.className = 'trend-indicator trend-up';
+    } else if (trend === 'down') {
+        trendIndicator.textContent = '↓';
+        trendIndicator.className = 'trend-indicator trend-down';
+    } else {
+        trendIndicator.textContent = '';
+    }
+
+    cell.title = `Indicator ${indicatorId} - Risk: ${percentage}% ${trend ? (trend === 'up' ? '(increasing)' : '(decreasing)') : ''}`;
+}
+
+/**
+ * Setup WebSocket connection for real-time updates
+ */
+function setupWebSocket(orgId) {
+    // Disconnect existing socket
+    if (socket) {
+        socket.disconnect();
+    }
+
+    // Connect to Socket.io server
+    socket = io();
+
+    socket.on('connect', () => {
+        logEvent('Real-time updates enabled', 'success');
+        socket.emit('subscribe', orgId);
+    });
+
+    socket.on('disconnect', () => {
+        logEvent('Disconnected', 'warning');
+    });
+
+    socket.on('indicator_update', (data) => {
+        if (data.orgId === currentOrgId) {
+            matrixData[data.indicatorId] = data.assessment;
+            updateCell(data.indicatorId, data.assessment, data.trend);
+            logEvent(`${data.indicatorId}: ${Math.round(data.newScore * 100)}% ${data.trend === 'up' ? '↑' : data.trend === 'down' ? '↓' : ''}`);
+        }
+    });
+
+    socket.on('error', (error) => {
+        logEvent(`Error: ${error}`, 'error');
+    });
 }
 
 // Toggle sort direction
@@ -562,6 +778,106 @@ function closeSidebar() {
 
     sidebar.classList.add('hidden');
     openBtn.style.display = 'inline-flex';
+}
+
+// Edit/Delete Organization Functions
+let editingOrgId = null;
+let deletingOrgId = null;
+
+function editOrganization(orgId) {
+    editingOrgId = orgId;
+    const org = organizations.find(o => o.id === orgId);
+    if (!org) return;
+
+    document.getElementById('edit-org-name').value = org.name;
+    document.getElementById('edit-org-industry').value = org.industry;
+    document.getElementById('edit-org-size').value = org.size;
+    document.getElementById('edit-org-country').value = org.country;
+    document.getElementById('edit-org-language').value = org.language;
+
+    document.getElementById('edit-org-modal').style.display = 'block';
+}
+
+function closeEditOrgModal() {
+    document.getElementById('edit-org-modal').style.display = 'none';
+    editingOrgId = null;
+}
+
+async function saveOrganizationEdit(event) {
+    event.preventDefault();
+
+    if (!editingOrgId) return;
+
+    const orgData = {
+        name: document.getElementById('edit-org-name').value.trim(),
+        industry: document.getElementById('edit-org-industry').value,
+        size: document.getElementById('edit-org-size').value,
+        country: document.getElementById('edit-org-country').value.trim().toUpperCase(),
+        language: document.getElementById('edit-org-language').value
+    };
+
+    try {
+        const response = await fetch(`/api/organizations/${editingOrgId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orgData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            logEvent(`Organization updated: ${orgData.name}`);
+            closeEditOrgModal();
+            await loadOrganizations();
+        } else {
+            alert(`Error: ${result.error || 'Failed to update organization'}`);
+        }
+    } catch (error) {
+        console.error('Error updating organization:', error);
+        alert('Failed to update organization');
+    }
+}
+
+function deleteOrganization(orgId, orgName) {
+    deletingOrgId = orgId;
+    document.getElementById('delete-org-name').textContent = orgName;
+    document.getElementById('delete-org-modal').style.display = 'block';
+}
+
+function closeDeleteOrgModal() {
+    document.getElementById('delete-org-modal').style.display = 'none';
+    deletingOrgId = null;
+}
+
+async function confirmDeleteOrganization() {
+    if (!deletingOrgId) return;
+
+    try {
+        const response = await fetch(`/api/organizations/${deletingOrgId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            logEvent(`Organization deleted`);
+            closeDeleteOrgModal();
+
+            // If deleting currently selected org, clear selection
+            if (currentOrgId === deletingOrgId) {
+                currentOrgId = null;
+                document.getElementById('simulator-dashboard').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+            }
+
+            await loadOrganizations();
+        } else {
+            alert(`Error: ${result.error || 'Failed to delete organization'}`);
+        }
+    } catch (error) {
+        console.error('Error deleting organization:', error);
+        alert('Failed to delete organization');
+    }
 }
 
 // Auto-refresh organizations every 30 seconds
