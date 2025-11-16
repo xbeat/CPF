@@ -966,36 +966,22 @@ function setupWebSocket(orgId) {
     socket = io();
 
     socket.on('connect', () => {
-        console.log('✅ WebSocket connected - Real-time updates enabled');
-
-        // Subscribe to organization updates
         socket.emit('subscribe', orgId);
     });
 
-    socket.on('disconnect', () => {
-        console.log('❌ WebSocket disconnected');
-    });
+    socket.on('disconnect', () => {});
 
     socket.on('indicator_update', (data) => {
-        console.log('📊 Real-time indicator update received:', data);
-
-        // Only process updates for the currently selected organization
         if (data.orgId === currentOrgId) {
-            // Update the specific indicator cell in the grid
             updateIndicatorCell(data.indicatorId, data.assessment, data.trend);
-
-            // Update aggregates if provided
             if (data.aggregates && currentOrgData) {
                 currentOrgData.aggregates = data.aggregates;
-                // Update overall risk display
                 updateOverallRiskDisplay(data.aggregates);
             }
         }
     });
 
-    socket.on('error', (error) => {
-        console.error('WebSocket error:', error);
-    });
+    socket.on('error', (error) => {});
 }
 
 /**
