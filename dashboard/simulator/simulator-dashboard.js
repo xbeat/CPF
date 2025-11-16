@@ -932,3 +932,87 @@ setInterval(async () => {
         await loadOrganizations();
     }
 }, 30000);
+
+// ============================================================================
+// CREATE ORGANIZATION FUNCTIONS
+// ============================================================================
+
+/**
+ * Open the create organization modal
+ */
+function openCreateOrgModal() {
+    document.getElementById('org-modal-title').textContent = 'Create New Organization';
+    document.getElementById('org-form').reset();
+    document.getElementById('org-id-input').disabled = false;
+    document.getElementById('save-org-btn').textContent = 'Create Organization';
+    document.getElementById('org-modal').style.display = 'flex';
+}
+
+/**
+ * Close the organization modal
+ */
+function closeOrgModal() {
+    document.getElementById('org-modal').style.display = 'none';
+}
+
+/**
+ * Save new organization
+ */
+async function saveOrganization(event) {
+    event.preventDefault();
+
+    const orgId = document.getElementById('org-id-input').value.trim();
+    const orgName = document.getElementById('org-name-input').value.trim();
+    const industry = document.getElementById('org-industry-input').value;
+    const size = document.getElementById('org-size-input').value;
+    const country = document.getElementById('org-country-input').value.toUpperCase();
+    const language = document.getElementById('org-language-input').value;
+    const notes = document.getElementById('org-notes-input').value.trim();
+
+    // Validate org ID format
+    if (!/^org-[a-z0-9-]+$/.test(orgId)) {
+        alert('Organization ID must follow format: org-yourname-001 (lowercase, hyphens allowed)');
+        return;
+    }
+
+    const saveBtn = document.getElementById('save-org-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Creating...';
+
+    try {
+        const response = await fetch('/api/organizations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: orgId,
+                name: orgName,
+                industry: industry,
+                size: size,
+                country: country,
+                language: language,
+                notes: notes
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || `HTTP ${response.status}`);
+        }
+
+        const newOrg = await response.json();
+        console.log('Created organization:', newOrg);
+
+        // Refresh organizations list
+        await loadOrganizations();
+
+        closeOrgModal();
+        logEvent(`Organization "${orgName}" created successfully!`, 'success');
+
+    } catch (error) {
+        console.error('Error creating organization:', error);
+        alert(`Failed to create organization: ${error.message}`);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Create Organization';
+    }
+}
