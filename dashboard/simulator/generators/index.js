@@ -43,10 +43,6 @@ class SimulatorOrchestrator {
 
     const orgConfig = { ...defaultConfig, ...config };
 
-    console.log(`\n🚀 [Simulator] Starting for organization: ${orgId}`);
-    console.log(`   Sources: ${orgConfig.sources.join(', ')}`);
-    console.log(`   Scenario: ${orgConfig.scenario}`);
-    console.log(`   Rate: ${orgConfig.rate} events/sec`);
 
     // Avvia scenario se non è "normal"
     if (orgConfig.scenario !== 'normal') {
@@ -77,7 +73,6 @@ class SimulatorOrchestrator {
       this.stats.startTime = Date.now();
     }
 
-    console.log(`✅ [Simulator] Started for ${orgId}\n`);
 
     return {
       success: true,
@@ -97,7 +92,6 @@ class SimulatorOrchestrator {
       };
     }
 
-    console.log(`\n🛑 [Simulator] Stopping for organization: ${orgId}`);
 
     // Ferma interval
     const intervalId = this.intervals.get(orgId);
@@ -127,8 +121,6 @@ class SimulatorOrchestrator {
       this.running = false;
     }
 
-    console.log(`✅ [Simulator] Stopped for ${orgId}`);
-    console.log(`   Events: ${stats.eventsGenerated}, Assessments: ${stats.assessmentsCreated}, Duration: ${stats.duration}s\n`);
 
     return {
       success: true,
@@ -217,7 +209,6 @@ class SimulatorOrchestrator {
     // Questa funzione sarà chiamata dal server.js che ha accesso al dataManager
     // Per ora registriamo solo a console
     if (assessments.length > 0) {
-      console.log(`📊 [Simulator] Generated ${assessments.length} assessments for ${orgId}`);
     }
 
     // Il server.js userà questa callback per salvare i dati
@@ -282,7 +273,6 @@ class SimulatorOrchestrator {
   stopAll() {
     const orgs = Array.from(this.activeOrganizations.keys());
 
-    console.log(`\n🛑 [Simulator] Stopping all simulators (${orgs.length} active)`);
 
     orgs.forEach(orgId => {
       this.stop(orgId);
