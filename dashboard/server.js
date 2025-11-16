@@ -23,13 +23,14 @@ const { Server } = require('socket.io');
 // Import data manager
 const dataManager = require('./lib/dataManager');
 
-// Simulator (lazy-loaded on first use)
+// SOC (lazy-loaded on first use)
 let simulator = null;
 
 function getSimulator() {
   if (!simulator) {
     const { getInstance } = require('./simulator/generators');
     simulator = getInstance();
+    console.log('🎭 [SOC] Initialized on-demand');
   }
   return simulator;
 }
@@ -189,15 +190,18 @@ app.post('/api/organizations', async (req, res) => {
       notes: notes || ''
     });
 
+    console.log(`\n✅ [API] Created organization: ${id} (${name})`);
 
     // Fetch indicators if requested
     if (fetch_indicators) {
+      console.log(`📥 [API] Fetching 100 indicators for ${id}...`);
       // This will be done asynchronously - return success immediately
       fetchIndicatorsForOrganization(id, language || 'en-US').catch(err => {
         console.error(`❌ [API] Failed to fetch indicators for ${id}:`, err.message);
       });
     }
 
+    console.log('');
 
     res.status(201).json({
       success: true,
@@ -229,6 +233,7 @@ async function fetchIndicatorsForOrganization(orgId, language) {
       fetched++;
 
       if (fetched % 10 === 0) {
+        console.log(`   Progress: ${fetched}/100 indicators fetched`);
       }
 
       // Small delay to avoid rate limiting
@@ -239,6 +244,7 @@ async function fetchIndicatorsForOrganization(orgId, language) {
     }
   }
 
+  console.log(`\n✅ [API] Indicator fetch complete for ${orgId}: ${fetched} fetched, ${failed} failed\n`);
 }
 
 /**
@@ -273,6 +279,7 @@ app.put('/api/organizations/:orgId', (req, res) => {
     // Save
     dataManager.writeOrganization(orgData);
 
+    console.log(`\n✅ [API] Updated organization: ${orgId}\n`);
 
     res.json({
       success: true,
@@ -309,6 +316,7 @@ app.delete('/api/organizations/:orgId', (req, res) => {
     // Soft delete organization (moves to trash, logs audit)
     const orgData = dataManager.deleteOrganization(orgId, user);
 
+    console.log(`\n🗑️  [API] Moved to trash: ${orgId}\n`);
 
     res.json({
       success: true,
@@ -432,6 +440,7 @@ app.post('/api/organizations/:orgId/assessments', (req, res) => {
     // Save assessment (this also recalculates aggregates, saves version, and logs)
     const orgData = dataManager.saveAssessment(orgId, assessmentData, user);
 
+    console.log(`\n✅ [API] Saved assessment: ${orgId} / ${assessmentData.indicator_id}\n`);
 
     res.json({
       success: true,
@@ -470,6 +479,7 @@ app.delete('/api/organizations/:orgId/assessments/:indicatorId', (req, res) => {
     // Delete assessment (this also recalculates aggregates, saves version, and logs)
     const orgData = dataManager.deleteAssessment(orgId, indicatorId, user);
 
+    console.log(`\n🗑️  [API] Deleted assessment: ${orgId} / ${indicatorId}\n`);
 
     res.json({
       success: true,
@@ -541,6 +551,7 @@ app.post('/api/organizations/:orgId/recalculate', (req, res) => {
 
     const orgData = dataManager.recalculateAggregates(orgId);
 
+    console.log(`\n🔄 [API] Recalculated aggregates: ${orgId}\n`);
 
     res.json({
       success: true,
@@ -636,6 +647,7 @@ app.post('/api/organizations/:orgId/restore', (req, res) => {
 
     const orgData = dataManager.restoreOrganization(orgId, user);
 
+    console.log(`\n♻️  [API] Restored from trash: ${orgId}\n`);
 
     res.json({
       success: true,
@@ -672,6 +684,7 @@ app.delete('/api/organizations/:orgId/permanent', (req, res) => {
 
     const result = dataManager.permanentlyDeleteOrganization(orgId, user);
 
+    console.log(`\n🔥 [API] Permanently deleted: ${orgId}\n`);
 
     res.json({
       success: true,
@@ -696,6 +709,7 @@ app.post('/api/trash/cleanup', (req, res) => {
     const user = req.body.user || 'System';
     const result = dataManager.cleanupTrash(user);
 
+    console.log(`\n🧹 [API] Trash cleanup: ${result.deletedCount} organizations permanently deleted\n`);
 
     res.json({
       success: true,
@@ -813,6 +827,7 @@ app.post('/api/organizations/:orgId/assessments/:indicatorId/revert', (req, res)
 
     const orgData = dataManager.revertAssessment(orgId, indicatorId, parseInt(version), user || 'System');
 
+    console.log(`\n↩️  [API] Reverted assessment: ${orgId} / ${indicatorId} to version ${version}\n`);
 
     res.json({
       success: true,
@@ -855,6 +870,7 @@ app.get('/api/organizations/:orgId/export/xlsx', async (req, res) => {
     const workbook = await dataManager.generateXLSXExport(orgId, user);
     const orgData = dataManager.readOrganization(orgId);
 
+    console.log(`\n📊 [API] Generating XLSX export for: ${orgId}\n`);
 
     // Set headers for file download
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -863,6 +879,8 @@ app.get('/api/organizations/:orgId/export/xlsx', async (req, res) => {
     // Write to response
     await workbook.xlsx.write(res);
     res.end();
+
+    console.log(`\n✅ [API] XLSX export completed: ${orgId}\n`);
 
   } catch (error) {
     console.error(`[API] Error generating XLSX export for ${req.params.orgId}:`, error.message);
@@ -893,6 +911,7 @@ app.get('/api/organizations/:orgId/export/pdf', async (req, res) => {
     const doc = await dataManager.generatePDFExport(orgId, user);
     const orgData = dataManager.readOrganization(orgId);
 
+    console.log(`\n📄 [API] Generating PDF export for: ${orgId}\n`);
 
     // Set headers for file download
     res.setHeader('Content-Type', 'application/pdf');
@@ -901,6 +920,8 @@ app.get('/api/organizations/:orgId/export/pdf', async (req, res) => {
     // Pipe PDF to response
     doc.pipe(res);
     doc.end();
+
+    console.log(`\n✅ [API] PDF export completed: ${orgId}\n`);
 
   } catch (error) {
     console.error(`[API] Error generating PDF export for ${req.params.orgId}:`, error.message);
@@ -984,9 +1005,11 @@ app.get('/api/get-export', (req, res) => {
       });
     }
 
+    console.log(`\n🔍 [API] Looking for assessment: org_id=${org_id}, indicator_id=${indicator_id}`);
 
     // Check if organization exists
     if (!dataManager.organizationExists(org_id)) {
+      console.log(`   ❌ Organization not found: ${org_id}\n`);
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -1000,6 +1023,7 @@ app.get('/api/get-export', (req, res) => {
 
     // Check if assessment exists for this indicator
     if (!orgData.assessments || !orgData.assessments[indicator_id]) {
+      console.log(`   ❌ Assessment not found for indicator: ${indicator_id}\n`);
       return res.status(404).json({
         success: false,
         error: 'Assessment not found',
@@ -1010,6 +1034,7 @@ app.get('/api/get-export', (req, res) => {
 
     const assessment = orgData.assessments[indicator_id];
 
+    console.log(`   ✅ Assessment loaded for ${indicator_id}\n`);
 
     // Format response to match expected structure from client
     const exportData = {
@@ -1042,6 +1067,7 @@ app.post('/api/batch-import', (req, res) => {
   try {
     const folderPath = req.body.folderPath || path.join(__dirname, '../field_kit_exports');
 
+    console.log(`\n🔧 [API] Batch import requested for: ${folderPath}`);
 
     if (!fs.existsSync(folderPath)) {
       return res.status(400).json({
@@ -1062,16 +1088,19 @@ app.post('/api/batch-import', (req, res) => {
       });
     }
 
+    console.log(`   Found ${files.length} export files`);
 
     const scriptPath = path.join(__dirname, 'scripts/batch_import.js');
     const command = `node "${scriptPath}" "${folderPath}"`;
 
+    console.log(`   Executing: ${command}`);
 
     const output = execSync(command, {
       encoding: 'utf8',
       cwd: __dirname
     });
 
+    console.log(`   ✅ Import completed successfully\n`);
 
     res.json({
       success: true,
@@ -1118,6 +1147,7 @@ app.post('/api/save-export', (req, res) => {
     const exportsPath = path.join(__dirname, '../field_kit_exports');
     if (!fs.existsSync(exportsPath)) {
       fs.mkdirSync(exportsPath, { recursive: true });
+      console.log(`✅ Created field_kit_exports directory`);
     }
 
     const timestamp = Date.now();
@@ -1126,6 +1156,9 @@ app.post('/api/save-export', (req, res) => {
 
     fs.writeFileSync(filePath, JSON.stringify(exportData, null, 2), 'utf8');
 
+    console.log(`\n📥 [API] Saved export: ${filename}`);
+    console.log(`   Organization: ${exportData.organization_name || exportData.organization_id}`);
+    console.log(`   Indicator: ${exportData.indicator_id}\n`);
 
     res.json({
       success: true,
@@ -1152,6 +1185,7 @@ app.post('/api/save-export', (req, res) => {
  */
 app.post('/api/generate-synthetic', (req, res) => {
   try {
+    console.log('\n🔧 [API] Generating synthetic Field Kit assessments...');
 
     const scriptPath = path.join(__dirname, 'scripts/generate_field_kit_assessments.js');
 
@@ -1160,6 +1194,7 @@ app.post('/api/generate-synthetic', (req, res) => {
       cwd: __dirname
     });
 
+    console.log('   ✅ Synthetic data generated\n');
 
     res.json({
       success: true,
@@ -1204,7 +1239,7 @@ app.get('/api/simulator/status', (req, res) => {
         availableSources
       });
     } catch (error) {
-      console.error('[Simulator] Error getting status:', error.message);
+      console.error('[SOC] Error getting status:', error.message);
       res.status(500).json({
         success: false,
         error: error.message
@@ -1214,7 +1249,7 @@ app.get('/api/simulator/status', (req, res) => {
 
   /**
    * POST /api/simulator/start
-   * Start simulator for organization
+   * Start SOC for organization
    * Body: { orgId, sources?, scenario?, rate? }
    */
   app.post('/api/simulator/start', async (req, res) => {
@@ -1237,14 +1272,14 @@ app.get('/api/simulator/status', (req, res) => {
         });
       }
 
-      // Setup callback per salvare assessments generati
+      // Setup callback per salvare assessments generati nel file SOC
       const sim = getSimulator();
       sim.setAssessmentsCallback(async (orgId, assessments) => {
         for (const assessment of assessments) {
           try {
-            await dataManager.saveAssessment(orgId, assessment, 'SIEM-Simulator');
+            await dataManager.saveSocIndicator(orgId, assessment);
           } catch (error) {
-            console.error(`Failed to save assessment for ${orgId}:`, error.message);
+            console.error(`Failed to save SOC indicator for ${orgId}:`, error.message);
           }
         }
       });
@@ -1257,15 +1292,16 @@ app.get('/api/simulator/status', (req, res) => {
         duration: duration || 0
       });
 
+      console.log(`\n✅ [API] SOC started for ${orgId}\n`);
 
       res.json({
         success: true,
-        message: 'Simulator started',
+        message: 'SOC started',
         ...result
       });
 
     } catch (error) {
-      console.error('[Simulator] Error starting:', error.message);
+      console.error('[SOC] Error starting:', error.message);
       res.status(500).json({
         success: false,
         error: error.message
@@ -1275,7 +1311,7 @@ app.get('/api/simulator/status', (req, res) => {
 
   /**
    * POST /api/simulator/stop
-   * Stop simulator for organization
+   * Stop SOC for organization
    * Body: { orgId }
    */
   app.post('/api/simulator/stop', (req, res) => {
@@ -1292,11 +1328,12 @@ app.get('/api/simulator/status', (req, res) => {
       const sim = getSimulator();
       const result = sim.stop(orgId);
 
+      console.log(`\n✅ [API] SOC stopped for ${orgId}\n`);
 
       res.json(result);
 
     } catch (error) {
-      console.error('[Simulator] Error stopping:', error.message);
+      console.error('[SOC] Error stopping:', error.message);
       res.status(500).json({
         success: false,
         error: error.message
@@ -1328,7 +1365,7 @@ app.get('/api/simulator/status', (req, res) => {
       });
 
     } catch (error) {
-      console.error('[Simulator] Error reading sources:', error.message);
+      console.error('[SOC] Error reading sources:', error.message);
       res.status(500).json({
         success: false,
         error: error.message
@@ -1403,6 +1440,7 @@ app.get('/api/simulator/status', (req, res) => {
         intensity: intensity || 'high'
       });
 
+      console.log(`\n🎬 [API] Scenario "${scenario}" started for ${orgId}\n`);
 
       res.json({
         success: true,
@@ -1508,6 +1546,7 @@ app.post('/api/simulator/emit', async (req, res) => {
       }
     }
 
+    console.log(`\n⚡ [API] Emitted ${events.length} manual event(s) for ${orgId}\n`);
 
     res.json({
       success: true,
@@ -1530,10 +1569,59 @@ app.post('/api/simulator/emit', async (req, res) => {
 // ============================================
 
 server.listen(PORT, () => {
+  console.log('\n╔════════════════════════════════════════════════════════════╗');
+  console.log('║          🛡️  CPF Dashboard Server v2.0 - RUNNING           ║');
+  console.log('╚════════════════════════════════════════════════════════════╝\n');
+  console.log(`📡 Server listening on: http://localhost:${PORT}`);
+  console.log(`🔌 WebSocket server ready\n`);
+  console.log('📂 Available endpoints:\n');
+  console.log('   🌐 Dashboards:');
+  console.log(`      → http://localhost:${PORT}/dashboard/auditing/`);
+  console.log(`        (Auditing Progress + Risk Analysis Dashboard - with integrated client)`);
+  console.log(`      → http://localhost:${PORT}/dashboard/soc/`);
+  console.log(`        (SOC + Bayesian Analysis Dashboard)`);
+  console.log(`      → http://localhost:${PORT}/dashboard/simulator/`);
+  console.log(`        (SIEM/SOC Simulator Control Dashboard)\n`);
+  console.log('   📝 Legacy URLs (auto-redirect):');
+  console.log(`      → /dashboard/dashboard_auditing.html → /dashboard/auditing/`);
+  console.log(`      → /dashboard/dashboard.html → /dashboard/soc/\n`);
+  console.log('   🔌 API Endpoints (v2.0 - JSON Storage):');
+  console.log(`      Organizations:`);
+  console.log(`        GET    /api/organizations`);
+  console.log(`        GET    /api/organizations/:orgId`);
+  console.log(`        POST   /api/organizations`);
+  console.log(`        PUT    /api/organizations/:orgId`);
+  console.log(`        DELETE /api/organizations/:orgId`);
+  console.log(`      Assessments:`);
+  console.log(`        GET    /api/organizations/:orgId/assessments`);
+  console.log(`        GET    /api/organizations/:orgId/assessments/:indicatorId`);
+  console.log(`        POST   /api/organizations/:orgId/assessments`);
+  console.log(`        DELETE /api/organizations/:orgId/assessments/:indicatorId`);
+  console.log(`      Aggregates:`);
+  console.log(`        GET    /api/organizations/:orgId/aggregates`);
+  console.log(`        GET    /api/organizations/:orgId/missing`);
+  console.log(`        POST   /api/organizations/:orgId/recalculate`);
+  console.log(`      Legacy (backward compatibility):`);
+  console.log(`        GET    /api/auditing-results`);
+  console.log(`        GET    /api/list-exports`);
+  console.log(`        POST   /api/save-export`);
+  console.log(`        POST   /api/batch-import`);
+  console.log(`        POST   /api/generate-synthetic`);
+  console.log(`\n   🎭 Simulator (Lazy-loaded on first use):`);
+  console.log(`        GET    /api/simulator/status`);
+  console.log(`        POST   /api/simulator/start`);
+  console.log(`        POST   /api/simulator/stop`);
+  console.log(`        POST   /api/simulator/emit`);
+  console.log(`        GET    /api/simulator/sources`);
+  console.log(`        GET    /api/simulator/scenarios`);
+  console.log(`        POST   /api/simulator/scenario`);
+  console.log(`        GET    /api/simulator/scenario/:orgId`);
 
+  console.log('\n⚙️  Press CTRL+C to stop the server\n');
 });
 
 // Graceful shutdown
 process.on('SIGINT', () => {
+  console.log('\n\n👋 Server shutting down gracefully...\n');
   process.exit(0);
 });

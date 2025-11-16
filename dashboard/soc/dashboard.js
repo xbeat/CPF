@@ -7,12 +7,14 @@ let editingOrgId = null;
 let deletingOrgId = null;
 // Note: modalStack is now in ui-utils.js as window.modalStack
 let securityRadarChartInstance = null; // Global chart instance to allow updates
+let categoryDescriptions = null; // Category descriptions (bilingual)
 
 // Note: openSidebar() and closeSidebar() are now in shared/ui-utils.js
 
 // Load data on page load
 window.addEventListener('DOMContentLoaded', async () => {
     await loadOrganizationsData();
+    await loadCategoryDescriptions();
 });
 
 // Modal stack management
@@ -34,6 +36,9 @@ window.addEventListener('keydown', (event) => {
                 break;
             case 'delete-org-modal':
                 closeDeleteOrgModal();
+                break;
+            case 'category-modal':
+                closeCategoryModal();
                 break;
         }
     }
@@ -526,11 +531,15 @@ function renderCategoryHeatmap(categories) {
         const riskClass = risk > 0.66 ? 'high' : risk > 0.33 ? 'medium' : 'low';
 
         tile.className = `category-tile ${riskClass}`;
+        tile.style.cursor = 'pointer';
         tile.innerHTML = `
             <div class="category-name">${CATEGORY_NAMES[name]}</div>
             <div class="category-risk">${riskPct}%</div>
             <div class="category-conf">conf: ${(data.confidence * 100).toFixed(0)}%</div>
         `;
+
+        // Add click handler to open category description modal
+        tile.addEventListener('click', () => openCategoryModal(name));
 
         container.appendChild(tile);
     });
@@ -546,6 +555,7 @@ function renderPrioritizationTable(priorities) {
         const recClass = item.recommendation === 'critical' ? 'critical' :
             item.recommendation === 'review' ? 'review' : 'monitor';
 
+        row.style.cursor = 'pointer';
         row.innerHTML = `
             <td>${idx + 1}</td>
             <td><strong>${item.category.charAt(0).toUpperCase() + item.category.slice(1)}</strong></td>
@@ -555,6 +565,9 @@ function renderPrioritizationTable(priorities) {
             <td>${item.downstream_impact.toFixed(2)}</td>
             <td><span class="recommendation ${recClass}">${item.recommendation}</span></td>
         `;
+
+        // Add click handler to open category description modal
+        row.addEventListener('click', () => openCategoryModal(item.category));
 
         tbody.appendChild(row);
     });
@@ -1110,4 +1123,133 @@ function restoreMatrixZoom() {
     if (savedZoom) {
         setMatrixZoom('indicator', parseInt(savedZoom));
     }
+}
+
+/**
+ * Load category descriptions from JSON file
+ */
+async function loadCategoryDescriptions() {
+    try {
+        const response = await fetch('category-descriptions.json');
+        if (!response.ok) {
+            console.warn('Failed to load category descriptions');
+            return;
+        }
+        categoryDescriptions = await response.json();
+    } catch (error) {
+        console.error('Error loading category descriptions:', error);
+    }
+}
+
+/**
+ * Open category description modal
+ */
+function openCategoryModal(categoryName) {
+    if (!categoryDescriptions || !categoryDescriptions.categories[categoryName]) {
+        console.warn('Category description not found:', categoryName);
+        return;
+    }
+
+    // Determine language based on current organization's language
+    const lang = getCategoryLanguage(currentOrgLanguage);
+    const category = categoryDescriptions.categories[categoryName][lang];
+
+    // Set modal title
+    document.getElementById('category-modal-title').textContent = category.name;
+
+    // Build modal body with localized labels
+    const labels = getCategoryLabels(lang);
+    const body = document.getElementById('category-modal-body');
+    body.innerHTML = `
+        <div style="line-height: 1.6;">
+            <p style="font-size: 16px; font-weight: 500; color: var(--primary); margin-bottom: 15px;">
+                ${category.short_description}
+            </p>
+            <p style="margin-bottom: 20px; color: var(--text);">
+                ${category.description}
+            </p>
+
+            <h4 style="color: var(--primary); margin: 20px 0 10px 0; font-size: 16px;">
+                ${labels.examples}
+            </h4>
+            <ul style="margin: 0 0 20px 0; padding-left: 20px; color: var(--text);">
+                ${category.examples.map(ex => `<li style="margin-bottom: 8px;">${ex}</li>`).join('')}
+            </ul>
+
+            <h4 style="color: var(--primary); margin: 20px 0 10px 0; font-size: 16px;">
+                ${labels.mitigation}
+            </h4>
+            <p style="margin: 0; padding: 15px; background: #f0f9ff; border-left: 4px solid var(--primary); border-radius: 4px; color: var(--text);">
+                ${category.mitigation}
+            </p>
+        </div>
+    `;
+
+    // Show modal
+    const modal = document.getElementById('category-modal');
+    modal.style.display = 'flex';
+    window.pushModal('category-modal');
+}
+
+/**
+ * Get language code from organization language setting
+ * Supports: en, it, es, fr, de (with fallback to en)
+ */
+function getCategoryLanguage(orgLanguage) {
+    if (!orgLanguage) return 'en';
+
+    // Extract language code from locale (e.g., 'it-IT' -> 'it')
+    const langCode = orgLanguage.split('-')[0].toLowerCase();
+
+    // Check if language is available in descriptions
+    if (categoryDescriptions &&
+        categoryDescriptions.categories &&
+        Object.keys(categoryDescriptions.categories).length > 0) {
+        const firstCategory = Object.values(categoryDescriptions.categories)[0];
+        if (firstCategory[langCode]) {
+            return langCode;
+        }
+    }
+
+    // Fallback to English
+    return 'en';
+}
+
+/**
+ * Get localized labels for category modal UI elements
+ */
+function getCategoryLabels(lang) {
+    const labels = {
+        en: {
+            examples: '📌 Examples',
+            mitigation: '🛡️ Mitigation'
+        },
+        it: {
+            examples: '📌 Esempi',
+            mitigation: '🛡️ Mitigazione'
+        },
+        es: {
+            examples: '📌 Ejemplos',
+            mitigation: '🛡️ Mitigación'
+        },
+        fr: {
+            examples: '📌 Exemples',
+            mitigation: '🛡️ Atténuation'
+        },
+        de: {
+            examples: '📌 Beispiele',
+            mitigation: '🛡️ Abhilfe'
+        }
+    };
+
+    return labels[lang] || labels.en;
+}
+
+/**
+ * Close category description modal
+ */
+function closeCategoryModal() {
+    const modal = document.getElementById('category-modal');
+    modal.style.display = 'none';
+    window.popModal();
 }

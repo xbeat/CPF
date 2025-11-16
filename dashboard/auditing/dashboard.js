@@ -299,33 +299,12 @@ function selectOrganization(orgId) {
 }
 
 /**
- * Filtra assessments per mostrare SOLO quelli con human_values (auditor manuale)
- * Ignora assessments con solo soc_values (dal simulatore)
+ * Prepara assessments per la dashboard auditing
+ * Mostra TUTTI gli assessments (come dashboard SOC)
  */
 function filterAuditingAssessments(org) {
-    const filtered = { ...org };
-    filtered.assessments = {};
-
-    // Filtra assessments - prendi solo quelli con human_values
-    for (const [indicatorId, assessment] of Object.entries(org.assessments || {})) {
-        const hasHumanValues = assessment?.raw_data?.human_values?.length > 0;
-        if (hasHumanValues) {
-            filtered.assessments[indicatorId] = assessment;
-        }
-    }
-
-    // Ricalcola aggregati solo per assessments filtrati
-    const assessmentCount = Object.keys(filtered.assessments).length;
-    filtered.aggregates = {
-        ...org.aggregates,
-        completion: {
-            total_indicators: 100,
-            assessed_indicators: assessmentCount,
-            percentage: (assessmentCount / 100) * 100
-        }
-    };
-
-    return filtered;
+    // Ritorna tutto senza filtri - stessa logica della dashboard SOC
+    return org;
 }
 
 function renderAssessmentDetails() {
@@ -435,10 +414,9 @@ function renderProgressMatrix(org) {
             const indicatorId = `${cat}.${ind}`;
             const assessment = assessments[indicatorId];
 
-            // IMPORTANTE: Considera completato SOLO se ha human_values (auditor manuale)
-            // Ignora assessments che hanno solo soc_values (dal simulatore)
-            const hasHumanValues = assessment?.raw_data?.human_values?.length > 0;
-            const completed = !!assessment && hasHumanValues;
+            // Gli assessments sono già filtrati da filterAuditingAssessments
+            // quindi qui consideriamo solo se l'assessment esiste
+            const completed = !!assessment;
 
             let cellClass = '';
             let riskLevel = 'Not assessed';
@@ -457,7 +435,8 @@ function renderProgressMatrix(org) {
                 }
             }
 
-            const title = completed ? `${indicatorId} - ${riskLevel} (${(assessment.bayesian_score * 100).toFixed(1)}%)` : `${indicatorId} - Not assessed`;
+            const riskPercent = completed ? (assessment.bayesian_score * 100).toFixed(1) : '';
+            const title = completed ? `${indicatorId} - ${riskLevel} (${riskPercent}%)` : `${indicatorId} - Not assessed`;
             const cellStyle = isFiltered ? 'opacity: 0.3; cursor: default;' : '';
 
             const onclickHandler = isFiltered ? '' : `openIndicatorDetail('${indicatorId}', '${org.id}')`;
@@ -466,7 +445,8 @@ function renderProgressMatrix(org) {
                         title="${title}"
                         style="${cellStyle}"
                         onclick="${onclickHandler}">
-                    ${indicatorId}
+                    <div style="font-weight: 600; font-size: 11px;">${indicatorId}</div>
+                    ${completed ? `<div style="font-size: 10px; margin-top: 2px; opacity: 0.9;">${riskPercent}%</div>` : ''}
                 </div>
             `;
         }
