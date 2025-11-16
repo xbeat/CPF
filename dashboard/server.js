@@ -189,15 +189,18 @@ app.post('/api/organizations', async (req, res) => {
       notes: notes || ''
     });
 
+    console.log(`\n✅ [API] Created organization: ${id} (${name})`);
 
     // Fetch indicators if requested
     if (fetch_indicators) {
+      console.log(`📥 [API] Fetching 100 indicators for ${id}...`);
       // This will be done asynchronously - return success immediately
       fetchIndicatorsForOrganization(id, language || 'en-US').catch(err => {
         console.error(`❌ [API] Failed to fetch indicators for ${id}:`, err.message);
       });
     }
 
+    console.log('');
 
     res.status(201).json({
       success: true,
@@ -229,6 +232,7 @@ async function fetchIndicatorsForOrganization(orgId, language) {
       fetched++;
 
       if (fetched % 10 === 0) {
+        console.log(`   Progress: ${fetched}/100 indicators fetched`);
       }
 
       // Small delay to avoid rate limiting
@@ -239,6 +243,7 @@ async function fetchIndicatorsForOrganization(orgId, language) {
     }
   }
 
+  console.log(`\n✅ [API] Indicator fetch complete for ${orgId}: ${fetched} fetched, ${failed} failed\n`);
 }
 
 /**
@@ -273,6 +278,7 @@ app.put('/api/organizations/:orgId', (req, res) => {
     // Save
     dataManager.writeOrganization(orgData);
 
+    console.log(`\n✅ [API] Updated organization: ${orgId}\n`);
 
     res.json({
       success: true,
@@ -309,6 +315,7 @@ app.delete('/api/organizations/:orgId', (req, res) => {
     // Soft delete organization (moves to trash, logs audit)
     const orgData = dataManager.deleteOrganization(orgId, user);
 
+    console.log(`\n🗑️  [API] Moved to trash: ${orgId}\n`);
 
     res.json({
       success: true,
@@ -432,6 +439,7 @@ app.post('/api/organizations/:orgId/assessments', (req, res) => {
     // Save assessment (this also recalculates aggregates, saves version, and logs)
     const orgData = dataManager.saveAssessment(orgId, assessmentData, user);
 
+    console.log(`\n✅ [API] Saved assessment: ${orgId} / ${assessmentData.indicator_id}\n`);
 
     res.json({
       success: true,
@@ -470,6 +478,7 @@ app.delete('/api/organizations/:orgId/assessments/:indicatorId', (req, res) => {
     // Delete assessment (this also recalculates aggregates, saves version, and logs)
     const orgData = dataManager.deleteAssessment(orgId, indicatorId, user);
 
+    console.log(`\n🗑️  [API] Deleted assessment: ${orgId} / ${indicatorId}\n`);
 
     res.json({
       success: true,
@@ -541,6 +550,7 @@ app.post('/api/organizations/:orgId/recalculate', (req, res) => {
 
     const orgData = dataManager.recalculateAggregates(orgId);
 
+    console.log(`\n🔄 [API] Recalculated aggregates: ${orgId}\n`);
 
     res.json({
       success: true,
@@ -636,6 +646,7 @@ app.post('/api/organizations/:orgId/restore', (req, res) => {
 
     const orgData = dataManager.restoreOrganization(orgId, user);
 
+    console.log(`\n♻️  [API] Restored from trash: ${orgId}\n`);
 
     res.json({
       success: true,
@@ -672,6 +683,7 @@ app.delete('/api/organizations/:orgId/permanent', (req, res) => {
 
     const result = dataManager.permanentlyDeleteOrganization(orgId, user);
 
+    console.log(`\n🔥 [API] Permanently deleted: ${orgId}\n`);
 
     res.json({
       success: true,
@@ -696,6 +708,7 @@ app.post('/api/trash/cleanup', (req, res) => {
     const user = req.body.user || 'System';
     const result = dataManager.cleanupTrash(user);
 
+    console.log(`\n🧹 [API] Trash cleanup: ${result.deletedCount} organizations permanently deleted\n`);
 
     res.json({
       success: true,
@@ -813,6 +826,7 @@ app.post('/api/organizations/:orgId/assessments/:indicatorId/revert', (req, res)
 
     const orgData = dataManager.revertAssessment(orgId, indicatorId, parseInt(version), user || 'System');
 
+    console.log(`\n↩️  [API] Reverted assessment: ${orgId} / ${indicatorId} to version ${version}\n`);
 
     res.json({
       success: true,
@@ -855,6 +869,7 @@ app.get('/api/organizations/:orgId/export/xlsx', async (req, res) => {
     const workbook = await dataManager.generateXLSXExport(orgId, user);
     const orgData = dataManager.readOrganization(orgId);
 
+    console.log(`\n📊 [API] Generating XLSX export for: ${orgId}\n`);
 
     // Set headers for file download
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -863,6 +878,8 @@ app.get('/api/organizations/:orgId/export/xlsx', async (req, res) => {
     // Write to response
     await workbook.xlsx.write(res);
     res.end();
+
+    console.log(`\n✅ [API] XLSX export completed: ${orgId}\n`);
 
   } catch (error) {
     console.error(`[API] Error generating XLSX export for ${req.params.orgId}:`, error.message);
@@ -893,6 +910,7 @@ app.get('/api/organizations/:orgId/export/pdf', async (req, res) => {
     const doc = await dataManager.generatePDFExport(orgId, user);
     const orgData = dataManager.readOrganization(orgId);
 
+    console.log(`\n📄 [API] Generating PDF export for: ${orgId}\n`);
 
     // Set headers for file download
     res.setHeader('Content-Type', 'application/pdf');
@@ -901,6 +919,8 @@ app.get('/api/organizations/:orgId/export/pdf', async (req, res) => {
     // Pipe PDF to response
     doc.pipe(res);
     doc.end();
+
+    console.log(`\n✅ [API] PDF export completed: ${orgId}\n`);
 
   } catch (error) {
     console.error(`[API] Error generating PDF export for ${req.params.orgId}:`, error.message);
@@ -1530,7 +1550,11 @@ app.post('/api/simulator/emit', async (req, res) => {
 // ============================================
 
 server.listen(PORT, () => {
-
+  console.log('\n╔════════════════════════════════════════════════════════════╗');
+  console.log('║          🛡️  CPF Dashboard Server v2.0 - RUNNING           ║');
+  console.log('╚════════════════════════════════════════════════════════════╝\n');
+  console.log(`📡 Server listening on: http://localhost:${PORT}`);
+  console.log(`🔌 WebSocket server ready\n`);
 });
 
 // Graceful shutdown
