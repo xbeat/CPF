@@ -779,25 +779,25 @@ function generateReport() {
             ${currentData.fieldKit.sections.map((section, sIdx) => `
                 <div style="margin-bottom: 20px; page-break-inside: avoid;">
                     <div style="background: #e0e0e0; padding: 10px; margin-bottom: 10px;">
-                        <strong>${section.icon} ${section.title}</strong>
+                        <strong>${section.icon || '📋'} ${section.title}</strong>
                     </div>
-                    ${section.items.map((item, iIdx) => {
+                    ${(section.items || []).map((item, iIdx) => {
                         const itemId = `s${sIdx}_i${iIdx}`;
                         const response = currentData.responses[itemId];
                         if (item.type === 'radio-list' || item.type === 'radio-group') {
-                            const selectedOption = item.options.find(opt => opt.value === response);
+                            const selectedOption = item.options ? item.options.find(opt => opt.value === response) : null;
                             const selectedLabel = selectedOption ? selectedOption.label : 'N/A';
                             return `<div style="margin: 10px 0;">
-                                <div><strong>${item.number ? item.number + '. ' : ''}${item.title}</strong></div>
+                                <div><strong>${item.number ? item.number + '. ' : ''}${item.title || ''}</strong></div>
                                 <div style="margin-left: 20px;">→ ${selectedLabel}</div>
                             </div>`;
                         }
                         else if (item.type === 'checkbox') {
-                            return `<div style="margin: 5px 0;">${response ? '[✓]' : '[ ]'} ${item.label}</div>`;
+                            return `<div style="margin: 5px 0;">${response ? '[✓]' : '[ ]'} ${item.label || ''}</div>`;
                         }
                         else if (item.type === 'input') {
                             return `<div style="margin: 10px 0;">
-                                <strong>${item.label}:</strong><br>
+                                <strong>${item.label || ''}:</strong><br>
                                 <div style="margin-left: 20px;">${response || '_____'}</div>
                             </div>`;
                         }
@@ -805,24 +805,24 @@ function generateReport() {
                     }).join('')}
                     ${(section.subsections || []).map((sub, subIdx) => `
                         <div style="margin: 15px 0; padding-left: 10px; border-left: 3px solid #ccc;">
-                            <h3 style="font-size: 14px; margin: 10px 0;">${sub.title}</h3>
-                            ${sub.items.map((item, iIdx) => {
+                            <h3 style="font-size: 14px; margin: 10px 0;">${sub.title || ''}</h3>
+                            ${(sub.items || []).map((item, iIdx) => {
                                 const itemId = `s${sIdx}_sub${subIdx}_i${iIdx}`;
                                 const response = currentData.responses[itemId];
                                if (item.type === 'radio-list' || item.type === 'radio-group') {
-                                    const selectedOption = item.options.find(opt => opt.value === response);
+                                    const selectedOption = item.options ? item.options.find(opt => opt.value === response) : null;
                                     const selectedLabel = selectedOption ? selectedOption.label : 'N/A';
                                     return `<div style="margin: 10px 0;">
-                                        <div><strong>${item.number ? item.number + '. ' : ''}${item.title}</strong></div>
+                                        <div><strong>${item.number ? item.number + '. ' : ''}${item.title || ''}</strong></div>
                                         <div style="margin-left: 20px;">→ ${selectedLabel}</div>
                                     </div>`;
                                 }
                                 else if (item.type === 'checkbox') {
-                                    return `<div style="margin: 5px 0;">${response ? '[✓]' : '[ ]'} ${item.label}</div>`;
+                                    return `<div style="margin: 5px 0;">${response ? '[✓]' : '[ ]'} ${item.label || ''}</div>`;
                                 }
                                 else if (item.type === 'question') {
                                     let questionHTML = `<div style="margin: 15px 0;">
-                                        <div style="font-weight: bold; color: #1a1a2e; margin-bottom: 8px;">${item.text}</div>`;
+                                        <div style="font-weight: bold; color: #1a1a2e; margin-bottom: 8px;">${item.text || ''}</div>`;
                                     
                                     if (item.followups) {
                                         item.followups.forEach((followup, fIdx) => {
