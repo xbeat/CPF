@@ -448,8 +448,8 @@ function renderProgressMatrix(org) {
                         title="${title}"
                         style="${cellStyle}"
                         onclick="${onclickHandler}">
-                    <div style="font-weight: 600; font-size: 11px;">${indicatorId}</div>
-                    ${completed ? `<div style="font-size: 10px; margin-top: 2px; opacity: 0.9;">${riskPercent}%</div>` : ''}
+                    <div style="font-weight: 700; font-size: 13px;">${indicatorId}</div>
+                    ${completed ? `<div style="font-weight: 600; font-size: 16px; margin-top: 4px;">${riskPercent}%</div>` : ''}
                 </div>
             `;
         }

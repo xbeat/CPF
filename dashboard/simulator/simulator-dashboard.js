@@ -575,8 +575,8 @@ function initializeMatrix() {
             cell.className = 'matrix-cell risk-missing';
             cell.id = `cell-${indicatorId.replace('.', '-')}`;
             cell.innerHTML = `
-                <div class="cell-id" style="font-weight: 600; font-size: 11px;">${indicatorId}</div>
-                <div class="cell-value" style="font-size: 10px; margin-top: 2px; opacity: 0.9;"></div>
+                <div class="cell-id" style="font-weight: 700; font-size: 13px;">${indicatorId}</div>
+                <div class="cell-value" style="font-weight: 600; font-size: 16px; margin-top: 4px;"></div>
                 <span class="trend-indicator"></span>
             `;
             cell.title = `Indicator ${indicatorId}`;
