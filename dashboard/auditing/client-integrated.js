@@ -552,14 +552,13 @@ async function saveData() {
     if (organizationContext.orgId && currentScore) {
         try {
             await saveToAPI();
-            alert('✅ Assessment saved successfully!');
+            // No dialog - auto-save indicator already shows status
         } catch (error) {
             console.error('❌ Save to API failed:', error);
-            alert('⚠️ Saved locally, but API save failed. Check console for details.');
+            // Silent fail - user can see auto-save indicator
         }
-    } else {
-        alert('✅ Assessment saved to browser storage!');
     }
+    // No dialog for local storage save - auto-save indicator is sufficient
 }
 
 // ============================================
@@ -712,13 +711,23 @@ function generateReport() {
         alert('No assessment loaded');
         return;
     }
-    
+
     // Calculate score if not already calculated
-    if (!currentData.score) {
+    if (!currentScore || !currentScore.final_score) {
         calculateIndicatorScore();
     }
-    
-    const maturityConfig = currentData.fieldKit.scoring?.maturity_levels?.[currentScore.maturity_level];
+
+    // Check if score calculation was successful
+    if (!currentScore || currentScore.final_score === undefined) {
+        alert('Unable to calculate score. Please fill in the Quick Assessment section first.');
+        return;
+    }
+
+    const maturityConfig = currentData.fieldKit.scoring?.maturity_levels?.[currentScore.maturity_level] || {
+        color: '#888888',
+        label: 'Unknown',
+        description: 'Score calculated but maturity level not configured'
+    };
     const scorePercentage = (currentScore.final_score * 100).toFixed(1);
     
     const report = document.createElement('div');
@@ -851,16 +860,34 @@ function generateReport() {
     document.body.appendChild(report);
     const opt = {
         margin: 10,
-        filename: `cpf_${currentData.fieldKit.indicator}_${currentData.metadata.client}_${currentData.metadata.date}_SCORED.pdf`,
+        filename: `cpf_${currentData.fieldKit.indicator}_${currentData.metadata.client || 'client'}_${currentData.metadata.date}_SCORED.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, logging: false },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
-    
-    html2pdf().from(report).set(opt).save();
-    document.body.removeChild(report);
-    alert('✅ PDF generated with score analysis');
+
+    // Check if html2pdf library is loaded
+    if (typeof html2pdf === 'undefined') {
+        document.body.removeChild(report);
+        alert('❌ PDF generation library not loaded. Please check your internet connection and reload the page.');
+        return;
+    }
+
+    try {
+        html2pdf().from(report).set(opt).save().then(() => {
+            document.body.removeChild(report);
+            console.log('✅ PDF generated successfully');
+        }).catch(err => {
+            document.body.removeChild(report);
+            console.error('PDF generation error:', err);
+            alert('❌ PDF generation failed: ' + err.message);
+        });
+    } catch (error) {
+        document.body.removeChild(report);
+        console.error('PDF generation error:', error);
+        alert('❌ PDF generation failed: ' + error.message);
+    }
 }
 
 function selectRadioOption(itemId, value) {
