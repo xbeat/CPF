@@ -1151,13 +1151,14 @@ function openCategoryModal(categoryName) {
     }
 
     // Determine language based on current organization's language
-    const lang = currentOrgLanguage && currentOrgLanguage.startsWith('it') ? 'it' : 'en';
+    const lang = getCategoryLanguage(currentOrgLanguage);
     const category = categoryDescriptions.categories[categoryName][lang];
 
     // Set modal title
     document.getElementById('category-modal-title').textContent = category.name;
 
-    // Build modal body
+    // Build modal body with localized labels
+    const labels = getCategoryLabels(lang);
     const body = document.getElementById('category-modal-body');
     body.innerHTML = `
         <div style="line-height: 1.6;">
@@ -1169,14 +1170,14 @@ function openCategoryModal(categoryName) {
             </p>
 
             <h4 style="color: var(--primary); margin: 20px 0 10px 0; font-size: 16px;">
-                ${lang === 'it' ? '📌 Esempi' : '📌 Examples'}
+                ${labels.examples}
             </h4>
             <ul style="margin: 0 0 20px 0; padding-left: 20px; color: var(--text);">
                 ${category.examples.map(ex => `<li style="margin-bottom: 8px;">${ex}</li>`).join('')}
             </ul>
 
             <h4 style="color: var(--primary); margin: 20px 0 10px 0; font-size: 16px;">
-                ${lang === 'it' ? '🛡️ Mitigazione' : '🛡️ Mitigation'}
+                ${labels.mitigation}
             </h4>
             <p style="margin: 0; padding: 15px; background: #f0f9ff; border-left: 4px solid var(--primary); border-radius: 4px; color: var(--text);">
                 ${category.mitigation}
@@ -1188,6 +1189,60 @@ function openCategoryModal(categoryName) {
     const modal = document.getElementById('category-modal');
     modal.style.display = 'flex';
     window.pushModal('category-modal');
+}
+
+/**
+ * Get language code from organization language setting
+ * Supports: en, it, es, fr, de (with fallback to en)
+ */
+function getCategoryLanguage(orgLanguage) {
+    if (!orgLanguage) return 'en';
+
+    // Extract language code from locale (e.g., 'it-IT' -> 'it')
+    const langCode = orgLanguage.split('-')[0].toLowerCase();
+
+    // Check if language is available in descriptions
+    if (categoryDescriptions &&
+        categoryDescriptions.categories &&
+        Object.keys(categoryDescriptions.categories).length > 0) {
+        const firstCategory = Object.values(categoryDescriptions.categories)[0];
+        if (firstCategory[langCode]) {
+            return langCode;
+        }
+    }
+
+    // Fallback to English
+    return 'en';
+}
+
+/**
+ * Get localized labels for category modal UI elements
+ */
+function getCategoryLabels(lang) {
+    const labels = {
+        en: {
+            examples: '📌 Examples',
+            mitigation: '🛡️ Mitigation'
+        },
+        it: {
+            examples: '📌 Esempi',
+            mitigation: '🛡️ Mitigazione'
+        },
+        es: {
+            examples: '📌 Ejemplos',
+            mitigation: '🛡️ Mitigación'
+        },
+        fr: {
+            examples: '📌 Exemples',
+            mitigation: '🛡️ Atténuation'
+        },
+        de: {
+            examples: '📌 Beispiele',
+            mitigation: '🛡️ Abhilfe'
+        }
+    };
+
+    return labels[lang] || labels.en;
 }
 
 /**
