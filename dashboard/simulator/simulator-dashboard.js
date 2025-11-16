@@ -166,6 +166,12 @@ function selectOrganization(orgId) {
     document.getElementById('empty-state').style.display = 'none';
     document.getElementById('simulator-dashboard').style.display = 'block';
 
+    // Show export buttons
+    const xlsxBtn = document.getElementById('exportXLSXBtn');
+    const pdfBtn = document.getElementById('exportPDFBtn');
+    if (xlsxBtn) xlsxBtn.style.display = 'inline-flex';
+    if (pdfBtn) pdfBtn.style.display = 'inline-flex';
+
     const org = organizations.find(o => o.id === orgId);
     logEvent(`Selected organization: ${org.name}`);
 
@@ -1026,5 +1032,97 @@ async function saveOrganization(event) {
     } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Create Organization';
+    }
+}
+
+// ===== EXPORT FUNCTIONS =====
+
+/**
+ * Export current organization data to XLSX format
+ */
+async function exportCurrentOrgXLSX() {
+    if (!currentOrgId) {
+        alert('Please select an organization first');
+        return;
+    }
+
+    try {
+        const orgId = currentOrgId;
+        const url = `/api/organizations/${orgId}/export/xlsx?user=Simulator Dashboard User`;
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        // Create download link
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+
+        // Get org name for filename
+        const org = organizations.find(o => o.id === orgId);
+        const orgName = org ? org.name.replace(/[^a-zA-Z0-9]/g, '_') : orgId;
+        const date = new Date().toISOString().split('T')[0];
+        link.download = `CPF_Simulator_${orgName}_${date}.xlsx`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+
+        logEvent('XLSX export successful', 'success');
+        console.log('XLSX export successful');
+    } catch (error) {
+        console.error('Error exporting XLSX:', error);
+        logEvent(`Failed to export XLSX: ${error.message}`, 'error');
+        alert(`Failed to export XLSX: ${error.message}`);
+    }
+}
+
+/**
+ * Export current organization data to PDF format
+ */
+async function exportCurrentOrgPDF() {
+    if (!currentOrgId) {
+        alert('Please select an organization first');
+        return;
+    }
+
+    try {
+        const orgId = currentOrgId;
+        const url = `/api/organizations/${orgId}/export/pdf?user=Simulator Dashboard User`;
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        // Create download link
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+
+        // Get org name for filename
+        const org = organizations.find(o => o.id === orgId);
+        const orgName = org ? org.name.replace(/[^a-zA-Z0-9]/g, '_') : orgId;
+        const date = new Date().toISOString().split('T')[0];
+        link.download = `CPF_Simulator_${orgName}_${date}.pdf`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+
+        logEvent('PDF export successful', 'success');
+        console.log('PDF export successful');
+    } catch (error) {
+        console.error('Error exporting PDF:', error);
+        logEvent(`Failed to export PDF: ${error.message}`, 'error');
+        alert(`Failed to export PDF: ${error.message}`);
     }
 }
