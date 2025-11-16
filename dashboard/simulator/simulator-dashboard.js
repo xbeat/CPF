@@ -2,12 +2,27 @@
 let organizations = [];
 let organizationsData = null;
 let currentOrgId = null;
+let currentOrgLanguage = 'en-US'; // Default language for Quick Reference
 let socData = null; // SOC indicator values from {org-name}-soc.json
 let simulatorRunning = false;
 let mode = 'auto'; // 'auto' or 'manual'
 let statusInterval = null;
 let selectedSources = ['splunk', 'qradar', 'sentinel', 'crowdstrike'];
 let sortDirection = 'desc'; // 'asc' or 'desc'
+
+// Category mapping for GitHub URLs
+const CATEGORY_MAP = {
+    '1': 'authority',
+    '2': 'temporal',
+    '3': 'social',
+    '4': 'affective',
+    '5': 'cognitive',
+    '6': 'group',
+    '7': 'stress',
+    '8': 'unconscious',
+    '9': 'ai',
+    '10': 'convergent'
+};
 
 // Initialize on page load
 window.addEventListener('DOMContentLoaded', async () => {
@@ -173,6 +188,8 @@ function selectOrganization(orgId) {
     if (pdfBtn) pdfBtn.style.display = 'inline-flex';
 
     const org = organizations.find(o => o.id === orgId);
+    // Store organization language for Quick Reference
+    currentOrgLanguage = org.language || 'en-US';
     logEvent(`Selected organization: ${org.name}`);
 
     // Initialize CPF Matrix
@@ -585,7 +602,8 @@ function initializeMatrix() {
                 <div class="cell-value" style="font-weight: 600; font-size: 16px; margin-top: 4px;"></div>
                 <span class="trend-indicator"></span>
             `;
-            cell.title = `Indicator ${indicatorId}`;
+            cell.title = `Indicator ${indicatorId} - Click for details`;
+            cell.onclick = () => showIndicatorDetail(indicatorId);
 
             matrixContainer.appendChild(cell);
         }
@@ -709,6 +727,211 @@ function updateCell(indicatorId, assessment, trend) {
 
     cell.title = `Indicator ${indicatorId} - Risk: ${percentage}% [SOC] ${calculatedTrend ? (calculatedTrend === 'up' ? '(increasing)' : calculatedTrend === 'down' ? '(decreasing)' : '(stable)') : ''}`;
 }
+
+/**
+ * Set matrix zoom level
+ */
+function setMatrixZoom(zoomLevel) {
+    const matrixElement = document.getElementById('cpf-matrix');
+    const buttonsContainer = document.querySelector('.zoom-controls');
+
+    // Remove all zoom classes
+    matrixElement.classList.remove('zoom-100', 'zoom-75', 'zoom-50');
+
+    // Add the new zoom class
+    matrixElement.classList.add(`zoom-${zoomLevel}`);
+
+    // Update button states
+    const buttons = buttonsContainer.querySelectorAll('.zoom-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent === `${zoomLevel}%`) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Save zoom preference in localStorage
+    localStorage.setItem('matrix-zoom-simulator', zoomLevel);
+
+    logEvent(`Matrix zoom set to ${zoomLevel}%`);
+}
+
+/**
+ * Show indicator detail modal with Quick Reference
+ */
+async function showIndicatorDetail(indicatorId) {
+    const modal = document.getElementById('indicator-modal');
+    document.getElementById('modal-indicator-title').textContent = `Indicator ${indicatorId} - Quick Reference`;
+
+    const body = document.getElementById('modal-indicator-body');
+
+    // Get SOC data for this indicator
+    const socIndicator = socData?.indicators?.[indicatorId];
+
+    // Show loading state
+    body.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <div class="spinner" style="margin: 0 auto 20px;"></div>
+            <p>Loading Quick Reference from GitHub...</p>
+        </div>
+    `;
+
+    modal.style.display = 'block';
+
+    try {
+        // Construct GitHub URL using current organization language
+        const [categoryNum, indicatorNum] = indicatorId.split('.');
+        const categoryName = CATEGORY_MAP[categoryNum];
+        const url = `https://raw.githubusercontent.com/xbeat/CPF/main/auditor%20field%20kit/interactive/${currentOrgLanguage}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
+
+        console.log('Fetching Quick Reference from:', url, '(Language:', currentOrgLanguage + ')');
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: Quick Reference not found`);
+        }
+
+        const fieldKit = await response.json();
+
+        // Render SOC Data + Quick Reference
+        body.innerHTML = `
+            <div class="indicator-detail">
+                <!-- SOC Stats -->
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 15px 0; color: var(--primary);">📊 SOC Analysis</h3>
+                    ${socIndicator ? `
+                        <div class="detail-row" style="margin-bottom: 10px;">
+                            <strong>Current Risk Value:</strong>
+                            <span style="font-size: 24px; color: ${socIndicator.value > 0.66 ? 'var(--danger)' : socIndicator.value > 0.33 ? 'var(--warning)' : 'var(--success)'}">
+                                ${(socIndicator.value * 100).toFixed(1)}%
+                            </span>
+                        </div>
+                        ${socIndicator.previous_value !== null && socIndicator.previous_value !== undefined ? `
+                        <div class="detail-row" style="margin-bottom: 10px;">
+                            <strong>Previous Value:</strong> ${(socIndicator.previous_value * 100).toFixed(1)}%
+                            ${socIndicator.value > socIndicator.previous_value ? '<span style="color: var(--danger);"> ↑ Increasing</span>' :
+                              socIndicator.value < socIndicator.previous_value ? '<span style="color: var(--success);"> ↓ Decreasing</span>' :
+                              '<span style="color: var(--text-light);"> → Stable</span>'}
+                        </div>
+                        ` : ''}
+                        <div class="detail-row">
+                            <strong>Source:</strong> ${socIndicator.source || 'SIEM/SOC'}
+                        </div>
+                    ` : `
+                        <div style="color: var(--text-light);">
+                            <p>No SOC data available for this indicator</p>
+                            <p style="font-size: 0.875rem;">Start the simulator to generate SOC data</p>
+                        </div>
+                    `}
+                </div>
+
+                <!-- Quick Reference -->
+                <div>
+                    <h3 style="margin: 0 0 15px 0; color: var(--primary);">📚 Quick Reference</h3>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Title</h4>
+                        <p style="font-size: 18px; font-weight: 600;">${fieldKit.title || 'N/A'}</p>
+                        <p style="color: var(--text-light);">${fieldKit.subtitle || ''}</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Category</h4>
+                        <p>${fieldKit.category || 'N/A'}</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Description</h4>
+                        <p style="line-height: 1.6;">${fieldKit.description?.short || 'No description available'}</p>
+                    </div>
+
+                    ${fieldKit.description?.context ? `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Context</h4>
+                        <p style="line-height: 1.6;">${fieldKit.description.context}</p>
+                    </div>
+                    ` : ''}
+
+                    ${fieldKit.description?.impact ? `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Impact</h4>
+                        <p style="line-height: 1.6;">${fieldKit.description.impact}</p>
+                    </div>
+                    ` : ''}
+
+                    ${fieldKit.risk_scenarios && fieldKit.risk_scenarios.length > 0 ? `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Risk Scenarios</h4>
+                        ${fieldKit.risk_scenarios.slice(0, 3).map((scenario, idx) => `
+                            <div style="background: #fff3cd; padding: 15px; border-left: 4px solid var(--warning); margin-bottom: 10px;">
+                                <strong>${scenario.title || 'Scenario ' + (idx + 1)}</strong>
+                                <p style="margin-top: 5px;">${scenario.description || ''}</p>
+                                ${scenario.likelihood ? `<small>Likelihood: ${scenario.likelihood}</small>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
+                        <a href="${url}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                            📄 View Full Field Kit JSON on GitHub →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error('Error loading Quick Reference:', error);
+
+        // Fallback to basic info only
+        body.innerHTML = `
+            <div class="indicator-detail">
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 15px 0; color: var(--primary);">📊 SOC Analysis</h3>
+                    ${socIndicator ? `
+                        <div class="detail-row" style="margin-bottom: 10px;">
+                            <strong>Current Risk Value:</strong>
+                            <span style="font-size: 24px; color: ${socIndicator.value > 0.66 ? 'var(--danger)' : socIndicator.value > 0.33 ? 'var(--warning)' : 'var(--success)'}">
+                                ${(socIndicator.value * 100).toFixed(1)}%
+                            </span>
+                        </div>
+                        ${socIndicator.previous_value !== null && socIndicator.previous_value !== undefined ? `
+                        <div class="detail-row" style="margin-bottom: 10px;">
+                            <strong>Previous Value:</strong> ${(socIndicator.previous_value * 100).toFixed(1)}%
+                        </div>
+                        ` : ''}
+                    ` : `
+                        <div style="color: var(--text-light);">
+                            <p>No SOC data available for this indicator</p>
+                        </div>
+                    `}
+                </div>
+
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
+                    <strong>⚠️ Quick Reference Not Available</strong>
+                    <p style="margin-top: 10px;">Could not load Quick Reference from GitHub: ${error.message}</p>
+                    <p style="margin-top: 10px;">The Field Kit JSON might not exist yet for this indicator.</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Close indicator modal
+ */
+function closeIndicatorModal() {
+    document.getElementById('indicator-modal').style.display = 'none';
+}
+
+// Close modal on outside click
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('indicator-modal');
+    if (event.target === modal) {
+        closeIndicatorModal();
+    }
+});
 
 /**
  * Setup WebSocket connection for real-time updates
