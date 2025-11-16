@@ -2,6 +2,7 @@
 let organizations = [];
 let organizationsData = null;
 let currentOrgId = null;
+let socData = null; // SOC indicator values from {org-name}-soc.json
 let simulatorRunning = false;
 let mode = 'auto'; // 'auto' or 'manual'
 let statusInterval = null;
@@ -174,11 +175,36 @@ function selectOrganization(orgId) {
     // Load organization data and populate matrix
     loadOrganizationData(orgId);
 
+    // Load SOC data for matrix visualization
+    loadSocData(orgId);
+
     // Setup WebSocket for real-time updates
     setupWebSocket(orgId);
 
     // Check if simulator is running for this org
     checkSimulatorStatus();
+}
+
+async function loadSocData(orgId) {
+    try {
+        const response = await fetch(`/api/soc/${orgId}`);
+        const result = await response.json();
+
+        if (result.success) {
+            socData = result.data;
+            console.log(`✅ SOC data loaded for ${orgId}:`, socData);
+            // Re-render matrix with SOC data
+            if (organizationsData) {
+                populateMatrixWithAssessments(organizationsData.assessments || {});
+            }
+        } else {
+            console.log(`ℹ️  No SOC data found for ${orgId}`);
+            socData = null;
+        }
+    } catch (error) {
+        console.error('Error loading SOC data:', error);
+        socData = null;
+    }
 }
 
 async function loadSources() {
@@ -609,7 +635,33 @@ function updateCell(indicatorId, assessment, trend) {
     // Get trend indicator element
     const trendIndicator = cell.querySelector('.trend-indicator');
 
-    if (!assessment || assessment.bayesian_score === undefined) {
+    // PRIORITY: Check SOC data first, then fallback to assessment
+    const socIndicator = socData?.indicators?.[indicatorId];
+    let score = null;
+    let dataSource = 'none';
+    let calculatedTrend = trend;
+
+    if (socIndicator && socIndicator.value !== undefined) {
+        score = socIndicator.value;
+        dataSource = 'soc';
+
+        // Calculate trend from SOC previous_value if not provided
+        if (!calculatedTrend && socIndicator.previous_value !== null && socIndicator.previous_value !== undefined) {
+            const diff = score - socIndicator.previous_value;
+            if (diff > 0.05) {
+                calculatedTrend = 'up';
+            } else if (diff < -0.05) {
+                calculatedTrend = 'down';
+            } else {
+                calculatedTrend = 'stable';
+            }
+        }
+    } else if (assessment && assessment.bayesian_score !== undefined) {
+        score = assessment.bayesian_score;
+        dataSource = 'assessment';
+    }
+
+    if (score === null) {
         // No data
         cell.classList.add('risk-missing');
         trendIndicator.textContent = '';
@@ -617,7 +669,6 @@ function updateCell(indicatorId, assessment, trend) {
         return;
     }
 
-    const score = assessment.bayesian_score;
     const percentage = Math.round(score * 100);
 
     // Determine risk level (fixed thresholds)
@@ -633,17 +684,18 @@ function updateCell(indicatorId, assessment, trend) {
     cell.classList.add(riskClass);
 
     // Update trend indicator
-    if (trend === 'up') {
+    if (calculatedTrend === 'up') {
         trendIndicator.textContent = '↑';
         trendIndicator.className = 'trend-indicator trend-up';
-    } else if (trend === 'down') {
+    } else if (calculatedTrend === 'down') {
         trendIndicator.textContent = '↓';
         trendIndicator.className = 'trend-indicator trend-down';
     } else {
         trendIndicator.textContent = '';
     }
 
-    cell.title = `Indicator ${indicatorId} - Risk: ${percentage}% ${trend ? (trend === 'up' ? '(increasing)' : '(decreasing)') : ''}`;
+    const sourceLabel = dataSource === 'soc' ? ' [SOC]' : dataSource === 'assessment' ? ' [Manual]' : '';
+    cell.title = `Indicator ${indicatorId} - Risk: ${percentage}%${sourceLabel} ${calculatedTrend ? (calculatedTrend === 'up' ? '(increasing)' : calculatedTrend === 'down' ? '(decreasing)' : '(stable)') : ''}`;
 }
 
 /**
