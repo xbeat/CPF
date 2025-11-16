@@ -17,8 +17,10 @@ const EVENT_BASELINE = {
     '1.1': 0.70,  // Unquestioning compliance to apparent authority (high)
     '1.3': 0.65,  // Authority impersonation susceptibility (high)
     '1.5': 0.60,  // Fear-based compliance (medium-high)
+    '1.9': 0.62,  // Authority-based social proof (medium-high)
     '3.1': 0.55,  // Social reciprocity exploitation (medium)
     '3.3': 0.58,  // Social proof manipulation (medium)
+    '3.5': 0.60,  // Social commitment consistency (medium-high)
     '4.1': 0.50,  // Fear paralysis (medium if urgent language)
   },
 
@@ -421,6 +423,134 @@ const EVENT_BASELINE = {
     '5.1': 0.70,  // Information overload
     '5.3': 0.66,  // Task-switching cost
     '7.6': 0.68,  // Stress contagion
+  },
+
+  // ============================================================================
+  // EVENTI ADDIZIONALI PER COVERAGE 100%
+  // ============================================================================
+
+  // Authority crisis escalation (1.10)
+  'authority_crisis_escalation': {
+    '1.10': 0.78,  // Crisis authority escalation (high)
+    '7.1': 0.70,   // Acute stress (high)
+    '10.1': 0.65,  // Perfect storm (medium-high)
+  },
+
+  // Temporal vulnerabilities specifiche
+  'deadline_pressure_event': {
+    '2.8': 0.72,   // Time-based decision degradation (high)
+    '2.9': 0.70,   // Temporal myopia (high)
+    '2.10': 0.68,  // Time perception distortion (medium-high)
+    '5.2': 0.65,   // Decision fatigue (medium-high)
+  },
+
+  // Social influence avanzata
+  'social_network_manipulation': {
+    '3.10': 0.74,  // Network-based influence (high)
+    '6.1': 0.68,   // Groupthink (medium-high)
+    '6.2': 0.66,   // Risky shift (medium-high)
+  },
+
+  // Affective vulnerabilities specifiche
+  'emotional_exhaustion_event': {
+    '4.9': 0.76,   // Emotional resource depletion (high)
+    '4.10': 0.74,  // Affective forecasting errors (high)
+    '7.6': 0.70,   // Stress contagion (high)
+  },
+
+  // Cognitive limite
+  'cognitive_limit_reached': {
+    '5.10': 0.80,  // Ego depletion (very high)
+    '5.2': 0.75,   // Decision fatigue (high)
+    '7.1': 0.68,   // Acute stress (medium-high)
+  },
+
+  // Group dynamics avanzati (Bion's basic assumptions)
+  'group_dependency_pattern': {
+    '6.8': 0.72,   // Pairing basic assumption (high)
+    '6.9': 0.70,   // Group unconscious dynamics (high)
+    '6.10': 0.68,  // Collective shadow (medium-high)
+  },
+
+  // Stress advanced
+  'traumatic_stress_event': {
+    '7.10': 0.82,  // Post-traumatic stress patterns (very high)
+    '7.1': 0.78,   // Acute stress (high)
+    '4.1': 0.75,   // Fear paralysis (high)
+  },
+
+  // Unconscious processes avanzati
+  'unconscious_pattern_repetition': {
+    '8.9': 0.70,   // Archetypal activation (high)
+    '8.10': 0.68,  // Synchronicity phenomena (medium-high)
+    '8.3': 0.66,   // Repetition compulsion (medium-high)
+  },
+
+  // AI vulnerabilities avanzate
+  'ai_overreliance_event': {
+    '9.9': 0.76,   // AI skill atrophy (high)
+    '9.10': 0.74,  // Human-AI boundary confusion (high)
+    '9.2': 0.78,   // Automation bias (very high)
+  },
+
+  // Convergent states critici
+  'systemic_collapse_warning': {
+    '10.9': 0.88,  // Organizational immune system failure (critical)
+    '10.10': 0.90, // Total system vulnerability (critical)
+    '10.1': 0.85,  // Perfect storm (very high)
+    '7.1': 0.80,   // Acute stress (very high)
+  },
+
+  // Eventi generici per sicurezza coverage
+  'security_policy_override': {
+    '1.10': 0.70,  // Crisis escalation
+    '6.5': 0.66,   // Organizational conformity
+  },
+
+  'time_critical_decision': {
+    '2.8': 0.68,
+    '2.9': 0.66,
+    '5.2': 0.64,
+  },
+
+  'social_pressure_event': {
+    '3.10': 0.70,
+    '6.9': 0.65,
+  },
+
+  'emotional_trigger_event': {
+    '4.9': 0.72,
+    '4.10': 0.70,
+  },
+
+  'mental_exhaustion': {
+    '5.10': 0.75,
+    '7.6': 0.68,
+  },
+
+  'group_dynamics_event': {
+    '6.8': 0.68,
+    '6.10': 0.66,
+  },
+
+  'trauma_response': {
+    '7.10': 0.78,
+    '8.9': 0.65,
+  },
+
+  'archetypal_pattern': {
+    '8.9': 0.66,
+    '8.10': 0.64,
+  },
+
+  'ai_dependency': {
+    '9.9': 0.72,
+    '9.10': 0.70,
+  },
+
+  'system_wide_failure': {
+    '10.9': 0.85,
+    '10.10': 0.88,
   }
 };
 
