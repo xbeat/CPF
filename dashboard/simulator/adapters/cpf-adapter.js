@@ -5,6 +5,8 @@
  * Converte eventi di sicurezza in assessments psicologici
  */
 
+const { EVENT_BASELINE } = require('./event-baseline');
+
 class CPFAdapter {
   constructor(denseLoader) {
     this.denseLoader = denseLoader;
@@ -217,13 +219,19 @@ class CPFAdapter {
     const avgSeverity = aggregate.totalSeverity / eventCount;
     const maxSeverity = aggregate.maxSeverity;
 
+    // Estrai tipo evento (usa il primo se ci sono eventi multipli)
+    const eventType = aggregate.events[0]?.type || 'unknown';
+
     // Calcola bayesian score basato su eventi
     const bayesianScore = this.calculateBayesianScore(
       indicator,
+      indicatorId,
+      eventType,
       eventCount,
       avgSeverity,
       maxSeverity,
-      scenario
+      scenario,
+      aggregate.events // Passa gli eventi per context analysis
     );
 
     // Calcola confidence basato su numero di osservazioni
@@ -272,12 +280,26 @@ class CPFAdapter {
 
   /**
    * Calcola Bayesian score da eventi
+   * Usa baseline deterministici da EVENT_BASELINE + modulazione dinamica + context
    */
-  calculateBayesianScore(indicator, eventCount, avgSeverity, maxSeverity, scenario) {
-    // Base risk dall'indicatore
-    let score = indicator.baselineRisk;
+  calculateBayesianScore(indicator, indicatorId, eventType, eventCount, avgSeverity, maxSeverity, scenario, events = []) {
+    // 1. BASE RISK DETERMINISTICO (da EVENT_BASELINE)
+    let baseRisk = 0.5; // Fallback default
+
+    if (EVENT_BASELINE[eventType] && EVENT_BASELINE[eventType][indicatorId]) {
+      // Usa baseline deterministico specifico evento-indicatore
+      baseRisk = EVENT_BASELINE[eventType][indicatorId];
+    } else {
+      // Fallback al baseline generico della categoria (da denseLoader)
+      baseRisk = indicator.baselineRisk;
+    }
+
+    let score = baseRisk;
+
+    // 2. MODULAZIONE DINAMICA
 
     // Incrementa in base al numero di eventi (logaritmico)
+    // Formula: log10(n+1) / 2 dà 0.0 per 1 evento, 0.15 per 10 eventi, 0.25 per 100 eventi
     const eventFactor = Math.min(1.0, Math.log10(eventCount + 1) / 2);
     score += eventFactor * 0.2;
 
@@ -287,13 +309,138 @@ class CPFAdapter {
     // Incrementa in base alla severity massima
     score += maxSeverity * 0.1;
 
-    // Modifica in base allo scenario
+    // 3. BAYESIAN CONTEXT ADJUSTMENT (Dense Paper formula)
+    // P(legitimate|factors) = P(factors|legitimate)·P(legitimate) / P(factors)
+    // Factors: time_of_day, request_pattern, verification_attempted
+    const contextAdjustment = this.calculateBayesianContext(events, eventType, indicatorId);
+    score *= contextAdjustment;
+
+    // 4. SCENARIO MULTIPLIER
+    // Scenari di attacco aumentano il rischio del 30%
     if (scenario !== 'normal') {
-      score *= 1.3; // 30% increase per scenari di attacco
+      score *= 1.3;
     }
 
     // Limita tra 0 e 1
     return Math.max(0, Math.min(1, score));
+  }
+
+  /**
+   * Calcola aggiustamento Bayesiano basato sul contesto
+   * Formula Dense Paper: P(legitimate|factors) = P(factors|legitimate)·P(legitimate) / P(factors)
+   *
+   * Factors:
+   * - time_of_day: Eventi fuori orario sono più sospetti
+   * - request_pattern: Pattern insoliti aumentano rischio
+   * - verification_attempted: Verifiche riducono rischio
+   *
+   * Returns: moltiplicatore tra 0.5 (molto ridotto) e 1.5 (molto aumentato)
+   */
+  calculateBayesianContext(events, eventType, indicatorId) {
+    if (!events || events.length === 0) {
+      return 1.0; // Nessun aggiustamento se non ci sono eventi
+    }
+
+    let adjustment = 1.0;
+
+    // Usa il primo evento per estrarre il contesto
+    const event = events[0];
+
+    // FACTOR 1: Time of Day
+    // Eventi fuori orario lavorativo (18:00-08:00) sono più sospetti
+    if (event.timestamp) {
+      const hour = new Date(event.timestamp).getHours();
+      const isAfterHours = hour < 8 || hour >= 18;
+
+      if (isAfterHours) {
+        // Fuori orario aumenta rischio del 20%
+        adjustment *= 1.2;
+      } else {
+        // Orario normale riduce leggermente rischio (5%)
+        adjustment *= 0.95;
+      }
+    }
+
+    // FACTOR 2: Request Pattern
+    // Eventi ripetitivi ravvicinati indicano automazione o attacco
+    if (events.length > 1) {
+      const timestamps = events.map(e => new Date(e.timestamp).getTime());
+      const timeDeltas = [];
+
+      for (let i = 1; i < timestamps.length; i++) {
+        timeDeltas.push(timestamps[i] - timestamps[i-1]);
+      }
+
+      // Calcola deviazione standard dei delta temporali
+      const avgDelta = timeDeltas.reduce((a, b) => a + b, 0) / timeDeltas.length;
+      const variance = timeDeltas.reduce((acc, delta) =>
+        acc + Math.pow(delta - avgDelta, 2), 0) / timeDeltas.length;
+      const stdDev = Math.sqrt(variance);
+
+      // Pattern molto regolare (bassa std dev) = possibile automazione/script
+      if (stdDev < avgDelta * 0.1) { // < 10% di variazione
+        adjustment *= 1.25; // Aumenta rischio del 25%
+      }
+    }
+
+    // FACTOR 3: Verification Attempted
+    // Se evento ha metadata che indica tentativo di verifica, riduce rischio
+    if (event.metadata) {
+      const metadata = event.metadata;
+
+      // Verifica multi-fattore riduce rischio
+      if (metadata.mfa_verified || metadata.verification_attempted) {
+        adjustment *= 0.7; // Riduce rischio del 30%
+      }
+
+      // Verifica manuale/umana riduce rischio
+      if (metadata.human_verified) {
+        adjustment *= 0.6; // Riduce rischio del 40%
+      }
+
+      // Source trusted riduce rischio
+      if (metadata.trusted_source) {
+        adjustment *= 0.8; // Riduce rischio del 20%
+      }
+
+      // Source unknown/untrusted aumenta rischio
+      if (metadata.untrusted_source || metadata.unknown_source) {
+        adjustment *= 1.3; // Aumenta rischio del 30%
+      }
+    }
+
+    // FACTOR 4: User Context (se disponibile)
+    if (event.user || event.metadata?.user) {
+      const user = event.user || event.metadata.user;
+
+      // Privileged user con azione insolita = più rischioso
+      if (user.is_admin || user.is_privileged) {
+        adjustment *= 1.15; // Aumenta rischio del 15%
+      }
+
+      // New user = più sospetto
+      if (user.is_new || user.account_age_days < 30) {
+        adjustment *= 1.2; // Aumenta rischio del 20%
+      }
+    }
+
+    // FACTOR 5: Geographic Context
+    if (event.metadata?.geo) {
+      const geo = event.metadata.geo;
+
+      // Location insolita o VPN
+      if (geo.is_unusual || geo.is_vpn || geo.is_tor) {
+        adjustment *= 1.3; // Aumenta rischio del 30%
+      }
+
+      // Geo impossible travel (due login da location distanti in poco tempo)
+      if (geo.impossible_travel) {
+        adjustment *= 1.5; // Aumenta rischio del 50%
+      }
+    }
+
+    // Limita adjustment tra 0.5 e 1.5
+    return Math.max(0.5, Math.min(1.5, adjustment));
   }
 
   /**
