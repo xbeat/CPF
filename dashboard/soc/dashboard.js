@@ -381,28 +381,80 @@ async function selectOrganization(orgId) {
 
 async function loadAndRenderOrganization(orgId) {
     try {
-        // Fetch complete organization data from API
-        const response = await fetch(`/api/organizations/${orgId}`);
-        if (!response.ok) {
-            throw new Error(`Failed to load organization: ${response.status}`);
+        // Fetch SOC data (NON usare assessments di auditing)
+        const socResponse = await fetch(`/api/soc/${orgId}`);
+        if (!socResponse.ok) {
+            throw new Error(`Failed to load SOC data: ${socResponse.status}`);
         }
-        const result = await response.json();
-        const org = result.data;
+        const socResult = await socResponse.json();
 
-        renderOrganizationDetail(org);
+        if (!socResult.success) {
+            throw new Error(socResult.error || 'No SOC data available');
+        }
+
+        renderOrganizationDetail(socResult.data);
     } catch (error) {
         console.error('Error loading organization:', error);
         document.getElementById('org-detail').innerHTML = `
             <div class="error-message">
-                <h3>⚠️ Error Loading Organization</h3>
+                <h3>⚠️ Error Loading SOC Data</h3>
                 <p>${error.message}</p>
+                <p>Make sure the simulator has generated data for this organization</p>
             </div>
         `;
     }
 }
 
 /**
- * Convert API v2.0 organization format to bayesian.js expected format
+ * Convert SOC data format to bayesian.js expected format
+ * SOC format: {org_id, org_name, indicators: {indicatorId: {value, previous_value, last_updated}}}
+ * Bayesian format: {indicators: {indicatorId: {soc_values: [...], human_values: [...], current_bayesian: value}}}
+ */
+function convertSocDataForBayesian(socData) {
+    const indicators = {};
+
+    if (socData.indicators) {
+        for (const [indicatorId, socIndicator] of Object.entries(socData.indicators)) {
+            // Create soc_values array with current and previous values
+            const socValues = [];
+
+            if (socIndicator.previous_value !== null && socIndicator.previous_value !== undefined) {
+                // Add previous value (older timestamp)
+                socValues.push({
+                    timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+                    value: socIndicator.previous_value,
+                    confidence: 0.8,
+                    source: 'soc'
+                });
+            }
+
+            if (socIndicator.value !== undefined) {
+                // Add current value
+                socValues.push({
+                    timestamp: socIndicator.last_updated || new Date().toISOString(),
+                    value: socIndicator.value,
+                    confidence: 0.8,
+                    source: 'soc'
+                });
+            }
+
+            indicators[indicatorId] = {
+                soc_values: socValues,
+                human_values: [], // No human assessments in SOC data
+                current_bayesian: socIndicator.value || 0
+            };
+        }
+    }
+
+    return {
+        org_id: socData.org_id,
+        org_name: socData.org_name,
+        indicators
+    };
+}
+
+/**
+ * Convert API v2.0 organization format to bayesian.js expected format (DEPRECATED - use convertSocDataForBayesian)
  * API v2.0 has 'assessments' with bayesian_score
  * bayesian.js expects 'indicators' with current_bayesian, soc_values, human_values
  */
@@ -450,16 +502,15 @@ function convertOrgDataForBayesian(org) {
     return result;
 }
 
-function renderOrganizationDetail(org) {
-    // Save organization language for indicator detail modal
-    // Full org object has language in metadata, not at root level
-    currentOrgLanguage = org.metadata?.language || 'en-US';
+function renderOrganizationDetail(socData) {
+    // SOC data format: {org_id, org_name, indicators: {indicatorId: {value, previous_value, ...}}}
+    currentOrgLanguage = 'en-US'; // Default language (TODO: get from org metadata)
 
     // Save current org data for WebSocket updates
-    currentOrgData = org;
+    currentOrgData = socData;
 
-    // Convert API v2.0 format (assessments) to bayesian.js format (indicators)
-    const orgDataForBayesian = convertOrgDataForBayesian(org);
+    // Convert SOC format to bayesian.js format (indicators)
+    const orgDataForBayesian = convertSocDataForBayesian(socData);
 
     // Run Bayesian analysis
     const analysis = BAYESIAN.analyzeOrganization(orgDataForBayesian);

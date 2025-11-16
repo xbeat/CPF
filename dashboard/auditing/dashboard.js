@@ -406,8 +406,7 @@ function renderProgressMatrix(org) {
     const matrix = document.getElementById('progressMatrix');
     const filterDiv = document.getElementById('progressFilter');
 
-    // PRIORITY: Use SOC data if available, otherwise fallback to assessments
-    const assessments = org.assessments || {};
+    // AUDITING DASHBOARD: Usa SOLO dati SOC nella matrice (no fallback a assessments manuali)
     const socIndicators = socData?.indicators || {};
 
     // Render filter info if active
@@ -437,19 +436,13 @@ function renderProgressMatrix(org) {
         for (let ind = 1; ind <= 10; ind++) {
             const indicatorId = `${cat}.${ind}`;
 
-            // PRIORITY: Check SOC data first, then fallback to assessments
+            // AUDITING DASHBOARD: Usa SOLO dati SOC (no fallback a assessment)
             const socIndicator = socIndicators[indicatorId];
-            const assessment = assessments[indicatorId];
 
             let score = null;
-            let dataSource = 'none';
 
             if (socIndicator && socIndicator.value !== undefined) {
                 score = socIndicator.value;
-                dataSource = 'soc';
-            } else if (assessment && assessment.bayesian_score !== undefined) {
-                score = assessment.bayesian_score;
-                dataSource = 'assessment';
             }
 
             const completed = score !== null;
@@ -470,8 +463,7 @@ function renderProgressMatrix(org) {
             }
 
             const riskPercent = completed ? (score * 100).toFixed(0) : '';
-            const sourceLabel = dataSource === 'soc' ? ' [SOC]' : dataSource === 'assessment' ? ' [Manual]' : '';
-            const title = completed ? `${indicatorId} - ${riskLevel} (${riskPercent}%)${sourceLabel}` : `${indicatorId} - Not assessed`;
+            const title = completed ? `${indicatorId} - ${riskLevel} (${riskPercent}%) [SOC]` : `${indicatorId} - No SOC data`;
             const cellStyle = isFiltered ? 'opacity: 0.3; cursor: default;' : '';
 
             const onclickHandler = isFiltered ? '' : `openIndicatorDetail('${indicatorId}', '${org.id}')`;
