@@ -246,6 +246,8 @@ function updateOrganizationInIndex(orgData) {
     size: orgData.metadata.size,
     country: orgData.metadata.country,
     language: orgData.metadata.language,
+    sede_sociale: orgData.metadata.sede_sociale || '',
+    partita_iva: orgData.metadata.partita_iva || '',
     created_at: orgData.metadata.created_at,
     updated_at: orgData.metadata.updated_at,
     deleted_at: orgData.metadata.deleted_at || null,
@@ -451,7 +453,9 @@ function createOrganization(orgConfig) {
       created_at: now,
       updated_at: now,
       created_by: user,
-      notes: orgConfig.notes || ''
+      notes: orgConfig.notes || '',
+      sede_sociale: orgConfig.sede_sociale || '',
+      partita_iva: orgConfig.partita_iva || ''
     },
     assessments: {},
     aggregates: {
@@ -714,6 +718,26 @@ function saveSocIndicator(orgId, assessmentData) {
   // Write SOC file
   writeJsonFile(socFilePath, socData);
 
+  // Emit WebSocket event for real-time dashboard update
+  if (global.io) {
+    const category = indicatorId.split('.')[0];
+    const trend = previousValue !== null
+      ? (assessmentData.bayesian_score > previousValue ? 'up' : assessmentData.bayesian_score < previousValue ? 'down' : 'stable')
+      : null;
+
+    global.io.to(`org:${orgId}`).emit('indicator_update', {
+      orgId,
+      indicatorId,
+      category,
+      assessment: assessmentData,
+      previousScore: previousValue,
+      newScore: assessmentData.bayesian_score,
+      trend,
+      source: 'soc',
+      timestamp: new Date().toISOString()
+    });
+  }
+
   return socData;
 }
 
@@ -782,7 +806,10 @@ function calculateAggregates(assessments) {
 
   // Completion
   const allIndicators = generateAllIndicatorIds();
-  const assessedIndicators = Object.keys(assessments);
+  // Conta solo assessment con score > 0 (score=0 significa reset/non valutato)
+  const assessedIndicators = Object.keys(assessments).filter(id =>
+    assessments[id] && assessments[id].bayesian_score > 0
+  );
   const missingIndicators = allIndicators.filter(id => !assessedIndicators.includes(id));
 
   return {

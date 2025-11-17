@@ -2,12 +2,51 @@
 let organizations = [];
 let organizationsData = null;
 let currentOrgId = null;
+let currentOrgLanguage = 'en-US'; // Default language for Quick Reference
 let socData = null; // SOC indicator values from {org-name}-soc.json
 let simulatorRunning = false;
 let mode = 'auto'; // 'auto' or 'manual'
 let statusInterval = null;
 let selectedSources = ['splunk', 'qradar', 'sentinel', 'crowdstrike'];
 let sortDirection = 'desc'; // 'asc' or 'desc'
+
+// Category mapping for GitHub URLs
+const CATEGORY_MAP = {
+    '1': 'authority',
+    '2': 'temporal',
+    '3': 'social',
+    '4': 'affective',
+    '5': 'cognitive',
+    '6': 'group',
+    '7': 'stress',
+    '8': 'unconscious',
+    '9': 'ai',
+    '10': 'convergent'
+};
+
+// Close modals on ESC key - always close the most recently opened modal
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && window.modalStack && window.modalStack.length > 0) {
+        // Get the most recently opened modal (last in stack)
+        const topModal = window.modalStack[window.modalStack.length - 1];
+
+        // Close it based on its ID
+        switch (topModal) {
+            case 'indicator-modal':
+                closeIndicatorModal();
+                break;
+            case 'edit-org-modal':
+                closeEditOrgModal();
+                break;
+            case 'delete-org-modal':
+                closeDeleteOrgModal();
+                break;
+            case 'org-modal':
+                closeOrgModal();
+                break;
+        }
+    }
+});
 
 // Initialize on page load
 window.addEventListener('DOMContentLoaded', async () => {
@@ -166,7 +205,15 @@ function selectOrganization(orgId) {
     document.getElementById('empty-state').style.display = 'none';
     document.getElementById('simulator-dashboard').style.display = 'block';
 
+    // Show export buttons
+    const xlsxBtn = document.getElementById('exportXLSXBtn');
+    const pdfBtn = document.getElementById('exportPDFBtn');
+    if (xlsxBtn) xlsxBtn.style.display = 'inline-flex';
+    if (pdfBtn) pdfBtn.style.display = 'inline-flex';
+
     const org = organizations.find(o => o.id === orgId);
+    // Store organization language for Quick Reference
+    currentOrgLanguage = org.language || 'en-US';
     logEvent(`Selected organization: ${org.name}`);
 
     // Initialize CPF Matrix
@@ -194,16 +241,17 @@ async function loadSocData(orgId) {
             socData = result.data;
             console.log(`✅ SOC data loaded for ${orgId}:`, socData);
             // Re-render matrix with SOC data
-            if (organizationsData) {
-                populateMatrixWithAssessments(organizationsData.assessments || {});
-            }
+            updateAllCells();
         } else {
-            console.log(`ℹ️  No SOC data found for ${orgId}`);
+            console.log(`ℹ️  No SOC data found for ${orgId}:`, result.message);
             socData = null;
+            // Clear matrix since no SOC data available
+            updateAllCells();
         }
     } catch (error) {
         console.error('Error loading SOC data:', error);
         socData = null;
+        updateAllCells();
     }
 }
 
@@ -573,8 +621,13 @@ function initializeMatrix() {
             const cell = document.createElement('div');
             cell.className = 'matrix-cell risk-missing';
             cell.id = `cell-${indicatorId.replace('.', '-')}`;
-            cell.innerHTML = `${indicatorId}<span class="trend-indicator"></span>`;
-            cell.title = `Indicator ${indicatorId}`;
+            cell.innerHTML = `
+                <div class="cell-id" style="font-weight: 700; font-size: 13px;">${indicatorId}</div>
+                <div class="cell-value" style="font-weight: 600; font-size: 16px; margin-top: 4px;"></div>
+                <span class="trend-indicator"></span>
+            `;
+            cell.title = `Indicator ${indicatorId} - Click for details`;
+            cell.onclick = () => showIndicatorDetail(indicatorId);
 
             matrixContainer.appendChild(cell);
         }
@@ -656,10 +709,14 @@ function updateCell(indicatorId, assessment, trend) {
         }
     }
 
+    // Get value display element
+    const valueDiv = cell.querySelector('.cell-value');
+
     if (score === null) {
         // No SOC data available
         cell.classList.add('risk-missing');
         trendIndicator.textContent = '';
+        valueDiv.textContent = '';
         cell.title = `Indicator ${indicatorId} - No SOC data`;
         return;
     }
@@ -678,6 +735,9 @@ function updateCell(indicatorId, assessment, trend) {
 
     cell.classList.add(riskClass);
 
+    // Update percentage value display
+    valueDiv.textContent = `${percentage}%`;
+
     // Update trend indicator
     if (calculatedTrend === 'up') {
         trendIndicator.textContent = '↑';
@@ -691,6 +751,213 @@ function updateCell(indicatorId, assessment, trend) {
 
     cell.title = `Indicator ${indicatorId} - Risk: ${percentage}% [SOC] ${calculatedTrend ? (calculatedTrend === 'up' ? '(increasing)' : calculatedTrend === 'down' ? '(decreasing)' : '(stable)') : ''}`;
 }
+
+/**
+ * Set matrix zoom level
+ */
+function setMatrixZoom(zoomLevel) {
+    const matrixElement = document.getElementById('cpf-matrix');
+    const buttonsContainer = document.querySelector('.zoom-controls');
+
+    // Remove all zoom classes
+    matrixElement.classList.remove('zoom-100', 'zoom-75', 'zoom-50');
+
+    // Add the new zoom class
+    matrixElement.classList.add(`zoom-${zoomLevel}`);
+
+    // Update button states
+    const buttons = buttonsContainer.querySelectorAll('.zoom-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent === `${zoomLevel}%`) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Save zoom preference in localStorage
+    localStorage.setItem('matrix-zoom-simulator', zoomLevel);
+
+    logEvent(`Matrix zoom set to ${zoomLevel}%`);
+}
+
+/**
+ * Show indicator detail modal with Quick Reference
+ */
+async function showIndicatorDetail(indicatorId) {
+    const modal = document.getElementById('indicator-modal');
+    document.getElementById('modal-indicator-title').textContent = `Indicator ${indicatorId} - Quick Reference`;
+
+    const body = document.getElementById('modal-indicator-body');
+
+    // Get SOC data for this indicator
+    const socIndicator = socData?.indicators?.[indicatorId];
+
+    // Show loading state
+    body.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <div class="spinner" style="margin: 0 auto 20px;"></div>
+            <p>Loading Quick Reference from GitHub...</p>
+        </div>
+    `;
+
+    modal.style.display = 'block';
+    pushModal('indicator-modal');
+
+    try {
+        // Construct GitHub URL using current organization language
+        const [categoryNum, indicatorNum] = indicatorId.split('.');
+        const categoryName = CATEGORY_MAP[categoryNum];
+        const url = `https://raw.githubusercontent.com/xbeat/CPF/main/auditor%20field%20kit/interactive/${currentOrgLanguage}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
+
+        console.log('Fetching Quick Reference from:', url, '(Language:', currentOrgLanguage + ')');
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: Quick Reference not found`);
+        }
+
+        const fieldKit = await response.json();
+
+        // Render SOC Data + Quick Reference
+        body.innerHTML = `
+            <div class="indicator-detail">
+                <!-- SOC Stats -->
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 15px 0; color: var(--primary);">📊 SOC Analysis</h3>
+                    ${socIndicator ? `
+                        <div class="detail-row" style="margin-bottom: 10px;">
+                            <strong>Current Risk Value:</strong>
+                            <span style="font-size: 24px; color: ${socIndicator.value > 0.66 ? 'var(--danger)' : socIndicator.value > 0.33 ? 'var(--warning)' : 'var(--success)'}">
+                                ${(socIndicator.value * 100).toFixed(1)}%
+                            </span>
+                        </div>
+                        ${socIndicator.previous_value !== null && socIndicator.previous_value !== undefined ? `
+                        <div class="detail-row" style="margin-bottom: 10px;">
+                            <strong>Previous Value:</strong> ${(socIndicator.previous_value * 100).toFixed(1)}%
+                            ${socIndicator.value > socIndicator.previous_value ? '<span style="color: var(--danger);"> ↑ Increasing</span>' :
+                              socIndicator.value < socIndicator.previous_value ? '<span style="color: var(--success);"> ↓ Decreasing</span>' :
+                              '<span style="color: var(--text-light);"> → Stable</span>'}
+                        </div>
+                        ` : ''}
+                        <div class="detail-row">
+                            <strong>Source:</strong> ${socIndicator.source || 'SIEM/SOC'}
+                        </div>
+                    ` : `
+                        <div style="color: var(--text-light);">
+                            <p>No SOC data available for this indicator</p>
+                            <p style="font-size: 0.875rem;">Start the simulator to generate SOC data</p>
+                        </div>
+                    `}
+                </div>
+
+                <!-- Quick Reference -->
+                <div>
+                    <h3 style="margin: 0 0 15px 0; color: var(--primary);">📚 Quick Reference</h3>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Title</h4>
+                        <p style="font-size: 18px; font-weight: 600;">${fieldKit.title || 'N/A'}</p>
+                        <p style="color: var(--text-light);">${fieldKit.subtitle || ''}</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Category</h4>
+                        <p>${fieldKit.category || 'N/A'}</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Description</h4>
+                        <p style="line-height: 1.6;">${fieldKit.description?.short || 'No description available'}</p>
+                    </div>
+
+                    ${fieldKit.description?.context ? `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Context</h4>
+                        <p style="line-height: 1.6;">${fieldKit.description.context}</p>
+                    </div>
+                    ` : ''}
+
+                    ${fieldKit.description?.impact ? `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Impact</h4>
+                        <p style="line-height: 1.6;">${fieldKit.description.impact}</p>
+                    </div>
+                    ` : ''}
+
+                    ${fieldKit.risk_scenarios && fieldKit.risk_scenarios.length > 0 ? `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 10px;">Risk Scenarios</h4>
+                        ${fieldKit.risk_scenarios.slice(0, 3).map((scenario, idx) => `
+                            <div style="background: #fff3cd; padding: 15px; border-left: 4px solid var(--warning); margin-bottom: 10px;">
+                                <strong>${scenario.title || 'Scenario ' + (idx + 1)}</strong>
+                                <p style="margin-top: 5px;">${scenario.description || ''}</p>
+                                ${scenario.likelihood ? `<small>Likelihood: ${scenario.likelihood}</small>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    ` : ''}
+
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
+                        <a href="${url}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                            📄 View Full Field Kit JSON on GitHub →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error('Error loading Quick Reference:', error);
+
+        // Fallback to basic info only
+        body.innerHTML = `
+            <div class="indicator-detail">
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 15px 0; color: var(--primary);">📊 SOC Analysis</h3>
+                    ${socIndicator ? `
+                        <div class="detail-row" style="margin-bottom: 10px;">
+                            <strong>Current Risk Value:</strong>
+                            <span style="font-size: 24px; color: ${socIndicator.value > 0.66 ? 'var(--danger)' : socIndicator.value > 0.33 ? 'var(--warning)' : 'var(--success)'}">
+                                ${(socIndicator.value * 100).toFixed(1)}%
+                            </span>
+                        </div>
+                        ${socIndicator.previous_value !== null && socIndicator.previous_value !== undefined ? `
+                        <div class="detail-row" style="margin-bottom: 10px;">
+                            <strong>Previous Value:</strong> ${(socIndicator.previous_value * 100).toFixed(1)}%
+                        </div>
+                        ` : ''}
+                    ` : `
+                        <div style="color: var(--text-light);">
+                            <p>No SOC data available for this indicator</p>
+                        </div>
+                    `}
+                </div>
+
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
+                    <strong>⚠️ Quick Reference Not Available</strong>
+                    <p style="margin-top: 10px;">Could not load Quick Reference from GitHub: ${error.message}</p>
+                    <p style="margin-top: 10px;">The Field Kit JSON might not exist yet for this indicator.</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Close indicator modal
+ */
+function closeIndicatorModal() {
+    document.getElementById('indicator-modal').style.display = 'none';
+    popModal('indicator-modal');
+}
+
+// Close modal on outside click
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('indicator-modal');
+    if (event.target === modal) {
+        closeIndicatorModal();
+    }
+});
 
 /**
  * Setup WebSocket connection for real-time updates
@@ -715,8 +982,8 @@ function setupWebSocket(orgId) {
 
     socket.on('indicator_update', (data) => {
         if (data.orgId === currentOrgId) {
-            matrixData[data.indicatorId] = data.assessment;
-            updateCell(data.indicatorId, data.assessment, data.trend);
+            // Reload SOC data to get latest values
+            loadSocData(currentOrgId);
             logEvent(`${data.indicatorId}: ${Math.round(data.newScore * 100)}% ${data.trend === 'up' ? '↑' : data.trend === 'down' ? '↓' : ''}`);
         }
     });
@@ -840,13 +1107,17 @@ function editOrganization(orgId) {
     document.getElementById('edit-org-size').value = org.size;
     document.getElementById('edit-org-country').value = org.country;
     document.getElementById('edit-org-language').value = org.language;
+    document.getElementById('edit-org-sede-sociale').value = org.sede_sociale || '';
+    document.getElementById('edit-org-partita-iva').value = org.partita_iva || '';
 
     document.getElementById('edit-org-modal').style.display = 'block';
+    pushModal('edit-org-modal');
 }
 
 function closeEditOrgModal() {
     document.getElementById('edit-org-modal').style.display = 'none';
     editingOrgId = null;
+    popModal('edit-org-modal');
 }
 
 async function saveOrganizationEdit(event) {
@@ -859,7 +1130,9 @@ async function saveOrganizationEdit(event) {
         industry: document.getElementById('edit-org-industry').value,
         size: document.getElementById('edit-org-size').value,
         country: document.getElementById('edit-org-country').value.trim().toUpperCase(),
-        language: document.getElementById('edit-org-language').value
+        language: document.getElementById('edit-org-language').value,
+        sede_sociale: document.getElementById('edit-org-sede-sociale').value.trim(),
+        partita_iva: document.getElementById('edit-org-partita-iva').value.trim()
     };
 
     try {
@@ -888,11 +1161,13 @@ function deleteOrganization(orgId, orgName) {
     deletingOrgId = orgId;
     document.getElementById('delete-org-name').textContent = orgName;
     document.getElementById('delete-org-modal').style.display = 'block';
+    pushModal('delete-org-modal');
 }
 
 function closeDeleteOrgModal() {
     document.getElementById('delete-org-modal').style.display = 'none';
     deletingOrgId = null;
+    popModal('delete-org-modal');
 }
 
 async function confirmDeleteOrganization() {
@@ -932,3 +1207,351 @@ setInterval(async () => {
         await loadOrganizations();
     }
 }, 30000);
+
+// ============================================================================
+// CREATE ORGANIZATION FUNCTIONS
+// ============================================================================
+
+/**
+ * Open the create organization modal
+ */
+function openCreateOrgModal() {
+    document.getElementById('org-modal-title').textContent = 'Create New Organization';
+    document.getElementById('org-form').reset();
+    document.getElementById('org-id-input').disabled = false;
+    document.getElementById('save-org-btn').textContent = 'Create Organization';
+    document.getElementById('org-modal').style.display = 'flex';
+    pushModal('org-modal');
+}
+
+/**
+ * Close the organization modal
+ */
+function closeOrgModal() {
+    document.getElementById('org-modal').style.display = 'none';
+    popModal('org-modal');
+}
+
+/**
+ * Save new organization
+ */
+async function saveOrganization(event) {
+    event.preventDefault();
+
+    const orgId = document.getElementById('org-id-input').value.trim();
+    const orgName = document.getElementById('org-name-input').value.trim();
+    const industry = document.getElementById('org-industry-input').value;
+    const size = document.getElementById('org-size-input').value;
+    const country = document.getElementById('org-country-input').value.toUpperCase();
+    const language = document.getElementById('org-language-input').value;
+    const sedeSociale = document.getElementById('org-sede-sociale-input').value.trim();
+    const partitaIva = document.getElementById('org-partita-iva-input').value.trim();
+    const notes = document.getElementById('org-notes-input').value.trim();
+
+    // Validate org ID format
+    if (!/^org-[a-z0-9-]+$/.test(orgId)) {
+        alert('Organization ID must follow format: org-yourname-001 (lowercase, hyphens allowed)');
+        return;
+    }
+
+    const saveBtn = document.getElementById('save-org-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Creating...';
+
+    try {
+        const response = await fetch('/api/organizations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: orgId,
+                name: orgName,
+                industry: industry,
+                size: size,
+                country: country,
+                language: language,
+                sede_sociale: sedeSociale,
+                partita_iva: partitaIva,
+                notes: notes
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || `HTTP ${response.status}`);
+        }
+
+        const newOrg = await response.json();
+        console.log('Created organization:', newOrg);
+
+        // Refresh organizations list
+        await loadOrganizations();
+
+        closeOrgModal();
+        logEvent(`Organization "${orgName}" created successfully!`, 'success');
+
+    } catch (error) {
+        console.error('Error creating organization:', error);
+        alert(`Failed to create organization: ${error.message}`);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Create Organization';
+    }
+}
+
+// ===== EXPORT FUNCTIONS =====
+
+/**
+ * Export current organization data to XLSX format
+ */
+async function exportCurrentOrgXLSX() {
+    if (!currentOrgId) {
+        alert('Please select an organization first');
+        return;
+    }
+
+    try {
+        const orgId = currentOrgId;
+        const url = `/api/organizations/${orgId}/export/xlsx?user=Simulator Dashboard User`;
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        // Create download link
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+
+        // Get org name for filename
+        const org = organizations.find(o => o.id === orgId);
+        const orgName = org ? org.name.replace(/[^a-zA-Z0-9]/g, '_') : orgId;
+        const date = new Date().toISOString().split('T')[0];
+        link.download = `CPF_Simulator_${orgName}_${date}.xlsx`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+
+        logEvent('XLSX export successful', 'success');
+        console.log('XLSX export successful');
+    } catch (error) {
+        console.error('Error exporting XLSX:', error);
+        logEvent(`Failed to export XLSX: ${error.message}`, 'error');
+        alert(`Failed to export XLSX: ${error.message}`);
+    }
+}
+
+/**
+ * Export current organization data to PDF format
+ */
+async function exportCurrentOrgPDF() {
+    if (!currentOrgId) {
+        alert('Please select an organization first');
+        return;
+    }
+
+    try {
+        const orgId = currentOrgId;
+        const url = `/api/organizations/${orgId}/export/pdf?user=Simulator Dashboard User`;
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        // Create download link
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+
+        // Get org name for filename
+        const org = organizations.find(o => o.id === orgId);
+        const orgName = org ? org.name.replace(/[^a-zA-Z0-9]/g, '_') : orgId;
+        const date = new Date().toISOString().split('T')[0];
+        link.download = `CPF_Simulator_${orgName}_${date}.pdf`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+
+        logEvent('PDF export successful', 'success');
+        console.log('PDF export successful');
+    } catch (error) {
+        console.error('Error exporting PDF:', error);
+        logEvent(`Failed to export PDF: ${error.message}`, 'error');
+        alert(`Failed to export PDF: ${error.message}`);
+    }
+}
+
+// ===== TRASH & RESTORE FUNCTIONS =====
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+async function loadTrashCount() {
+    try {
+        const response = await fetch('/api/trash');
+        const data = await response.json();
+
+        if (data.success) {
+            const count = data.count;
+            const badge = document.getElementById('trashCount');
+
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                    badge.style.marginLeft = '5px';
+                    badge.style.background = 'var(--danger)';
+                    badge.style.color = 'white';
+                    badge.style.padding = '2px 8px';
+                    badge.style.borderRadius = '12px';
+                    badge.style.fontSize = '11px';
+                    badge.style.fontWeight = '600';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error loading trash count:', error);
+    }
+}
+
+async function openTrashModal() {
+    document.getElementById('trashModal').style.display = 'flex';
+
+    try {
+        const response = await fetch('/api/trash');
+        const data = await response.json();
+
+        if (!data.success || data.count === 0) {
+            document.getElementById('trashContent').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🗑️</div>
+                    <div class="empty-state-title">Trash is Empty</div>
+                    <div class="empty-state-text">No deleted organizations</div>
+                </div>
+            `;
+            return;
+        }
+
+        // Render trash items
+        let html = '<div style="padding: 20px;">';
+        html += '<p style="color: var(--text-light); font-size: 14px; margin-bottom: 20px;">Organizations will be automatically deleted after 30 days</p>';
+
+        data.organizations.forEach(org => {
+            const daysLeft = org.days_until_permanent_delete;
+            const warningClass = daysLeft <= 5 ? 'var(--danger)' : 'var(--text-light)';
+
+            html += `
+                <div style="background: var(--bg-gray); border: 2px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 8px 0; color: var(--primary);">${escapeHtml(org.name)}</h4>
+                            <div style="font-size: 13px; color: var(--text-light);">
+                                <div>ID: <code>${escapeHtml(org.id)}</code></div>
+                                <div>Industry: ${escapeHtml(org.industry)}</div>
+                                <div>Assessments: ${org.stats.total_assessments}/100</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 12px; color: ${warningClass}; font-weight: 600; margin-bottom: 10px;">
+                                ${daysLeft > 0 ? `${daysLeft} days left` : 'Expires today'}
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-primary btn-small" onclick="restoreFromTrash('${escapeHtml(org.id)}')" style="padding: 6px 12px; font-size: 12px;">
+                                    Restore
+                                </button>
+                                <button class="btn btn-danger btn-small" onclick="permanentDeleteOrg('${escapeHtml(org.id)}', '${escapeHtml(org.name)}')" style="padding: 6px 12px; font-size: 12px;">
+                                    Delete Forever
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-light); padding-top: 12px; border-top: 1px solid var(--border);">
+                        Deleted: ${new Date(org.deleted_at).toLocaleString()}
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        document.getElementById('trashContent').innerHTML = html;
+
+    } catch (error) {
+        console.error('Error loading trash:', error);
+        alert('Failed to load trash');
+    }
+}
+
+function closeTrashModal() {
+    document.getElementById('trashModal').style.display = 'none';
+}
+
+async function restoreFromTrash(orgId) {
+    if (!confirm('Restore this organization?')) return;
+
+    try {
+        const response = await fetch(`/api/organizations/${orgId}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: 'Dashboard User' })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            logEvent('Organization restored successfully!', 'success');
+            closeTrashModal();
+            await loadOrganizations();
+            await loadTrashCount();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error restoring organization:', error);
+        alert(`Failed to restore: ${error.message}`);
+    }
+}
+
+async function permanentDeleteOrg(orgId, orgName) {
+    if (!confirm(`PERMANENTLY DELETE "${orgName}"?\n\nThis action CANNOT be undone!\n\nAll assessment data will be lost forever.`)) return;
+
+    // Double confirmation
+    if (!confirm(`Are you absolutely sure? This will permanently delete "${orgName}".`)) return;
+
+    try {
+        const response = await fetch(`/api/organizations/${orgId}/permanent?user=Dashboard%20User`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            logEvent('Organization permanently deleted', 'success');
+            closeTrashModal();
+            await loadTrashCount();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error permanently deleting organization:', error);
+        alert(`Failed to delete: ${error.message}`);
+    }
+}
+
+// Load trash count on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadTrashCount();
+});

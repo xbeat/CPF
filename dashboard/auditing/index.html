@@ -15,7 +15,7 @@
     <div class="dashboard-container">
         <!-- Header -->
         <div class="dashboard-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%) !important;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div>
                     <a href="../index.html" style="display: inline-block; color: white; text-decoration: none; opacity: 0.9; margin-bottom: 10px; font-size: 14px; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">
                         ← Back to Dashboard
@@ -23,14 +23,51 @@
                     <h1 style="font-size: 32px; font-weight: 300; color: white; margin-bottom: 5px;">🛡️ CPF Auditing Dashboard <span style="font-size: 0.6em; opacity: 0.85;">v2.0</span></h1>
                     <p class="subtitle">Organizations & Assessment Progress</p>
                 </div>
-                <!-- Open Button (shown when sidebar is hidden) -->
-                <button class="sidebar-open-btn" id="sidebarOpenBtn" onclick="openSidebar()" title="Show organizations">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="7" height="18"></rect>
-                        <rect x="14" y="3" width="7" height="18"></rect>
-                    </svg>
-                    Organizations
-                </button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <!-- Open Button (shown when sidebar is hidden) -->
+                    <button class="sidebar-open-btn" id="sidebarOpenBtn" onclick="openSidebar()" title="Show organizations">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="18"></rect>
+                            <rect x="14" y="3" width="7" height="18"></rect>
+                        </svg>
+                        Organizations
+                    </button>
+                    <button class="sidebar-open-btn" onclick="openCreateOrgModal()" title="Create new organization" style="display: inline-flex;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        New Organization
+                    </button>
+                    <button class="sidebar-open-btn" id="trashBtn" onclick="openTrashModal()" title="View deleted organizations" style="display: inline-flex;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        Deleted Items
+                        <span id="trashCount" style="display: none;"></span>
+                    </button>
+                    <button class="sidebar-open-btn" id="exportXLSXBtn" onclick="exportCurrentOrgXLSX()" title="Export to Excel" style="display: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="9" y1="21" x2="9" y2="9"></line>
+                        </svg>
+                        Export Excel
+                    </button>
+                    <button class="sidebar-open-btn" id="exportPDFBtn" onclick="exportCurrentOrgPDF()" title="Export to PDF" style="display: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        Export PDF
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -90,6 +127,13 @@
             <div class="main-content">
                 <!-- Alert Container -->
                 <div id="alertContainer"></div>
+
+                <!-- Empty State (shown when no org selected) -->
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-state-icon">🛡️</div>
+                    <h2 class="empty-state-title">Welcome to CPF Auditing Dashboard</h2>
+                    <p class="empty-state-text">Select an organization from the sidebar to view assessment progress and risk analysis</p>
+                </div>
 
                 <!-- Assessment Details (shown when org selected) -->
                 <div id="assessmentSection" class="hidden">
@@ -377,6 +421,16 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label class="form-label">Sede Sociale</label>
+                    <input type="text" id="orgSedeSociale" class="form-input" placeholder="Via Roma 1, 00100 Roma (RM)">
+                    <div class="form-helper">Indirizzo della sede legale dell'azienda</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Partita IVA</label>
+                    <input type="text" id="orgPartitaIva" class="form-input" placeholder="IT12345678901">
+                    <div class="form-helper">Numero di Partita IVA (es. IT12345678901)</div>
+                </div>
+                <div class="form-group">
                     <label class="form-label">Notes</label>
                     <textarea id="orgNotes" class="form-textarea" placeholder="Additional notes about this organization..."></textarea>
                 </div>
@@ -409,10 +463,10 @@
                 <button class="close-btn" onclick="closeDeleteModal()">×</button>
             </div>
             <p>Are you sure you want to delete <strong id="deleteOrgName"></strong>?</p>
-            <p style="color: var(--danger); font-size: 14px;">This action cannot be undone. All assessment data will be permanently deleted.</p>
+            <p style="color: var(--warning); font-size: 14px;">The organization will be moved to the trash and can be restored within 30 days. After 30 days, it will be permanently deleted.</p>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
-                <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete Organization</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">Move to Trash</button>
             </div>
         </div>
     </div>
@@ -494,6 +548,20 @@
             </div><!-- End Main Content -->
         </div><!-- End Dashboard Main -->
     </div><!-- End Dashboard Container -->
+
+    <!-- Category Description Modal -->
+    <div id="category-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="category-modal-title">Category</h3>
+                <span class="modal-close" onclick="closeCategoryModal()">&times;</span>
+            </div>
+            <div id="category-modal-body" style="padding: 20px;">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
     <!-- Shared UI utilities (must load before dashboard.js) -->
     <script src="../shared/ui-utils.js"></script>
     <script defer src="client-integrated.js"></script>
