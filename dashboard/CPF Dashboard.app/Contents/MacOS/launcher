@@ -64,16 +64,24 @@ fi
 # Kill any existing instance on port 3000
 /usr/bin/lsof -ti:3000 2>/dev/null | /usr/bin/xargs kill -9 2>/dev/null || true
 
+# Detect npm path - check common locations
+NPM_PATH=""
+for p in /usr/local/bin/npm /opt/homebrew/bin/npm "$HOME/.nvm/versions/node/"*/bin/npm; do
+    if [[ -x "$p" ]]; then
+        NPM_PATH="$(dirname "$p")"
+        break
+    fi
+done
+
 # Open Terminal and run start.sh
 osascript <<EOF
 tell application "Terminal"
     activate
-    do script "cd '$DASHBOARD_DIR' && export PATH='/usr/local/bin:/opt/homebrew/bin:\$PATH' && if [ ! -d node_modules ]; then npm install; fi && /bin/bash start.sh; exit"
+    do script "cd '$DASHBOARD_DIR' && export PATH='$NPM_PATH:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:\$PATH' && if [ ! -d node_modules ]; then npm install; fi && /bin/bash start.sh"
 end tell
 EOF
 
 # Keep this process alive so the app stays in the Dock
 # Press Cmd+Q on the app icon to quit, or close the Terminal window
-while true; do
-    /bin/sleep 3600
-done
+# Use caffeinate to prevent the app from being terminated
+exec /usr/bin/caffeinate -i -w $$
