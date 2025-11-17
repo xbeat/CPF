@@ -802,7 +802,10 @@ function calculateAggregates(assessments) {
 
   // Completion
   const allIndicators = generateAllIndicatorIds();
-  const assessedIndicators = Object.keys(assessments);
+  // Conta solo assessment con score > 0 (score=0 significa reset/non valutato)
+  const assessedIndicators = Object.keys(assessments).filter(id =>
+    assessments[id] && assessments[id].bayesian_score > 0
+  );
   const missingIndicators = allIndicators.filter(id => !assessedIndicators.includes(id));
 
   return {
