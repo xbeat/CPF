@@ -2417,27 +2417,44 @@ function getMaturityLevel(score) {
 
 // Reset Assessment - Clears form and saves empty values
 async function resetCompileForm() {
-    if (!currentIndicatorId || !selectedOrganization) {
+    // Use selectedIndicatorId and selectedOrgId for integrated form
+    const indicatorId = selectedIndicatorId || currentIndicatorId;
+    const orgId = selectedOrgId || selectedOrganization;
+
+    if (!indicatorId || !orgId) {
+        console.warn('Reset: No indicator or organization selected');
         return;
     }
 
-    // Single confirm dialog
-    if (!confirm('Reset this assessment?')) {
+    // Show confirmation dialog
+    if (!confirm('⚠️ Reset this assessment?\n\nThis will clear all form data and save an empty assessment. This action cannot be undone.')) {
         return;
     }
 
-    // Clear all form inputs
-    const formContent = document.getElementById('compileFormContent');
-    if (formContent) {
-        const inputs = formContent.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            if (input.type === 'checkbox' || input.type === 'radio') {
-                input.checked = false;
-            } else {
-                input.value = '';
-            }
-        });
-    }
+    console.log('🗑️ Resetting assessment:', { indicatorId, orgId });
+
+    // Clear all form inputs in both possible containers
+    const containers = [
+        document.getElementById('compileFormContent'),
+        document.getElementById('indicatorModalContent'),
+        document.getElementById('content')
+    ];
+
+    containers.forEach(container => {
+        if (container) {
+            const inputs = container.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                    input.checked = false;
+                    // Also remove visual feedback
+                    const parent = input.closest('.checkbox-item');
+                    if (parent) parent.classList.remove('checked');
+                } else if (input.type !== 'hidden') {
+                    input.value = '';
+                }
+            });
+        }
+    });
 
     // Reset metadata fields
     const assessorField = document.getElementById('compile-assessor');
@@ -2453,11 +2470,13 @@ async function resetCompileForm() {
         window.CPFClient.currentData.metadata = {
             date: new Date().toISOString().split('T')[0],
             auditor: '',
-            client: '',
+            client: selectedOrgData?.name || '',
             status: 'in-progress',
             notes: ''
         };
         window.CPFClient.currentData.score = null;
+
+        console.log('✅ CPFClient data reset');
     }
 
     // Hide score displays
@@ -2465,14 +2484,19 @@ async function resetCompileForm() {
     if (scoreDisplay) scoreDisplay.style.display = 'none';
     const scoreBar = document.getElementById('score-bar');
     if (scoreBar) scoreBar.style.display = 'none';
+    const scoreSummary = document.getElementById('score-summary-section');
+    if (scoreSummary) scoreSummary.style.display = 'none';
 
-    // Save empty assessment
+    // Get indicator data from CPFClient if available
+    const indicatorData = window.CPFClient?.currentData?.fieldKit || currentIndicatorData;
+
+    // Save empty assessment to API
     const emptyAssessment = {
-        indicator_id: currentIndicatorId,
-        title: currentIndicatorData?.title || '',
-        category: currentIndicatorData?.category || '',
+        indicator_id: indicatorId,
+        title: indicatorData?.title || '',
+        category: indicatorData?.category || '',
         bayesian_score: 0,
-        confidence: 0.7,
+        confidence: 0.5,
         maturity_level: 'green',
         assessor: '',
         assessment_date: new Date().toISOString(),
@@ -2480,24 +2504,49 @@ async function resetCompileForm() {
             quick_assessment: {},
             client_conversation: {
                 responses: {},
-                notes: ''
+                scores: null,
+                metadata: {
+                    date: new Date().toISOString().split('T')[0],
+                    auditor: '',
+                    client: selectedOrgData?.name || '',
+                    status: 'in-progress',
+                    notes: ''
+                },
+                notes: '',
+                red_flags: []
             }
         }
     };
 
     try {
-        await fetch(`/api/organizations/${selectedOrganization}/assessments`, {
+        console.log('💾 Saving empty assessment to API...');
+        const response = await fetch(`/api/organizations/${orgId}/assessments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(emptyAssessment)
         });
 
-        // Refresh matrix
-        if (selectedOrgData) {
-            await loadOrganizationDetails(selectedOrganization);
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('✅ Empty assessment saved successfully');
+            showAlert('Assessment reset successfully!', 'success');
+
+            // Refresh organization data to update matrix
+            if (selectedOrgData) {
+                await loadOrganizationDetails(orgId);
+            }
+
+            // Recalculate score to update UI
+            if (window.CPFClient && typeof window.CPFClient.calculateIndicatorScore === 'function') {
+                window.CPFClient.calculateIndicatorScore();
+            }
+        } else {
+            throw new Error(result.error || 'Failed to save');
         }
     } catch (error) {
-        console.error('Error saving reset:', error);
+        console.error('❌ Error saving reset:', error);
+        showAlert('Failed to reset assessment: ' + error.message, 'error');
     }
 }
 
