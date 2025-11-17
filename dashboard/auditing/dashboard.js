@@ -298,6 +298,10 @@ function selectOrganization(orgId) {
     selectedOrgId = orgId;
     renderOrganizations();
     loadOrganizationDetails(orgId);
+
+    // Hide empty state and show assessment section
+    const emptyState = document.getElementById('emptyState');
+    if (emptyState) emptyState.style.display = 'none';
     document.getElementById('assessmentSection').classList.remove('hidden');
 
     // Show export buttons (if they exist)
@@ -2226,6 +2230,8 @@ async function confirmDelete() {
                 selectedOrgId = null;
                 selectedOrgData = null;
                 document.getElementById('assessmentSection').classList.add('hidden');
+                const emptyState = document.getElementById('emptyState');
+                if (emptyState) emptyState.style.display = 'block';
             }
 
             await loadAllData();
