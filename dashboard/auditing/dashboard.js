@@ -351,15 +351,17 @@ function renderProgressSummary(org) {
     const el = document.getElementById('progressSummary');
     const completion = org.aggregates.completion.percentage;
     const assessed = org.aggregates.completion.assessed_indicators;
+    const lang = getCategoryLanguage(currentOrgLanguage);
+    const t = getTranslations(lang);
 
     el.innerHTML = `
         <div style="display: flex; gap: 30px; align-items: center; margin-top: 10px;">
             <div>
-                <span style="font-size: 14px; color: var(--text-light);">Completion:</span>
+                <span style="font-size: 14px; color: var(--text-light);">${t.completion}</span>
                 <span style="font-size: 24px; font-weight: 700; color: var(--primary); margin-left: 10px;">${completion}%</span>
             </div>
             <div>
-                <span style="font-size: 14px; color: var(--text-light);">Assessed:</span>
+                <span style="font-size: 14px; color: var(--text-light);">${t.assessed}</span>
                 <span style="font-size: 24px; font-weight: 700; color: var(--primary); margin-left: 10px;">${assessed}/100</span>
             </div>
             <div style="flex: 1;">
@@ -376,16 +378,18 @@ function renderRiskSummary(org) {
     const risk = org.aggregates.overall_risk;
     const riskPercent = (risk * 100).toFixed(1);
     const riskClass = risk < 0.3 ? 'risk-low' : risk < 0.7 ? 'risk-medium' : 'risk-high';
-    const riskLabel = risk < 0.3 ? '🟢 Low Risk' : risk < 0.7 ? '🟡 Medium Risk' : '🔴 High Risk';
+    const lang = getCategoryLanguage(currentOrgLanguage);
+    const t = getTranslations(lang);
+    const riskLabel = risk < 0.3 ? t.lowRisk : risk < 0.7 ? t.mediumRisk : t.highRisk;
 
     el.innerHTML = `
         <div style="display: flex; gap: 30px; align-items: center; margin-top: 10px;">
             <div>
-                <span style="font-size: 14px; color: var(--text-light);">Overall Risk:</span>
+                <span style="font-size: 14px; color: var(--text-light);">${t.overallRisk}</span>
                 <span style="font-size: 24px; font-weight: 700; margin-left: 10px;" class="${riskClass}">${riskLabel}</span>
             </div>
             <div>
-                <span style="font-size: 14px; color: var(--text-light);">Risk Score:</span>
+                <span style="font-size: 14px; color: var(--text-light);">${t.riskScore}</span>
                 <span style="font-size: 24px; font-weight: 700; color: var(--primary); margin-left: 10px;">${riskPercent}%</span>
             </div>
             <div style="flex: 1;">
@@ -403,6 +407,8 @@ function renderProgressMatrix(org) {
 
     // AUDITING DASHBOARD: Usa SOLO assessments manuali (valutazioni dell'auditor umano)
     const assessments = org.assessments || {};
+    const lang = getCategoryLanguage(currentOrgLanguage);
+    const t = getTranslations(lang);
 
     // Render filter info if active
     if (categoryFilter) {
@@ -444,7 +450,7 @@ function renderProgressMatrix(org) {
             const completed = hasScore && (hasResponses || assessment.bayesian_score > 0);
 
             let cellClass = '';
-            let riskLevel = 'Not assessed';
+            let riskLevel = t.notAssessed;
             let score = null;
 
             if (completed) {
@@ -453,18 +459,18 @@ function renderProgressMatrix(org) {
                 // Score 0 = Low Risk (green), not empty!
                 if (score <= 0.33) {
                     cellClass = 'risk-low';
-                    riskLevel = 'Low Risk';
+                    riskLevel = t.lowRisk;
                 } else if (score <= 0.66) {
                     cellClass = 'risk-medium';
-                    riskLevel = 'Medium Risk';
+                    riskLevel = t.mediumRisk;
                 } else {
                     cellClass = 'risk-high';
-                    riskLevel = 'High Risk';
+                    riskLevel = t.highRisk;
                 }
             }
 
             const riskPercent = completed ? (score * 100).toFixed(0) : '';
-            const title = completed ? `${indicatorId} - ${riskLevel} (${riskPercent}%)` : `${indicatorId} - Not assessed`;
+            const title = completed ? `${indicatorId} - ${riskLevel} (${riskPercent}%)` : `${indicatorId} - ${t.notAssessed}`;
             const cellStyle = isFiltered ? 'opacity: 0.3; cursor: default;' : '';
 
             const onclickHandler = isFiltered ? '' : `openIndicatorDetail('${indicatorId}', '${org.id}')`;
@@ -486,6 +492,8 @@ function renderProgressMatrix(org) {
 function renderRiskHeatmap(org) {
     const heatmap = document.getElementById('riskHeatmap');
     const categories = org.aggregates.by_category || {};
+    const lang = getCategoryLanguage(currentOrgLanguage);
+    const t = getTranslations(lang);
 
     const categoryNames = {
         '1': 'Authority-Based',
@@ -519,17 +527,17 @@ function renderRiskHeatmap(org) {
                               style="cursor: pointer; float: right; font-size: 16px; opacity: 0.7; transition: opacity 0.2s;"
                               onmouseover="this.style.opacity='1'"
                               onmouseout="this.style.opacity='0.7'"
-                              title="View category details">❓</span>
+                              title="${t.viewCategoryDetails}">❓</span>
                     </div>
                     <div class="category-stats">
                         <div class="category-risk ${riskClass}">${riskPercent}%</div>
-                        <div class="category-completion">${catData.completion_percentage}% complete</div>
+                        <div class="category-completion">${catData.completion_percentage}% ${t.completeSuffix}</div>
                     </div>
                     <div class="progress-bar-container">
                         <div class="progress-bar-fill" style="width: ${catData.completion_percentage}%"></div>
                     </div>
                     <div style="font-size: 12px; color: var(--text-light); margin-top: 8px;">
-                        ${catData.total_assessments}/10 assessed • Conf: ${(catData.avg_confidence * 100).toFixed(0)}%
+                        ${catData.total_assessments}/10 ${t.assessedSuffix} • ${t.confAbbr} ${(catData.avg_confidence * 100).toFixed(0)}%
                     </div>
                 </div>
             `;
@@ -542,14 +550,14 @@ function renderRiskHeatmap(org) {
                               style="cursor: pointer; float: right; font-size: 16px; opacity: 0.7; transition: opacity 0.2s;"
                               onmouseover="this.style.opacity='1'"
                               onmouseout="this.style.opacity='0.7'"
-                              title="View category details">❓</span>
+                              title="${t.viewCategoryDetails}">❓</span>
                     </div>
                     <div class="category-stats">
                         <div class="category-risk">--</div>
-                        <div class="category-completion">No data</div>
+                        <div class="category-completion">${t.noData}</div>
                     </div>
                     <div style="font-size: 12px; color: var(--text-light); margin-top: 8px;">
-                        No assessments yet
+                        ${t.noAssessmentsYet}
                     </div>
                 </div>
             `;
@@ -566,6 +574,8 @@ function renderSecurityRadarChart(org) {
     const canvas = document.getElementById('securityRadarChart');
     const statsDiv = document.getElementById('radarStats');
     const categories = org.aggregates.by_category || {};
+    const lang = getCategoryLanguage(currentOrgLanguage);
+    const t = getTranslations(lang);
 
     const categoryNames = {
         '1': 'Authority',
@@ -601,6 +611,9 @@ function renderSecurityRadarChart(org) {
         securityRadarChartInstance.destroy();
     }
 
+    // Save translation for tooltip callback (must be outside callback scope)
+    const completionLabel = t.completionTooltip;
+
     // Create radar chart
     const ctx = canvas.getContext('2d');
     securityRadarChartInstance = new Chart(ctx, {
@@ -609,7 +622,7 @@ function renderSecurityRadarChart(org) {
             labels: labels,
             datasets: [
                 {
-                    label: 'Risk Level (%)',
+                    label: t.riskLevelPercent,
                     data: riskData,
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     borderColor: 'rgba(255, 99, 132, 1)',
@@ -622,7 +635,7 @@ function renderSecurityRadarChart(org) {
                     pointHoverRadius: 6
                 },
                 {
-                    label: 'Confidence (%)',
+                    label: t.confidencePercent,
                     data: confidenceData,
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     borderColor: 'rgba(54, 162, 235, 1)',
@@ -667,7 +680,7 @@ function renderSecurityRadarChart(org) {
                         },
                         afterLabel: function(context) {
                             const catIndex = context.dataIndex;
-                            return `Completion: ${completionData[catIndex].toFixed(0)}%`;
+                            return `${completionLabel} ${completionData[catIndex].toFixed(0)}%`;
                         }
                     }
                 }
@@ -714,30 +727,30 @@ function renderSecurityRadarChart(org) {
 
     statsDiv.innerHTML = `
         <div style="margin-bottom: 15px;">
-            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Average Risk</div>
+            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">${t.averageRisk}</div>
             <div style="font-size: 28px; font-weight: 700; color: ${avgRisk >= 70 ? '#ff6b6b' : avgRisk >= 40 ? '#ffd93d' : '#6bcf7f'};">${avgRisk.toFixed(1)}%</div>
         </div>
         <div style="margin-bottom: 15px;">
-            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Average Confidence</div>
+            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">${t.averageConfidence}</div>
             <div style="font-size: 28px; font-weight: 700; color: var(--primary);">${avgConfidence.toFixed(1)}%</div>
         </div>
         <div style="margin-bottom: 20px;">
-            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Overall Completion</div>
+            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">${t.overallCompletion}</div>
             <div style="font-size: 28px; font-weight: 700; color: var(--primary);">${avgCompletion.toFixed(1)}%</div>
         </div>
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
-        <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Risk Distribution:</div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">${t.riskDistribution}</div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 13px;">🔴 High Risk (≥70%)</span>
+                <span style="font-size: 13px;">${t.highRiskRange}</span>
                 <span style="font-weight: 700; color: #ff6b6b;">${highRiskCategories}</span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 13px;">🟡 Medium Risk (40-69%)</span>
+                <span style="font-size: 13px;">${t.mediumRiskRange}</span>
                 <span style="font-weight: 700; color: #ffd93d;">${mediumRiskCategories}</span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 13px;">🟢 Low Risk (<40%)</span>
+                <span style="font-size: 13px;">${t.lowRiskRange}</span>
                 <span style="font-weight: 700; color: #6bcf7f;">${lowRiskCategories}</span>
             </div>
         </div>
@@ -857,6 +870,12 @@ function openCategoryModal(categoryId) {
 
     // Determine language based on current organization's language
     const lang = getCategoryLanguage(currentOrgLanguage);
+    console.log('🌍 Modal Debug:', {
+        currentOrgLanguage,
+        determinedLang: lang,
+        availableLanguages: Object.keys(categoryDescriptions.categories[categoryId]),
+        categoryData: categoryDescriptions.categories[categoryId]
+    });
     const category = categoryDescriptions.categories[categoryId][lang];
 
     // Set modal title
@@ -910,41 +929,141 @@ function closeCategoryModal() {
  * Supports: en, it (with fallback to en)
  */
 function getCategoryLanguage(orgLanguage) {
-    if (!orgLanguage) return 'en';
+    if (!orgLanguage) {
+        console.log('🌍 No orgLanguage provided, defaulting to en');
+        return 'en';
+    }
 
     // Extract language code from locale (e.g., 'it-IT' -> 'it')
     const langCode = orgLanguage.split('-')[0].toLowerCase();
+    console.log('🌍 Extracted language code:', langCode, 'from', orgLanguage);
 
     // Check if language is available in descriptions
     if (categoryDescriptions &&
         categoryDescriptions.categories &&
         Object.keys(categoryDescriptions.categories).length > 0) {
         const firstCategory = Object.values(categoryDescriptions.categories)[0];
+        console.log('🌍 First category available languages:', Object.keys(firstCategory));
         if (firstCategory[langCode]) {
+            console.log('🌍 Language', langCode, 'found in descriptions');
             return langCode;
         }
     }
 
     // Fallback to English
+    console.log('🌍 Language', langCode, 'not found, falling back to en');
     return 'en';
 }
 
 /**
- * Get localized labels for category modal UI elements
+ * Get all localized translations for the dashboard
  */
-function getCategoryLabels(lang) {
-    const labels = {
+function getTranslations(lang) {
+    const translations = {
         en: {
+            // Category modal
             examples: '📌 Examples',
-            mitigation: '🛡️ Mitigation'
+            mitigation: '🛡️ Mitigation',
+            viewCategoryDetails: 'View category details',
+
+            // Dashboard labels
+            completion: 'Completion:',
+            assessed: 'Assessed:',
+            overallRisk: 'Overall Risk:',
+            riskScore: 'Risk Score:',
+
+            // Risk levels
+            lowRisk: '🟢 Low Risk',
+            mediumRisk: '🟡 Medium Risk',
+            highRisk: '🔴 High Risk',
+
+            // Status messages
+            notAssessed: 'Not assessed',
+            noData: 'No data',
+            noAssessmentsYet: 'No assessments yet',
+
+            // Suffixes
+            completeSuffix: 'complete',
+            assessedSuffix: 'assessed',
+            confAbbr: 'Conf:',
+
+            // Risk ranges for radar
+            highRiskRange: '🔴 High Risk (≥70%)',
+            mediumRiskRange: '🟡 Medium Risk (40-69%)',
+            lowRiskRange: '🟢 Low Risk (<40%)',
+
+            // Tooltips in radar chart
+            completionTooltip: 'Completion:',
+
+            // Radar chart stats
+            averageRisk: 'Average Risk',
+            averageConfidence: 'Average Confidence',
+            overallCompletion: 'Overall Completion',
+            riskDistribution: 'Risk Distribution:',
+
+            // Chart labels
+            riskLevelPercent: 'Risk Level (%)',
+            confidencePercent: 'Confidence (%)'
         },
         it: {
+            // Category modal
             examples: '📌 Esempi',
-            mitigation: '🛡️ Mitigazione'
+            mitigation: '🛡️ Mitigazione',
+            viewCategoryDetails: 'Visualizza dettagli categoria',
+
+            // Dashboard labels
+            completion: 'Completamento:',
+            assessed: 'Valutati:',
+            overallRisk: 'Rischio Complessivo:',
+            riskScore: 'Punteggio Rischio:',
+
+            // Risk levels
+            lowRisk: '🟢 Rischio Basso',
+            mediumRisk: '🟡 Rischio Medio',
+            highRisk: '🔴 Rischio Alto',
+
+            // Status messages
+            notAssessed: 'Non valutato',
+            noData: 'Nessun dato',
+            noAssessmentsYet: 'Nessuna valutazione',
+
+            // Suffixes
+            completeSuffix: 'completato',
+            assessedSuffix: 'valutati',
+            confAbbr: 'Conf:',
+
+            // Risk ranges for radar
+            highRiskRange: '🔴 Rischio Alto (≥70%)',
+            mediumRiskRange: '🟡 Rischio Medio (40-69%)',
+            lowRiskRange: '🟢 Rischio Basso (<40%)',
+
+            // Tooltips in radar chart
+            completionTooltip: 'Completamento:',
+
+            // Radar chart stats
+            averageRisk: 'Rischio Medio',
+            averageConfidence: 'Confidenza Media',
+            overallCompletion: 'Completamento Complessivo',
+            riskDistribution: 'Distribuzione Rischio:',
+
+            // Chart labels
+            riskLevelPercent: 'Livello Rischio (%)',
+            confidencePercent: 'Confidenza (%)'
         }
     };
 
-    return labels[lang] || labels.en;
+    return translations[lang] || translations.en;
+}
+
+/**
+ * Get localized labels for category modal UI elements (backward compatibility)
+ */
+function getCategoryLabels(lang) {
+    const t = getTranslations(lang);
+    return {
+        examples: t.examples,
+        mitigation: t.mitigation
+    };
 }
 
 async function openIndicatorDetail(indicatorId, orgId) {
