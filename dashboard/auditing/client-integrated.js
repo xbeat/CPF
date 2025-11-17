@@ -1010,13 +1010,27 @@ let currentScore = {
 
 function calculateIndicatorScore() {
     if (!currentData.fieldKit || !currentData.fieldKit.scoring) {
-        alert('⚠️ No field kit loaded or scoring configuration missing');
+        console.warn('⚠️ No field kit loaded or scoring configuration missing');
         return;
     }
 
     const scoring = currentData.fieldKit.scoring;
     const sections = currentData.fieldKit.sections;
-    
+
+    // CRITICAL DEBUG: Log what we're working with
+    console.log('🔍 calculateIndicatorScore DEBUG:', {
+        hasFieldKit: !!currentData.fieldKit,
+        hasSections: !!sections,
+        sectionsIsArray: Array.isArray(sections),
+        sectionsLength: sections ? sections.length : 0,
+        sectionTitles: sections ? sections.map(s => ({ id: s.id, title: s.title })) : []
+    });
+
+    if (!sections || !Array.isArray(sections) || sections.length === 0) {
+        console.error('❌ CRITICAL: sections is empty or not an array!');
+        return;
+    }
+
     // Reset score
     currentScore = {
         quick_assessment: 0,
@@ -1069,13 +1083,34 @@ function calculateIndicatorScore() {
     }
 
     // 2. TRACK CONVERSATION COMPLETENESS (informational only, not part of vulnerability score)
-    const convSectionIndex = sections.findIndex(s => s.id === 'client-conversation');
+    // Try multiple methods to find the conversation section (handles different JSON formats)
+    let convSectionIndex = sections.findIndex(s => s.id === 'client-conversation');
+
+    // Fallback 1: Search by type
+    if (convSectionIndex < 0) {
+        convSectionIndex = sections.findIndex(s => s.type === 'conversation');
+    }
+
+    // Fallback 2: Search by title keywords (works for all languages)
+    if (convSectionIndex < 0) {
+        convSectionIndex = sections.findIndex(s =>
+            s.title && (
+                s.title.toLowerCase().includes('conversation') ||
+                s.title.toLowerCase().includes('conversazione') ||
+                s.title.toLowerCase().includes('cliente') ||
+                s.title.toLowerCase().includes('client')
+            )
+        );
+    }
+
     const convSection = convSectionIndex >= 0 ? sections[convSectionIndex] : null;
 
     console.log('📊 Conversation completeness calculation:', {
         convSectionIndex,
         hasConvSection: !!convSection,
-        sectionIds: sections.map(s => s.id)
+        sectionCount: sections.length,
+        sectionIds: sections.map(s => s.id || 'NO_ID'),
+        sectionTitles: sections.map(s => s.title || 'NO_TITLE')
     });
 
     if (convSection) {
