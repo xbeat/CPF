@@ -155,11 +155,11 @@ app.get('/api/organizations/:orgId', (req, res) => {
 /**
  * POST /api/organizations
  * Create new organization
- * Body: { id, name, industry, size, country, language, created_by, notes, fetch_indicators }
+ * Body: { id, name, industry, size, country, language, created_by, notes, sede_sociale, partita_iva, fetch_indicators }
  */
 app.post('/api/organizations', async (req, res) => {
   try {
-    const { id, name, industry, size, country, language, created_by, notes, fetch_indicators } = req.body;
+    const { id, name, industry, size, country, language, created_by, notes, sede_sociale, partita_iva, fetch_indicators } = req.body;
 
     // Validate required fields
     if (!id || !name || !industry || !size || !country) {
@@ -187,7 +187,9 @@ app.post('/api/organizations', async (req, res) => {
       country,
       language: language || 'en-US',
       created_by: created_by || 'System',
-      notes: notes || ''
+      notes: notes || '',
+      sede_sociale: sede_sociale || '',
+      partita_iva: partita_iva || ''
     });
 
     console.log(`\n✅ [API] Created organization: ${id} (${name})`);
@@ -275,6 +277,8 @@ app.put('/api/organizations/:orgId', (req, res) => {
     if (updates.country) orgData.metadata.country = updates.country;
     if (updates.language) orgData.metadata.language = updates.language;
     if (updates.notes !== undefined) orgData.metadata.notes = updates.notes;
+    if (updates.sede_sociale !== undefined) orgData.metadata.sede_sociale = updates.sede_sociale;
+    if (updates.partita_iva !== undefined) orgData.metadata.partita_iva = updates.partita_iva;
 
     // Save
     dataManager.writeOrganization(orgData);

@@ -2038,6 +2038,8 @@ function editOrganization(orgId) {
     document.getElementById('orgSize').value = org.size;
     document.getElementById('orgCountry').value = org.country;
     document.getElementById('orgLanguage').value = org.language;
+    document.getElementById('orgSedeSociale').value = org.sede_sociale || '';
+    document.getElementById('orgPartitaIva').value = org.partita_iva || '';
     // Note: we'd need to fetch full org data to get notes
     document.getElementById('fetchIndicators').parentElement.parentElement.classList.add('hidden');
     document.getElementById('orgModal').classList.add('active');
@@ -2053,6 +2055,8 @@ async function saveOrganization(event) {
     const orgSize = document.getElementById('orgSize').value;
     const orgCountry = document.getElementById('orgCountry').value.trim().toUpperCase();
     const orgLanguage = document.getElementById('orgLanguage').value;
+    const orgSedeSociale = document.getElementById('orgSedeSociale').value.trim();
+    const orgPartitaIva = document.getElementById('orgPartitaIva').value.trim();
     const orgNotes = document.getElementById('orgNotes').value.trim();
     const fetchIndicators = document.getElementById('fetchIndicators').checked;
 
@@ -2063,6 +2067,8 @@ async function saveOrganization(event) {
         size: orgSize,
         country: orgCountry,
         language: orgLanguage,
+        sede_sociale: orgSedeSociale,
+        partita_iva: orgPartitaIva,
         notes: orgNotes
     };
 
