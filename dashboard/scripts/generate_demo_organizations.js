@@ -41,7 +41,9 @@ const DEMO_ORGANIZATIONS = [
     country: 'US',
     language: 'en-US',
     created_by: 'System',
-    notes: 'Large technology company with global operations'
+    notes: 'Large technology company with global operations',
+    sede_sociale: '100 Innovation Drive, San Francisco, CA 94105',
+    partita_iva: 'US12-3456789'
   },
   {
     id: 'org-demo-002',
@@ -51,7 +53,9 @@ const DEMO_ORGANIZATIONS = [
     country: 'GB',
     language: 'en-US',
     created_by: 'System',
-    notes: 'International banking institution'
+    notes: 'International banking institution',
+    sede_sociale: '25 Bank Street, London, E14 5JP',
+    partita_iva: 'GB123456789'
   },
   {
     id: 'org-demo-003',
@@ -61,7 +65,9 @@ const DEMO_ORGANIZATIONS = [
     country: 'IT',
     language: 'it-IT',
     created_by: 'System',
-    notes: 'Regional healthcare provider'
+    notes: 'Regional healthcare provider',
+    sede_sociale: 'Via della Salute 15, 00185 Roma (RM)',
+    partita_iva: 'IT12345678901'
   },
   {
     id: 'org-demo-004',
@@ -71,7 +77,9 @@ const DEMO_ORGANIZATIONS = [
     country: 'DE',
     language: 'de-DE',
     created_by: 'System',
-    notes: 'Retail chain with e-commerce platform'
+    notes: 'Retail chain with e-commerce platform',
+    sede_sociale: 'Marktstraße 42, 10117 Berlin',
+    partita_iva: 'DE123456789'
   },
   {
     id: 'org-demo-005',
@@ -81,7 +89,9 @@ const DEMO_ORGANIZATIONS = [
     country: 'FR',
     language: 'fr-FR',
     created_by: 'System',
-    notes: 'Online education platform'
+    notes: 'Online education platform',
+    sede_sociale: '8 Rue de l\'Éducation, 75001 Paris',
+    partita_iva: 'FR12345678901'
   }
 ];
 
