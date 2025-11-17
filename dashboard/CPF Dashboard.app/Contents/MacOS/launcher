@@ -3,36 +3,66 @@
 # CPF Dashboard Launcher for macOS
 # This script finds and executes start.sh in a Terminal window
 
+# Configuration file for storing dashboard path
+CONFIG_FILE="$HOME/.cpf_dashboard_path"
+
 # Get the directory where the .app bundle is located
 APP_DIR="$(dirname "$(dirname "$(dirname "$0")")")"
 
-# Find the dashboard directory (parent of the .app)
-DASHBOARD_DIR="$(dirname "$APP_DIR")"
+# Find the dashboard directory
+DASHBOARD_DIR=""
 
-# If the app is in /Applications, look for dashboard in common locations
-if [[ "$DASHBOARD_DIR" == "/Applications" ]]; then
+# First check if we have a saved path
+if [[ -f "$CONFIG_FILE" ]]; then
+    SAVED_PATH=$(cat "$CONFIG_FILE")
+    if [[ -f "$SAVED_PATH/start.sh" ]]; then
+        DASHBOARD_DIR="$SAVED_PATH"
+    fi
+fi
+
+# If no saved path, try to auto-detect
+if [[ -z "$DASHBOARD_DIR" ]]; then
+    # Check if app is inside the dashboard folder
+    PARENT_DIR="$(dirname "$APP_DIR")"
+    if [[ -f "$PARENT_DIR/start.sh" ]]; then
+        DASHBOARD_DIR="$PARENT_DIR"
     # Check common locations
-    if [[ -f "$HOME/CPF/dashboard/start.sh" ]]; then
+    elif [[ -f "$HOME/CPF/dashboard/start.sh" ]]; then
         DASHBOARD_DIR="$HOME/CPF/dashboard"
     elif [[ -f "$HOME/Desktop/CPF/dashboard/start.sh" ]]; then
         DASHBOARD_DIR="$HOME/Desktop/CPF/dashboard"
     elif [[ -f "$HOME/Documents/CPF/dashboard/start.sh" ]]; then
         DASHBOARD_DIR="$HOME/Documents/CPF/dashboard"
+    elif [[ -f "$HOME/Projects/CPF/dashboard/start.sh" ]]; then
+        DASHBOARD_DIR="$HOME/Projects/CPF/dashboard"
     else
-        # Try to find it
-        FOUND_DIR=$(find "$HOME" -name "start.sh" -path "*/CPF/dashboard/*" -type f 2>/dev/null | head -1 | xargs dirname)
-        if [[ -n "$FOUND_DIR" ]]; then
-            DASHBOARD_DIR="$FOUND_DIR"
+        # Ask user to select the folder
+        SELECTED_PATH=$(osascript -e 'tell application "System Events"' \
+            -e 'activate' \
+            -e 'set folderPath to POSIX path of (choose folder with prompt "Select the CPF dashboard folder (containing start.sh):")' \
+            -e 'end tell' 2>/dev/null)
+
+        if [[ -n "$SELECTED_PATH" && -f "$SELECTED_PATH/start.sh" ]]; then
+            DASHBOARD_DIR="$SELECTED_PATH"
+            # Remove trailing slash if present
+            DASHBOARD_DIR="${DASHBOARD_DIR%/}"
         else
-            osascript -e 'display alert "CPF Dashboard Error" message "Cannot find CPF dashboard directory. Please ensure the CPF project is in your home directory." as critical'
+            osascript -e 'display alert "CPF Dashboard Error" message "The selected folder does not contain start.sh. Please select the correct dashboard folder." as critical'
             exit 1
         fi
+    fi
+
+    # Save the path for next time
+    if [[ -n "$DASHBOARD_DIR" ]]; then
+        echo "$DASHBOARD_DIR" > "$CONFIG_FILE"
     fi
 fi
 
 # Verify start.sh exists
 if [[ ! -f "$DASHBOARD_DIR/start.sh" ]]; then
-    osascript -e "display alert \"CPF Dashboard Error\" message \"Cannot find start.sh in $DASHBOARD_DIR\" as critical"
+    # Clear saved path if invalid
+    rm -f "$CONFIG_FILE"
+    osascript -e "display alert \"CPF Dashboard Error\" message \"Cannot find start.sh in $DASHBOARD_DIR. Please restart the app to select the correct folder.\" as critical"
     exit 1
 fi
 
