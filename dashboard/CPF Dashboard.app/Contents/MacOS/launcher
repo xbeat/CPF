@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # CPF Dashboard Launcher for macOS
-# This script launches the Node.js server and opens the dashboard
+# This script finds and executes start.sh
 
 # Get the directory where the .app bundle is located
 APP_DIR="$(dirname "$(dirname "$(dirname "$0")")")"
@@ -12,15 +12,15 @@ DASHBOARD_DIR="$(dirname "$APP_DIR")"
 # If the app is in /Applications, look for dashboard in common locations
 if [[ "$DASHBOARD_DIR" == "/Applications" ]]; then
     # Check common locations
-    if [[ -f "$HOME/CPF/dashboard/server.js" ]]; then
+    if [[ -f "$HOME/CPF/dashboard/start.sh" ]]; then
         DASHBOARD_DIR="$HOME/CPF/dashboard"
-    elif [[ -f "$HOME/Desktop/CPF/dashboard/server.js" ]]; then
+    elif [[ -f "$HOME/Desktop/CPF/dashboard/start.sh" ]]; then
         DASHBOARD_DIR="$HOME/Desktop/CPF/dashboard"
-    elif [[ -f "$HOME/Documents/CPF/dashboard/server.js" ]]; then
+    elif [[ -f "$HOME/Documents/CPF/dashboard/start.sh" ]]; then
         DASHBOARD_DIR="$HOME/Documents/CPF/dashboard"
     else
         # Try to find it
-        FOUND_DIR=$(find "$HOME" -name "server.js" -path "*/CPF/dashboard/*" -type f 2>/dev/null | head -1 | xargs dirname)
+        FOUND_DIR=$(find "$HOME" -name "start.sh" -path "*/CPF/dashboard/*" -type f 2>/dev/null | head -1 | xargs dirname)
         if [[ -n "$FOUND_DIR" ]]; then
             DASHBOARD_DIR="$FOUND_DIR"
         else
@@ -30,9 +30,9 @@ if [[ "$DASHBOARD_DIR" == "/Applications" ]]; then
     fi
 fi
 
-# Verify dashboard directory exists
-if [[ ! -f "$DASHBOARD_DIR/server.js" ]]; then
-    osascript -e "display alert \"CPF Dashboard Error\" message \"Cannot find server.js in $DASHBOARD_DIR\" as critical"
+# Verify start.sh exists
+if [[ ! -f "$DASHBOARD_DIR/start.sh" ]]; then
+    osascript -e "display alert \"CPF Dashboard Error\" message \"Cannot find start.sh in $DASHBOARD_DIR\" as critical"
     exit 1
 fi
 
@@ -56,18 +56,8 @@ if [[ ! -d "node_modules" ]]; then
     npm install
 fi
 
-# Check if demo data exists
-if [[ ! -f "data/soc/organizations_index.json" ]]; then
-    osascript -e 'display notification "Generating demo data..." with title "CPF Dashboard"'
-    npm run generate:demo 2>/dev/null || true
-fi
-
 # Kill any existing instance on port 3000
 lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 
-# Open browser after delay
-(sleep 3 && open "http://localhost:3000/dashboard/") &
-
-# Start the server
-# Using exec so the script process becomes the node process
-exec node server.js
+# Execute start.sh
+exec bash start.sh
