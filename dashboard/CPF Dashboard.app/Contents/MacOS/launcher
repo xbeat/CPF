@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# CPF Dashboard Launcher for macOS
+# This script finds and executes start.sh
+
+# Get the directory where the .app bundle is located
+APP_DIR="$(dirname "$(dirname "$(dirname "$0")")")"
+
+# Find the dashboard directory (parent of the .app)
+DASHBOARD_DIR="$(dirname "$APP_DIR")"
+
+# If the app is in /Applications, look for dashboard in common locations
+if [[ "$DASHBOARD_DIR" == "/Applications" ]]; then
+    # Check common locations
+    if [[ -f "$HOME/CPF/dashboard/start.sh" ]]; then
+        DASHBOARD_DIR="$HOME/CPF/dashboard"
+    elif [[ -f "$HOME/Desktop/CPF/dashboard/start.sh" ]]; then
+        DASHBOARD_DIR="$HOME/Desktop/CPF/dashboard"
+    elif [[ -f "$HOME/Documents/CPF/dashboard/start.sh" ]]; then
+        DASHBOARD_DIR="$HOME/Documents/CPF/dashboard"
+    else
+        # Try to find it
+        FOUND_DIR=$(find "$HOME" -name "start.sh" -path "*/CPF/dashboard/*" -type f 2>/dev/null | head -1 | xargs dirname)
+        if [[ -n "$FOUND_DIR" ]]; then
+            DASHBOARD_DIR="$FOUND_DIR"
+        else
+            osascript -e 'display alert "CPF Dashboard Error" message "Cannot find CPF dashboard directory. Please ensure the CPF project is in your home directory." as critical'
+            exit 1
+        fi
+    fi
+fi
+
+# Verify start.sh exists
+if [[ ! -f "$DASHBOARD_DIR/start.sh" ]]; then
+    osascript -e "display alert \"CPF Dashboard Error\" message \"Cannot find start.sh in $DASHBOARD_DIR\" as critical"
+    exit 1
+fi
+
+cd "$DASHBOARD_DIR"
+
+# Check if Node.js is installed
+if ! command -v node &> /dev/null; then
+    osascript -e 'display alert "Node.js Not Found" message "Please install Node.js from https://nodejs.org" as critical'
+    exit 1
+fi
+
+# Check if npm is installed
+if ! command -v npm &> /dev/null; then
+    osascript -e 'display alert "npm Not Found" message "Please install Node.js (includes npm) from https://nodejs.org" as critical'
+    exit 1
+fi
+
+# Check if node_modules exists
+if [[ ! -d "node_modules" ]]; then
+    osascript -e 'display notification "Installing dependencies..." with title "CPF Dashboard"'
+    npm install
+fi
+
+# Kill any existing instance on port 3000
+lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+
+# Execute start.sh
+exec bash start.sh
