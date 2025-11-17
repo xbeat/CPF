@@ -936,6 +936,48 @@ app.get('/api/organizations/:orgId/export/pdf', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/organizations/:orgId/export/zip
+ * Export all organization's assessment cards (schede) as ZIP file
+ */
+app.get('/api/organizations/:orgId/export/zip', async (req, res) => {
+  try {
+    const { orgId } = req.params;
+    const user = req.query.user || 'Dashboard User';
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const { stream } = await dataManager.generateZIPExport(orgId, user);
+    const orgData = dataManager.readOrganization(orgId);
+
+    console.log(`\n📦 [API] Generating ZIP export for: ${orgId}\n`);
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="CPF_Audit_${orgData.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.zip"`);
+
+    // Pipe ZIP stream to response
+    stream.pipe(res);
+
+    stream.on('end', () => {
+      console.log(`\n✅ [API] ZIP export completed: ${orgId}\n`);
+    });
+
+  } catch (error) {
+    console.error(`[API] Error generating ZIP export for ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // ============================================
 // API ENDPOINTS - SOC DATA
 // ============================================
