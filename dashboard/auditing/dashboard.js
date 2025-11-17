@@ -95,7 +95,8 @@ async function loadOrganizationDetails(orgId) {
         if (result.success) {
             selectedOrgData = result.data;
             // Update current organization language for category modal
-            currentOrgLanguage = selectedOrgData.language || 'en-US';
+            // Language is stored in metadata.language, not in language field
+            currentOrgLanguage = selectedOrgData.metadata?.language || 'en-US';
             renderAssessmentDetails();
         } else {
             showAlert('Failed to load organization details', 'error');
@@ -870,12 +871,6 @@ function openCategoryModal(categoryId) {
 
     // Determine language based on current organization's language
     const lang = getCategoryLanguage(currentOrgLanguage);
-    console.log('🌍 Modal Debug:', {
-        currentOrgLanguage,
-        determinedLang: lang,
-        availableLanguages: Object.keys(categoryDescriptions.categories[categoryId]),
-        categoryData: categoryDescriptions.categories[categoryId]
-    });
     const category = categoryDescriptions.categories[categoryId][lang];
 
     // Set modal title
@@ -929,29 +924,22 @@ function closeCategoryModal() {
  * Supports: en, it (with fallback to en)
  */
 function getCategoryLanguage(orgLanguage) {
-    if (!orgLanguage) {
-        console.log('🌍 No orgLanguage provided, defaulting to en');
-        return 'en';
-    }
+    if (!orgLanguage) return 'en';
 
     // Extract language code from locale (e.g., 'it-IT' -> 'it')
     const langCode = orgLanguage.split('-')[0].toLowerCase();
-    console.log('🌍 Extracted language code:', langCode, 'from', orgLanguage);
 
     // Check if language is available in descriptions
     if (categoryDescriptions &&
         categoryDescriptions.categories &&
         Object.keys(categoryDescriptions.categories).length > 0) {
         const firstCategory = Object.values(categoryDescriptions.categories)[0];
-        console.log('🌍 First category available languages:', Object.keys(firstCategory));
         if (firstCategory[langCode]) {
-            console.log('🌍 Language', langCode, 'found in descriptions');
             return langCode;
         }
     }
 
     // Fallback to English
-    console.log('🌍 Language', langCode, 'not found, falling back to en');
     return 'en';
 }
 
