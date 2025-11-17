@@ -30,15 +30,36 @@ on run
     -- Open Terminal and run server
     tell application "Terminal"
         activate
-        do script "cd " & quoted form of dashboardPath & " && export PATH='" & npmPath & ":/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH' && /bin/bash start.sh"
+        set serverWindow to do script "cd " & quoted form of dashboardPath & " && export PATH='" & npmPath & ":/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH' && /bin/bash start.sh"
+        set windowID to id of front window
     end tell
 
-    -- Keep app running by showing a dialog
-    -- This makes the app stay in Dock
+    -- Keep app running while Terminal window is open
+    -- When user closes Terminal window, app will quit
     repeat
-        delay 3600
+        delay 2
+        try
+            tell application "Terminal"
+                if not (exists window id windowID) then
+                    -- Terminal window was closed, quit app
+                    quit
+                    return
+                end if
+            end tell
+        on error
+            -- Terminal closed or error, quit app
+            return
+        end try
     end repeat
 end run
+
+on quit
+    -- Clean up: kill server on port 3000
+    try
+        do shell script "/usr/bin/lsof -ti:3000 | /usr/bin/xargs /bin/kill -9 2>/dev/null"
+    end try
+    continue quit
+end quit
 
 on findDashboardPath()
     set configFile to (POSIX path of (path to home folder)) & ".cpf_dashboard_path"
