@@ -1,7 +1,6 @@
 // ============================================
-// CLIENT V2.0 - WRAPPED IN NAMESPACE TO AVOID CONFLICTS
+// CLIENT V2.0 - REFACTORED WITHOUT IIFE WRAPPER
 // ============================================
-(function() {
 'use strict';
 
 // Organization context (loaded from URL parameters or dashboard)
@@ -1995,4 +1994,4 @@ window.CPFClient = {
     // validateCurrentJSON: validateCurrentJSON
 };
 
-})(); // End of IIFE wrapper
+// End of file - IIFE wrapper removed for better accessibility
