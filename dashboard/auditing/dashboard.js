@@ -429,8 +429,15 @@ function renderProgressMatrix(org) {
 
             // AUDITING DASHBOARD: Usa SOLO assessments manuali
             const assessment = assessments[indicatorId];
-            // Un assessment è completato SOLO se ha uno score > 0 (score=0 significa reset)
-            const completed = assessment && assessment.bayesian_score !== undefined && assessment.bayesian_score > 0;
+
+            // Un assessment è completato se:
+            // 1. Esiste l'oggetto assessment E
+            // 2. Ha un bayesian_score definito (anche 0 è valido!) E
+            // 3. Ha qualche risposta O uno score > 0 (per distinguere da reset vuoto)
+            const hasResponses = assessment?.raw_data?.client_conversation?.responses &&
+                                 Object.keys(assessment.raw_data.client_conversation.responses).length > 0;
+            const hasScore = assessment && typeof assessment.bayesian_score === 'number';
+            const completed = hasScore && (hasResponses || assessment.bayesian_score > 0);
 
             let cellClass = '';
             let riskLevel = 'Not assessed';
@@ -439,10 +446,11 @@ function renderProgressMatrix(org) {
             if (completed) {
                 score = assessment.bayesian_score;
 
-                if (score < 0.33) {
+                // Score 0 = Low Risk (green), not empty!
+                if (score <= 0.33) {
                     cellClass = 'risk-low';
                     riskLevel = 'Low Risk';
-                } else if (score < 0.66) {
+                } else if (score <= 0.66) {
                     cellClass = 'risk-medium';
                     riskLevel = 'Medium Risk';
                 } else {
