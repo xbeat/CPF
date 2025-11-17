@@ -7,6 +7,8 @@ let deletingOrgId = null;
 let selectedIndicatorId = null;
 let categoryFilter = null;
 let sortDirection = 'desc'; // 'asc' or 'desc'
+let categoryDescriptions = null; // Category descriptions (multilingual)
+let currentOrgLanguage = 'en-US'; // Current organization language
 // Note: modalStack is now in ui-utils.js as window.modalStack
 
 // ===== INITIALIZATION =====
@@ -48,6 +50,9 @@ window.addEventListener('keydown', (event) => {
                     window.CPFClient.closeQuickReference();
                 }
                 break;
+            case 'category-modal':
+                closeCategoryModal();
+                break;
             case 'indicator-details-modal':
                 if (window.CPFClient && window.CPFClient.closeIndicatorDetails) {
                     window.CPFClient.closeIndicatorDetails();
@@ -64,6 +69,9 @@ async function loadAllData() {
         const data = await response.json();
 
         organizations = data.organizations || [];
+
+        // Load category descriptions
+        await loadCategoryDescriptions();
 
         // Load trash count for badge
         await loadTrashCount();
@@ -86,6 +94,8 @@ async function loadOrganizationDetails(orgId) {
 
         if (result.success) {
             selectedOrgData = result.data;
+            // Update current organization language for category modal
+            currentOrgLanguage = selectedOrgData.language || 'en-US';
             renderAssessmentDetails();
         } else {
             showAlert('Failed to load organization details', 'error');
@@ -490,8 +500,15 @@ function renderRiskHeatmap(org) {
                                 catData.avg_score < 0.7 ? 'risk-medium' : 'risk-high';
 
             html += `
-                <div class="category-card" onclick="filterByCategory('${catKey}')">
-                    <div class="category-title">${cat}. ${categoryNames[catKey]}</div>
+                <div class="category-card" onclick="filterByCategory('${catKey}')" style="position: relative;">
+                    <div class="category-title">
+                        ${cat}. ${categoryNames[catKey]}
+                        <span onclick="event.stopPropagation(); openCategoryModal('${catKey}')"
+                              style="cursor: pointer; float: right; font-size: 16px; opacity: 0.7; transition: opacity 0.2s;"
+                              onmouseover="this.style.opacity='1'"
+                              onmouseout="this.style.opacity='0.7'"
+                              title="View category details">❓</span>
+                    </div>
                     <div class="category-stats">
                         <div class="category-risk ${riskClass}">${riskPercent}%</div>
                         <div class="category-completion">${catData.completion_percentage}% complete</div>
@@ -506,8 +523,15 @@ function renderRiskHeatmap(org) {
             `;
         } else {
             html += `
-                <div class="category-card" style="opacity: 0.5;">
-                    <div class="category-title">${cat}. ${categoryNames[catKey]}</div>
+                <div class="category-card" style="opacity: 0.5; position: relative;">
+                    <div class="category-title">
+                        ${cat}. ${categoryNames[catKey]}
+                        <span onclick="event.stopPropagation(); openCategoryModal('${catKey}')"
+                              style="cursor: pointer; float: right; font-size: 16px; opacity: 0.7; transition: opacity 0.2s;"
+                              onmouseover="this.style.opacity='1'"
+                              onmouseout="this.style.opacity='0.7'"
+                              title="View category details">❓</span>
+                    </div>
                     <div class="category-stats">
                         <div class="category-risk">--</div>
                         <div class="category-completion">No data</div>
@@ -775,7 +799,9 @@ function renderPrioritizationTable(org) {
     priorityData.forEach((item, idx) => {
         const riskClass = item.risk < 0.33 ? 'risk-low' : item.risk < 0.66 ? 'risk-medium' : 'risk-high';
         html += `
-            <tr>
+            <tr onclick="openCategoryModal('${item.category}')" style="cursor: pointer; transition: background-color 0.2s;"
+                onmouseover="this.style.backgroundColor='var(--bg-gray)'"
+                onmouseout="this.style.backgroundColor='transparent'">
                 <td style="font-weight: 600; color: var(--text-light);">${idx + 1}</td>
                 <td style="font-weight: 600;">${item.category}. ${item.name}</td>
                 <td><span class="stat-value ${riskClass}" style="font-size: 14px;">${(item.risk * 100).toFixed(1)}%</span></td>
@@ -788,6 +814,125 @@ function renderPrioritizationTable(org) {
     });
 
     tbody.innerHTML = html;
+}
+
+// ===== CATEGORY DESCRIPTIONS & MODAL =====
+
+/**
+ * Load category descriptions from JSON file
+ */
+async function loadCategoryDescriptions() {
+    try {
+        const response = await fetch('category-descriptions.json');
+        if (!response.ok) {
+            console.warn('Failed to load category descriptions');
+            return;
+        }
+        categoryDescriptions = await response.json();
+    } catch (error) {
+        console.error('Error loading category descriptions:', error);
+    }
+}
+
+/**
+ * Open category description modal
+ */
+function openCategoryModal(categoryId) {
+    if (!categoryDescriptions || !categoryDescriptions.categories[categoryId]) {
+        console.warn('Category description not found:', categoryId);
+        return;
+    }
+
+    // Determine language based on current organization's language
+    const lang = getCategoryLanguage(currentOrgLanguage);
+    const category = categoryDescriptions.categories[categoryId][lang];
+
+    // Set modal title
+    document.getElementById('category-modal-title').textContent = category.name;
+
+    // Build modal body with localized labels
+    const labels = getCategoryLabels(lang);
+    const body = document.getElementById('category-modal-body');
+    body.innerHTML = `
+        <div style="line-height: 1.6;">
+            <p style="font-size: 16px; font-weight: 500; color: var(--primary); margin-bottom: 15px;">
+                ${category.short_description}
+            </p>
+            <p style="margin-bottom: 20px; color: var(--text);">
+                ${category.description}
+            </p>
+
+            <h4 style="color: var(--primary); margin: 20px 0 10px 0; font-size: 16px;">
+                ${labels.examples}
+            </h4>
+            <ul style="margin: 0 0 20px 0; padding-left: 20px; color: var(--text);">
+                ${category.examples.map(ex => `<li style="margin-bottom: 8px;">${ex}</li>`).join('')}
+            </ul>
+
+            <h4 style="color: var(--primary); margin: 20px 0 10px 0; font-size: 16px;">
+                ${labels.mitigation}
+            </h4>
+            <p style="margin: 0; padding: 15px; background: #f0f9ff; border-left: 4px solid var(--primary); border-radius: 4px; color: var(--text);">
+                ${category.mitigation}
+            </p>
+        </div>
+    `;
+
+    // Show modal
+    const modal = document.getElementById('category-modal');
+    modal.style.display = 'flex';
+    window.pushModal('category-modal');
+}
+
+/**
+ * Close category description modal
+ */
+function closeCategoryModal() {
+    const modal = document.getElementById('category-modal');
+    modal.style.display = 'none';
+    window.popModal();
+}
+
+/**
+ * Get language code from organization language setting
+ * Supports: en, it (with fallback to en)
+ */
+function getCategoryLanguage(orgLanguage) {
+    if (!orgLanguage) return 'en';
+
+    // Extract language code from locale (e.g., 'it-IT' -> 'it')
+    const langCode = orgLanguage.split('-')[0].toLowerCase();
+
+    // Check if language is available in descriptions
+    if (categoryDescriptions &&
+        categoryDescriptions.categories &&
+        Object.keys(categoryDescriptions.categories).length > 0) {
+        const firstCategory = Object.values(categoryDescriptions.categories)[0];
+        if (firstCategory[langCode]) {
+            return langCode;
+        }
+    }
+
+    // Fallback to English
+    return 'en';
+}
+
+/**
+ * Get localized labels for category modal UI elements
+ */
+function getCategoryLabels(lang) {
+    const labels = {
+        en: {
+            examples: '📌 Examples',
+            mitigation: '🛡️ Mitigation'
+        },
+        it: {
+            examples: '📌 Esempi',
+            mitigation: '🛡️ Mitigazione'
+        }
+    };
+
+    return labels[lang] || labels.en;
 }
 
 async function openIndicatorDetail(indicatorId, orgId) {
