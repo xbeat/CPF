@@ -2624,13 +2624,16 @@ async function resetCompileForm() {
         console.log('✅ CPFClient data reset');
     }
 
-    // Hide score displays
+    // REMOVE score displays entirely so they get recreated fresh by calculateIndicatorScore
     const scoreDisplay = document.getElementById('scoreDisplay');
     if (scoreDisplay) scoreDisplay.style.display = 'none';
     const scoreBar = document.getElementById('score-bar');
-    if (scoreBar) scoreBar.style.display = 'none';
+    if (scoreBar) {
+        scoreBar.remove(); // Remove entirely so it gets recreated
+        console.log('✅ Removed score-bar for fresh recreation');
+    }
     const scoreSummary = document.getElementById('score-summary-section');
-    if (scoreSummary) scoreSummary.style.display = 'none';
+    if (scoreSummary) scoreSummary.remove();
 
     // Get indicator data from CPFClient if available
     const indicatorData = window.CPFClient?.currentData?.fieldKit || currentIndicatorData;
