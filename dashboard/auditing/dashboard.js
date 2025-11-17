@@ -2580,11 +2580,71 @@ async function resetCompileForm() {
     }
 
     // Show confirmation dialog
-    if (!confirm('⚠️ Reset this assessment?\n\nThis will clear all form data and save an empty assessment. This action cannot be undone.')) {
+    if (!confirm('⚠️ Reset this assessment?\n\nThis will clear all form data and save an empty assessment.\n\nYou can undo this action using the History button.')) {
         return;
     }
 
     console.log('🗑️ Resetting assessment:', { indicatorId, orgId });
+
+    // SAVE CURRENT STATE TO HISTORY BEFORE RESET
+    // This ensures undo is possible via history
+    if (window.CPFClient && window.CPFClient.currentData) {
+        const currentResponses = window.CPFClient.currentData.responses || {};
+        const hasData = Object.keys(currentResponses).length > 0;
+
+        if (hasData) {
+            console.log('💾 Saving current state to history before reset...');
+
+            // Get indicator data from CPFClient if available
+            const indicatorData = window.CPFClient?.currentData?.fieldKit || currentIndicatorData;
+
+            // Build current assessment data
+            const currentAssessment = {
+                indicator_id: indicatorId,
+                title: indicatorData?.title || '',
+                category: indicatorData?.category || '',
+                bayesian_score: window.CPFClient.currentData.score?.bayesian_score || 0,
+                confidence: window.CPFClient.currentData.score?.confidence || 0.5,
+                maturity_level: window.CPFClient.currentData.score?.maturity_level || 'green',
+                assessor: window.CPFClient.currentData.metadata?.auditor || '',
+                assessment_date: new Date().toISOString(),
+                raw_data: {
+                    quick_assessment: {},
+                    client_conversation: {
+                        responses: currentResponses,
+                        scores: window.CPFClient.currentData.score || null,
+                        metadata: window.CPFClient.currentData.metadata || {
+                            date: new Date().toISOString().split('T')[0],
+                            auditor: '',
+                            client: selectedOrgData?.name || '',
+                            status: 'in-progress',
+                            notes: ''
+                        },
+                        notes: window.CPFClient.currentData.notes || '',
+                        red_flags: window.CPFClient.currentData.redFlags || []
+                    }
+                }
+            };
+
+            try {
+                // Save current state first (this creates a history entry)
+                const saveResponse = await fetch(`/api/organizations/${orgId}/assessments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentAssessment)
+                });
+
+                const saveResult = await saveResponse.json();
+                if (saveResult.success) {
+                    console.log('✅ Current state saved to history before reset');
+                } else {
+                    console.warn('⚠️ Could not save current state to history:', saveResult.error);
+                }
+            } catch (error) {
+                console.warn('⚠️ Error saving current state to history:', error);
+            }
+        }
+    }
 
     // Clear all form inputs in both possible containers
     const containers = [
