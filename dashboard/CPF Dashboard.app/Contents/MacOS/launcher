@@ -62,7 +62,11 @@ if [[ ! -f "$DASHBOARD_DIR/start.sh" ]]; then
 fi
 
 # Kill any existing instance on port 3000
-/usr/bin/lsof -ti:3000 2>/dev/null | /usr/bin/xargs kill -9 2>/dev/null || true
+PIDS=$(/usr/bin/lsof -ti:3000 2>/dev/null)
+if [[ -n "$PIDS" ]]; then
+    echo "$PIDS" | /usr/bin/xargs kill -9 2>/dev/null
+    /bin/sleep 1
+fi
 
 # Detect npm path - check common locations
 NPM_PATH=""
@@ -83,5 +87,12 @@ EOF
 
 # Keep this process alive so the app stays in the Dock
 # Press Cmd+Q on the app icon to quit, or close the Terminal window
-# Use caffeinate to prevent the app from being terminated
-exec /usr/bin/caffeinate -i -w $$
+# Use caffeinate to prevent sleep and keep app running
+/usr/bin/caffeinate -i &
+CAFF_PID=$!
+
+# Wait forever (until user quits the app with Cmd+Q)
+trap "kill $CAFF_PID 2>/dev/null; exit 0" SIGTERM SIGINT
+while true; do
+    /bin/sleep 86400
+done
