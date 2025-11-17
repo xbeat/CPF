@@ -3,23 +3,8 @@
 # CPF Dashboard Launcher for macOS
 # This script finds and executes start.sh in a Terminal window
 
-# Load user's shell environment to get correct PATH
-if [[ -f "$HOME/.zshrc" ]]; then
-    source "$HOME/.zshrc" 2>/dev/null
-elif [[ -f "$HOME/.bash_profile" ]]; then
-    source "$HOME/.bash_profile" 2>/dev/null
-elif [[ -f "$HOME/.bashrc" ]]; then
-    source "$HOME/.bashrc" 2>/dev/null
-fi
-
-# Also check common Node.js installation paths
-export PATH="/usr/local/bin:/opt/homebrew/bin:$HOME/.nvm/versions/node/$(ls -1 $HOME/.nvm/versions/node 2>/dev/null | tail -1)/bin:$PATH"
-
 # Configuration file for storing dashboard path
 CONFIG_FILE="$HOME/.cpf_dashboard_path"
-
-# Get the directory where the .app bundle is located
-APP_DIR="$(dirname "$(dirname "$(dirname "$0")")")"
 
 # Find the dashboard directory
 DASHBOARD_DIR=""
@@ -34,11 +19,12 @@ fi
 
 # If no saved path, try to auto-detect
 if [[ -z "$DASHBOARD_DIR" ]]; then
-    # Check if app is inside the dashboard folder
+    # Get the directory where the .app bundle is located
+    APP_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
     PARENT_DIR="$(dirname "$APP_DIR")"
+
     if [[ -f "$PARENT_DIR/start.sh" ]]; then
         DASHBOARD_DIR="$PARENT_DIR"
-    # Check common locations
     elif [[ -f "$HOME/CPF/dashboard/start.sh" ]]; then
         DASHBOARD_DIR="$HOME/CPF/dashboard"
     elif [[ -f "$HOME/Desktop/CPF/dashboard/start.sh" ]]; then
@@ -54,10 +40,8 @@ if [[ -z "$DASHBOARD_DIR" ]]; then
             -e 'set folderPath to POSIX path of (choose folder with prompt "Select the CPF dashboard folder (containing start.sh):")' \
             -e 'end tell' 2>/dev/null)
 
-        if [[ -n "$SELECTED_PATH" && -f "$SELECTED_PATH/start.sh" ]]; then
-            DASHBOARD_DIR="$SELECTED_PATH"
-            # Remove trailing slash if present
-            DASHBOARD_DIR="${DASHBOARD_DIR%/}"
+        if [[ -n "$SELECTED_PATH" && -f "${SELECTED_PATH%/}/start.sh" ]]; then
+            DASHBOARD_DIR="${SELECTED_PATH%/}"
         else
             osascript -e 'display alert "CPF Dashboard Error" message "The selected folder does not contain start.sh. Please select the correct dashboard folder." as critical'
             exit 1
@@ -72,37 +56,22 @@ fi
 
 # Verify start.sh exists
 if [[ ! -f "$DASHBOARD_DIR/start.sh" ]]; then
-    # Clear saved path if invalid
     rm -f "$CONFIG_FILE"
-    osascript -e "display alert \"CPF Dashboard Error\" message \"Cannot find start.sh in $DASHBOARD_DIR. Please restart the app to select the correct folder.\" as critical"
-    exit 1
-fi
-
-# Check if Node.js is installed
-if ! command -v node &> /dev/null; then
-    osascript -e 'display alert "Node.js Not Found" message "Please install Node.js from https://nodejs.org" as critical'
-    exit 1
-fi
-
-# Check if npm is installed
-if ! command -v npm &> /dev/null; then
-    osascript -e 'display alert "npm Not Found" message "Please install Node.js (includes npm) from https://nodejs.org" as critical'
+    osascript -e "display alert \"CPF Dashboard Error\" message \"Cannot find start.sh. Please delete ~/.cpf_dashboard_path and restart.\" as critical"
     exit 1
 fi
 
 # Kill any existing instance on port 3000
-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+/usr/bin/lsof -ti:3000 2>/dev/null | /usr/bin/xargs kill -9 2>/dev/null || true
 
 # Open Terminal and run start.sh
 osascript <<EOF
 tell application "Terminal"
     activate
-    do script "cd '$DASHBOARD_DIR' && if [ ! -d node_modules ]; then npm install; fi && bash start.sh"
+    do script "cd '$DASHBOARD_DIR' && export PATH='/usr/local/bin:/opt/homebrew/bin:\$PATH' && if [ ! -d node_modules ]; then npm install; fi && bash start.sh; exit"
 end tell
 EOF
 
-# Keep the app running indefinitely so it stays in Dock
-# The app will close when user quits it (Cmd+Q) or closes Terminal
-while true; do
-    sleep 60
-done
+# Keep this process alive so the app stays in the Dock
+# Press Cmd+Q on the app icon to quit, or close the Terminal window
+exec sleep infinity
