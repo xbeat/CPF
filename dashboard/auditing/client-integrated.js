@@ -276,19 +276,19 @@ const CPFClient = {
         metadataBar.innerHTML = `
             <div class="meta-field">
                 <label>Assessment Date</label>
-                <input type="date" value="${CPFClient.currentData.metadata.date}" onchange="window.CPFClient.updateMeta('date', CPFClient.value)">
+                <input type="date" value="${CPFClient.currentData.metadata.date}" onchange="window.CPFClient.updateMeta('date', this.value)">
             </div>
             <div class="meta-field">
                 <label>Auditor</label>
-                <input type="text" value="${CPFClient.currentData.metadata.auditor}" onchange="window.CPFClient.updateMeta('auditor', CPFClient.value)" placeholder="Your name">
+                <input type="text" value="${CPFClient.currentData.metadata.auditor}" onchange="window.CPFClient.updateMeta('auditor', this.value)" placeholder="Your name">
             </div>
             <div class="meta-field">
                 <label>Client</label>
-                <input type="text" value="${CPFClient.currentData.metadata.client}" onchange="window.CPFClient.updateMeta('client', CPFClient.value)" placeholder="Client name">
+                <input type="text" value="${CPFClient.currentData.metadata.client}" onchange="window.CPFClient.updateMeta('client', this.value)" placeholder="Client name">
             </div>
             <div class="meta-field">
                 <label>Status</label>
-                <select onchange="window.CPFClient.updateMeta('status', CPFClient.value)">
+                <select onchange="window.CPFClient.updateMeta('status', this.value)">
                     <option value="in-progress" ${CPFClient.currentData.metadata.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
                     <option value="completed" ${CPFClient.currentData.metadata.status === 'completed' ? 'selected' : ''}>Completed</option>
                     <option value="review" ${CPFClient.currentData.metadata.status === 'review' ? 'selected' : ''}>Under Review</option>
@@ -299,8 +299,8 @@ const CPFClient = {
                 <textarea id="assessment-notes"
                           placeholder="Assessment notes..."
                           style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; min-height: 80px; font-family: inherit; font-size: 14px; resize: vertical;"
-                          onchange="window.CPFClient.updateMeta('notes', CPFClient.value)"
-                          onblur="window.CPFClient.updateMeta('notes', CPFClient.value)">${CPFClient.currentData.metadata.notes || ''}</textarea>
+                          onchange="window.CPFClient.updateMeta('notes', this.value)"
+                          onblur="window.CPFClient.updateMeta('notes', this.value)">${CPFClient.currentData.metadata.notes || ''}</textarea>
             </div>
         `;
 
@@ -421,7 +421,7 @@ const CPFClient = {
             const checked = value ? 'checked' : '';
             let html = `
                 <div class="checkbox-item ${checked}">
-                    <input type="checkbox" id="${itemId}" ${checked} onchange="window.CPFClient.updateResponseWithAutoScore('${itemId}', CPFClient.checked)">
+                    <input type="checkbox" id="${itemId}" ${checked} onchange="window.CPFClient.updateResponseWithAutoScore('${itemId}', this.checked)">
                     <label for="${itemId}">${item.label}</label>
                 </div>
             `;
@@ -436,7 +436,7 @@ const CPFClient = {
                         html += `
                             <div class="checkbox-item ${subValue ? 'checked' : ''}" style="display: inline-block; margin-right: 15px;">
                                 <input type="checkbox" id="${subItemId}" ${subValue ? 'checked' : ''}
-                                       onchange="window.CPFClient.updateResponse('${subItemId}', CPFClient.checked)">
+                                       onchange="window.CPFClient.updateResponse('${subItemId}', this.checked)">
                                 <label for="${subItemId}">${sub.label}</label>
                             </div>
                         `;
@@ -447,7 +447,7 @@ const CPFClient = {
                             <div class="radio-option" style="display: inline-block; margin-right: 15px;">
                                 <input type="radio" name="${itemId}_radio" id="${subItemId}" value="${sub.label}"
                                        ${subValue === sub.label ? 'checked' : ''}
-                                       onchange="window.CPFClient.updateResponse('${itemId}_radio_value', CPFClient.value)">
+                                       onchange="window.CPFClient.updateResponse('${itemId}_radio_value', this.value)">
                                 <label for="${subItemId}">${sub.label}</label>
                             </div>
                         `;
@@ -456,7 +456,7 @@ const CPFClient = {
                         html += `
                             <div class="input-group" style="margin: 10px 0;">
                                 <input type="text" id="${subItemId}" value="${CPFClient.currentData.responses[subItemId] || ''}"
-                                       placeholder="${sub.label}" onchange="window.CPFClient.updateResponse('${subItemId}', CPFClient.value)"
+                                       placeholder="${sub.label}" onchange="window.CPFClient.updateResponse('${subItemId}', this.value)"
                                        style="padding: 6px; width: 200px;">
                             </div>
                         `;
@@ -471,7 +471,7 @@ const CPFClient = {
             return `
                 <div class="input-group">
                     <label>${item.label}</label>
-                    <input type="text" id="${itemId}" value="${value || ''}" onchange="window.CPFClient.updateResponse('${itemId}', CPFClient.value)">
+                    <input type="text" id="${itemId}" value="${value || ''}" onchange="window.CPFClient.updateResponse('${itemId}', this.value)">
                 </div>
             `;
         }
@@ -496,8 +496,8 @@ const CPFClient = {
                             <textarea id="${followupId}"
                                       placeholder="Notes..."
                                       style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; min-height: 60px; font-family: inherit; font-size: 14px;"
-                                      onchange="window.CPFClient.updateResponseWithAutoScore('${followupId}', CPFClient.value)"
-                                      onblur="window.CPFClient.updateResponseWithAutoScore('${followupId}', CPFClient.value)">${followupValue}</textarea>
+                                      onchange="window.CPFClient.updateResponseWithAutoScore('${followupId}', this.value)"
+                                      onblur="window.CPFClient.updateResponseWithAutoScore('${followupId}', this.value)">${followupValue}</textarea>
                         </div>
                     `;
                 });
