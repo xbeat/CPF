@@ -1,13 +1,13 @@
 #!/bin/bash
 
+# Set PATH FIRST before any command
+export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH"
+
 # CPF Dashboard Launcher
 # Starts Node server and opens browser
 
 # Change to the script's directory
-cd "$(dirname "$0")"
-
-# Set PATH to include common locations for npm, node, etc.
-export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH"
+cd "$(/usr/bin/dirname "$0")"
 
 echo "🚀 Starting CPF Dashboard..."
 echo ""
