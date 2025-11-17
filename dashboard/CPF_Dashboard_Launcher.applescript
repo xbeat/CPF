@@ -1,17 +1,7 @@
-# CPF Dashboard - macOS App Launcher
-
-Crea un'applicazione macOS che avvia il server CPF Dashboard con un doppio clic.
-
-## Creazione dell'App
-
-### 1. Apri Editor di Script
-Cerca "Editor di Script" (o "Script Editor") in **Applicazioni > Utility**
-
-### 2. Incolla il codice
-Copia e incolla questo codice:
-
-```applescript
 -- CPF Dashboard Launcher
+-- AppleScript source code for macOS app
+-- Save as Application with "Stay open after run handler" enabled
+
 property terminalWindowID : missing value
 
 on run
@@ -114,39 +104,3 @@ on findDashboardPath()
 
     return ""
 end findDashboardPath
-```
-
-### 3. Salva come Applicazione
-- **File** → **Salva...**
-- Nome: `CPF Dashboard`
-- Dove: `/Applications` (o dove preferisci)
-- Formato file: **Applicazione**
-- ✅ **IMPORTANTE**: Spunta **"Resta aperto dopo l'esecuzione del gestore"**
-
-### 4. Aggiungi l'icona personalizzata
-- Trova `logo.icns` nella cartella dashboard (o converti un PNG)
-- Tasto destro su `CPF Dashboard.app` → **Ottieni informazioni**
-- Trascina il file `.icns` sull'icona in alto a sinistra
-
-## Funzionalità
-
-- **Avvio**: Doppio clic sull'app avvia il server e apre il browser
-- **Chiudi Terminal** → L'app esce automaticamente
-- **Tasto destro sull'app → Esci** → Chiude Terminal e server
-- L'icona resta nel Dock finché il server è attivo
-- Auto-rileva la cartella dashboard o chiede di selezionarla
-- Salva il percorso per i lanci successivi
-
-## Reset percorso salvato
-
-Se sposti la cartella dashboard:
-```bash
-rm ~/.cpf_dashboard_path
-```
-Al prossimo avvio l'app cercherà di nuovo.
-
-## Requisiti
-
-- macOS 10.13+
-- Node.js (https://nodejs.org)
-- npm (incluso con Node.js)
