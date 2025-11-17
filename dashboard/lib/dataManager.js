@@ -246,6 +246,8 @@ function updateOrganizationInIndex(orgData) {
     size: orgData.metadata.size,
     country: orgData.metadata.country,
     language: orgData.metadata.language,
+    sede_sociale: orgData.metadata.sede_sociale || '',
+    partita_iva: orgData.metadata.partita_iva || '',
     created_at: orgData.metadata.created_at,
     updated_at: orgData.metadata.updated_at,
     deleted_at: orgData.metadata.deleted_at || null,
@@ -451,7 +453,9 @@ function createOrganization(orgConfig) {
       created_at: now,
       updated_at: now,
       created_by: user,
-      notes: orgConfig.notes || ''
+      notes: orgConfig.notes || '',
+      sede_sociale: orgConfig.sede_sociale || '',
+      partita_iva: orgConfig.partita_iva || ''
     },
     assessments: {},
     aggregates: {

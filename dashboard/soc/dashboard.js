@@ -261,6 +261,8 @@ async function editOrganization(orgId) {
         document.getElementById('edit-org-size').value = org.metadata.size;
         document.getElementById('edit-org-country').value = org.metadata.country;
         document.getElementById('edit-org-language').value = org.metadata.language;
+        document.getElementById('edit-org-sede-sociale').value = org.metadata.sede_sociale || '';
+        document.getElementById('edit-org-partita-iva').value = org.metadata.partita_iva || '';
         document.getElementById('edit-org-notes').value = org.metadata.notes || '';
 
         // Show modal
@@ -286,13 +288,13 @@ async function saveOrganizationEdit(event) {
 
     const data = {
         name: document.getElementById('edit-org-name').value,
-        metadata: {
-            industry: document.getElementById('edit-org-industry').value,
-            size: document.getElementById('edit-org-size').value,
-            country: document.getElementById('edit-org-country').value.toUpperCase(),
-            language: document.getElementById('edit-org-language').value,
-            notes: document.getElementById('edit-org-notes').value
-        }
+        industry: document.getElementById('edit-org-industry').value,
+        size: document.getElementById('edit-org-size').value,
+        country: document.getElementById('edit-org-country').value.toUpperCase(),
+        language: document.getElementById('edit-org-language').value,
+        sede_sociale: document.getElementById('edit-org-sede-sociale').value.trim(),
+        partita_iva: document.getElementById('edit-org-partita-iva').value.trim(),
+        notes: document.getElementById('edit-org-notes').value
     };
 
     try {
@@ -1357,6 +1359,8 @@ async function saveOrganization(event) {
     const size = document.getElementById('org-size-input').value;
     const country = document.getElementById('org-country-input').value.toUpperCase();
     const language = document.getElementById('org-language-input').value;
+    const sedeSociale = document.getElementById('org-sede-sociale-input').value.trim();
+    const partitaIva = document.getElementById('org-partita-iva-input').value.trim();
     const notes = document.getElementById('org-notes-input').value.trim();
 
     // Validate org ID format
@@ -1380,6 +1384,8 @@ async function saveOrganization(event) {
                 size: size,
                 country: country,
                 language: language,
+                sede_sociale: sedeSociale,
+                partita_iva: partitaIva,
                 notes: notes
             })
         });
