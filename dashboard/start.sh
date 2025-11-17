@@ -3,6 +3,9 @@
 # CPF Dashboard Launcher
 # Starts Node server and opens browser
 
+# Change to the script's directory
+cd "$(dirname "$0")"
+
 echo "🚀 Starting CPF Dashboard..."
 echo ""
 
