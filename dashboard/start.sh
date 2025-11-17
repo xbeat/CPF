@@ -6,6 +6,9 @@
 # Change to the script's directory
 cd "$(dirname "$0")"
 
+# Set PATH to include common locations for npm, node, etc.
+export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH"
+
 echo "🚀 Starting CPF Dashboard..."
 echo ""
 
@@ -30,7 +33,7 @@ echo ""
 
 # Open browser after 2 seconds (landing page at root)
 # Add timestamp to force reload without cache
-(sleep 2 && open "http://localhost:3000/?nocache=$(date +%s)" 2>/dev/null || xdg-open "http://localhost:3000/?nocache=$(date +%s)" 2>/dev/null) &
+(/bin/sleep 2 && open "http://localhost:3000/?nocache=$(/bin/date +%s)" 2>/dev/null || xdg-open "http://localhost:3000/?nocache=$(/bin/date +%s)" 2>/dev/null) &
 
 # Start server
 npm start
