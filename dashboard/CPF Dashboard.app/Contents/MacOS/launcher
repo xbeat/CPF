@@ -93,18 +93,19 @@ fi
 # Kill any existing instance on port 3000
 lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 
-# Open Terminal and run start.sh, get the window ID
-WINDOW_ID=$(osascript <<EOF
+# Open Terminal and run start.sh
+osascript <<EOF
 tell application "Terminal"
     activate
-    set newWindow to do script "cd '$DASHBOARD_DIR' && if [ ! -d node_modules ]; then npm install; fi && bash start.sh"
-    return id of window 1
+    do script "cd '$DASHBOARD_DIR' && if [ ! -d node_modules ]; then npm install; fi && bash start.sh"
 end tell
 EOF
-)
 
-# Keep the app running while Terminal window is open
+# Wait a moment for the server to start
+sleep 3
+
+# Keep the app running while server is running on port 3000
 # This makes the app stay in the Dock
-while osascript -e "tell application \"Terminal\" to exists window id $WINDOW_ID" 2>/dev/null | grep -q "true"; do
+while lsof -ti:3000 > /dev/null 2>&1; do
     sleep 2
 done
