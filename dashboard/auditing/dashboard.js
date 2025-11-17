@@ -3031,8 +3031,12 @@ function closeHistoryModal() {
 async function revertToVersion(versionNumber) {
     if (!confirm(`Revert to version ${versionNumber}?\n\nThis will create a new version based on the selected one.`)) return;
 
+    // IMPORTANT: Save IDs before closing modal (closeHistoryModal nullifies them!)
+    const orgId = currentHistoryOrgId;
+    const indicatorId = currentHistoryIndicatorId;
+
     try {
-        const response = await fetch(`/api/organizations/${currentHistoryOrgId}/assessments/${currentHistoryIndicatorId}/revert`, {
+        const response = await fetch(`/api/organizations/${orgId}/assessments/${indicatorId}/revert`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -3048,8 +3052,34 @@ async function revertToVersion(versionNumber) {
             closeHistoryModal();
 
             // Reload organization data
-            await loadOrganizationDetails(currentHistoryOrgId);
+            await loadOrganizationDetails(orgId);
             renderAssessmentDetails();
+
+            // CRITICAL: Reload the integrated form if it's open
+            // Update CPFClient with reverted data
+            if (window.CPFClient && window.CPFClient.currentData && selectedOrgData) {
+                const revertedAssessment = selectedOrgData.assessments[indicatorId];
+
+                if (revertedAssessment && revertedAssessment.raw_data && revertedAssessment.raw_data.client_conversation) {
+                    // Update CPFClient internal data
+                    window.CPFClient.currentData.responses = revertedAssessment.raw_data.client_conversation.responses || {};
+                    window.CPFClient.currentData.score = revertedAssessment.raw_data.client_conversation.scores || null;
+
+                    if (revertedAssessment.raw_data.client_conversation.metadata) {
+                        window.CPFClient.currentData.metadata = {
+                            ...window.CPFClient.currentData.metadata,
+                            ...revertedAssessment.raw_data.client_conversation.metadata
+                        };
+                    }
+
+                    // Re-render the form with reverted data
+                    if (window.CPFClient.currentData.fieldKit) {
+                        console.log('🔄 Reloading form with reverted data...');
+                        window.CPFClient.renderFieldKit(window.CPFClient.currentData.fieldKit);
+                        showAlert(`Form reloaded with version ${versionNumber} data`, 'info');
+                    }
+                }
+            }
         } else {
             throw new Error(result.error);
         }
