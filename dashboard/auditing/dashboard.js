@@ -419,7 +419,8 @@ function renderProgressMatrix(org) {
 
             // AUDITING DASHBOARD: Usa SOLO assessments manuali
             const assessment = assessments[indicatorId];
-            const completed = assessment && assessment.bayesian_score !== undefined;
+            // Un assessment è completato SOLO se ha uno score > 0 (score=0 significa reset)
+            const completed = assessment && assessment.bayesian_score !== undefined && assessment.bayesian_score > 0;
 
             let cellClass = '';
             let riskLevel = 'Not assessed';
@@ -2392,11 +2393,8 @@ async function saveAssessmentToOrg() {
 
         // Refresh organization details
         setTimeout(() => {
-            renderOrganizationDetails(selectedOrganization);
+            loadOrganizationDetails(selectedOrganization);
         }, 1000);
-
-        // Reset form
-        resetCompileForm();
 
         // Switch back to progress tab
         switchTab('progress');
@@ -2496,7 +2494,7 @@ async function resetCompileForm() {
 
         // Refresh matrix
         if (selectedOrgData) {
-            await renderOrganizationDetails(selectedOrganization);
+            await loadOrganizationDetails(selectedOrganization);
         }
     } catch (error) {
         console.error('Error saving reset:', error);

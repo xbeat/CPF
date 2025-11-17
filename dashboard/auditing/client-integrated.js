@@ -1069,7 +1069,8 @@ function calculateIndicatorScore() {
     }
 
     // 2. TRACK CONVERSATION COMPLETENESS (informational only, not part of vulnerability score)
-    const convSection = sections.find(s => s.id === 'client-conversation');
+    const convSectionIndex = sections.findIndex(s => s.id === 'client-conversation');
+    const convSection = convSectionIndex >= 0 ? sections[convSectionIndex] : null;
     if (convSection) {
         let totalQuestions = 0;
         let answeredQuestions = 0;
@@ -1098,17 +1099,18 @@ function calculateIndicatorScore() {
         };
 
         // Process subsections if they exist (EN structure)
+        // Use actual section index (sIdx) to match ID generation in renderUI
         if (convSection.subsections && convSection.subsections.length > 0) {
             convSection.subsections.forEach((subsection, subIdx) => {
                 if (subsection.items) {
-                    processItems(subsection.items, `s1_sub${subIdx}`);
+                    processItems(subsection.items, `s${convSectionIndex}_sub${subIdx}`);
                 }
             });
         }
 
         // Process direct items if they exist (IT structure)
         if (convSection.items && convSection.items.length > 0) {
-            processItems(convSection.items, 's1');
+            processItems(convSection.items, `s${convSectionIndex}`);
         }
 
         // Conversation completeness (for reference only, NOT part of vulnerability score)
