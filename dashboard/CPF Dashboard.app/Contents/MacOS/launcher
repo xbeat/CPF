@@ -35,6 +35,8 @@ on run
         activate
         set serverWindow to do script "cd " & quoted form of dashboardPath & " && export PATH='" & npmPath & ":/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH' && /bin/bash start.sh"
         set terminalWindowID to id of front window
+        -- Save window ID to temp file for cleanup
+        do shell script "/bin/echo " & terminalWindowID & " > /tmp/.cpf_terminal_window_id"
     end tell
 
     -- Keep app running while Terminal window is open
@@ -44,12 +46,14 @@ on run
         try
             tell application "Terminal"
                 if not (exists window id terminalWindowID) then
-                    -- Terminal window was closed, quit app
+                    -- Terminal window was closed, clean up and quit app
+                    do shell script "/bin/rm -f /tmp/.cpf_terminal_window_id"
                     return
                 end if
             end tell
         on error
             -- Terminal closed or error, quit app
+            do shell script "/bin/rm -f /tmp/.cpf_terminal_window_id"
             return
         end try
     end repeat
@@ -60,11 +64,14 @@ on quit
     try
         do shell script "/usr/bin/lsof -ti:3000 | /usr/bin/xargs /bin/kill -9 2>/dev/null"
     end try
-    -- Close Terminal window
+    -- Close Terminal window using saved ID
     try
+        set savedID to do shell script "/bin/cat /tmp/.cpf_terminal_window_id 2>/dev/null"
+        set windowID to savedID as integer
         tell application "Terminal"
-            close window id terminalWindowID
+            close window id windowID
         end tell
+        do shell script "/bin/rm -f /tmp/.cpf_terminal_window_id"
     end try
     continue quit
 end quit
