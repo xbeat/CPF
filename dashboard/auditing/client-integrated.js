@@ -1071,25 +1071,39 @@ function calculateIndicatorScore() {
     // 2. TRACK CONVERSATION COMPLETENESS (informational only, not part of vulnerability score)
     const convSectionIndex = sections.findIndex(s => s.id === 'client-conversation');
     const convSection = convSectionIndex >= 0 ? sections[convSectionIndex] : null;
+
+    console.log('📊 Conversation completeness calculation:', {
+        convSectionIndex,
+        hasConvSection: !!convSection,
+        sectionIds: sections.map(s => s.id)
+    });
+
     if (convSection) {
         let totalQuestions = 0;
         let answeredQuestions = 0;
 
         // Handle both structures: subsections (EN) OR direct items (IT)
         const processItems = (items, baseId) => {
+            if (!items || !Array.isArray(items)) {
+                console.warn('⚠️ processItems: items is not an array', items);
+                return;
+            }
+
             items.forEach((item, iIdx) => {
                 if (item.type === 'question') {
                     // Use item.id from Field Kit if available, otherwise use baseId
                     const itemId = item.id || `${baseId}_i${iIdx}`;
 
                     // Only count follow-ups (main questions don't have input fields, only text)
-                    if (item.followups || item.followup) {
-                        const followups = item.followups || item.followup || [];
+                    const followups = item.followups || item.followup || [];
+
+                    if (Array.isArray(followups) && followups.length > 0) {
                         followups.forEach((followup, fIdx) => {
                             totalQuestions++;
                             const followupId = `${itemId}_f${fIdx}`;
                             const followupResponse = currentData.responses[followupId];
-                            if (followupResponse && followupResponse.trim().length > 0) {
+
+                            if (followupResponse && String(followupResponse).trim().length > 0) {
                                 answeredQuestions++;
                             }
                         });
@@ -1099,17 +1113,18 @@ function calculateIndicatorScore() {
         };
 
         // Process subsections if they exist (EN structure)
-        // Use actual section index (sIdx) to match ID generation in renderUI
-        if (convSection.subsections && convSection.subsections.length > 0) {
+        if (convSection.subsections && Array.isArray(convSection.subsections) && convSection.subsections.length > 0) {
+            console.log('📋 Processing subsections:', convSection.subsections.length);
             convSection.subsections.forEach((subsection, subIdx) => {
-                if (subsection.items) {
+                if (subsection.items && Array.isArray(subsection.items)) {
                     processItems(subsection.items, `s${convSectionIndex}_sub${subIdx}`);
                 }
             });
         }
 
         // Process direct items if they exist (IT structure)
-        if (convSection.items && convSection.items.length > 0) {
+        if (convSection.items && Array.isArray(convSection.items) && convSection.items.length > 0) {
+            console.log('📋 Processing direct items:', convSection.items.length);
             processItems(convSection.items, `s${convSectionIndex}`);
         }
 
@@ -1122,6 +1137,21 @@ function calculateIndicatorScore() {
             answered_questions: answeredQuestions,
             completion_rate: completionRate,
             is_informational: true // Flag to indicate this is NOT a vulnerability score
+        };
+
+        console.log('✅ Conversation completeness calculated:', {
+            totalQuestions,
+            answeredQuestions,
+            completionRate: (completionRate * 100).toFixed(1) + '%'
+        });
+    } else {
+        // Fallback: if no client-conversation section found, set defaults
+        console.warn('⚠️ No client-conversation section found, setting defaults');
+        currentScore.details.conversation_breakdown = {
+            total_questions: 0,
+            answered_questions: 0,
+            completion_rate: 0,
+            is_informational: true
         };
     }
 
@@ -1330,53 +1360,79 @@ function updateScoreDisplay() {
 
     } else {
         // SUBSEQUENT UPDATES: Only update values, NO HTML regeneration
-        document.getElementById('score-val').textContent = scorePercentage + '%';
+        const scoreValEl = document.getElementById('score-val');
+        if (scoreValEl) scoreValEl.textContent = scorePercentage + '%';
 
         const fill = document.getElementById('score-bar-fill');
-        fill.className = `progress-bar-fill ${currentScore.maturity_level}`;
-        fill.style.width = scorePercentage + '%';
-        fill.textContent = scorePercentage + '%';
+        if (fill) {
+            fill.className = `progress-bar-fill ${currentScore.maturity_level}`;
+            fill.style.width = scorePercentage + '%';
+            fill.textContent = scorePercentage + '%';
+        }
 
         const badge = document.getElementById('maturity-badge');
-        badge.className = `maturity-badge ${currentScore.maturity_level}`;
-        badge.textContent = maturityConfig.label;
+        if (badge) {
+            badge.className = `maturity-badge ${currentScore.maturity_level}`;
+            badge.textContent = maturityConfig.label;
+        }
 
-        document.getElementById('quick-val').textContent = (currentScore.quick_assessment * 100).toFixed(1) + '%';
-        document.getElementById('quick-count').textContent = currentScore.details.quick_assessment_breakdown.length;
+        const quickValEl = document.getElementById('quick-val');
+        if (quickValEl) quickValEl.textContent = (currentScore.quick_assessment * 100).toFixed(1) + '%';
 
-        document.getElementById('flags-val').textContent = (currentScore.red_flags * 100).toFixed(1) + '%';
-        document.getElementById('flags-count').textContent = currentScore.details.red_flags_list.length;
+        const quickCountEl = document.getElementById('quick-count');
+        if (quickCountEl) quickCountEl.textContent = currentScore.details.quick_assessment_breakdown.length;
 
-        document.getElementById('conv-val').textContent = (currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0) + '%';
-        document.getElementById('conv-answered').textContent = currentScore.details.conversation_breakdown.answered_questions;
-        document.getElementById('conv-total').textContent = currentScore.details.conversation_breakdown.total_questions;
+        const flagsValEl = document.getElementById('flags-val');
+        if (flagsValEl) flagsValEl.textContent = (currentScore.red_flags * 100).toFixed(1) + '%';
 
-        document.getElementById('interp-text').innerHTML = `<strong style="color: ${maturityConfig.color};">${maturityConfig.label}:</strong> ${maturityConfig.description}`;
+        const flagsCountEl = document.getElementById('flags-count');
+        if (flagsCountEl) flagsCountEl.textContent = currentScore.details.red_flags_list.length;
 
-        document.getElementById('quick-breakdown').innerHTML = currentScore.details.quick_assessment_breakdown.map(item => `
-            <div class="detail-row">
-                <span class="detail-label">${item.question}</span>
-                <span class="detail-value">${(item.weighted_score * 100).toFixed(1)}%</span>
-            </div>
-        `).join('');
+        const convValEl = document.getElementById('conv-val');
+        if (convValEl) convValEl.textContent = (currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0) + '%';
 
-        document.getElementById('flags-breakdown').innerHTML = currentScore.details.red_flags_list.length > 0 ? `
-            <h4 style="margin: 20px 0 15px; color: var(--danger);">Red Flags Detected</h4>
-            ${currentScore.details.red_flags_list.map(flag => `
+        const convAnsweredEl = document.getElementById('conv-answered');
+        if (convAnsweredEl) convAnsweredEl.textContent = currentScore.details.conversation_breakdown.answered_questions;
+
+        const convTotalEl = document.getElementById('conv-total');
+        if (convTotalEl) convTotalEl.textContent = currentScore.details.conversation_breakdown.total_questions;
+
+        const interpTextEl = document.getElementById('interp-text');
+        if (interpTextEl) interpTextEl.innerHTML = `<strong style="color: ${maturityConfig.color};">${maturityConfig.label}:</strong> ${maturityConfig.description}`;
+
+        const quickBreakdownEl = document.getElementById('quick-breakdown');
+        if (quickBreakdownEl) {
+            quickBreakdownEl.innerHTML = currentScore.details.quick_assessment_breakdown.map(item => `
                 <div class="detail-row">
-                    <span class="detail-label">⚠️ ${flag.flag}</span>
-                    <span class="detail-value" style="color: var(--danger);">+${(flag.impact * 100).toFixed(1)}%</span>
+                    <span class="detail-label">${item.question}</span>
+                    <span class="detail-value">${(item.weighted_score * 100).toFixed(1)}%</span>
                 </div>
-            `).join('')}
-        ` : '';
+            `).join('');
+        }
 
-        document.getElementById('calc-formula').innerHTML = `
-            <strong>Vulnerability Score Calculation:</strong><br>
-            Final Score = (Quick Assessment × ${weights.quick_assessment}) + (Red Flags × ${weights.red_flags})<br>
-            Final Score = (${currentScore.quick_assessment.toFixed(3)} × ${weights.quick_assessment}) + (${currentScore.red_flags.toFixed(3)} × ${weights.red_flags})<br>
-            <strong>Final Score = ${currentScore.final_score.toFixed(3)} (${scorePercentage}%)</strong><br>
-            <em style="color: #888; font-size: 12px;">Note: Conversation completeness is tracked separately for reference</em>
-        `;
+        const flagsBreakdownEl = document.getElementById('flags-breakdown');
+        if (flagsBreakdownEl) {
+            flagsBreakdownEl.innerHTML = currentScore.details.red_flags_list.length > 0 ? `
+                <h4 style="margin: 20px 0 15px; color: var(--danger);">Red Flags Detected</h4>
+                ${currentScore.details.red_flags_list.map(flag => `
+                    <div class="detail-row">
+                        <span class="detail-label">⚠️ ${flag.flag}</span>
+                        <span class="detail-value" style="color: var(--danger);">+${(flag.impact * 100).toFixed(1)}%</span>
+                    </div>
+                `).join('')}
+            ` : '';
+        }
+
+        const calcFormulaEl = document.getElementById('calc-formula');
+        if (calcFormulaEl) {
+            calcFormulaEl.innerHTML = `
+                <strong>Vulnerability Score Calculation:</strong><br>
+                Final Score = (Quick Assessment × ${weights.quick_assessment}) + (Red Flags × ${weights.red_flags})<br>
+                Final Score = (${currentScore.quick_assessment.toFixed(3)} × ${weights.quick_assessment}) + (${currentScore.red_flags.toFixed(3)} × ${weights.red_flags})<br>
+                <strong>Final Score = ${currentScore.final_score.toFixed(3)} (${scorePercentage}%)</strong><br>
+                <em style="color: #888; font-size: 12px;">Note: Conversation completeness is tracked separately for reference</em>
+            `;
+        }
     }
 }
 
