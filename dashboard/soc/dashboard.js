@@ -1500,3 +1500,169 @@ async function exportCurrentOrgPDF() {
         alert(`Failed to export PDF: ${error.message}`);
     }
 }
+
+// ===== TRASH & RESTORE FUNCTIONS =====
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+async function loadTrashCount() {
+    try {
+        const response = await fetch('/api/trash');
+        const data = await response.json();
+
+        if (data.success) {
+            const count = data.count;
+            const badge = document.getElementById('trashCount');
+
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                    badge.style.marginLeft = '5px';
+                    badge.style.background = 'var(--danger)';
+                    badge.style.color = 'white';
+                    badge.style.padding = '2px 8px';
+                    badge.style.borderRadius = '12px';
+                    badge.style.fontSize = '11px';
+                    badge.style.fontWeight = '600';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error loading trash count:', error);
+    }
+}
+
+async function openTrashModal() {
+    document.getElementById('trashModal').style.display = 'flex';
+
+    try {
+        const response = await fetch('/api/trash');
+        const data = await response.json();
+
+        if (!data.success || data.count === 0) {
+            document.getElementById('trashContent').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🗑️</div>
+                    <div class="empty-state-title">Trash is Empty</div>
+                    <div class="empty-state-text">No deleted organizations</div>
+                </div>
+            `;
+            return;
+        }
+
+        // Render trash items
+        let html = '<div style="padding: 20px;">';
+        html += '<p style="color: var(--text-light); font-size: 14px; margin-bottom: 20px;">Organizations will be automatically deleted after 30 days</p>';
+
+        data.organizations.forEach(org => {
+            const daysLeft = org.days_until_permanent_delete;
+            const warningClass = daysLeft <= 5 ? 'var(--danger)' : 'var(--text-light)';
+
+            html += `
+                <div style="background: var(--bg-gray); border: 2px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 8px 0; color: var(--primary);">${escapeHtml(org.name)}</h4>
+                            <div style="font-size: 13px; color: var(--text-light);">
+                                <div>ID: <code>${escapeHtml(org.id)}</code></div>
+                                <div>Industry: ${escapeHtml(org.industry)}</div>
+                                <div>Assessments: ${org.stats.total_assessments}/100</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 12px; color: ${warningClass}; font-weight: 600; margin-bottom: 10px;">
+                                ${daysLeft > 0 ? `${daysLeft} days left` : 'Expires today'}
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-primary btn-small" onclick="restoreFromTrash('${escapeHtml(org.id)}')" style="padding: 6px 12px; font-size: 12px;">
+                                    Restore
+                                </button>
+                                <button class="btn btn-danger btn-small" onclick="permanentDeleteOrg('${escapeHtml(org.id)}', '${escapeHtml(org.name)}')" style="padding: 6px 12px; font-size: 12px;">
+                                    Delete Forever
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-light); padding-top: 12px; border-top: 1px solid var(--border);">
+                        Deleted: ${new Date(org.deleted_at).toLocaleString()}
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        document.getElementById('trashContent').innerHTML = html;
+
+    } catch (error) {
+        console.error('Error loading trash:', error);
+        alert('Failed to load trash');
+    }
+}
+
+function closeTrashModal() {
+    document.getElementById('trashModal').style.display = 'none';
+}
+
+async function restoreFromTrash(orgId) {
+    if (!confirm('Restore this organization?')) return;
+
+    try {
+        const response = await fetch(`/api/organizations/${orgId}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: 'Dashboard User' })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('Organization restored successfully!');
+            closeTrashModal();
+            await loadOrganizationsData();
+            await loadTrashCount();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error restoring organization:', error);
+        alert(`Failed to restore: ${error.message}`);
+    }
+}
+
+async function permanentDeleteOrg(orgId, orgName) {
+    if (!confirm(`PERMANENTLY DELETE "${orgName}"?\n\nThis action CANNOT be undone!\n\nAll assessment data will be lost forever.`)) return;
+
+    // Double confirmation
+    if (!confirm(`Are you absolutely sure? This will permanently delete "${orgName}".`)) return;
+
+    try {
+        const response = await fetch(`/api/organizations/${orgId}/permanent?user=Dashboard%20User`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('Organization permanently deleted');
+            closeTrashModal();
+            await loadTrashCount();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error permanently deleting organization:', error);
+        alert(`Failed to delete: ${error.message}`);
+    }
+}
+
+// Load trash count on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadTrashCount();
+});
