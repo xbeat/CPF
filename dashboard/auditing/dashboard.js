@@ -101,8 +101,8 @@ async function loadOrganizationDetails(orgId) {
                 fullData: selectedOrgData
             });
             // Update current organization language for category modal
-            currentOrgLanguage = selectedOrgData.language || 'en-US';
-            console.log('🌍 currentOrgLanguage set to:', currentOrgLanguage);
+            // Language is stored in metadata.language, not in language field
+            currentOrgLanguage = selectedOrgData.metadata?.language || 'en-US';
             renderAssessmentDetails();
         } else {
             showAlert('Failed to load organization details', 'error');
