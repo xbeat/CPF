@@ -308,8 +308,10 @@ function selectOrganization(orgId) {
     // Show export buttons (if they exist)
     const xlsxBtn = document.getElementById('exportXLSXBtn');
     const pdfBtn = document.getElementById('exportPDFBtn');
+    const zipBtn = document.getElementById('exportZIPBtn');
     if (xlsxBtn) xlsxBtn.style.display = 'inline-block';
     if (pdfBtn) pdfBtn.style.display = 'inline-block';
+    if (zipBtn) zipBtn.style.display = 'inline-block';
 
     // Scroll to assessment section
     document.getElementById('assessmentSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -3209,7 +3211,7 @@ async function revertToVersion(versionNumber) {
 }
 
 // ============================================================================
-// EXPORT FUNCTIONS (XLSX & PDF)
+// EXPORT FUNCTIONS (XLSX, PDF & ZIP)
 // ============================================================================
 
 /**
@@ -3279,6 +3281,41 @@ async function exportCurrentOrgPDF() {
     } catch (error) {
         console.error('Error exporting PDF:', error);
         showAlert(`Failed to export PDF: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Export current organization to ZIP (all assessment cards/schede)
+ */
+async function exportCurrentOrgZIP() {
+    if (!selectedOrgData) {
+        showAlert('No organization selected', 'error');
+        return;
+    }
+
+    try {
+        const orgId = selectedOrgData.id;
+        const url = `/api/organizations/${orgId}/export/zip?user=Dashboard User`;
+
+        showAlert('Generating ZIP export with all assessment cards...', 'info');
+
+        // Get organization name with fallbacks
+        const orgName = (selectedOrgData.metadata?.name || selectedOrgData.name || orgId || 'Organization').replace(/\s/g, '_');
+
+        // Create temporary link and trigger download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `CPF_Audit_${orgName}_${new Date().toISOString().split('T')[0]}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => {
+            showAlert('ZIP export started! Check your downloads.', 'success');
+        }, 1000);
+    } catch (error) {
+        console.error('Error exporting ZIP:', error);
+        showAlert(`Failed to export ZIP: ${error.message}`, 'error');
     }
 }
 
