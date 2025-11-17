@@ -1,98 +1,94 @@
-#!/bin/bash
+#!/usr/bin/osascript
 
-# CPF Dashboard Launcher for macOS
-# This script finds and executes start.sh in a Terminal window
+-- CPF Dashboard Launcher
+-- AppleScript wrapper that stays in Dock
 
-# Configuration file for storing dashboard path
-CONFIG_FILE="$HOME/.cpf_dashboard_path"
+on run
+    set dashboardPath to findDashboardPath()
 
-# Find the dashboard directory
-DASHBOARD_DIR=""
+    if dashboardPath is "" then
+        display alert "CPF Dashboard Error" message "Cannot find CPF dashboard folder"
+        return
+    end if
 
-# First check if we have a saved path
-if [[ -f "$CONFIG_FILE" ]]; then
-    SAVED_PATH=$(cat "$CONFIG_FILE")
-    if [[ -f "$SAVED_PATH/start.sh" ]]; then
-        DASHBOARD_DIR="$SAVED_PATH"
-    fi
-fi
+    -- Kill existing server on port 3000
+    try
+        do shell script "/usr/bin/lsof -ti:3000 | /usr/bin/xargs /bin/kill -9 2>/dev/null"
+    end try
 
-# If no saved path, try to auto-detect
-if [[ -z "$DASHBOARD_DIR" ]]; then
-    # Get the directory where the .app bundle is located
-    APP_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
-    PARENT_DIR="$(dirname "$APP_DIR")"
+    delay 1
 
-    if [[ -f "$PARENT_DIR/start.sh" ]]; then
-        DASHBOARD_DIR="$PARENT_DIR"
-    elif [[ -f "$HOME/CPF/dashboard/start.sh" ]]; then
-        DASHBOARD_DIR="$HOME/CPF/dashboard"
-    elif [[ -f "$HOME/Desktop/CPF/dashboard/start.sh" ]]; then
-        DASHBOARD_DIR="$HOME/Desktop/CPF/dashboard"
-    elif [[ -f "$HOME/Documents/CPF/dashboard/start.sh" ]]; then
-        DASHBOARD_DIR="$HOME/Documents/CPF/dashboard"
-    elif [[ -f "$HOME/Projects/CPF/dashboard/start.sh" ]]; then
-        DASHBOARD_DIR="$HOME/Projects/CPF/dashboard"
-    else
-        # Ask user to select the folder
-        SELECTED_PATH=$(osascript -e 'tell application "System Events"' \
-            -e 'activate' \
-            -e 'set folderPath to POSIX path of (choose folder with prompt "Select the CPF dashboard folder (containing start.sh):")' \
-            -e 'end tell' 2>/dev/null)
+    -- Find npm path
+    set npmPath to ""
+    try
+        set npmPath to do shell script "/bin/ls -1d $HOME/.nvm/versions/node/*/bin 2>/dev/null | /usr/bin/tail -1"
+    end try
+    if npmPath is "" then
+        set npmPath to "/usr/local/bin"
+    end if
 
-        if [[ -n "$SELECTED_PATH" && -f "${SELECTED_PATH%/}/start.sh" ]]; then
-            DASHBOARD_DIR="${SELECTED_PATH%/}"
-        else
-            osascript -e 'display alert "CPF Dashboard Error" message "The selected folder does not contain start.sh. Please select the correct dashboard folder." as critical'
-            exit 1
-        fi
-    fi
+    -- Open Terminal and run server
+    tell application "Terminal"
+        activate
+        do script "cd " & quoted form of dashboardPath & " && export PATH='" & npmPath & ":/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH' && /bin/bash start.sh"
+    end tell
 
-    # Save the path for next time
-    if [[ -n "$DASHBOARD_DIR" ]]; then
-        echo "$DASHBOARD_DIR" > "$CONFIG_FILE"
-    fi
-fi
+    -- Keep app running by showing a dialog
+    -- This makes the app stay in Dock
+    repeat
+        delay 3600
+    end repeat
+end run
 
-# Verify start.sh exists
-if [[ ! -f "$DASHBOARD_DIR/start.sh" ]]; then
-    rm -f "$CONFIG_FILE"
-    osascript -e "display alert \"CPF Dashboard Error\" message \"Cannot find start.sh. Please delete ~/.cpf_dashboard_path and restart.\" as critical"
-    exit 1
-fi
+on findDashboardPath()
+    set configFile to (POSIX path of (path to home folder)) & ".cpf_dashboard_path"
 
-# Kill any existing instance on port 3000
-PIDS=$(/usr/bin/lsof -ti:3000 2>/dev/null)
-if [[ -n "$PIDS" ]]; then
-    echo "$PIDS" | /usr/bin/xargs kill -9 2>/dev/null
-    /bin/sleep 1
-fi
+    -- Check saved path
+    try
+        set savedPath to do shell script "/bin/cat " & quoted form of configFile
+        if (do shell script "/bin/test -f " & quoted form of (savedPath & "/start.sh") & " && echo yes") is "yes" then
+            return savedPath
+        end if
+    end try
 
-# Detect npm path - check common locations
-NPM_PATH=""
-for p in /usr/local/bin/npm /opt/homebrew/bin/npm "$HOME/.nvm/versions/node/"*/bin/npm; do
-    if [[ -x "$p" ]]; then
-        NPM_PATH="$(dirname "$p")"
-        break
-    fi
-done
+    -- Auto-detect common locations
+    set homeDir to POSIX path of (path to home folder)
+    set possiblePaths to {¬
+        homeDir & "CPF/dashboard", ¬
+        homeDir & "Desktop/CPF/dashboard", ¬
+        homeDir & "Documents/CPF/dashboard", ¬
+        homeDir & "Projects/CPF/dashboard"}
 
-# Open Terminal and run start.sh
-osascript <<EOF
-tell application "Terminal"
-    activate
-    do script "cd '$DASHBOARD_DIR' && export PATH='$NPM_PATH:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:\$PATH' && if [ ! -d node_modules ]; then npm install; fi && /bin/bash start.sh"
-end tell
-EOF
+    -- Also check Lavori folder
+    try
+        set lavoriDirs to paragraphs of (do shell script "/bin/ls -1d " & quoted form of (homeDir & "Lavori/*/github/CPF/dashboard") & " 2>/dev/null")
+        set possiblePaths to possiblePaths & lavoriDirs
+    end try
 
-# Keep this process alive so the app stays in the Dock
-# Press Cmd+Q on the app icon to quit, or close the Terminal window
-# Use caffeinate to prevent sleep and keep app running
-/usr/bin/caffeinate -i &
-CAFF_PID=$!
+    repeat with aPath in possiblePaths
+        try
+            if (do shell script "/bin/test -f " & quoted form of (aPath & "/start.sh") & " && echo yes") is "yes" then
+                -- Save path for next time
+                do shell script "/bin/echo " & quoted form of aPath & " > " & quoted form of configFile
+                return aPath
+            end if
+        end try
+    end repeat
 
-# Wait forever (until user quits the app with Cmd+Q)
-trap "kill $CAFF_PID 2>/dev/null; exit 0" SIGTERM SIGINT
-while true; do
-    /bin/sleep 86400
-done
+    -- Ask user to select
+    set selectedFolder to choose folder with prompt "Select the CPF dashboard folder (containing start.sh):"
+    set selectedPath to POSIX path of selectedFolder
+    if selectedPath ends with "/" then
+        set selectedPath to text 1 thru -2 of selectedPath
+    end if
+
+    -- Verify and save
+    try
+        if (do shell script "/bin/test -f " & quoted form of (selectedPath & "/start.sh") & " && echo yes") is "yes" then
+            do shell script "/bin/echo " & quoted form of selectedPath & " > " & quoted form of configFile
+            return selectedPath
+        end if
+    end try
+
+    return ""
+end findDashboardPath
