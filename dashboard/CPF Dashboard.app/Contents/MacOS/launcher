@@ -3,6 +3,9 @@
 -- CPF Dashboard Launcher
 -- AppleScript wrapper that stays in Dock
 
+-- Global variable to store Terminal window ID
+property terminalWindowID : 0
+
 on run
     set dashboardPath to findDashboardPath()
 
@@ -31,7 +34,7 @@ on run
     tell application "Terminal"
         activate
         set serverWindow to do script "cd " & quoted form of dashboardPath & " && export PATH='" & npmPath & ":/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH' && /bin/bash start.sh"
-        set windowID to id of front window
+        set terminalWindowID to id of front window
     end tell
 
     -- Keep app running while Terminal window is open
@@ -40,7 +43,7 @@ on run
         delay 2
         try
             tell application "Terminal"
-                if not (exists window id windowID) then
+                if not (exists window id terminalWindowID) then
                     -- Terminal window was closed, quit app
                     return
                 end if
@@ -56,6 +59,12 @@ on quit
     -- Clean up: kill server on port 3000 and close the Terminal window
     try
         do shell script "/usr/bin/lsof -ti:3000 | /usr/bin/xargs /bin/kill -9 2>/dev/null"
+    end try
+    -- Close Terminal window
+    try
+        tell application "Terminal"
+            close window id terminalWindowID
+        end tell
     end try
     continue quit
 end quit
