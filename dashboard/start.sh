@@ -26,7 +26,8 @@ echo "Press Ctrl+C to stop"
 echo ""
 
 # Open browser after 2 seconds (landing page at root)
-(sleep 2 && open http://localhost:3000/ 2>/dev/null || xdg-open http://localhost:3000/ 2>/dev/null) &
+# Add timestamp to force reload without cache
+(sleep 2 && open "http://localhost:3000/?nocache=$(date +%s)" 2>/dev/null || xdg-open "http://localhost:3000/?nocache=$(date +%s)" 2>/dev/null) &
 
 # Start server
 npm start
