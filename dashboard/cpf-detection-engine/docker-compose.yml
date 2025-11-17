@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: cpf-timescaledb
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: cpf_detection
+      POSTGRES_USER: cpf_user
+      POSTGRES_PASSWORD: cpf_password_change_in_production
+      TIMESCALEDB_TELEMETRY: 'off'
+    volumes:
+      - timescaledb-data:/var/lib/postgresql/data
+      - ./storage/schema:/docker-entrypoint-initdb.d
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=512MB"
+      - "-c"
+      - "effective_cache_size=2GB"
+      - "-c"
+      - "max_connections=200"
+      - "-c"
+      - "work_mem=10MB"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cpf_user -d cpf_detection"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: cpf-pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@cpf.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - timescaledb
+
+  # Optional: Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cpf-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: grafana-clock-panel
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - timescaledb
+
+volumes:
+  timescaledb-data:
+  pgadmin-data:
+  grafana-data:
+
+networks:
+  default:
+    name: cpf-network
