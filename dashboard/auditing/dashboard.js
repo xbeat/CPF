@@ -94,8 +94,15 @@ async function loadOrganizationDetails(orgId) {
 
         if (result.success) {
             selectedOrgData = result.data;
+            console.log('🌍 Organization data loaded:', {
+                orgId,
+                language: selectedOrgData.language,
+                metadata_language: selectedOrgData.metadata?.language,
+                fullData: selectedOrgData
+            });
             // Update current organization language for category modal
             currentOrgLanguage = selectedOrgData.language || 'en-US';
+            console.log('🌍 currentOrgLanguage set to:', currentOrgLanguage);
             renderAssessmentDetails();
         } else {
             showAlert('Failed to load organization details', 'error');
