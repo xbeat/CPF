@@ -24,6 +24,30 @@ const CATEGORY_MAP = {
     '10': 'convergent'
 };
 
+// Close modals on ESC key - always close the most recently opened modal
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && window.modalStack && window.modalStack.length > 0) {
+        // Get the most recently opened modal (last in stack)
+        const topModal = window.modalStack[window.modalStack.length - 1];
+
+        // Close it based on its ID
+        switch (topModal) {
+            case 'indicator-modal':
+                closeIndicatorModal();
+                break;
+            case 'edit-org-modal':
+                closeEditOrgModal();
+                break;
+            case 'delete-org-modal':
+                closeDeleteOrgModal();
+                break;
+            case 'org-modal':
+                closeOrgModal();
+                break;
+        }
+    }
+});
+
 // Initialize on page load
 window.addEventListener('DOMContentLoaded', async () => {
     await initializeDashboard();
@@ -777,6 +801,7 @@ async function showIndicatorDetail(indicatorId) {
     `;
 
     modal.style.display = 'block';
+    pushModal('indicator-modal');
 
     try {
         // Construct GitHub URL using current organization language
@@ -923,6 +948,7 @@ async function showIndicatorDetail(indicatorId) {
  */
 function closeIndicatorModal() {
     document.getElementById('indicator-modal').style.display = 'none';
+    popModal('indicator-modal');
 }
 
 // Close modal on outside click
@@ -1083,11 +1109,13 @@ function editOrganization(orgId) {
     document.getElementById('edit-org-language').value = org.language;
 
     document.getElementById('edit-org-modal').style.display = 'block';
+    pushModal('edit-org-modal');
 }
 
 function closeEditOrgModal() {
     document.getElementById('edit-org-modal').style.display = 'none';
     editingOrgId = null;
+    popModal('edit-org-modal');
 }
 
 async function saveOrganizationEdit(event) {
@@ -1129,11 +1157,13 @@ function deleteOrganization(orgId, orgName) {
     deletingOrgId = orgId;
     document.getElementById('delete-org-name').textContent = orgName;
     document.getElementById('delete-org-modal').style.display = 'block';
+    pushModal('delete-org-modal');
 }
 
 function closeDeleteOrgModal() {
     document.getElementById('delete-org-modal').style.display = 'none';
     deletingOrgId = null;
+    popModal('delete-org-modal');
 }
 
 async function confirmDeleteOrganization() {
@@ -1187,6 +1217,7 @@ function openCreateOrgModal() {
     document.getElementById('org-id-input').disabled = false;
     document.getElementById('save-org-btn').textContent = 'Create Organization';
     document.getElementById('org-modal').style.display = 'flex';
+    pushModal('org-modal');
 }
 
 /**
@@ -1194,6 +1225,7 @@ function openCreateOrgModal() {
  */
 function closeOrgModal() {
     document.getElementById('org-modal').style.display = 'none';
+    popModal('org-modal');
 }
 
 /**
