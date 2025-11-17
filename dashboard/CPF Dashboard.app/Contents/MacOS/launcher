@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # CPF Dashboard Launcher for macOS
-# This script finds and executes start.sh
+# This script finds and executes start.sh in a Terminal window
 
 # Get the directory where the .app bundle is located
 APP_DIR="$(dirname "$(dirname "$(dirname "$0")")")"
@@ -36,8 +36,6 @@ if [[ ! -f "$DASHBOARD_DIR/start.sh" ]]; then
     exit 1
 fi
 
-cd "$DASHBOARD_DIR"
-
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
     osascript -e 'display alert "Node.js Not Found" message "Please install Node.js from https://nodejs.org" as critical'
@@ -50,14 +48,13 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
-# Check if node_modules exists
-if [[ ! -d "node_modules" ]]; then
-    osascript -e 'display notification "Installing dependencies..." with title "CPF Dashboard"'
-    npm install
-fi
-
 # Kill any existing instance on port 3000
 lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 
-# Execute start.sh
-exec bash start.sh
+# Open Terminal and run start.sh
+osascript <<EOF
+tell application "Terminal"
+    activate
+    do script "cd '$DASHBOARD_DIR' && if [ ! -d node_modules ]; then npm install; fi && bash start.sh"
+end tell
+EOF
