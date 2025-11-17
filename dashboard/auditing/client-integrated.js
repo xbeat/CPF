@@ -89,13 +89,13 @@ const CPFClient = {
     init() {
         // Auto-save to localStorage every 30 seconds (backup)
         setInterval(() => {
-            if (this.currentData.fieldKit) {
-                localStorage.setItem('cpf_current', JSON.stringify(this.currentData));
+            if (CPFClient.currentData.fieldKit) {
+                localStorage.setItem('cpf_current', JSON.stringify(CPFClient.currentData));
             }
         }, 30000);
 
         // Make CATEGORY_MAP available globally for dashboard.js compatibility
-        window.CATEGORY_MAP = window.CATEGORY_MAP || this.CATEGORY_MAP;
+        window.CATEGORY_MAP = window.CATEGORY_MAP || CPFClient.CATEGORY_MAP;
     },
 
     displayOrganizationInfo() {
@@ -105,8 +105,8 @@ const CPFClient = {
 
         if (orgInfo && orgNameDisplay && orgIdDisplay) {
             orgInfo.style.display = 'block';
-            orgNameDisplay.textContent = this.organizationContext.orgName;
-            orgIdDisplay.textContent = this.organizationContext.orgId;
+            orgNameDisplay.textContent = CPFClient.organizationContext.orgName;
+            orgIdDisplay.textContent = CPFClient.organizationContext.orgId;
         }
     },
 
@@ -136,11 +136,11 @@ const CPFClient = {
         // Determine language: use override, then organization context, then UI select, then default
         if (languageOverride) {
             isoLang = languageOverride;
-        } else if (this.organizationContext.language) {
-            isoLang = this.organizationContext.language;
+        } else if (CPFClient.organizationContext.language) {
+            isoLang = CPFClient.organizationContext.language;
         } else if (langSelect) {
             const lang = langSelect.value;
-            isoLang = this.LANG_MAP[lang.toUpperCase()] || 'en-US';
+            isoLang = CPFClient.LANG_MAP[lang.toUpperCase()] || 'en-US';
         } else {
             isoLang = 'en-US';
         }
@@ -177,12 +177,12 @@ const CPFClient = {
 
                 // If language was specified in the input, use it
                 if (indicatorMatch[3]) {
-                    isoLang = this.LANG_MAP[indicatorMatch[3].toUpperCase()] || isoLang;
+                    isoLang = CPFClient.LANG_MAP[indicatorMatch[3].toUpperCase()] || isoLang;
                 }
 
                 // Get category info
                 const categoryNum = indicatorMatch[1];
-                const categoryName = this.CATEGORY_MAP[categoryNum];
+                const categoryName = CPFClient.CATEGORY_MAP[categoryNum];
 
                 if (!categoryName) {
                     throw new Error(`Invalid category number: ${categoryNum}. Must be 1-10.`);
@@ -202,8 +202,8 @@ const CPFClient = {
             }
 
             const data = await response.json();
-            this.currentData.fieldKit = data;
-            this.renderFieldKit(data);
+            CPFClient.currentData.fieldKit = data;
+            CPFClient.renderFieldKit(data);
         } catch (error) {
             alert('Error loading JSON: ' + error.message);
             console.error('Load error:', error);
@@ -214,26 +214,25 @@ const CPFClient = {
         const file = event.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        const self = this;
         reader.onload = function(e) {
             try {
                 const data = JSON.parse(e.target.result);
 
                 if (data.fieldKit && data.metadata && data.responses) {
-                    self.currentData = data;
-                    self.renderFieldKit(data.fieldKit);
+                    CPFClient.currentData = data;
+                    CPFClient.renderFieldKit(data.fieldKit);
                 }
                 else if (data.indicator && data.sections) {
-                    self.currentData.fieldKit = data;
-                    self.currentData.metadata = {
+                    CPFClient.currentData.fieldKit = data;
+                    CPFClient.currentData.metadata = {
                         date: new Date().toISOString().split('T')[0],
                         auditor: '',
                         client: '',
                         status: 'in-progress',
                         notes: ''
                     };
-                    self.currentData.responses = {};
-                    self.renderFieldKit(data);
+                    CPFClient.currentData.responses = {};
+                    CPFClient.renderFieldKit(data);
                 }
                 else {
                     throw new Error('Unrecognized JSON structure');
@@ -277,22 +276,22 @@ const CPFClient = {
         metadataBar.innerHTML = `
             <div class="meta-field">
                 <label>Assessment Date</label>
-                <input type="date" value="${this.currentData.metadata.date}" onchange="window.CPFClient.updateMeta('date', this.value)">
+                <input type="date" value="${CPFClient.currentData.metadata.date}" onchange="window.CPFClient.updateMeta('date', CPFClient.value)">
             </div>
             <div class="meta-field">
                 <label>Auditor</label>
-                <input type="text" value="${this.currentData.metadata.auditor}" onchange="window.CPFClient.updateMeta('auditor', this.value)" placeholder="Your name">
+                <input type="text" value="${CPFClient.currentData.metadata.auditor}" onchange="window.CPFClient.updateMeta('auditor', CPFClient.value)" placeholder="Your name">
             </div>
             <div class="meta-field">
                 <label>Client</label>
-                <input type="text" value="${this.currentData.metadata.client}" onchange="window.CPFClient.updateMeta('client', this.value)" placeholder="Client name">
+                <input type="text" value="${CPFClient.currentData.metadata.client}" onchange="window.CPFClient.updateMeta('client', CPFClient.value)" placeholder="Client name">
             </div>
             <div class="meta-field">
                 <label>Status</label>
-                <select onchange="window.CPFClient.updateMeta('status', this.value)">
-                    <option value="in-progress" ${this.currentData.metadata.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
-                    <option value="completed" ${this.currentData.metadata.status === 'completed' ? 'selected' : ''}>Completed</option>
-                    <option value="review" ${this.currentData.metadata.status === 'review' ? 'selected' : ''}>Under Review</option>
+                <select onchange="window.CPFClient.updateMeta('status', CPFClient.value)">
+                    <option value="in-progress" ${CPFClient.currentData.metadata.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                    <option value="completed" ${CPFClient.currentData.metadata.status === 'completed' ? 'selected' : ''}>Completed</option>
+                    <option value="review" ${CPFClient.currentData.metadata.status === 'review' ? 'selected' : ''}>Under Review</option>
                 </select>
             </div>
             <div class="meta-field" style="grid-column: 1 / -1;">
@@ -300,8 +299,8 @@ const CPFClient = {
                 <textarea id="assessment-notes"
                           placeholder="Assessment notes..."
                           style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; min-height: 80px; font-family: inherit; font-size: 14px; resize: vertical;"
-                          onchange="window.CPFClient.updateMeta('notes', this.value)"
-                          onblur="window.CPFClient.updateMeta('notes', this.value)">${this.currentData.metadata.notes || ''}</textarea>
+                          onchange="window.CPFClient.updateMeta('notes', CPFClient.value)"
+                          onblur="window.CPFClient.updateMeta('notes', CPFClient.value)">${CPFClient.currentData.metadata.notes || ''}</textarea>
             </div>
         `;
 
@@ -322,7 +321,7 @@ const CPFClient = {
             if (section.items && Array.isArray(section.items)) {
                 section.items.forEach((item, iIdx) => {
                     const itemId = item.id || `s${sIdx}_i${iIdx}`;
-                    html += this.renderItem(item, itemId);
+                    html += CPFClient.renderItem(item, itemId);
                 });
             }
 
@@ -337,7 +336,7 @@ const CPFClient = {
                     if (sub.items && Array.isArray(sub.items)) {
                         sub.items.forEach((item, iIdx) => {
                             const itemId = item.id || `s${sIdx}_sub${subIdx}_i${iIdx}`;
-                            html += this.renderItem(item, itemId);
+                            html += CPFClient.renderItem(item, itemId);
                         });
                     }
                     html += `</div></div>`;
@@ -359,12 +358,12 @@ const CPFClient = {
 
         // Auto-calculate score on load if scoring is available
         if (data.scoring) {
-            this.calculateIndicatorScore();
+            CPFClient.calculateIndicatorScore();
         }
     },
 
     renderItem(item, itemId) {
-        const value = this.currentData.responses[itemId];
+        const value = CPFClient.currentData.responses[itemId];
 
         if (value !== undefined && value !== null && value !== '') {
             console.log(`✅ Found value for ${itemId}:`, value);
@@ -422,7 +421,7 @@ const CPFClient = {
             const checked = value ? 'checked' : '';
             let html = `
                 <div class="checkbox-item ${checked}">
-                    <input type="checkbox" id="${itemId}" ${checked} onchange="window.CPFClient.updateResponseWithAutoScore('${itemId}', this.checked)">
+                    <input type="checkbox" id="${itemId}" ${checked} onchange="window.CPFClient.updateResponseWithAutoScore('${itemId}', CPFClient.checked)">
                     <label for="${itemId}">${item.label}</label>
                 </div>
             `;
@@ -433,22 +432,22 @@ const CPFClient = {
                 item.subitems.forEach((sub, subIdx) => {
                     const subItemId = `${itemId}_sub${subIdx}`;
                     if (sub.type === 'checkbox') {
-                        const subValue = this.currentData.responses[subItemId] || false;
+                        const subValue = CPFClient.currentData.responses[subItemId] || false;
                         html += `
                             <div class="checkbox-item ${subValue ? 'checked' : ''}" style="display: inline-block; margin-right: 15px;">
                                 <input type="checkbox" id="${subItemId}" ${subValue ? 'checked' : ''}
-                                       onchange="window.CPFClient.updateResponse('${subItemId}', this.checked)">
+                                       onchange="window.CPFClient.updateResponse('${subItemId}', CPFClient.checked)">
                                 <label for="${subItemId}">${sub.label}</label>
                             </div>
                         `;
                     }
                     else if (sub.type === 'radio') {
-                        const subValue = this.currentData.responses[`${itemId}_radio_value`];
+                        const subValue = CPFClient.currentData.responses[`${itemId}_radio_value`];
                         html += `
                             <div class="radio-option" style="display: inline-block; margin-right: 15px;">
                                 <input type="radio" name="${itemId}_radio" id="${subItemId}" value="${sub.label}"
                                        ${subValue === sub.label ? 'checked' : ''}
-                                       onchange="window.CPFClient.updateResponse('${itemId}_radio_value', this.value)">
+                                       onchange="window.CPFClient.updateResponse('${itemId}_radio_value', CPFClient.value)">
                                 <label for="${subItemId}">${sub.label}</label>
                             </div>
                         `;
@@ -456,8 +455,8 @@ const CPFClient = {
                     else if (sub.type === 'input') {
                         html += `
                             <div class="input-group" style="margin: 10px 0;">
-                                <input type="text" id="${subItemId}" value="${this.currentData.responses[subItemId] || ''}"
-                                       placeholder="${sub.label}" onchange="window.CPFClient.updateResponse('${subItemId}', this.value)"
+                                <input type="text" id="${subItemId}" value="${CPFClient.currentData.responses[subItemId] || ''}"
+                                       placeholder="${sub.label}" onchange="window.CPFClient.updateResponse('${subItemId}', CPFClient.value)"
                                        style="padding: 6px; width: 200px;">
                             </div>
                         `;
@@ -472,7 +471,7 @@ const CPFClient = {
             return `
                 <div class="input-group">
                     <label>${item.label}</label>
-                    <input type="text" id="${itemId}" value="${value || ''}" onchange="window.CPFClient.updateResponse('${itemId}', this.value)">
+                    <input type="text" id="${itemId}" value="${value || ''}" onchange="window.CPFClient.updateResponse('${itemId}', CPFClient.value)">
                 </div>
             `;
         }
@@ -488,7 +487,7 @@ const CPFClient = {
                 html += `<div style="margin-left: 20px; margin-top: 10px;">`;
                 item.followups.forEach((followup, fIdx) => {
                     const followupId = `${itemId}_f${fIdx}`;
-                    const followupValue = this.currentData.responses[followupId] || '';
+                    const followupValue = CPFClient.currentData.responses[followupId] || '';
                     html += `
                         <div style="margin-bottom: 10px;">
                             <div style="font-size: 14px; color: var(--text-light); margin-bottom: 5px;">
@@ -497,8 +496,8 @@ const CPFClient = {
                             <textarea id="${followupId}"
                                       placeholder="Notes..."
                                       style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; min-height: 60px; font-family: inherit; font-size: 14px;"
-                                      onchange="window.CPFClient.updateResponseWithAutoScore('${followupId}', this.value)"
-                                      onblur="window.CPFClient.updateResponseWithAutoScore('${followupId}', this.value)">${followupValue}</textarea>
+                                      onchange="window.CPFClient.updateResponseWithAutoScore('${followupId}', CPFClient.value)"
+                                      onblur="window.CPFClient.updateResponseWithAutoScore('${followupId}', CPFClient.value)">${followupValue}</textarea>
                         </div>
                     `;
                 });
@@ -515,12 +514,12 @@ const CPFClient = {
     // RESPONSE HANDLING
     // ============================================
     updateMeta(field, value) {
-        this.currentData.metadata[field] = value;
-        this.autoSave();
+        CPFClient.currentData.metadata[field] = value;
+        CPFClient.autoSave();
     },
 
     updateResponse(id, value) {
-        this.currentData.responses[id] = value;
+        CPFClient.currentData.responses[id] = value;
         const elem = document.getElementById(id);
         if (elem && elem.type === 'checkbox') {
             const item = elem.closest('.checkbox-item');
@@ -546,23 +545,23 @@ const CPFClient = {
         }
 
         // Auto-calculate score when responses change
-        if (this.currentData.fieldKit && this.currentData.fieldKit.scoring) {
-            this.calculateIndicatorScore();
+        if (CPFClient.currentData.fieldKit && CPFClient.currentData.fieldKit.scoring) {
+            CPFClient.calculateIndicatorScore();
         }
 
-        this.autoSave();
+        CPFClient.autoSave();
     },
 
     updateResponseWithAutoScore(id, value) {
-        this.updateResponse(id, value);
+        CPFClient.updateResponse(id, value);
 
         // Auto-calculate IMMEDIATELY
-        if (this.currentData.fieldKit && this.currentData.fieldKit.scoring) {
-            this.calculateIndicatorScore();
+        if (CPFClient.currentData.fieldKit && CPFClient.currentData.fieldKit.scoring) {
+            CPFClient.calculateIndicatorScore();
 
             // Save IMMEDIATELY to API
-            if (this.organizationContext.orgId && this.currentScore) {
-                this.saveToAPI().catch(err => {
+            if (CPFClient.organizationContext.orgId && CPFClient.currentScore) {
+                CPFClient.saveToAPI().catch(err => {
                     console.error('Auto-save failed:', err);
                 });
             }
@@ -570,7 +569,7 @@ const CPFClient = {
     },
 
     selectRadioOption(itemId, value) {
-        this.currentData.responses[itemId] = value;
+        CPFClient.currentData.responses[itemId] = value;
 
         const container = document.querySelector(`[data-item-id="${itemId}"]`);
         if (container) {
@@ -593,22 +592,22 @@ const CPFClient = {
             }
         }
 
-        if (this.currentData.fieldKit && this.currentData.fieldKit.scoring) {
-            this.calculateIndicatorScore();
+        if (CPFClient.currentData.fieldKit && CPFClient.currentData.fieldKit.scoring) {
+            CPFClient.calculateIndicatorScore();
         }
 
-        this.autoSave();
+        CPFClient.autoSave();
     },
 
     // ============================================
     // SAVE & EXPORT
     // ============================================
     async saveData() {
-        localStorage.setItem('cpf_current', JSON.stringify(this.currentData));
+        localStorage.setItem('cpf_current', JSON.stringify(CPFClient.currentData));
 
-        if (this.organizationContext.orgId && this.currentScore) {
+        if (CPFClient.organizationContext.orgId && CPFClient.currentScore) {
             try {
-                await this.saveToAPI();
+                await CPFClient.saveToAPI();
             } catch (error) {
                 console.error('❌ Save to API failed:', error);
             }
@@ -616,16 +615,16 @@ const CPFClient = {
     },
 
     async autoSave() {
-        if (!this.currentData.fieldKit) {
+        if (!CPFClient.currentData.fieldKit) {
             return;
         }
 
-        localStorage.setItem('cpf_current', JSON.stringify(this.currentData));
+        localStorage.setItem('cpf_current', JSON.stringify(CPFClient.currentData));
         console.log('✅ Local auto-save at', new Date().toLocaleTimeString());
 
-        if (this.organizationContext.orgId && this.currentScore) {
+        if (CPFClient.organizationContext.orgId && CPFClient.currentScore) {
             try {
-                await this.saveToAPI();
+                await CPFClient.saveToAPI();
             } catch (error) {
                 console.error('❌ Auto-save to API failed:', error);
             }
@@ -633,64 +632,64 @@ const CPFClient = {
     },
 
     async saveToAPI() {
-        if (!this.organizationContext.orgId) {
+        if (!CPFClient.organizationContext.orgId) {
             console.warn('⚠️ No organization context - cannot save to API');
             alert('⚠️ No organization context available');
             return;
         }
 
-        if (!this.currentScore) {
+        if (!CPFClient.currentScore) {
             console.log('📊 Auto-calculating score before save...');
-            this.calculateIndicatorScore();
+            CPFClient.calculateIndicatorScore();
 
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            if (!this.currentScore) {
+            if (!CPFClient.currentScore) {
                 console.warn('⚠️ Score calculation failed - cannot save to API');
                 alert('⚠️ Unable to calculate score. Please fill in the required fields.');
                 return;
             }
         }
 
-        const indicator = this.currentData.fieldKit.indicator;
+        const indicator = CPFClient.currentData.fieldKit.indicator;
         const timestamp = new Date().toISOString();
 
-        const redFlagsArray = this.currentScore.details?.red_flags_list?.map(item => item.flag) || [];
+        const redFlagsArray = CPFClient.currentScore.details?.red_flags_list?.map(item => item.flag) || [];
 
-        const completionRate = this.currentScore.details?.conversation_breakdown?.completion_rate || 0;
+        const completionRate = CPFClient.currentScore.details?.conversation_breakdown?.completion_rate || 0;
         const calculatedConfidence = 0.5 + (completionRate * 0.45);
         const confidence = Math.round(calculatedConfidence * 100) / 100;
 
         const assessmentData = {
             indicator_id: indicator,
-            title: this.currentData.fieldKit.title || '',
-            category: this.currentData.fieldKit.category || '',
-            bayesian_score: this.currentScore.final_score,
+            title: CPFClient.currentData.fieldKit.title || '',
+            category: CPFClient.currentData.fieldKit.category || '',
+            bayesian_score: CPFClient.currentScore.final_score,
             confidence: confidence,
-            maturity_level: this.currentScore.maturity_level || 'yellow',
-            assessor: this.currentData.metadata.auditor || 'Client User',
+            maturity_level: CPFClient.currentScore.maturity_level || 'yellow',
+            assessor: CPFClient.currentData.metadata.auditor || 'Client User',
             assessment_date: timestamp,
             raw_data: {
-                quick_assessment: this.currentScore.details?.quick_assessment_breakdown || {},
+                quick_assessment: CPFClient.currentScore.details?.quick_assessment_breakdown || {},
                 client_conversation: {
-                    responses: this.currentData.responses || {},
-                    scores: this.currentScore,
-                    metadata: this.currentData.metadata,
-                    notes: this.currentData.metadata.notes || '',
+                    responses: CPFClient.currentData.responses || {},
+                    scores: CPFClient.currentScore,
+                    metadata: CPFClient.currentData.metadata,
+                    notes: CPFClient.currentData.metadata.notes || '',
                     red_flags: redFlagsArray
                 }
             }
         };
 
         console.log('💾 Saving assessment to API:', {
-            orgId: this.organizationContext.orgId,
+            orgId: CPFClient.organizationContext.orgId,
             indicator,
-            score: this.currentScore.final_score,
+            score: CPFClient.currentScore.final_score,
             confidence: confidence,
-            maturity_level: this.currentScore.maturity_level
+            maturity_level: CPFClient.currentScore.maturity_level
         });
 
-        const response = await fetch(`/api/organizations/${this.organizationContext.orgId}/assessments`, {
+        const response = await fetch(`/api/organizations/${CPFClient.organizationContext.orgId}/assessments`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -702,7 +701,7 @@ const CPFClient = {
 
         if (result.success) {
             console.log('✅ Assessment saved to API successfully');
-            this.showAutoSaveIndicator();
+            CPFClient.showAutoSaveIndicator();
 
             if (window.dashboardReloadOrganization) {
                 window.dashboardReloadOrganization().catch(err => {
@@ -728,53 +727,53 @@ const CPFClient = {
     },
 
     exportData() {
-        if (!this.currentData.score && this.currentData.fieldKit) {
-            this.calculateIndicatorScore();
+        if (!CPFClient.currentData.score && CPFClient.currentData.fieldKit) {
+            CPFClient.calculateIndicatorScore();
         }
 
-        const blob = new Blob([JSON.stringify(this.currentData, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(CPFClient.currentData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `cpf_${this.currentData.fieldKit.indicator}_${this.currentData.metadata.client}_${this.currentData.metadata.date}.json`;
+        a.download = `cpf_${CPFClient.currentData.fieldKit.indicator}_${CPFClient.currentData.metadata.client}_${CPFClient.currentData.metadata.date}.json`;
         a.click();
         URL.revokeObjectURL(url);
     },
 
     generateReport() {
-        if (!this.currentData.fieldKit) {
+        if (!CPFClient.currentData.fieldKit) {
             alert('No assessment loaded');
             return;
         }
 
-        if (!this.currentScore || !this.currentScore.final_score) {
-            this.calculateIndicatorScore();
+        if (!CPFClient.currentScore || !CPFClient.currentScore.final_score) {
+            CPFClient.calculateIndicatorScore();
         }
 
-        if (!this.currentScore || this.currentScore.final_score === undefined) {
+        if (!CPFClient.currentScore || CPFClient.currentScore.final_score === undefined) {
             alert('Unable to calculate score. Please fill in the Quick Assessment section first.');
             return;
         }
 
-        const maturityConfig = this.currentData.fieldKit.scoring?.maturity_levels?.[this.currentScore.maturity_level] || {
+        const maturityConfig = CPFClient.currentData.fieldKit.scoring?.maturity_levels?.[CPFClient.currentScore.maturity_level] || {
             color: '#888888',
             label: 'Unknown',
             description: 'Score calculated but maturity level not configured'
         };
-        const scorePercentage = (this.currentScore.final_score * 100).toFixed(1);
+        const scorePercentage = (CPFClient.currentScore.final_score * 100).toFixed(1);
 
         const report = document.createElement('div');
         report.innerHTML = `
             <div style="font-family: Arial; padding: 20px; max-width: 800px;">
                 <div style="background: #1a1a2e; color: white; padding: 20px; margin-bottom: 20px;">
-                    <h1>CPF Indicator ${this.currentData.fieldKit.indicator}</h1>
-                    <h2>${this.currentData.fieldKit.title}</h2>
+                    <h1>CPF Indicator ${CPFClient.currentData.fieldKit.indicator}</h1>
+                    <h2>${CPFClient.currentData.fieldKit.title}</h2>
                 </div>
                 <div style="margin-bottom: 20px; padding: 10px; background: #f5f5f5;">
-                    <strong>Date:</strong> ${this.currentData.metadata.date} |
-                    <strong>Auditor:</strong> ${this.currentData.metadata.auditor}<br>
-                    <strong>Client:</strong> ${this.currentData.metadata.client} |
-                    <strong>Status:</strong> ${this.currentData.metadata.status}
+                    <strong>Date:</strong> ${CPFClient.currentData.metadata.date} |
+                    <strong>Auditor:</strong> ${CPFClient.currentData.metadata.auditor}<br>
+                    <strong>Client:</strong> ${CPFClient.currentData.metadata.client} |
+                    <strong>Status:</strong> ${CPFClient.currentData.metadata.status}
                 </div>
 
                 <!-- SCORE SECTION IN PDF -->
@@ -786,19 +785,19 @@ const CPFClient = {
                         <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
                             <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Quick Assessment (70%)</div>
                             <div style="font-size: 24px; font-weight: bold; color: #1a1a2e;">
-                                ${(this.currentScore.quick_assessment * 100).toFixed(1)}%
+                                ${(CPFClient.currentScore.quick_assessment * 100).toFixed(1)}%
                             </div>
                         </div>
                         <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
                             <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Red Flags (30%)</div>
                             <div style="font-size: 24px; font-weight: bold; color: #1a1a2e;">
-                                ${(this.currentScore.red_flags * 100).toFixed(1)}%
+                                ${(CPFClient.currentScore.red_flags * 100).toFixed(1)}%
                             </div>
                         </div>
                         <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; border: 2px dashed #888;">
                             <div style="font-size: 12px; color: #888; margin-bottom: 5px;">Conversation Completeness</div>
                             <div style="font-size: 24px; font-weight: bold; color: #666;">
-                                ${this.currentScore.details.conversation_breakdown.answered_questions}/${this.currentScore.details.conversation_breakdown.total_questions}
+                                ${CPFClient.currentScore.details.conversation_breakdown.answered_questions}/${CPFClient.currentScore.details.conversation_breakdown.total_questions}
                             </div>
                             <div style="font-size: 10px; color: #999; margin-top: 3px;">(informational)</div>
                         </div>
@@ -809,14 +808,14 @@ const CPFClient = {
                     </div>
                 </div>
 
-                ${this.currentData.fieldKit.sections.map((section, sIdx) => `
+                ${CPFClient.currentData.fieldKit.sections.map((section, sIdx) => `
                     <div style="margin-bottom: 20px; page-break-inside: avoid;">
                         <div style="background: #e0e0e0; padding: 10px; margin-bottom: 10px;">
                             <strong>${section.icon || '📋'} ${section.title}</strong>
                         </div>
                         ${(section.items || []).map((item, iIdx) => {
                             const itemId = `s${sIdx}_i${iIdx}`;
-                            const response = this.currentData.responses[itemId];
+                            const response = CPFClient.currentData.responses[itemId];
                             if (item.type === 'radio-list' || item.type === 'radio-group') {
                                 const selectedOption = item.options ? item.options.find(opt => opt.value === response) : null;
                                 const selectedLabel = selectedOption ? selectedOption.label : 'N/A';
@@ -841,7 +840,7 @@ const CPFClient = {
                                 <h3 style="font-size: 14px; margin: 10px 0;">${sub.title || ''}</h3>
                                 ${(sub.items || []).map((item, iIdx) => {
                                     const itemId = `s${sIdx}_sub${subIdx}_i${iIdx}`;
-                                    const response = this.currentData.responses[itemId];
+                                    const response = CPFClient.currentData.responses[itemId];
                                    if (item.type === 'radio-list' || item.type === 'radio-group') {
                                         const selectedOption = item.options ? item.options.find(opt => opt.value === response) : null;
                                         const selectedLabel = selectedOption ? selectedOption.label : 'N/A';
@@ -860,7 +859,7 @@ const CPFClient = {
                                         if (item.followups) {
                                             item.followups.forEach((followup, fIdx) => {
                                                 const followupId = `${itemId}_f${fIdx}`;
-                                                const followupResponse = this.currentData.responses[followupId] || '';
+                                                const followupResponse = CPFClient.currentData.responses[followupId] || '';
                                                 questionHTML += `
                                                     <div style="margin-left: 20px; margin-top: 8px;">
                                                         <em style="font-size: 13px; color: #666;">${followup.text}</em><br>
@@ -893,7 +892,7 @@ const CPFClient = {
         document.body.appendChild(report);
         const opt = {
             margin: 10,
-            filename: `cpf_${this.currentData.fieldKit.indicator}_${this.currentData.metadata.client || 'client'}_${this.currentData.metadata.date}_SCORED.pdf`,
+            filename: `cpf_${CPFClient.currentData.fieldKit.indicator}_${CPFClient.currentData.metadata.client || 'client'}_${CPFClient.currentData.metadata.date}_SCORED.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, logging: false },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
@@ -929,7 +928,7 @@ const CPFClient = {
 
         localStorage.removeItem('cpf_current');
 
-        this.currentData = {
+        CPFClient.currentData = {
             fieldKit: null,
             metadata: {
                 date: new Date().toISOString().split('T')[0],
@@ -942,7 +941,7 @@ const CPFClient = {
             score: null
         };
 
-        this.currentScore = {
+        CPFClient.currentScore = {
             quick_assessment: 0,
             conversation_depth: 0,
             red_flags: 0,
@@ -987,16 +986,16 @@ const CPFClient = {
     // SCORE CALCULATION
     // ============================================
     calculateIndicatorScore() {
-        if (!this.currentData.fieldKit || !this.currentData.fieldKit.scoring) {
+        if (!CPFClient.currentData.fieldKit || !CPFClient.currentData.fieldKit.scoring) {
             console.warn('⚠️ No field kit loaded or scoring configuration missing');
             return;
         }
 
-        const scoring = this.currentData.fieldKit.scoring;
-        const sections = this.currentData.fieldKit.sections;
+        const scoring = CPFClient.currentData.fieldKit.scoring;
+        const sections = CPFClient.currentData.fieldKit.sections;
 
         console.log('🔍 calculateIndicatorScore DEBUG:', {
-            hasFieldKit: !!this.currentData.fieldKit,
+            hasFieldKit: !!CPFClient.currentData.fieldKit,
             hasSections: !!sections,
             sectionsIsArray: Array.isArray(sections),
             sectionsLength: sections ? sections.length : 0,
@@ -1008,7 +1007,7 @@ const CPFClient = {
             return;
         }
 
-        this.currentScore = {
+        CPFClient.currentScore = {
             quick_assessment: 0,
             conversation_depth: 0,
             red_flags: 0,
@@ -1034,7 +1033,7 @@ const CPFClient = {
 
             quickSection.items.forEach((item, idx) => {
                 const itemId = item.id || `s0_i${idx}`;
-                const response = this.currentData.responses[itemId];
+                const response = CPFClient.currentData.responses[itemId];
 
                 if (response && item.options) {
                     const selectedOption = item.options.find(opt => opt.value === response);
@@ -1043,7 +1042,7 @@ const CPFClient = {
                         weightedScore += selectedOption.score * weight;
                         totalWeight += weight;
 
-                        this.currentScore.details.quick_assessment_breakdown.push({
+                        CPFClient.currentScore.details.quick_assessment_breakdown.push({
                             question: item.title,
                             response: selectedOption.label,
                             score: selectedOption.score,
@@ -1054,7 +1053,7 @@ const CPFClient = {
                 }
             });
 
-            this.currentScore.quick_assessment = totalWeight > 0 ? weightedScore / totalWeight : 0;
+            CPFClient.currentScore.quick_assessment = totalWeight > 0 ? weightedScore / totalWeight : 0;
         }
 
         // 2. TRACK CONVERSATION COMPLETENESS
@@ -1104,7 +1103,7 @@ const CPFClient = {
                             followups.forEach((followup, fIdx) => {
                                 totalQuestions++;
                                 const followupId = `${itemId}_f${fIdx}`;
-                                const followupResponse = this.currentData.responses[followupId];
+                                const followupResponse = CPFClient.currentData.responses[followupId];
 
                                 if (followupResponse && String(followupResponse).trim().length > 0) {
                                     answeredQuestions++;
@@ -1130,9 +1129,9 @@ const CPFClient = {
             }
 
             const completionRate = totalQuestions > 0 ? answeredQuestions / totalQuestions : 0;
-            this.currentScore.conversation_depth = 0;
+            CPFClient.currentScore.conversation_depth = 0;
 
-            this.currentScore.details.conversation_breakdown = {
+            CPFClient.currentScore.details.conversation_breakdown = {
                 total_questions: totalQuestions,
                 answered_questions: answeredQuestions,
                 completion_rate: completionRate,
@@ -1146,7 +1145,7 @@ const CPFClient = {
             });
         } else {
             console.warn('⚠️ No client-conversation section found, setting defaults');
-            this.currentScore.details.conversation_breakdown = {
+            CPFClient.currentScore.details.conversation_breakdown = {
                 total_questions: 0,
                 answered_questions: 0,
                 completion_rate: 0,
@@ -1186,31 +1185,31 @@ const CPFClient = {
                 const itemId = item.id;
                 if (!itemId) return;
 
-                const isChecked = this.currentData.responses[itemId];
+                const isChecked = CPFClient.currentData.responses[itemId];
                 const impact = item.score_impact || item.weight || 0;
 
                 if (isChecked && impact > 0) {
                     totalRedFlagImpact += impact;
-                    this.currentScore.details.red_flags_list.push({
+                    CPFClient.currentScore.details.red_flags_list.push({
                         flag: item.label || item.title || item.description,
                         impact: impact
                     });
                 }
             });
 
-            this.currentScore.red_flags = Math.min(totalRedFlagImpact, 1);
+            CPFClient.currentScore.red_flags = Math.min(totalRedFlagImpact, 1);
         }
 
         // 4. CALCULATE FINAL VULNERABILITY SCORE
         const QUICK_WEIGHT = 0.70;
         const RED_FLAGS_WEIGHT = 0.30;
 
-        this.currentScore.final_score = (
-            this.currentScore.quick_assessment * QUICK_WEIGHT +
-            this.currentScore.red_flags * RED_FLAGS_WEIGHT
+        CPFClient.currentScore.final_score = (
+            CPFClient.currentScore.quick_assessment * QUICK_WEIGHT +
+            CPFClient.currentScore.red_flags * RED_FLAGS_WEIGHT
         );
 
-        this.currentScore.weights_used = {
+        CPFClient.currentScore.weights_used = {
             quick_assessment: QUICK_WEIGHT,
             red_flags: RED_FLAGS_WEIGHT,
             conversation_depth: 0
@@ -1218,29 +1217,29 @@ const CPFClient = {
 
         // 5. DETERMINE MATURITY LEVEL
         const maturityLevels = scoring.maturity_levels;
-        if (this.currentScore.final_score <= maturityLevels.green.score_range[1]) {
-            this.currentScore.maturity_level = 'green';
-        } else if (this.currentScore.final_score <= maturityLevels.yellow.score_range[1]) {
-            this.currentScore.maturity_level = 'yellow';
+        if (CPFClient.currentScore.final_score <= maturityLevels.green.score_range[1]) {
+            CPFClient.currentScore.maturity_level = 'green';
+        } else if (CPFClient.currentScore.final_score <= maturityLevels.yellow.score_range[1]) {
+            CPFClient.currentScore.maturity_level = 'yellow';
         } else {
-            this.currentScore.maturity_level = 'red';
+            CPFClient.currentScore.maturity_level = 'red';
         }
 
         // 6. UPDATE UI
-        this.updateScoreDisplay();
+        CPFClient.updateScoreDisplay();
 
-        this.currentData.score = this.currentScore;
+        CPFClient.currentData.score = CPFClient.currentScore;
 
-        console.log('📊 Score Calculated:', this.currentScore);
+        console.log('📊 Score Calculated:', CPFClient.currentScore);
     },
 
     updateScoreDisplay() {
         const scoreBarDiv = document.getElementById('score-bar');
         const existingBreakdown = document.getElementById('score-detailed-breakdown');
 
-        const maturityConfig = this.currentData.fieldKit.scoring.maturity_levels[this.currentScore.maturity_level];
-        const scorePercentage = (this.currentScore.final_score * 100).toFixed(1);
-        const weights = this.currentScore.weights_used || { quick_assessment: 0.70, red_flags: 0.30, conversation_depth: 0 };
+        const maturityConfig = CPFClient.currentData.fieldKit.scoring.maturity_levels[CPFClient.currentScore.maturity_level];
+        const scorePercentage = (CPFClient.currentScore.final_score * 100).toFixed(1);
+        const weights = CPFClient.currentScore.weights_used || { quick_assessment: 0.70, red_flags: 0.30, conversation_depth: 0 };
 
         if (!scoreBarDiv || !existingBreakdown) {
             if (!scoreBarDiv) {
@@ -1259,14 +1258,14 @@ const CPFClient = {
                         <span class="score-value" id="score-val">${scorePercentage}%</span>
                     </div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill ${this.currentScore.maturity_level}" id="score-bar-fill" style="width: ${scorePercentage}%">
+                        <div class="progress-bar-fill ${CPFClient.currentScore.maturity_level}" id="score-bar-fill" style="width: ${scorePercentage}%">
                             ${scorePercentage}%
                         </div>
                     </div>
                 </div>
                 <div class="maturity-badge-container">
                     <div class="maturity-label">MATURITY LEVEL</div>
-                    <div class="maturity-badge ${this.currentScore.maturity_level}" id="maturity-badge">
+                    <div class="maturity-badge ${CPFClient.currentScore.maturity_level}" id="maturity-badge">
                         ${maturityConfig.label}
                     </div>
                 </div>
@@ -1276,27 +1275,27 @@ const CPFClient = {
                 <div class="score-breakdown">
                     <div class="score-component">
                         <div class="component-label">Quick Assessment</div>
-                        <div class="component-value" id="quick-val">${(this.currentScore.quick_assessment * 100).toFixed(1)}%</div>
+                        <div class="component-value" id="quick-val">${(CPFClient.currentScore.quick_assessment * 100).toFixed(1)}%</div>
                         <div class="component-description">
-                            Based on <span id="quick-count">${this.currentScore.details.quick_assessment_breakdown.length}</span> questions
+                            Based on <span id="quick-count">${CPFClient.currentScore.details.quick_assessment_breakdown.length}</span> questions
                             (Weight: ${(weights.quick_assessment * 100)}%)
                         </div>
                     </div>
 
                     <div class="score-component">
                         <div class="component-label">Red Flags</div>
-                        <div class="component-value" id="flags-val">${(this.currentScore.red_flags * 100).toFixed(1)}%</div>
+                        <div class="component-value" id="flags-val">${(CPFClient.currentScore.red_flags * 100).toFixed(1)}%</div>
                         <div class="component-description">
-                            <span id="flags-count">${this.currentScore.details.red_flags_list.length}</span> flags detected
+                            <span id="flags-count">${CPFClient.currentScore.details.red_flags_list.length}</span> flags detected
                             (Weight: ${(weights.red_flags * 100)}%)
                         </div>
                     </div>
 
                     <div class="score-component" style="border: 2px dashed #ccc; background: #fafafa;">
                         <div class="component-label">Conversation Completeness</div>
-                        <div class="component-value" style="color: #666;" id="conv-val">${(this.currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0)}%</div>
+                        <div class="component-value" style="color: #666;" id="conv-val">${(CPFClient.currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0)}%</div>
                         <div class="component-description" style="color: #888; font-size: 12px;">
-                            <span id="conv-answered">${this.currentScore.details.conversation_breakdown.answered_questions}</span>/<span id="conv-total">${this.currentScore.details.conversation_breakdown.total_questions}</span> answered
+                            <span id="conv-answered">${CPFClient.currentScore.details.conversation_breakdown.answered_questions}</span>/<span id="conv-total">${CPFClient.currentScore.details.conversation_breakdown.total_questions}</span> answered
                             <br><em>(Informational only)</em>
                         </div>
                     </div>
@@ -1317,16 +1316,16 @@ const CPFClient = {
 
                 <div id="score-details-content" class="score-details-content">
                     <h4 style="margin-bottom: 15px; color: var(--primary);">Quick Assessment Breakdown</h4>
-                    <div id="quick-breakdown">${this.currentScore.details.quick_assessment_breakdown.map(item => `
+                    <div id="quick-breakdown">${CPFClient.currentScore.details.quick_assessment_breakdown.map(item => `
                         <div class="detail-row">
                             <span class="detail-label">${item.question}</span>
                             <span class="detail-value">${(item.weighted_score * 100).toFixed(1)}%</span>
                         </div>
                     `).join('')}</div>
 
-                    <div id="flags-breakdown">${this.currentScore.details.red_flags_list.length > 0 ? `
+                    <div id="flags-breakdown">${CPFClient.currentScore.details.red_flags_list.length > 0 ? `
                         <h4 style="margin: 20px 0 15px; color: var(--danger);">Red Flags Detected</h4>
-                        ${this.currentScore.details.red_flags_list.map(flag => `
+                        ${CPFClient.currentScore.details.red_flags_list.map(flag => `
                             <div class="detail-row">
                                 <span class="detail-label">⚠️ ${flag.flag}</span>
                                 <span class="detail-value" style="color: var(--danger);">+${(flag.impact * 100).toFixed(1)}%</span>
@@ -1337,8 +1336,8 @@ const CPFClient = {
                     <div class="calculation-formula" id="calc-formula">
                         <strong>Vulnerability Score Calculation:</strong><br>
                         Final Score = (Quick Assessment × ${weights.quick_assessment}) + (Red Flags × ${weights.red_flags})<br>
-                        Final Score = (${this.currentScore.quick_assessment.toFixed(3)} × ${weights.quick_assessment}) + (${this.currentScore.red_flags.toFixed(3)} × ${weights.red_flags})<br>
-                        <strong>Final Score = ${this.currentScore.final_score.toFixed(3)} (${scorePercentage}%)</strong><br>
+                        Final Score = (${CPFClient.currentScore.quick_assessment.toFixed(3)} × ${weights.quick_assessment}) + (${CPFClient.currentScore.red_flags.toFixed(3)} × ${weights.red_flags})<br>
+                        <strong>Final Score = ${CPFClient.currentScore.final_score.toFixed(3)} (${scorePercentage}%)</strong><br>
                         <em style="color: #888; font-size: 12px;">Note: Conversation completeness is tracked separately for reference</em>
                     </div>
                 </div>
@@ -1352,44 +1351,44 @@ const CPFClient = {
 
             const fill = document.getElementById('score-bar-fill');
             if (fill) {
-                fill.className = `progress-bar-fill ${this.currentScore.maturity_level}`;
+                fill.className = `progress-bar-fill ${CPFClient.currentScore.maturity_level}`;
                 fill.style.width = scorePercentage + '%';
                 fill.textContent = scorePercentage + '%';
             }
 
             const badge = document.getElementById('maturity-badge');
             if (badge) {
-                badge.className = `maturity-badge ${this.currentScore.maturity_level}`;
+                badge.className = `maturity-badge ${CPFClient.currentScore.maturity_level}`;
                 badge.textContent = maturityConfig.label;
             }
 
             const quickValEl = document.getElementById('quick-val');
-            if (quickValEl) quickValEl.textContent = (this.currentScore.quick_assessment * 100).toFixed(1) + '%';
+            if (quickValEl) quickValEl.textContent = (CPFClient.currentScore.quick_assessment * 100).toFixed(1) + '%';
 
             const quickCountEl = document.getElementById('quick-count');
-            if (quickCountEl) quickCountEl.textContent = this.currentScore.details.quick_assessment_breakdown.length;
+            if (quickCountEl) quickCountEl.textContent = CPFClient.currentScore.details.quick_assessment_breakdown.length;
 
             const flagsValEl = document.getElementById('flags-val');
-            if (flagsValEl) flagsValEl.textContent = (this.currentScore.red_flags * 100).toFixed(1) + '%';
+            if (flagsValEl) flagsValEl.textContent = (CPFClient.currentScore.red_flags * 100).toFixed(1) + '%';
 
             const flagsCountEl = document.getElementById('flags-count');
-            if (flagsCountEl) flagsCountEl.textContent = this.currentScore.details.red_flags_list.length;
+            if (flagsCountEl) flagsCountEl.textContent = CPFClient.currentScore.details.red_flags_list.length;
 
             const convValEl = document.getElementById('conv-val');
-            if (convValEl) convValEl.textContent = (this.currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0) + '%';
+            if (convValEl) convValEl.textContent = (CPFClient.currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0) + '%';
 
             const convAnsweredEl = document.getElementById('conv-answered');
-            if (convAnsweredEl) convAnsweredEl.textContent = this.currentScore.details.conversation_breakdown.answered_questions;
+            if (convAnsweredEl) convAnsweredEl.textContent = CPFClient.currentScore.details.conversation_breakdown.answered_questions;
 
             const convTotalEl = document.getElementById('conv-total');
-            if (convTotalEl) convTotalEl.textContent = this.currentScore.details.conversation_breakdown.total_questions;
+            if (convTotalEl) convTotalEl.textContent = CPFClient.currentScore.details.conversation_breakdown.total_questions;
 
             const interpTextEl = document.getElementById('interp-text');
             if (interpTextEl) interpTextEl.innerHTML = `<strong style="color: ${maturityConfig.color};">${maturityConfig.label}:</strong> ${maturityConfig.description}`;
 
             const quickBreakdownEl = document.getElementById('quick-breakdown');
             if (quickBreakdownEl) {
-                quickBreakdownEl.innerHTML = this.currentScore.details.quick_assessment_breakdown.map(item => `
+                quickBreakdownEl.innerHTML = CPFClient.currentScore.details.quick_assessment_breakdown.map(item => `
                     <div class="detail-row">
                         <span class="detail-label">${item.question}</span>
                         <span class="detail-value">${(item.weighted_score * 100).toFixed(1)}%</span>
@@ -1399,9 +1398,9 @@ const CPFClient = {
 
             const flagsBreakdownEl = document.getElementById('flags-breakdown');
             if (flagsBreakdownEl) {
-                flagsBreakdownEl.innerHTML = this.currentScore.details.red_flags_list.length > 0 ? `
+                flagsBreakdownEl.innerHTML = CPFClient.currentScore.details.red_flags_list.length > 0 ? `
                     <h4 style="margin: 20px 0 15px; color: var(--danger);">Red Flags Detected</h4>
-                    ${this.currentScore.details.red_flags_list.map(flag => `
+                    ${CPFClient.currentScore.details.red_flags_list.map(flag => `
                         <div class="detail-row">
                             <span class="detail-label">⚠️ ${flag.flag}</span>
                             <span class="detail-value" style="color: var(--danger);">+${(flag.impact * 100).toFixed(1)}%</span>
@@ -1415,8 +1414,8 @@ const CPFClient = {
                 calcFormulaEl.innerHTML = `
                     <strong>Vulnerability Score Calculation:</strong><br>
                     Final Score = (Quick Assessment × ${weights.quick_assessment}) + (Red Flags × ${weights.red_flags})<br>
-                    Final Score = (${this.currentScore.quick_assessment.toFixed(3)} × ${weights.quick_assessment}) + (${this.currentScore.red_flags.toFixed(3)} × ${weights.red_flags})<br>
-                    <strong>Final Score = ${this.currentScore.final_score.toFixed(3)} (${scorePercentage}%)</strong><br>
+                    Final Score = (${CPFClient.currentScore.quick_assessment.toFixed(3)} × ${weights.quick_assessment}) + (${CPFClient.currentScore.red_flags.toFixed(3)} × ${weights.red_flags})<br>
+                    <strong>Final Score = ${CPFClient.currentScore.final_score.toFixed(3)} (${scorePercentage}%)</strong><br>
                     <em style="color: #888; font-size: 12px;">Note: Conversation completeness is tracked separately for reference</em>
                 `;
             }
@@ -1459,12 +1458,12 @@ const CPFClient = {
             pushModal('reference-modal');
         }
 
-        const isoLang = this.organizationContext.language ||
-                       this.currentData?.fieldKit?.language ||
+        const isoLang = CPFClient.organizationContext.language ||
+                       CPFClient.currentData?.fieldKit?.language ||
                        'en-US';
 
-        if (this.referenceData && this.loadedLanguage === isoLang) {
-            this.renderReferenceContent(content, this.referenceData);
+        if (CPFClient.referenceData && CPFClient.loadedLanguage === isoLang) {
+            CPFClient.renderReferenceContent(content, CPFClient.referenceData);
             return;
         }
 
@@ -1476,9 +1475,9 @@ const CPFClient = {
                 throw new Error(`Failed to load reference guide: ${response.status}`);
             }
 
-            this.referenceData = await response.json();
-            this.loadedLanguage = isoLang;
-            this.renderReferenceContent(content, this.referenceData);
+            CPFClient.referenceData = await response.json();
+            CPFClient.loadedLanguage = isoLang;
+            CPFClient.renderReferenceContent(content, CPFClient.referenceData);
         } catch (error) {
             console.error('Error loading reference guide:', error);
             content.innerHTML = `
@@ -1573,9 +1572,9 @@ const CPFClient = {
         if (categorySelect) categorySelect.value = category;
         if (indicatorSelect) indicatorSelect.value = indicator;
 
-        this.closeQuickReference();
+        CPFClient.closeQuickReference();
 
-        await this.loadJSON(indicatorId);
+        await CPFClient.loadJSON(indicatorId);
     },
 
     closeQuickReference() {
@@ -1599,7 +1598,7 @@ const CPFClient = {
             if (!response.ok) {
                 if (response.status === 404) {
                     alert(`⚠️ Export not found for ${orgId}/${indicatorId}. Loading empty form.`);
-                    await this.loadIndicatorFromReference(indicatorId);
+                    await CPFClient.loadIndicatorFromReference(indicatorId);
                     return;
                 }
                 throw new Error(`Failed to load export: ${response.status}`);
@@ -1611,9 +1610,9 @@ const CPFClient = {
             console.log('✅ Export loaded:', exportData);
 
             const [categoryNum, indicatorNum] = indicatorId.split('.');
-            const categoryName = this.getCategoryName(categoryNum);
+            const categoryName = CPFClient.getCategoryName(categoryNum);
 
-            const langCode = this.organizationContext.language ||
+            const langCode = CPFClient.organizationContext.language ||
                             (document.getElementById('lang-select')?.value === 'IT' ? 'it-IT' : 'en-US');
 
             const url = `/auditor-field-kit/interactive/${langCode}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
@@ -1626,7 +1625,7 @@ const CPFClient = {
 
             const fieldKit = await fieldKitResponse.json();
 
-            this.currentData.fieldKit = fieldKit;
+            CPFClient.currentData.fieldKit = fieldKit;
 
             if (exportData.full_assessment) {
                 console.log('📋 Loading data from full_assessment...');
@@ -1636,41 +1635,41 @@ const CPFClient = {
                     console.log('🔍 raw_data structure:', Object.keys(exportData.full_assessment.raw_data));
 
                     if (exportData.full_assessment.raw_data.client_conversation?.responses) {
-                        this.currentData.responses = exportData.full_assessment.raw_data.client_conversation.responses;
-                        console.log('✅ Responses loaded from raw_data:', Object.keys(this.currentData.responses).length, 'items');
-                        console.log('📝 Response keys:', Object.keys(this.currentData.responses));
+                        CPFClient.currentData.responses = exportData.full_assessment.raw_data.client_conversation.responses;
+                        console.log('✅ Responses loaded from raw_data:', Object.keys(CPFClient.currentData.responses).length, 'items');
+                        console.log('📝 Response keys:', Object.keys(CPFClient.currentData.responses));
                     }
 
                     if (exportData.full_assessment.raw_data.client_conversation?.metadata) {
-                        this.currentData.metadata = {
-                            ...this.currentData.metadata,
+                        CPFClient.currentData.metadata = {
+                            ...CPFClient.currentData.metadata,
                             ...exportData.full_assessment.raw_data.client_conversation.metadata
                         };
                     }
 
                     if (exportData.full_assessment.raw_data.client_conversation?.notes) {
-                        this.currentData.metadata.notes = exportData.full_assessment.raw_data.client_conversation.notes;
-                        console.log('✅ Notes loaded:', this.currentData.metadata.notes);
+                        CPFClient.currentData.metadata.notes = exportData.full_assessment.raw_data.client_conversation.notes;
+                        console.log('✅ Notes loaded:', CPFClient.currentData.metadata.notes);
                     }
                 }
                 else if (exportData.full_assessment.responses) {
-                    this.currentData.responses = exportData.full_assessment.responses;
-                    console.log('✅ Responses loaded (legacy format):', Object.keys(this.currentData.responses).length, 'items');
+                    CPFClient.currentData.responses = exportData.full_assessment.responses;
+                    console.log('✅ Responses loaded (legacy format):', Object.keys(CPFClient.currentData.responses).length, 'items');
 
                     if (exportData.full_assessment.metadata) {
-                        this.currentData.metadata = {
-                            ...this.currentData.metadata,
+                        CPFClient.currentData.metadata = {
+                            ...CPFClient.currentData.metadata,
                             ...exportData.full_assessment.metadata
                         };
                     }
                 }
 
                 if (exportData.full_assessment.maturity_scores) {
-                    this.currentData.scores = exportData.full_assessment.maturity_scores;
+                    CPFClient.currentData.scores = exportData.full_assessment.maturity_scores;
                 }
 
                 if (exportData.full_assessment.risk_assessments) {
-                    this.currentData.assessments = exportData.full_assessment.risk_assessments;
+                    CPFClient.currentData.assessments = exportData.full_assessment.risk_assessments;
                 }
 
                 if (exportData.full_assessment.notes) {
@@ -1681,23 +1680,23 @@ const CPFClient = {
                 }
             } else {
                 console.log('⚠️ Old format export detected, using indicator_data fallback');
-                this.currentData.metadata = exportData.metadata || this.currentData.metadata;
+                CPFClient.currentData.metadata = exportData.metadata || CPFClient.currentData.metadata;
             }
 
-            this.renderFieldKit(fieldKit);
+            CPFClient.renderFieldKit(fieldKit);
 
-            localStorage.setItem('cpf_current', JSON.stringify(this.currentData));
+            localStorage.setItem('cpf_current', JSON.stringify(CPFClient.currentData));
 
             console.log(`✅ Loaded existing assessment for ${exportData.organization_name}`);
 
         } catch (error) {
             console.error('Error loading existing export:', error);
-            await this.loadIndicatorFromReference(indicatorId);
+            await CPFClient.loadIndicatorFromReference(indicatorId);
         }
     },
 
     getCategoryName(categoryNum) {
-        return this.CATEGORY_MAP[categoryNum] || 'unknown';
+        return CPFClient.CATEGORY_MAP[categoryNum] || 'unknown';
     },
 
     // ============================================
@@ -1731,18 +1730,18 @@ const CPFClient = {
         });
 
         if (orgIdParam) {
-            this.organizationContext.orgId = orgIdParam;
+            CPFClient.organizationContext.orgId = orgIdParam;
         }
         if (orgNameParam) {
-            this.organizationContext.orgName = orgNameParam;
+            CPFClient.organizationContext.orgName = orgNameParam;
         }
         if (langParam) {
-            this.organizationContext.language = langParam;
+            CPFClient.organizationContext.language = langParam;
         }
 
-        if (this.organizationContext.orgId && this.organizationContext.orgName) {
-            this.displayOrganizationInfo();
-            this.currentData.metadata.client = this.organizationContext.orgName;
+        if (CPFClient.organizationContext.orgId && CPFClient.organizationContext.orgName) {
+            CPFClient.displayOrganizationInfo();
+            CPFClient.currentData.metadata.client = CPFClient.organizationContext.orgName;
         }
 
         if (langParam) {
@@ -1753,7 +1752,7 @@ const CPFClient = {
             }
         }
 
-        console.log('✅ Client v2.0 initialized with organization:', this.organizationContext);
+        console.log('✅ Client v2.0 initialized with organization:', CPFClient.organizationContext);
 
         if (indicatorParam) {
             console.log(`🔗 Loading indicator ${indicatorParam} from URL (mode: ${modeParam || 'new'})`);
@@ -1767,10 +1766,10 @@ const CPFClient = {
             setTimeout(async () => {
                 if (modeParam === 'edit' && orgIdParam) {
                     console.log(`📥 Edit mode: loading assessment for org=${orgIdParam}, indicator=${indicatorParam}`);
-                    await this.loadExistingExport(indicatorParam, orgIdParam);
+                    await CPFClient.loadExistingExport(indicatorParam, orgIdParam);
                 } else {
                     console.log(`📄 New mode: loading indicator ${indicatorParam} from local files`);
-                    await this.loadIndicatorFromReference(indicatorParam);
+                    await CPFClient.loadIndicatorFromReference(indicatorParam);
                 }
             }, 100);
             return;
@@ -1778,9 +1777,9 @@ const CPFClient = {
 
         const saved = localStorage.getItem('cpf_current');
         if (saved) {
-            this.currentData = JSON.parse(saved);
-            if (this.currentData.fieldKit) {
-                this.renderFieldKit(this.currentData.fieldKit);
+            CPFClient.currentData = JSON.parse(saved);
+            if (CPFClient.currentData.fieldKit) {
+                CPFClient.renderFieldKit(CPFClient.currentData.fieldKit);
             }
         }
     }
