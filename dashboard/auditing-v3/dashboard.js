@@ -3,7 +3,6 @@ import {
     organizationContext,
     currentData,
     renderFieldKit,
-    saveToAPI,
     calculateIndicatorScore,
     showQuickReference,
     closeQuickReference,
