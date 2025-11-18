@@ -1,3 +1,19 @@
+// ===== ES6 IMPORTS =====
+import {
+    organizationContext,
+    currentData,
+    renderFieldKit,
+    saveToAPI,
+    calculateIndicatorScore,
+    showQuickReference,
+    closeQuickReference,
+    toggleDetailedAnalysis,
+    importJSON,
+    saveData,
+    exportData,
+    generateReport
+} from './client-integrated.js';
+
 // ===== GLOBAL STATE =====
 let organizations = [];
 let selectedOrgId = null;
@@ -46,17 +62,10 @@ window.addEventListener('keydown', (event) => {
                 closeHistoryModal();
                 break;
             case 'reference-modal':
-                if (window.CPFClient && window.CPFClient.closeQuickReference) {
-                    window.CPFClient.closeQuickReference();
-                }
+                closeQuickReference();
                 break;
             case 'category-modal':
                 closeCategoryModal();
-                break;
-            case 'indicator-details-modal':
-                if (window.CPFClient && window.CPFClient.closeIndicatorDetails) {
-                    window.CPFClient.closeIndicatorDetails();
-                }
                 break;
         }
     }
@@ -1461,19 +1470,19 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                 </div>
                 <div class="toolbar" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                        <button class="btn btn-info" onclick="window.CPFClient.showQuickReference()">📚 Quick Reference</button>
-                        <button class="btn btn-info" onclick="window.CPFClient.toggleDetailedAnalysis()">📊 Show/Hide Analysis</button>
+                        <button class="btn btn-info" data-action="show-quick-reference">📚 Quick Reference</button>
+                        <button class="btn btn-info" data-action="toggle-detailed-analysis">📊 Show/Hide Analysis</button>
                         <button class="btn btn-light" data-action="trigger-file-input" data-file-input-id="file-input-integrated">📂 Import Data</button>
-                        <input type="file" id="file-input-integrated" accept=".json" onchange="window.CPFClient.importJSON(event)" style="display: none;">
+                        <input type="file" id="file-input-integrated" accept=".json" data-action="import-json" style="display: none;">
                         <button class="btn btn-danger" data-action="reset-compile-form" title="Reset assessment">🗑️ Reset</button>
                         <button class="btn btn-primary" data-action="view-assessment-details-from-edit" data-indicator-id="${indicatorId}">📋 View Details</button>
                         <button class="btn btn-warning" data-action="open-history-modal">📜 History</button>
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <span id="auto-save-status" style="color: #4CAF50; font-size: 14px; display: none;">✓ Auto-saved</span>
-                        <button class="btn btn-secondary" onclick="window.CPFClient.saveData()">💾 Save</button>
-                        <button class="btn btn-success" onclick="window.CPFClient.exportData()">💾 Export Data</button>
-                        <button class="btn btn-primary" onclick="window.CPFClient.generateReport()">📊 Report</button>
+                        <button class="btn btn-secondary" data-action="save-data">💾 Save</button>
+                        <button class="btn btn-success" data-action="export-data">💾 Export Data</button>
+                        <button class="btn btn-primary" data-action="generate-report">📊 Report</button>
                         <button class="btn btn-secondary" data-action="close-indicator-modal">Close</button>
                     </div>
                 </div>
@@ -1488,11 +1497,11 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
             </div>
 
             <!-- Quick Reference Modal -->
-            <div id="reference-modal" class="cpf-client modal" style="display: none;" onclick="if(event.target.id==='reference-modal') window.CPFClient.closeQuickReference()">
+            <div id="reference-modal" class="cpf-client modal" style="display: none;" data-action="close-quick-reference-backdrop">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h2>📚 CPF Indicators Quick Reference</h2>
-                        <button class="modal-close" onclick="window.CPFClient.closeQuickReference()">✕</button>
+                        <button class="modal-close" data-action="close-quick-reference">✕</button>
                     </div>
                     <div class="modal-body" id="reference-content">
                         <p style="text-align: center; color: #7f8c8d; padding: 40px;">Loading reference guide...</p>
@@ -1507,64 +1516,64 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
 
     // Wait for DOM to be ready, then initialize client
     setTimeout(() => {
-        if (typeof window.CPFClient !== 'undefined' && typeof window.CPFClient.renderFieldKit === 'function') {
+        if (typeof renderFieldKit === 'function') {
             // Initialize client's global variables with our data
-            if (window.CPFClient.organizationContext) {
-                window.CPFClient.organizationContext.orgId = orgId;
-                window.CPFClient.organizationContext.orgName = selectedOrgData?.name || 'Unknown';
-                window.CPFClient.organizationContext.language = selectedOrgData?.metadata?.language || 'en-US';
+            if (organizationContext) {
+                organizationContext.orgId = orgId;
+                organizationContext.orgName = selectedOrgData?.name || 'Unknown';
+                organizationContext.language = selectedOrgData?.metadata?.language || 'en-US';
             }
 
-            if (window.CPFClient.currentData) {
-                window.CPFClient.currentData.fieldKit = indicatorData;
-                window.CPFClient.currentData.metadata = {
+            if (currentData) {
+                currentData.fieldKit = indicatorData;
+                currentData.metadata = {
                     date: new Date().toISOString().split('T')[0],
                     auditor: selectedOrgData?.metadata?.auditor || '',
                     client: selectedOrgData?.name || '',
                     status: 'in-progress',
                     notes: ''
                 };
-                window.CPFClient.currentData.responses = {};
+                currentData.responses = {};
 
                 // If editing, populate with existing data from raw_data.client_conversation
                 if (existingAssessment && existingAssessment.raw_data && existingAssessment.raw_data.client_conversation) {
                     // Load metadata from client_conversation (CORRECT location!)
                     if (existingAssessment.raw_data.client_conversation.metadata) {
-                        window.CPFClient.currentData.metadata = {
-                            ...window.CPFClient.currentData.metadata,
+                        currentData.metadata = {
+                            ...currentData.metadata,
                             ...existingAssessment.raw_data.client_conversation.metadata
                         };
                     }
 
                     // Load notes separately (in case stored separately for compatibility)
                     if (existingAssessment.raw_data.client_conversation.notes) {
-                        window.CPFClient.currentData.metadata.notes = existingAssessment.raw_data.client_conversation.notes;
+                        currentData.metadata.notes = existingAssessment.raw_data.client_conversation.notes;
                     }
 
                     // Load responses
                     if (existingAssessment.raw_data.client_conversation.responses) {
-                        window.CPFClient.currentData.responses = existingAssessment.raw_data.client_conversation.responses;
+                        currentData.responses = existingAssessment.raw_data.client_conversation.responses;
                     }
 
                     console.log('✅ Existing assessment data loaded:', {
-                        metadata: window.CPFClient.currentData.metadata,
-                        responses: Object.keys(window.CPFClient.currentData.responses).length + ' items',
-                        notes: window.CPFClient.currentData.metadata.notes
+                        metadata: currentData.metadata,
+                        responses: Object.keys(currentData.responses).length + ' items',
+                        notes: currentData.metadata.notes
                     });
                 }
             }
 
             console.log('🎨 Calling CPFClient.renderFieldKit with data:', indicatorData);
-            console.log('📊 Organization context:', window.CPFClient.organizationContext);
-            console.log('📝 Current data:', window.CPFClient.currentData);
+            console.log('📊 Organization context:', organizationContext);
+            console.log('📝 Current data:', currentData);
 
             // Render the field kit
-            window.CPFClient.renderFieldKit(indicatorData);
+            renderFieldKit(indicatorData);
 
             // After rendering, close modal on successful save
             // Override saveToAPI to close modal after save
-            const originalSaveToAPI = window.CPFClient.saveToAPI;
-            window.CPFClient.saveToAPI = async function() {
+            const originalSaveToAPI = saveToAPI;
+            saveToAPI = async function() {
                 try {
                     await originalSaveToAPI();
                     showAlert('Assessment saved successfully!', 'success');
@@ -2704,40 +2713,40 @@ async function resetCompileForm() {
 
     // SAVE CURRENT STATE TO HISTORY BEFORE RESET
     // This ensures undo is possible via history
-    if (window.CPFClient && window.CPFClient.currentData) {
-        const currentResponses = window.CPFClient.currentData.responses || {};
+    if (currentData) {
+        const currentResponses = currentData.responses || {};
         const hasData = Object.keys(currentResponses).length > 0;
 
         if (hasData) {
             console.log('💾 Saving current state to history before reset...');
 
             // Get indicator data from CPFClient if available
-            const indicatorData = window.CPFClient?.currentData?.fieldKit || currentIndicatorData;
+            const indicatorData = currentData?.fieldKit || currentIndicatorData;
 
             // Build current assessment data
             const currentAssessment = {
                 indicator_id: indicatorId,
                 title: indicatorData?.title || '',
                 category: indicatorData?.category || '',
-                bayesian_score: window.CPFClient.currentData.score?.bayesian_score || 0,
-                confidence: window.CPFClient.currentData.score?.confidence || 0.5,
-                maturity_level: window.CPFClient.currentData.score?.maturity_level || 'green',
-                assessor: window.CPFClient.currentData.metadata?.auditor || '',
+                bayesian_score: currentData.score?.bayesian_score || 0,
+                confidence: currentData.score?.confidence || 0.5,
+                maturity_level: currentData.score?.maturity_level || 'green',
+                assessor: currentData.metadata?.auditor || '',
                 assessment_date: new Date().toISOString(),
                 raw_data: {
                     quick_assessment: {},
                     client_conversation: {
                         responses: currentResponses,
-                        scores: window.CPFClient.currentData.score || null,
-                        metadata: window.CPFClient.currentData.metadata || {
+                        scores: currentData.score || null,
+                        metadata: currentData.metadata || {
                             date: new Date().toISOString().split('T')[0],
                             auditor: '',
                             client: selectedOrgData?.name || '',
                             status: 'in-progress',
                             notes: ''
                         },
-                        notes: window.CPFClient.currentData.notes || '',
-                        red_flags: window.CPFClient.currentData.redFlags || []
+                        notes: currentData.notes || '',
+                        red_flags: currentData.redFlags || []
                     }
                 }
             };
@@ -2794,16 +2803,16 @@ async function resetCompileForm() {
     if (confidenceField) confidenceField.value = '0.7';
 
     // Reset CPFClient data
-    if (window.CPFClient && window.CPFClient.currentData) {
-        window.CPFClient.currentData.responses = {};
-        window.CPFClient.currentData.metadata = {
+    if (currentData) {
+        currentData.responses = {};
+        currentData.metadata = {
             date: new Date().toISOString().split('T')[0],
             auditor: '',
             client: selectedOrgData?.name || '',
             status: 'in-progress',
             notes: ''
         };
-        window.CPFClient.currentData.score = null;
+        currentData.score = null;
 
         console.log('✅ CPFClient data reset');
     }
@@ -2820,7 +2829,7 @@ async function resetCompileForm() {
     if (scoreSummary) scoreSummary.remove();
 
     // Get indicator data from CPFClient if available
-    const indicatorData = window.CPFClient?.currentData?.fieldKit || currentIndicatorData;
+    const indicatorData = currentData?.fieldKit || currentIndicatorData;
 
     // Save empty assessment to API
     const emptyAssessment = {
@@ -2870,8 +2879,8 @@ async function resetCompileForm() {
             }
 
             // Recalculate score to update UI
-            if (window.CPFClient && typeof window.CPFClient.calculateIndicatorScore === 'function') {
-                window.CPFClient.calculateIndicatorScore();
+            if (typeof calculateIndicatorScore === 'function') {
+                calculateIndicatorScore();
             }
         } else {
             throw new Error(result.error || 'Failed to save');
@@ -3173,25 +3182,25 @@ async function revertToVersion(versionNumber) {
 
             // CRITICAL: Reload the integrated form if it's open
             // Update CPFClient with reverted data
-            if (window.CPFClient && window.CPFClient.currentData && selectedOrgData) {
+            if (currentData && selectedOrgData) {
                 const revertedAssessment = selectedOrgData.assessments[indicatorId];
 
                 if (revertedAssessment && revertedAssessment.raw_data && revertedAssessment.raw_data.client_conversation) {
                     // Update CPFClient internal data
-                    window.CPFClient.currentData.responses = revertedAssessment.raw_data.client_conversation.responses || {};
-                    window.CPFClient.currentData.score = revertedAssessment.raw_data.client_conversation.scores || null;
+                    currentData.responses = revertedAssessment.raw_data.client_conversation.responses || {};
+                    currentData.score = revertedAssessment.raw_data.client_conversation.scores || null;
 
                     if (revertedAssessment.raw_data.client_conversation.metadata) {
-                        window.CPFClient.currentData.metadata = {
-                            ...window.CPFClient.currentData.metadata,
+                        currentData.metadata = {
+                            ...currentData.metadata,
                             ...revertedAssessment.raw_data.client_conversation.metadata
                         };
                     }
 
                     // Re-render the form with reverted data
-                    if (window.CPFClient.currentData.fieldKit) {
+                    if (currentData.fieldKit) {
                         console.log('🔄 Reloading form with reverted data...');
-                        window.CPFClient.renderFieldKit(window.CPFClient.currentData.fieldKit);
+                        renderFieldKit(currentData.fieldKit);
                         showAlert(`Form reloaded with version ${versionNumber} data`, 'info');
                     }
                 }
@@ -3549,6 +3558,30 @@ function setupEventDelegation() {
                     if (fileInput) fileInput.click();
                 }
                 break;
+
+            // Client actions
+            case 'show-quick-reference':
+                showQuickReference();
+                break;
+            case 'close-quick-reference':
+            case 'close-quick-reference-backdrop':
+                if (action === 'close-quick-reference-backdrop' && e.target.id !== 'reference-modal') {
+                    return; // Only close if clicking on backdrop
+                }
+                closeQuickReference();
+                break;
+            case 'toggle-detailed-analysis':
+                toggleDetailedAnalysis();
+                break;
+            case 'save-data':
+                saveData();
+                break;
+            case 'export-data':
+                exportData();
+                break;
+            case 'generate-report':
+                generateReport();
+                break;
         }
     });
 
@@ -3565,6 +3598,9 @@ function setupEventDelegation() {
                 break;
             case 'update-indicator-preview':
                 updateIndicatorPreview();
+                break;
+            case 'import-json':
+                importJSON(e);
                 break;
         }
     });
