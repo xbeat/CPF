@@ -2036,35 +2036,4 @@ export {
     loadIndicatorFromReference
 };
 
-// ============================================
-// BACKWARDS COMPATIBILITY: Global Namespace
-// ============================================
-// Expose exports to window.CPFClient for dashboard.js compatibility
-// NOTE: Client internally uses event delegation (no inline onclick handlers)
-//       Dashboard.js still accesses functions via window.CPFClient
-//       This allows gradual migration of dashboard.js to ES6 modules
-window.CPFClient = {
-    organizationContext,
-    currentData,
-    renderFieldKit,
-    saveToAPI,
-    calculateIndicatorScore,
-    updateResponse,
-    updateResponseWithAutoScore,
-    selectRadioOption,
-    updateMeta,
-    loadJSON,
-    importJSON,
-    saveData,
-    exportData,
-    generateReport,
-    resetAll,
-    toggleDetailedAnalysis,
-    toggleScoreDetails,
-    showQuickReference,
-    closeQuickReference,
-    toggleCategory,
-    loadIndicatorFromReference
-};
-
-// End of client-integrated.js v3.0 - Hybrid ES6 Module + Global Compat
+// End of client-integrated.js v3.0 - Pure ES6 Module (no global namespace)
