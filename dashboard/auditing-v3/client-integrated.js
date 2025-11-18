@@ -72,22 +72,23 @@ const LANG_MAP = {
 
 // Category mapping
 // Use existing CATEGORY_MAP from dashboard.js if available, otherwise define it
-window.CATEGORY_MAP = window.CATEGORY_MAP || {
-    '1': 'authority',
-    '2': 'temporal',
-    '3': 'social',
-    '4': 'affective',
-    '5': 'cognitive',
-    '6': 'group',
-    '7': 'stress',
-    '8': 'unconscious',
-    '9': 'ai',
-    '10': 'convergent'
-};
-const CATEGORY_MAP = window.CATEGORY_MAP;
+if (!window.CATEGORY_MAP) {
+    window.CATEGORY_MAP = {
+        '1': 'authority',
+        '2': 'temporal',
+        '3': 'social',
+        '4': 'affective',
+        '5': 'cognitive',
+        '6': 'group',
+        '7': 'stress',
+        '8': 'unconscious',
+        '9': 'ai',
+        '10': 'convergent'
+    };
+}
 
-// Category details for dropdown
-const CATEGORIES = [
+// Category details for dropdown (client-specific, no global pollution)
+const CLIENT_CATEGORIES = [
     { num: 1, name: 'authority', label: 'Authority-Based Vulnerabilities' },
     { num: 2, name: 'temporal', label: 'Temporal Vulnerabilities' },
     { num: 3, name: 'social', label: 'Social Influence Vulnerabilities' },
@@ -100,8 +101,8 @@ const CATEGORIES = [
     { num: 10, name: 'convergent', label: 'Critical Convergent States' }
 ];
 
-// Language options
-const LANGUAGES = [
+// Language options (client-specific)
+const CLIENT_LANGUAGES = [
     { code: 'EN', iso: 'en-US', label: 'English' },
     { code: 'IT', iso: 'it-IT', label: 'Italiano' },
     { code: 'ES', iso: 'es-ES', label: 'Español' },
@@ -174,7 +175,7 @@ async function loadJSON(indicatorId = null, languageOverride = null) {
 
             // Get category info
             const categoryNum = indicatorMatch[1];
-            const categoryName = CATEGORY_MAP[categoryNum];
+            const categoryName = window.CATEGORY_MAP[categoryNum];
 
             if (!categoryName) {
                 throw new Error(`Invalid category number: ${categoryNum}. Must be 1-10.`);
