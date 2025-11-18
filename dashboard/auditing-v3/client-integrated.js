@@ -49,19 +49,7 @@ function displayOrganizationInfo() {
     }
 }
 
-// Map ISO language code to short code
-function mapISOToLangCode(isoLang) {
-    const mapping = {
-        'en-US': 'EN',
-        'it-IT': 'IT',
-        'es-ES': 'ES',
-        'fr-FR': 'FR',
-        'de-DE': 'DE'
-    };
-    return mapping[isoLang] || 'EN';
-}
-
-// Language code mapping
+// Language code mapping (used in loadJSON)
 const LANG_MAP = {
     'EN': 'en-US',
     'IT': 'it-IT',
@@ -86,29 +74,6 @@ if (!window.CATEGORY_MAP) {
         '10': 'convergent'
     };
 }
-
-// Category details for dropdown (client-specific, no global pollution)
-const CLIENT_CATEGORIES = [
-    { num: 1, name: 'authority', label: 'Authority-Based Vulnerabilities' },
-    { num: 2, name: 'temporal', label: 'Temporal Vulnerabilities' },
-    { num: 3, name: 'social', label: 'Social Influence Vulnerabilities' },
-    { num: 4, name: 'affective', label: 'Affective Vulnerabilities' },
-    { num: 5, name: 'cognitive', label: 'Cognitive Overload Vulnerabilities' },
-    { num: 6, name: 'group', label: 'Group Dynamic Vulnerabilities' },
-    { num: 7, name: 'stress', label: 'Stress Response Vulnerabilities' },
-    { num: 8, name: 'unconscious', label: 'Unconscious Process Vulnerabilities' },
-    { num: 9, name: 'ai', label: 'AI-Specific Bias Vulnerabilities' },
-    { num: 10, name: 'convergent', label: 'Critical Convergent States' }
-];
-
-// Language options (client-specific)
-const CLIENT_LANGUAGES = [
-    { code: 'EN', iso: 'en-US', label: 'English' },
-    { code: 'IT', iso: 'it-IT', label: 'Italiano' },
-    { code: 'ES', iso: 'es-ES', label: 'Español' },
-    { code: 'FR', iso: 'fr-FR', label: 'Français' },
-    { code: 'DE', iso: 'de-DE', label: 'Deutsch' }
-];
 
 async function loadJSON(indicatorId = null, languageOverride = null) {
     // Priority order:
