@@ -2406,10 +2406,1704 @@ class ContinuousValidator {
 
 ---
 
-This document is getting quite long. Should I continue with:
+## 8. End-to-End Implementation Examples
 
-8. **End-to-End Implementation Examples** (complete code for 2-3 indicators)
-9. **Storage & Query Architecture** (time-series DB schemas, queries)
-10. **Deployment Roadmap** (phased rollout plan)
+### 8.1 Complete Indicator 1.1 Implementation
 
-Or would you like me to save this as-is and we can start implementing code based on this specification?
+Let's walk through a complete implementation of **Indicator 1.1 (Unquestioning Compliance)** from data generation to detection to validation.
+
+#### Step 1: Generate Realistic Email Data
+
+```javascript
+// File: /data-generator/email-generator.js
+
+class EmailTrafficGenerator {
+  constructor(orgConfig) {
+    this.orgId = orgConfig.orgId;
+    this.userCount = orgConfig.userCount || 1000;
+    this.emailsPerUserPerDay = 50;
+    this.execDomains = ["ceo@", "cfo@", "board@", "exec@"];
+
+    // Baseline from calibration (or defaults for new org)
+    this.baseline = {
+      compliance_rate: 0.72,
+      compliance_std: 0.08,
+      verification_rate: 0.35,
+      verification_std: 0.12
+    };
+  }
+
+  /**
+   * Generate one day of realistic email traffic
+   */
+  async generateDay(date) {
+    const events = [];
+    const totalEmails = this.userCount * this.emailsPerUserPerDay;
+
+    console.log(`Generating ${totalEmails} emails for ${date.toISOString().split('T')[0]}...`);
+
+    for (let i = 0; i < totalEmails; i++) {
+      const timestamp = this.distributeCircadian(date, i, totalEmails);
+      const email = this.generateNormalEmail(timestamp);
+      events.push(email);
+    }
+
+    // Inject hidden authority compliance signals (0.1% of emails)
+    const signalCount = Math.floor(totalEmails * 0.001);
+
+    for (let i = 0; i < signalCount; i++) {
+      const signal = this.injectAuthorityComplianceSignal(date);
+      events.push(signal);
+
+      // Record ground truth
+      await this.recordGroundTruth({
+        eventId: signal.id,
+        timestamp: signal.timestamp,
+        indicator: "1.1",
+        signalStrength: signal._metadata.deviationSigmas,
+        shouldDetect: signal._metadata.deviationSigmas >= 2.0
+      });
+    }
+
+    // Shuffle to hide injection pattern
+    return this.shuffle(events);
+  }
+
+  /**
+   * Generate normal business email (no signal)
+   */
+  generateNormalEmail(timestamp) {
+    const sender = this.selectRandomUser();
+    const recipient = this.selectRandomUser();
+
+    return {
+      id: `email-${uuidv4()}`,
+      timestamp: timestamp.getTime(),
+      type: "email",
+      from: sender.email,
+      to: recipient.email,
+      subject: this.generateSubject("normal"),
+      body: this.generateBody("normal"),
+
+      // User behavior (normally distributed)
+      user_action: {
+        read: true,
+        read_time: timestamp.getTime() + this.randomNormal(300, 120) * 1000,
+        clicked_link: Math.random() < 0.05,
+        opened_attachment: Math.random() < 0.03,
+        forwarded: Math.random() < 0.02,
+        deleted: Math.random() < 0.10
+      }
+    };
+  }
+
+  /**
+   * Inject authority compliance signal
+   * Creates email from exec that gets abnormally high compliance
+   */
+  injectAuthorityComplianceSignal(date) {
+    const timestamp = this.distributeCircadian(date, Math.random(), 1);
+
+    // Select exec sender
+    const execDomain = this.execDomains[Math.floor(Math.random() * this.execDomains.length)];
+    const sender = `${execDomain}company.com`;
+
+    // Create request that requires action
+    const actionTypes = ["wire transfer", "approve access", "grant exception", "urgent approval"];
+    const action = actionTypes[Math.floor(Math.random() * actionTypes.length)];
+
+    // Calculate anomalous compliance rate (3σ above baseline)
+    const targetCompliance = this.baseline.compliance_rate + (3 * this.baseline.compliance_std);
+
+    // Select recipients who will comply
+    const recipientCount = Math.floor(Math.random() * 10) + 5; // 5-15 recipients
+    const recipients = [];
+
+    for (let i = 0; i < recipientCount; i++) {
+      const recipient = this.selectRandomUser();
+      const willComply = Math.random() < targetCompliance;
+
+      recipients.push({
+        email: recipient.email,
+        user_id: recipient.id,
+        action_taken: willComply,
+        verified: Math.random() < 0.05, // Very low verification (vs 35% baseline)
+        response_time: willComply ? this.randomNormal(300, 60) : null // Fast response if comply
+      });
+    }
+
+    const email = {
+      id: `email-${uuidv4()}`,
+      timestamp: timestamp.getTime(),
+      type: "email",
+      from: sender,
+      to: recipients.map(r => r.email),
+      subject: `Urgent: ${action} needed`,
+      body: this.generateBody("urgent_authority", {action}),
+      urgency_markers: ["urgent", "immediately", "today"],
+
+      // Recipients and their actions
+      recipients: recipients,
+
+      // Metadata for ground truth (NOT visible to detection)
+      _metadata: {
+        injectedSignal: true,
+        indicator: "1.1",
+        baselineCompliance: this.baseline.compliance_rate,
+        actualCompliance: recipients.filter(r => r.action_taken).length / recipients.length,
+        deviationSigmas: (recipients.filter(r => r.action_taken).length / recipients.length - this.baseline.compliance_rate) / this.baseline.compliance_std,
+        baselineVerification: this.baseline.verification_rate,
+        actualVerification: recipients.filter(r => r.verified).length / recipients.length
+      }
+    };
+
+    return email;
+  }
+
+  /**
+   * Distribute events across day with circadian pattern
+   * Peak hours: 9-11am, 2-4pm
+   */
+  distributeCircadian(date, index, total) {
+    // Use inverse transform sampling with circadian PDF
+    const u = index / total; // Uniform [0, 1]
+
+    // Circadian CDF (approximation)
+    // Higher probability during work hours
+    let hour;
+    if (u < 0.05) hour = Math.floor(Math.random() * 8); // 0-8am: 5%
+    else if (u < 0.25) hour = 8 + Math.floor(Math.random() * 2); // 8-10am: 20%
+    else if (u < 0.50) hour = 10 + Math.floor(Math.random() * 2); // 10-12pm: 25%
+    else if (u < 0.65) hour = 12 + Math.floor(Math.random() * 2); // 12-2pm: 15%
+    else if (u < 0.90) hour = 14 + Math.floor(Math.random() * 3); // 2-5pm: 25%
+    else hour = 17 + Math.floor(Math.random() * 7); // 5pm-12am: 10%
+
+    const minute = Math.floor(Math.random() * 60);
+    const second = Math.floor(Math.random() * 60);
+
+    const timestamp = new Date(date);
+    timestamp.setHours(hour, minute, second, 0);
+
+    return timestamp;
+  }
+}
+
+// Usage
+const generator = new EmailTrafficGenerator({
+  orgId: "org-acme-001",
+  userCount: 1000
+});
+
+const events = await generator.generateDay(new Date("2025-11-17"));
+console.log(`Generated ${events.length} events, ${events.filter(e => e._metadata?.injectedSignal).length} contain hidden signals`);
+
+// Store to time-series DB
+await timeseries.batchInsert("emails", events);
+```
+
+#### Step 2: Detection Algorithm
+
+```javascript
+// File: /detection-engine/indicators/indicator-1-1.js
+
+class Indicator_1_1_UnquestioningCompliance {
+  constructor(timeSeriesDB, baselineDB) {
+    this.db = timeSeriesDB;
+    this.baselineDB = baselineDB;
+    this.indicatorId = "1.1";
+  }
+
+  /**
+   * Run detection for time window
+   */
+  async detect(orgId, windowSeconds = 3600) {
+    const windowStart = Date.now() - (windowSeconds * 1000);
+
+    // Step 1: Query authority domain emails
+    const authorityEmails = await this.db.query(`
+      SELECT * FROM emails
+      WHERE org_id = '${orgId}'
+      AND timestamp >= ${windowStart}
+      AND (
+        from LIKE '%ceo@%' OR
+        from LIKE '%cfo@%' OR
+        from LIKE '%exec@%' OR
+        from LIKE '%board@%'
+      )
+      AND (
+        body LIKE '%transfer%' OR
+        body LIKE '%approve%' OR
+        body LIKE '%grant%' OR
+        body LIKE '%urgent%'
+      )
+    `);
+
+    if (authorityEmails.length === 0) {
+      return this.noDataResult();
+    }
+
+    // Step 2: Calculate compliance metrics
+    const N_requested = authorityEmails.length;
+    let N_executed = 0;
+    let N_verified = 0;
+    const responseTimes = [];
+
+    for (const email of authorityEmails) {
+      // Check if recipients took action
+      const recipients = email.recipients || [];
+
+      for (const recipient of recipients) {
+        if (recipient.action_taken) {
+          N_executed++;
+          if (recipient.response_time) {
+            responseTimes.push(recipient.response_time);
+          }
+        }
+        if (recipient.verified) {
+          N_verified++;
+        }
+      }
+    }
+
+    const totalRecipients = authorityEmails.reduce((sum, e) =>
+      sum + (e.recipients?.length || 0), 0
+    );
+
+    // Observables
+    const Cr = totalRecipients > 0 ? N_executed / totalRecipients : 0;
+    const verificationRate = totalRecipients > 0 ? N_verified / totalRecipients : 0;
+    const avgResponseTime = responseTimes.length > 0
+      ? responseTimes.reduce((a,b) => a+b, 0) / responseTimes.length
+      : 0;
+
+    const observation = {
+      complianceRate: Cr,
+      verificationRate: verificationRate,
+      responseTime: avgResponseTime
+    };
+
+    // Step 3: Get baseline
+    const baseline = await this.baselineDB.get(orgId, this.indicatorId);
+
+    if (!baseline) {
+      console.warn(`No baseline for ${orgId} ${this.indicatorId} - skipping detection`);
+      return this.noBaselineResult(observation);
+    }
+
+    // Step 4: Rule-based detection
+    const threshold = baseline.mean.complianceRate + (2 * baseline.std.complianceRate);
+    const Ri = Cr > threshold ? 1 : 0;
+
+    // Step 5: Anomaly detection (Mahalanobis distance)
+    const Ai = this.calculateMahalanobisDistance(
+      [observation.complianceRate, observation.verificationRate, observation.responseTime],
+      baseline.mean_vector,
+      baseline.covariance_matrix
+    );
+
+    // Step 6: Contextual scoring (Bayesian)
+    const Ci = await this.calculateBayesianContext(orgId, authorityEmails);
+
+    // Step 7: Combined detection score
+    const weights = baseline.weights || {w1: 0.4, w2: 0.4, w3: 0.2};
+    const Di = (weights.w1 * Ri) + (weights.w2 * Ai) + (weights.w3 * Ci);
+
+    // Step 8: Temporal decay (if previous state exists)
+    const previousState = await this.getTemporalState(orgId);
+    const Di_temporal = previousState
+      ? this.applyTemporalDecay(Di, previousState, windowSeconds)
+      : Di;
+
+    // Step 9: Store result
+    const result = {
+      org_id: orgId,
+      indicator_id: this.indicatorId,
+      timestamp: Date.now(),
+      score: Di_temporal,
+      raw_score: Di,
+      confidence: this.calculateConfidence(totalRecipients, baseline.sample_size),
+
+      components: {
+        rule_based: Ri,
+        anomaly: Ai,
+        context: Ci,
+        weights: weights
+      },
+
+      observations: observation,
+      baseline: {
+        mean: baseline.mean.complianceRate,
+        std: baseline.std.complianceRate,
+        threshold: threshold
+      },
+
+      details: {
+        requests_analyzed: N_requested,
+        total_recipients: totalRecipients,
+        executed: N_executed,
+        verified: N_verified,
+        compliance_rate: Cr,
+        verification_rate: verificationRate,
+        avg_response_time: avgResponseTime,
+        sigmas_above_baseline: (Cr - baseline.mean.complianceRate) / baseline.std.complianceRate
+      },
+
+      triggered: Di_temporal > 0.7,
+      severity: this.calculateSeverity(Di_temporal),
+
+      raw_event_ids: authorityEmails.map(e => e.id)
+    };
+
+    await this.storeDetectionResult(result);
+    await this.updateTemporalState(orgId, Di_temporal);
+
+    if (result.triggered) {
+      await this.triggerAlert(result);
+    }
+
+    return result;
+  }
+
+  /**
+   * Mahalanobis distance calculation
+   */
+  calculateMahalanobisDistance(x, μ, Σ) {
+    // x = observation vector [Cr, verificationRate, responseTime]
+    // μ = baseline mean vector
+    // Σ = covariance matrix
+
+    const diff = x.map((xi, i) => xi - μ[i]);
+    const Σ_inv = this.invertMatrix(Σ);
+
+    // distance = sqrt(diff^T * Σ^-1 * diff)
+    const distance = Math.sqrt(
+      this.vectorMultiply(
+        this.matrixVectorMultiply(Σ_inv, diff),
+        diff
+      )
+    );
+
+    // Normalize using chi-squared CDF
+    return this.chiSquaredCDF(distance, x.length);
+  }
+
+  /**
+   * Bayesian context from Dense Paper
+   */
+  async calculateBayesianContext(orgId, emails) {
+    const factors = [];
+
+    // Time of day factor
+    const hour = new Date().getHours();
+    const afterHours = hour < 8 || hour > 18;
+    if (afterHours) factors.push(0.7); // Suspicious
+
+    // Sender reputation
+    for (const email of emails) {
+      const reputation = await this.getSenderReputation(email.from);
+      factors.push(1 - reputation); // Low rep = high suspicion
+    }
+
+    // Urgency language
+    const urgencyCount = emails.filter(e =>
+      e.urgency_markers && e.urgency_markers.length > 0
+    ).length;
+    const urgencyRatio = urgencyCount / emails.length;
+    factors.push(urgencyRatio);
+
+    // Average all factors
+    return factors.reduce((a,b) => a+b, 0) / factors.length;
+  }
+
+  /**
+   * Temporal decay from Dense Paper
+   * Ti(t) = α·Xi(t) + (1-α)·Ti(t-1)
+   */
+  applyTemporalDecay(currentScore, previousState, deltaTime) {
+    const τ = 14400; // 4 hours for authority indicators
+    const α = Math.exp(-deltaTime / τ);
+
+    return (α * currentScore) + ((1 - α) * previousState.score);
+  }
+
+  calculateConfidence(sampleSize, baselineSampleSize) {
+    // Wilson score interval
+    const n = sampleSize;
+    const n0 = baselineSampleSize;
+
+    if (n < 10) return 0.3; // Low confidence
+    if (n < 50) return 0.6; // Medium
+    if (n < n0 * 0.1) return 0.8; // Good
+    return 0.95; // High confidence
+  }
+
+  calculateSeverity(score) {
+    if (score >= 0.9) return "critical";
+    if (score >= 0.7) return "high";
+    if (score >= 0.5) return "medium";
+    return "low";
+  }
+
+  async triggerAlert(result) {
+    console.log(`🚨 ALERT: Indicator ${result.indicator_id} triggered for ${result.org_id}`);
+    console.log(`   Score: ${(result.score * 100).toFixed(1)}% (${result.severity})`);
+    console.log(`   Compliance: ${(result.details.compliance_rate * 100).toFixed(1)}% (baseline: ${(result.baseline.mean * 100).toFixed(1)}%)`);
+    console.log(`   ${result.details.sigmas_above_baseline.toFixed(1)}σ above baseline`);
+
+    // Send to SOC dashboard via WebSocket
+    await this.websocket.emit('indicator_update', {
+      orgId: result.org_id,
+      indicatorId: result.indicator_id,
+      score: result.score,
+      severity: result.severity,
+      details: result.details
+    });
+
+    // Store in alerts table
+    await this.db.insert('alerts', {
+      org_id: result.org_id,
+      indicator_id: result.indicator_id,
+      timestamp: result.timestamp,
+      score: result.score,
+      severity: result.severity,
+      message: `Unquestioning compliance detected: ${(result.details.compliance_rate*100).toFixed(1)}% compliance rate (${result.details.sigmas_above_baseline.toFixed(1)}σ above baseline)`,
+      raw_data: JSON.stringify(result)
+    });
+  }
+}
+```
+
+#### Step 3: Validation
+
+```javascript
+// File: /validation/indicator-1-1-validator.js
+
+class Indicator_1_1_Validator {
+  async validate(orgId, timeWindow = 86400) {
+    console.log(`Validating Indicator 1.1 for ${orgId} over ${timeWindow}s...`);
+
+    // Step 1: Get ground truth
+    const groundTruth = await this.db.query(`
+      SELECT * FROM ground_truth
+      WHERE org_id = '${orgId}'
+      AND indicator = '1.1'
+      AND timestamp >= ${Date.now() - timeWindow * 1000}
+    `);
+
+    // Step 2: Get detection results
+    const detections = await this.db.query(`
+      SELECT * FROM detection_results
+      WHERE org_id = '${orgId}'
+      AND indicator_id = '1.1'
+      AND timestamp >= ${Date.now() - timeWindow * 1000}
+    `);
+
+    // Step 3: Match ground truth to detections
+    let TP = 0, TN = 0, FP = 0, FN = 0;
+
+    for (const truth of groundTruth) {
+      const detected = detections.find(d =>
+        Math.abs(d.timestamp - truth.timestamp) < 3600000 // Within 1 hour
+      );
+
+      if (truth.shouldDetect && detected && detected.triggered) {
+        TP++;
+        console.log(`✓ TP: Signal at ${new Date(truth.timestamp).toISOString()} detected (${truth.signalStrength.toFixed(1)}σ)`);
+      } else if (truth.shouldDetect && (!detected || !detected.triggered)) {
+        FN++;
+        console.warn(`✗ FN: Signal at ${new Date(truth.timestamp).toISOString()} MISSED (${truth.signalStrength.toFixed(1)}σ)`);
+      } else if (!truth.shouldDetect && detected && detected.triggered) {
+        FP++;
+        console.warn(`✗ FP: False alarm at ${new Date(detected.timestamp).toISOString()}`);
+      } else {
+        TN++;
+      }
+    }
+
+    // Step 4: Calculate metrics
+    const MCC = (TP * TN - FP * FN) / Math.sqrt(
+      (TP + FP) * (TP + FN) * (TN + FP) * (TN + FN)
+    );
+
+    const precision = TP / (TP + FP);
+    const recall = TP / (TP + FN);
+    const f1 = 2 * (precision * recall) / (precision + recall);
+
+    const results = {
+      indicator: "1.1",
+      org_id: orgId,
+      timeWindow: timeWindow,
+
+      confusion_matrix: {TP, TN, FP, FN},
+
+      metrics: {
+        MCC: MCC,
+        precision: precision,
+        recall: recall,
+        f1: f1,
+        accuracy: (TP + TN) / (TP + TN + FP + FN)
+      },
+
+      quality: this.interpretMCC(MCC),
+
+      passed: MCC >= 0.7 && recall >= 0.8, // Thresholds
+
+      recommendations: this.generateRecommendations({MCC, precision, recall, FP, FN})
+    };
+
+    console.log(`\nValidation Results for Indicator 1.1:`);
+    console.log(`  MCC: ${MCC.toFixed(3)} (${results.quality})`);
+    console.log(`  Precision: ${(precision*100).toFixed(1)}% (${FP} false alarms)`);
+    console.log(`  Recall: ${(recall*100).toFixed(1)}% (${FN} missed signals)`);
+    console.log(`  F1 Score: ${f1.toFixed(3)}`);
+    console.log(`  Status: ${results.passed ? "✓ PASSED" : "✗ FAILED"}`);
+
+    return results;
+  }
+
+  interpretMCC(mcc) {
+    if (mcc >= 0.9) return "Excellent";
+    if (mcc >= 0.7) return "Good";
+    if (mcc >= 0.5) return "Moderate";
+    if (mcc >= 0.3) return "Weak";
+    return "Poor";
+  }
+
+  generateRecommendations({MCC, precision, recall, FP, FN}) {
+    const recommendations = [];
+
+    if (MCC < 0.7) {
+      recommendations.push("Overall detection quality below threshold - review baseline calibration");
+    }
+
+    if (precision < 0.8) {
+      recommendations.push(`High false positive rate (${FP} FP) - increase detection threshold or refine rule-based component`);
+    }
+
+    if (recall < 0.8) {
+      recommendations.push(`Missing signals (${FN} FN) - decrease detection threshold or improve anomaly detection sensitivity`);
+    }
+
+    if (FP > FN * 2) {
+      recommendations.push("Too many false alarms - prioritize precision by increasing threshold");
+    }
+
+    if (FN > FP * 2) {
+      recommendations.push("Missing too many signals - prioritize recall by decreasing threshold");
+    }
+
+    return recommendations;
+  }
+}
+
+// Run validation
+const validator = new Indicator_1_1_Validator();
+const results = await validator.validate("org-acme-001", 86400);
+```
+
+### 8.2 Complete Indicator 5.1 Implementation (Alert Fatigue)
+
+```javascript
+// File: /detection-engine/indicators/indicator-5-1.js
+
+class Indicator_5_1_AlertFatigue {
+  constructor(timeSeriesDB, baselineDB) {
+    this.db = timeSeriesDB;
+    this.baselineDB = baselineDB;
+    this.indicatorId = "5.1";
+  }
+
+  async detect(orgId, windowSeconds = 86400) {
+    // Query all security alerts
+    const alerts = await this.db.query(`
+      SELECT
+        alert_id,
+        severity,
+        presented_at,
+        investigated_at,
+        analyst_id,
+        auto_closed
+      FROM security_alerts
+      WHERE org_id = '${orgId}'
+      AND presented_at >= ${Date.now() - windowSeconds * 1000}
+      AND auto_closed = false
+    `);
+
+    const presented = alerts.length;
+    const investigated = alerts.filter(a => a.investigated_at !== null).length;
+
+    // Formula from Dense Paper: Fa = 1 - (investigated/presented)
+    const Fa = presented > 0 ? 1 - (investigated / presented) : 0;
+
+    // Temporal decay analysis - split into hourly buckets
+    const buckets = this.groupByHour(alerts);
+    const Fa_timeline = buckets.map(bucket => ({
+      hour: bucket.hour,
+      presented: bucket.alerts.length,
+      investigated: bucket.alerts.filter(a => a.investigated_at).length,
+      Fa: 1 - (bucket.alerts.filter(a => a.investigated_at).length / bucket.alerts.length),
+      alert_rate: bucket.alerts.length / 3600
+    }));
+
+    // Fit exponential: Fa(t) = F0 · e^(λ·alert_rate·t)
+    const {F0, λ} = this.fitExponentialDecay(Fa_timeline);
+
+    // By severity
+    const bySeverity = {
+      critical: this.calculateFaForSeverity(alerts, 'critical'),
+      high: this.calculateFaForSeverity(alerts, 'high'),
+      medium: this.calculateFaForSeverity(alerts, 'medium'),
+      low: this.calculateFaForSeverity(alerts, 'low')
+    };
+
+    // Detection
+    const baseline = await this.baselineDB.get(orgId, this.indicatorId);
+
+    // Rule: Fa > 0.7 OR critical alerts ignored
+    const Ri = (Fa > 0.7 || bySeverity.critical > 0.1) ? 1 : 0;
+
+    // Anomaly
+    const observation = [Fa, bySeverity.critical, λ];
+    const Ai = this.calculateMahalanobisDistance(observation, baseline.mean_vector, baseline.covariance_matrix);
+
+    // Context: analyst workload
+    const analystCount = await this.getActiveAnalystCount(orgId);
+    const alertsPerAnalyst = presented / Math.max(analystCount, 1);
+    const Ci = Math.min(alertsPerAnalyst / 100, 1.0);
+
+    const weights = baseline.weights || {w1: 0.5, w2: 0.3, w3: 0.2};
+    const Di = (weights.w1 * Ri) + (weights.w2 * Ai) + (weights.w3 * Ci);
+
+    return {
+      org_id: orgId,
+      indicator_id: this.indicatorId,
+      timestamp: Date.now(),
+      score: Di,
+      confidence: this.calculateConfidence(presented, baseline.sample_size),
+
+      observations: {
+        fatigueIndex: Fa,
+        decayRate: λ,
+        bySeverity: bySeverity
+      },
+
+      details: {
+        presented: presented,
+        investigated: investigated,
+        ignored: presented - investigated,
+        fatigue_percent: Fa * 100,
+        critical_ignored_percent: bySeverity.critical * 100,
+        alerts_per_analyst: alertsPerAnalyst
+      },
+
+      triggered: Di > 0.7 || bySeverity.critical > 0.1,
+      severity: this.calculateSeverity(Di),
+
+      warning: bySeverity.critical > 0.1 ?
+        `CRITICAL: ${(bySeverity.critical*100).toFixed(1)}% of critical alerts ignored!` : null
+    };
+  }
+
+  fitExponentialDecay(timeline) {
+    const X = timeline.map((p, i) => p.alert_rate * i);
+    const Y = timeline.map(p => Math.log(Math.max(p.Fa, 0.001)));
+
+    const {slope, intercept} = this.linearRegression(X, Y);
+
+    return {
+      F0: Math.exp(intercept),
+      λ: slope
+    };
+  }
+}
+```
+
+### 8.3 Integration Example: Multi-Indicator Detection
+
+```javascript
+// File: /detection-engine/orchestrator.js
+
+class DetectionOrchestrator {
+  constructor(config) {
+    this.indicators = [
+      new Indicator_1_1_UnquestioningCompliance(config.db, config.baselineDB),
+      new Indicator_1_2_DiffusionOfResponsibility(config.db, config.baselineDB),
+      new Indicator_2_1_UrgencyBypass(config.db, config.baselineDB),
+      new Indicator_5_1_AlertFatigue(config.db, config.baselineDB),
+      // ... 96 more
+    ];
+
+    this.bayesianNetwork = new BayesianNetwork();
+  }
+
+  /**
+   * Run detection for all indicators
+   */
+  async runDetection(orgId) {
+    console.log(`Starting detection cycle for ${orgId}...`);
+
+    const results = {};
+
+    // Phase 1: Run all indicators in parallel
+    const detectionPromises = this.indicators.map(indicator =>
+      indicator.detect(orgId).catch(err => {
+        console.error(`Error in ${indicator.indicatorId}:`, err);
+        return null;
+      })
+    );
+
+    const detectionResults = await Promise.all(detectionPromises);
+
+    // Phase 2: Store individual results
+    for (const result of detectionResults) {
+      if (result) {
+        results[result.indicator_id] = result;
+      }
+    }
+
+    // Phase 3: Bayesian Network - model interdependencies
+    const bayesianResults = await this.bayesianNetwork.analyze(results);
+
+    // Phase 4: Convergence detection (Category 10)
+    const convergence = this.detectConvergence(results);
+
+    // Phase 5: Aggregate for dashboard
+    const aggregated = {
+      org_id: orgId,
+      timestamp: Date.now(),
+
+      overall_risk: this.calculateOverallRisk(results, bayesianResults),
+      overall_confidence: this.calculateOverallConfidence(results),
+
+      by_category: this.aggregateByCategory(results),
+
+      triggered_indicators: Object.values(results).filter(r => r.triggered),
+
+      convergence: convergence,
+
+      bayesian_insights: bayesianResults.insights,
+
+      prioritization: this.prioritize(results, bayesianResults)
+    };
+
+    // Phase 6: Broadcast to dashboard
+    await this.broadcast(aggregated);
+
+    return aggregated;
+  }
+
+  /**
+   * Detect convergence states (Perfect Storm, Swiss Cheese, etc.)
+   */
+  detectConvergence(results) {
+    const triggered = Object.values(results).filter(r => r.triggered);
+
+    if (triggered.length >= 3) {
+      // Multiple indicators triggered - potential convergence
+
+      // Perfect Storm (10.1): CI = ∏(1 + vi)
+      const CI = triggered.reduce((product, r) =>
+        product * (1 + r.score), 1
+      );
+
+      if (CI > 5.0) {
+        return {
+          type: "perfect_storm",
+          severity: "critical",
+          convergence_index: CI,
+          contributing_indicators: triggered.map(r => r.indicator_id),
+          message: `Perfect Storm detected: ${triggered.length} indicators converged (CI=${CI.toFixed(2)})`
+        };
+      }
+    }
+
+    return null;
+  }
+
+  calculateOverallRisk(results, bayesianResults) {
+    // Weighted average from Dense Paper
+    const weights = {
+      "1.x": 0.12,  // Authority
+      "2.x": 0.10,  // Temporal
+      "3.x": 0.11,  // Social
+      "4.x": 0.09,  // Affective
+      "5.x": 0.10,  // Cognitive
+      "6.x": 0.08,  // Group
+      "7.x": 0.11,  // Stress
+      "8.x": 0.09,  // Unconscious
+      "9.x": 0.12,  // AI
+      "10.x": 0.08  // Convergent
+    };
+
+    let weightedSum = 0;
+    let totalWeight = 0;
+
+    for (const [indicatorId, result] of Object.entries(results)) {
+      const category = indicatorId.split('.')[0] + '.x';
+      const weight = weights[category] || 0.10;
+
+      // Adjust by Bayesian network
+      const bayesianAdjustment = bayesianResults.adjustments[indicatorId] || 1.0;
+
+      weightedSum += result.score * weight * bayesianAdjustment * result.confidence;
+      totalWeight += weight * result.confidence;
+    }
+
+    return weightedSum / totalWeight;
+  }
+}
+
+// Usage
+const orchestrator = new DetectionOrchestrator({
+  db: timeSeriesDB,
+  baselineDB: baselineDB
+});
+
+// Run every hour
+setInterval(async () => {
+  const orgs = await getActiveOrganizations();
+
+  for (const org of orgs) {
+    const results = await orchestrator.runDetection(org.id);
+    console.log(`Detection complete for ${org.name}: overall risk ${(results.overall_risk*100).toFixed(1)}%`);
+  }
+}, 3600000); // 1 hour
+```
+
+---
+
+## 9. Storage & Query Architecture
+
+### 9.1 Time-Series Database Selection
+
+**Recommended: InfluxDB or TimescaleDB**
+
+**InfluxDB Pros:**
+- Purpose-built for time-series
+- Native downsampling and retention policies
+- Fast tag-based queries
+- Line protocol for efficient ingestion
+
+**TimescaleDB Pros:**
+- PostgreSQL extension (familiar SQL)
+- Relational capabilities
+- Hypertables for automatic partitioning
+- Better for complex joins
+
+**Our Choice: TimescaleDB** (easier integration with existing PostgreSQL knowledge)
+
+### 9.2 Schema Design
+
+#### Raw Events Table
+
+```sql
+-- File: /storage/schema/01_raw_events.sql
+
+-- Create TimescaleDB extension
+CREATE EXTENSION IF NOT EXISTS timescaledb;
+
+-- Raw events table (all event types)
+CREATE TABLE raw_events (
+  time TIMESTAMPTZ NOT NULL,
+  org_id TEXT NOT NULL,
+  event_id TEXT NOT NULL,
+  event_type TEXT NOT NULL,  -- 'email', 'auth', 'alert', 'ticket'
+  source_system TEXT,         -- 'exchange', 'ad', 'siem', 'servicenow'
+
+  -- Event data (JSONB for flexibility)
+  data JSONB NOT NULL,
+
+  -- Metadata
+  ingested_at TIMESTAMPTZ DEFAULT NOW(),
+
+  -- Ground truth (if this is an injected signal)
+  _ground_truth JSONB,  -- {indicator, signal_strength, should_detect}
+
+  PRIMARY KEY (time, org_id, event_id)
+);
+
+-- Convert to hypertable (TimescaleDB magic)
+SELECT create_hypertable('raw_events', 'time');
+
+-- Create indexes for fast queries
+CREATE INDEX idx_raw_events_org ON raw_events (org_id, time DESC);
+CREATE INDEX idx_raw_events_type ON raw_events (event_type, time DESC);
+CREATE INDEX idx_raw_events_source ON raw_events (source_system, time DESC);
+
+-- GIN index for JSONB queries
+CREATE INDEX idx_raw_events_data ON raw_events USING GIN (data);
+CREATE INDEX idx_raw_events_ground_truth ON raw_events USING GIN (_ground_truth)
+  WHERE _ground_truth IS NOT NULL;
+
+-- Retention policy: raw events kept for 90 days
+SELECT add_retention_policy('raw_events', INTERVAL '90 days');
+```
+
+#### Aggregated Metrics Table
+
+```sql
+-- File: /storage/schema/02_aggregated_metrics.sql
+
+-- Pre-aggregated metrics for faster queries
+CREATE TABLE aggregated_metrics (
+  time TIMESTAMPTZ NOT NULL,
+  org_id TEXT NOT NULL,
+  indicator_id TEXT NOT NULL,
+  window_size INTEGER NOT NULL,  -- seconds (3600, 86400, etc.)
+
+  -- Observation values
+  observation_mean DOUBLE PRECISION,
+  observation_std DOUBLE PRECISION,
+  observation_min DOUBLE PRECISION,
+  observation_max DOUBLE PRECISION,
+  observation_count INTEGER,
+
+  -- Multi-dimensional observations (JSONB)
+  observations JSONB,  -- {complianceRate: 0.75, verificationRate: 0.32, ...}
+
+  PRIMARY KEY (time, org_id, indicator_id, window_size)
+);
+
+SELECT create_hypertable('aggregated_metrics', 'time');
+
+CREATE INDEX idx_agg_metrics_indicator ON aggregated_metrics (org_id, indicator_id, time DESC);
+
+-- Continuous aggregate: 1-hour rollups
+CREATE MATERIALIZED VIEW metrics_1h
+WITH (timescaledb.continuous) AS
+SELECT
+  time_bucket('1 hour', time) AS bucket,
+  org_id,
+  indicator_id,
+  AVG((data->>'value')::DOUBLE PRECISION) AS mean_value,
+  STDDEV((data->>'value')::DOUBLE PRECISION) AS std_value,
+  COUNT(*) AS event_count
+FROM raw_events
+WHERE event_type IN ('email', 'auth', 'alert', 'ticket')
+GROUP BY bucket, org_id, indicator_id;
+
+-- Refresh policy: update every 30 minutes
+SELECT add_continuous_aggregate_policy('metrics_1h',
+  start_offset => INTERVAL '2 hours',
+  end_offset => INTERVAL '30 minutes',
+  schedule_interval => INTERVAL '30 minutes');
+```
+
+#### Baselines Table
+
+```sql
+-- File: /storage/schema/03_baselines.sql
+
+CREATE TABLE baselines (
+  org_id TEXT NOT NULL,
+  indicator_id TEXT NOT NULL,
+  version INTEGER NOT NULL DEFAULT 1,
+
+  -- Calibration period
+  calibration_start TIMESTAMPTZ NOT NULL,
+  calibration_end TIMESTAMPTZ NOT NULL,
+  sample_size INTEGER NOT NULL,
+
+  -- Statistical parameters
+  mean_vector DOUBLE PRECISION[] NOT NULL,
+  std_vector DOUBLE PRECISION[] NOT NULL,
+  covariance_matrix DOUBLE PRECISION[][] NOT NULL,
+
+  -- Distribution info
+  distribution_type TEXT,  -- 'normal', 'exponential', 'poisson'
+
+  -- Percentiles
+  p50 DOUBLE PRECISION,
+  p75 DOUBLE PRECISION,
+  p90 DOUBLE PRECISION,
+  p95 DOUBLE PRECISION,
+  p99 DOUBLE PRECISION,
+
+  -- Detection parameters
+  threshold_k DOUBLE PRECISION DEFAULT 2.0,  -- For μ + k·σ
+  threshold_value DOUBLE PRECISION,
+
+  weights JSONB,  -- {w1: 0.4, w2: 0.4, w3: 0.2}
+
+  -- Temporal parameters
+  persistence_tau INTEGER,  -- seconds
+  circadian_params JSONB,   -- {E0, A, phi}
+
+  -- Bayesian priors
+  priors JSONB,
+
+  -- Metadata
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  is_active BOOLEAN DEFAULT true,
+
+  PRIMARY KEY (org_id, indicator_id, version)
+);
+
+CREATE INDEX idx_baselines_active ON baselines (org_id, indicator_id) WHERE is_active = true;
+```
+
+#### Detection Results Table
+
+```sql
+-- File: /storage/schema/04_detection_results.sql
+
+CREATE TABLE detection_results (
+  time TIMESTAMPTZ NOT NULL,
+  org_id TEXT NOT NULL,
+  indicator_id TEXT NOT NULL,
+
+  -- Scores
+  score DOUBLE PRECISION NOT NULL,
+  raw_score DOUBLE PRECISION,
+  confidence DOUBLE PRECISION,
+
+  -- Components
+  rule_based_score DOUBLE PRECISION,
+  anomaly_score DOUBLE PRECISION,
+  context_score DOUBLE PRECISION,
+
+  -- Observations
+  observations JSONB NOT NULL,
+
+  -- Baseline comparison
+  baseline_mean DOUBLE PRECISION,
+  baseline_std DOUBLE PRECISION,
+  sigmas_above_baseline DOUBLE PRECISION,
+
+  -- Metadata
+  triggered BOOLEAN NOT NULL,
+  severity TEXT,  -- 'low', 'medium', 'high', 'critical'
+
+  -- Raw event references
+  raw_event_ids TEXT[],
+  event_count INTEGER,
+
+  PRIMARY KEY (time, org_id, indicator_id)
+);
+
+SELECT create_hypertable('detection_results', 'time');
+
+CREATE INDEX idx_detection_triggered ON detection_results (org_id, time DESC) WHERE triggered = true;
+CREATE INDEX idx_detection_severity ON detection_results (severity, time DESC) WHERE severity IN ('high', 'critical');
+
+-- Retention: keep detection results for 1 year
+SELECT add_retention_policy('detection_results', INTERVAL '365 days');
+```
+
+#### Temporal State Table
+
+```sql
+-- File: /storage/schema/05_temporal_state.sql
+
+-- Stores Ti(t) for temporal decay
+CREATE TABLE temporal_state (
+  org_id TEXT NOT NULL,
+  indicator_id TEXT NOT NULL,
+
+  temporal_state DOUBLE PRECISION NOT NULL,
+  raw_observation DOUBLE PRECISION,
+  decay_factor DOUBLE PRECISION,
+
+  timestamp TIMESTAMPTZ NOT NULL,
+
+  PRIMARY KEY (org_id, indicator_id)
+);
+
+CREATE INDEX idx_temporal_state_time ON temporal_state (timestamp DESC);
+```
+
+#### Ground Truth Table
+
+```sql
+-- File: /storage/schema/06_ground_truth.sql
+
+CREATE TABLE ground_truth (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id TEXT NOT NULL,
+  indicator TEXT NOT NULL,
+
+  timestamp TIMESTAMPTZ NOT NULL,
+  event_ids TEXT[] NOT NULL,
+
+  signal_strength DOUBLE PRECISION NOT NULL,  -- In sigmas
+  should_detect BOOLEAN NOT NULL,
+
+  -- Detection outcome (filled after detection runs)
+  was_detected BOOLEAN,
+  detected_at TIMESTAMPTZ,
+  detection_score DOUBLE PRECISION,
+
+  -- Metadata
+  injection_method TEXT,
+  notes TEXT
+);
+
+CREATE INDEX idx_ground_truth_org_indicator ON ground_truth (org_id, indicator, timestamp DESC);
+CREATE INDEX idx_ground_truth_pending ON ground_truth (timestamp) WHERE was_detected IS NULL;
+```
+
+### 9.3 Query Patterns
+
+#### Query 1: Get Recent Events for Indicator Detection
+
+```sql
+-- Example: Get authority emails for Indicator 1.1
+SELECT
+  event_id,
+  time,
+  data->>'from' AS sender,
+  data->'recipients' AS recipients,
+  data->'urgency_markers' AS urgency
+FROM raw_events
+WHERE org_id = 'org-acme-001'
+  AND event_type = 'email'
+  AND time >= NOW() - INTERVAL '1 hour'
+  AND (
+    data->>'from' LIKE '%ceo@%' OR
+    data->>'from' LIKE '%cfo@%' OR
+    data->>'from' LIKE '%exec@%'
+  )
+  AND (
+    data->>'body' LIKE '%transfer%' OR
+    data->>'body' LIKE '%approve%' OR
+    data->>'body' LIKE '%grant%'
+  )
+ORDER BY time DESC;
+```
+
+#### Query 2: Get Baseline for Indicator
+
+```sql
+-- Get active baseline
+SELECT
+  mean_vector,
+  std_vector,
+  covariance_matrix,
+  threshold_value,
+  weights,
+  persistence_tau
+FROM baselines
+WHERE org_id = 'org-acme-001'
+  AND indicator_id = '1.1'
+  AND is_active = true
+ORDER BY version DESC
+LIMIT 1;
+```
+
+#### Query 3: Validation - Match Ground Truth to Detections
+
+```sql
+-- Find detections within 1 hour of ground truth signals
+SELECT
+  gt.id AS ground_truth_id,
+  gt.indicator,
+  gt.timestamp AS signal_time,
+  gt.signal_strength,
+  gt.should_detect,
+
+  dr.time AS detected_time,
+  dr.score AS detection_score,
+  dr.triggered,
+
+  CASE
+    WHEN gt.should_detect AND dr.triggered THEN 'TP'
+    WHEN gt.should_detect AND NOT dr.triggered THEN 'FN'
+    WHEN NOT gt.should_detect AND dr.triggered THEN 'FP'
+    WHEN NOT gt.should_detect AND NOT dr.triggered THEN 'TN'
+  END AS outcome
+
+FROM ground_truth gt
+LEFT JOIN detection_results dr
+  ON gt.org_id = dr.org_id
+  AND gt.indicator = dr.indicator_id
+  AND dr.time BETWEEN gt.timestamp - INTERVAL '30 minutes'
+                  AND gt.timestamp + INTERVAL '30 minutes'
+
+WHERE gt.org_id = 'org-acme-001'
+  AND gt.indicator = '1.1'
+  AND gt.timestamp >= NOW() - INTERVAL '24 hours'
+
+ORDER BY gt.timestamp DESC;
+```
+
+#### Query 4: Dashboard - Get Latest Indicator Scores
+
+```sql
+-- Get most recent detection results for all indicators
+SELECT DISTINCT ON (indicator_id)
+  indicator_id,
+  score,
+  confidence,
+  triggered,
+  severity,
+  observations,
+  sigmas_above_baseline,
+  time
+FROM detection_results
+WHERE org_id = 'org-acme-001'
+  AND time >= NOW() - INTERVAL '2 hours'
+ORDER BY indicator_id, time DESC;
+```
+
+#### Query 5: Trend Analysis - Indicator Over Time
+
+```sql
+-- Get 7-day trend for Indicator 1.1
+SELECT
+  time_bucket('1 day', time) AS day,
+  AVG(score) AS avg_score,
+  MAX(score) AS max_score,
+  STDDEV(score) AS score_volatility,
+  COUNT(*) FILTER (WHERE triggered) AS trigger_count,
+  AVG(sigmas_above_baseline) AS avg_sigmas
+FROM detection_results
+WHERE org_id = 'org-acme-001'
+  AND indicator_id = '1.1'
+  AND time >= NOW() - INTERVAL '7 days'
+GROUP BY day
+ORDER BY day;
+```
+
+### 9.4 Ingestion Pipeline
+
+```javascript
+// File: /storage/ingestion/batch-ingest.js
+
+class BatchIngestion {
+  constructor(timescaleDB) {
+    this.db = timescaleDB;
+    this.batchSize = 1000;
+    this.buffer = [];
+  }
+
+  /**
+   * Add event to buffer
+   */
+  async ingest(event) {
+    this.buffer.push(event);
+
+    if (this.buffer.length >= this.batchSize) {
+      await this.flush();
+    }
+  }
+
+  /**
+   * Flush buffer to database
+   */
+  async flush() {
+    if (this.buffer.length === 0) return;
+
+    const events = this.buffer.splice(0, this.buffer.length);
+
+    // Build multi-row INSERT
+    const values = events.map(e => {
+      return `(
+        '${new Date(e.timestamp).toISOString()}',
+        '${e.orgId}',
+        '${e.id}',
+        '${e.type}',
+        '${e.source || 'simulator'}',
+        '${JSON.stringify(e).replace(/'/g, "''")}'::jsonb,
+        ${e._groundTruth ? `'${JSON.stringify(e._groundTruth)}'::jsonb` : 'NULL'}
+      )`;
+    }).join(',');
+
+    const query = `
+      INSERT INTO raw_events (time, org_id, event_id, event_type, source_system, data, _ground_truth)
+      VALUES ${values}
+      ON CONFLICT (time, org_id, event_id) DO NOTHING
+    `;
+
+    try {
+      await this.db.query(query);
+      console.log(`✓ Ingested ${events.length} events`);
+    } catch (err) {
+      console.error(`✗ Ingestion failed:`, err);
+      // Re-add to buffer for retry
+      this.buffer.unshift(...events);
+    }
+  }
+
+  /**
+   * Auto-flush every 10 seconds
+   */
+  startAutoFlush() {
+    setInterval(() => this.flush(), 10000);
+  }
+}
+```
+
+---
+
+## 10. Deployment Roadmap
+
+### 10.1 Phased Deployment (8 Months to Full Operational Capability)
+
+**From Dense Paper (p.4):**
+> Deployment follows phased approach: baseline establishment (30 days), pilot deployment (10 indicators, 60 days), graduated rollout (20 indicators/month), and full operational capability (month 8).
+
+### Phase 1: Infrastructure Setup (Month 1)
+
+**Objectives:**
+- Set up time-series database
+- Deploy data ingestion pipeline
+- Create monitoring dashboards
+
+**Tasks:**
+```bash
+Week 1: TimescaleDB Setup
+- Install TimescaleDB on production cluster
+- Create database schemas (raw_events, baselines, detection_results)
+- Configure retention policies
+- Set up continuous aggregates
+- Performance testing (target: 10K inserts/sec)
+
+Week 2: Ingestion Pipeline
+- Build batch ingestion service
+- Implement SIEM connectors (Splunk, QRadar, etc.)
+- Create data validation layer
+- Set up dead letter queue for failed ingestions
+
+Week 3: Monitoring & Observability
+- Grafana dashboards for ingestion metrics
+- Prometheus alerts for pipeline health
+- Log aggregation (ELK stack)
+- Query performance monitoring
+
+Week 4: Testing & Validation
+- Load testing (100K events/day)
+- Failover testing
+- Backup/restore procedures
+- Documentation
+```
+
+**Deliverables:**
+- ✅ Scalable time-series database (tested to 100K events/day)
+- ✅ Reliable ingestion pipeline (99.9% uptime)
+- ✅ Monitoring dashboards
+- ✅ Runbooks for operations team
+
+### Phase 2: Baseline Establishment (30 Days)
+
+**Objectives:**
+- Collect 30 days of real organizational data
+- Calculate baselines for all 100 indicators
+- Validate baseline quality
+
+**Tasks:**
+```bash
+Day 1-7: Data Collection Validation
+- Connect to production SIEM/logs
+- Verify data quality and completeness
+- Identify gaps in telemetry
+- Adjust collection as needed
+
+Day 8-30: Passive Collection
+- Collect all security events (no detection yet)
+- Store raw events in time-series DB
+- Monitor data volume and quality
+- Build initial aggregations
+
+Day 31-35: Baseline Calculation
+- Run baseline calibration for all 100 indicators
+- Calculate μ, σ, Σ for each indicator
+- Fit temporal models (circadian, weekly)
+- Identify distribution types
+
+Day 36-38: Baseline Validation
+- Review baselines with security team
+- Check for anomalies in baselines
+- Adjust parameters if needed
+- Document baseline characteristics
+
+Day 39-40: Baseline Approval
+- Present baselines to stakeholders
+- Get sign-off for pilot deployment
+```
+
+**Deliverables:**
+- ✅ 30-day dataset for organization (millions of events)
+- ✅ Calibrated baselines for 100 indicators
+- ✅ Baseline quality report
+- ✅ Approved to proceed to pilot
+
+### Phase 3: Pilot Deployment (60 Days)
+
+**Objectives:**
+- Deploy 10 indicators for detection
+- Validate detection accuracy
+- Tune thresholds and weights
+
+**Selected Indicators for Pilot:**
+1. **1.1** - Unquestioning Compliance (high-impact)
+2. **1.2** - Diffusion of Responsibility
+3. **2.1** - Urgency-Induced Bypass
+4. **3.3** - Social Proof Manipulation
+5. **5.1** - Alert Fatigue (critical for SOC)
+6. **5.2** - Decision Fatigue
+7. **6.1** - Groupthink
+8. **7.1** - Acute Stress
+9. **9.2** - Automation Bias
+10. **10.1** - Perfect Storm Detection
+
+**Timeline:**
+```bash
+Week 1-2: Implementation
+- Deploy detection algorithms for 10 indicators
+- Set up alert routing
+- Create dashboard visualizations
+- Shadow mode (detect but don't alert)
+
+Week 3-4: Silent Running
+- Run detection in background
+- Collect results
+- No alerts to SOC analysts yet
+- Build ground truth dataset
+
+Week 5-6: Validation
+- Compare detections to ground truth
+- Calculate MCC, precision, recall for each indicator
+- Identify false positives and false negatives
+- Analyze failure modes
+
+Week 7-8: Tuning
+- Adjust detection thresholds
+- Recalibrate weights (w1, w2, w3)
+- Fine-tune Bayesian priors
+- Re-run validation
+
+Week 9-10: SOC Integration
+- Enable alerts to SOC dashboard
+- Train analysts on new indicators
+- Establish triage procedures
+- Collect analyst feedback
+
+Week 11-12: Iteration
+- Address feedback from SOC team
+- Fix bugs and edge cases
+- Optimize performance
+- Document lessons learned
+```
+
+**Success Criteria:**
+- ✅ MCC ≥ 0.7 for at least 8/10 indicators
+- ✅ False positive rate < 10%
+- ✅ SOC analyst acceptance (feedback survey > 7/10)
+- ✅ No performance degradation on production systems
+
+### Phase 4: Graduated Rollout (Months 4-7)
+
+**Objective:** Deploy remaining 90 indicators at 20/month
+
+**Month 4: Category 1 + Category 2 (20 indicators)**
+- Deploy indicators 1.3-1.10 (Authority)
+- Deploy indicators 2.2-2.10 (Temporal)
+- Validation cycle (2 weeks detection + 2 weeks tuning)
+
+**Month 5: Category 3 + Category 4 (20 indicators)**
+- Deploy indicators 3.1-3.10 (Social Influence)
+- Deploy indicators 4.1-4.10 (Affective)
+- Cross-category correlation analysis
+
+**Month 6: Category 5 + Category 6 (20 indicators)**
+- Deploy indicators 5.3-5.10 (Cognitive Overload)
+- Deploy indicators 6.2-6.10 (Group Dynamics)
+- Bayesian network activation
+
+**Month 7: Category 7 + Category 8 + Category 9 (30 indicators)**
+- Deploy indicators 7.1-7.10 (Stress)
+- Deploy indicators 8.1-8.10 (Unconscious)
+- Deploy indicators 9.1-9.10 (AI-Specific)
+- Full interdependency modeling
+
+### Phase 5: Full Operational Capability (Month 8)
+
+**Objectives:**
+- All 100 indicators operational
+- Bayesian network fully active
+- Convergence detection enabled
+- Automated response protocols
+
+**Tasks:**
+```bash
+Week 1: Integration Testing
+- Test all 100 indicators together
+- Verify Bayesian network calculations
+- Test convergence detection (10.x indicators)
+- Performance testing under full load
+
+Week 2: Automated Response
+- Deploy response playbooks
+- Configure automated isolation/blocking
+- Set up escalation procedures
+- Test incident response workflows
+
+Week 3: User Acceptance Testing
+- SOC team full-scale exercises
+- Red team testing (simulate attacks)
+- Measure detection coverage
+- Validate response times
+
+Week 4: Production Release
+- Go-live announcement
+- 24/7 monitoring for first week
+- Daily review meetings
+- Incident retrospectives
+```
+
+**Full Operational Capability Metrics:**
+- ✅ 100/100 indicators deployed and validated
+- ✅ Average MCC ≥ 0.7 across all indicators
+- ✅ Detection latency < 5 minutes
+- ✅ False positive rate < 5%
+- ✅ SOC analyst satisfaction > 8/10
+- ✅ Coverage: detecting ≥ 80% of simulated attacks
+
+### 10.2 Ongoing Operations (Month 9+)
+
+**Monthly:**
+- Baseline recalibration (if drift detected)
+- Validation testing with synthetic signals
+- Performance optimization
+- False positive analysis and tuning
+
+**Quarterly:**
+- Red team exercises
+- Indicator effectiveness review
+- Feature enhancements
+- Research new indicators
+
+**Annually:**
+- Full system audit
+- Baseline reset (fresh 30-day calibration)
+- Technology refresh
+- Strategic roadmap update
+
+### 10.3 Resource Requirements
+
+**Personnel:**
+```
+Phase 1-2 (Months 1-2):
+- 1 DevOps Engineer (database/infrastructure)
+- 1 Data Engineer (ingestion pipeline)
+- 1 Backend Developer (detection algorithms)
+- 0.5 Security Analyst (requirements/validation)
+
+Phase 3-4 (Months 3-7):
+- 2 Backend Developers (indicator implementation)
+- 1 Data Scientist (baseline calibration, ML tuning)
+- 1 Security Analyst (validation, SOC integration)
+- 0.5 DevOps Engineer (scaling/performance)
+
+Phase 5+ (Month 8+):
+- 1 Backend Developer (maintenance, new features)
+- 0.5 Data Scientist (optimization)
+- 1 Security Analyst (triage, tuning)
+- On-call rotation for 24/7 support
+```
+
+**Infrastructure:**
+```
+Database:
+- TimescaleDB cluster (3 nodes)
+- 1TB storage per 1000 users/year
+- 16 cores for real-time processing per 10,000 users
+
+Compute:
+- Detection engine: 8 cores, 32GB RAM
+- Ingestion pipeline: 4 cores, 16GB RAM
+- Baseline calibration: 16 cores, 64GB RAM (batch jobs)
+
+Network:
+- Ingestion: 100 Mbps sustained
+- Dashboard queries: 10 Mbps
+
+Monitoring:
+- Prometheus + Grafana
+- ELK stack for logs
+```
+
+**Budget Estimate (Annual):**
+```
+Infrastructure: $120K/year
+  - Database cluster: $60K
+  - Compute instances: $40K
+  - Monitoring/logging: $20K
+
+Personnel: $600K/year
+  - 2.5 Engineers @ $150K avg
+  - 1.5 Security Analysts @ $120K avg
+  - 0.5 Data Scientist @ $160K
+
+Licenses/Tools: $50K/year
+  - TimescaleDB support
+  - Monitoring tools
+  - Development tools
+
+Total: ~$770K/year for 1000-user organization
+```
+
+---
+
+## 11. Conclusion & Next Steps
+
+This guide has transformed the **CPF Dense Foundation Paper's mathematical framework** into **practical, implementable specifications**.
+
+### What We've Covered
+
+1. ✅ **Paradigm Shift**: From labeled events to realistic data with hidden signals
+2. ✅ **Architecture**: 6-layer system from ingestion to matrix output
+3. ✅ **Data Generation**: Realistic traffic patterns with statistical anomalies
+4. ✅ **Detection Algorithms**: Complete implementations for 7 indicators
+5. ✅ **Baseline Calibration**: 30-day learning with adaptive updates
+6. ✅ **Temporal Modeling**: Decay and persistence models (solves "rapid saturation")
+7. ✅ **Validation**: Ground truth tracking with MCC metrics
+8. ✅ **End-to-End Examples**: Full code from data generation to alerting
+9. ✅ **Storage Architecture**: TimescaleDB schema and query patterns
+10. ✅ **Deployment Roadmap**: 8-month phased rollout to FOC
+
+### The Core Innovation
+
+**We're not testing "does phishing map to indicator 1.1?"**
+
+**We're testing "can we FIND psychological vulnerabilities hidden in normal organizational behavior?"**
+
+This is the difference between:
+- ❌ A circular validation (event → mapping → indicator)
+- ✅ A real detection system (data → algorithms → discovery)
+
+### Ready to Implement
+
+This document provides everything needed to build a production CPF detection system:
+- Complete code examples (7 indicators fully implemented)
+- Database schemas with retention policies
+- Query patterns for all use cases
+- Deployment timeline with success criteria
+- Resource requirements and budget estimates
+
+### Recommended Next Steps
+
+**Option A: Build Proof-of-Concept (2 weeks)**
+- Implement Indicator 1.1 end-to-end
+- Generate 1 day of realistic data (50K events)
+- Run detection and validation
+- Prove the concept works
+
+**Option B: Set Up Infrastructure (1 month)**
+- Deploy TimescaleDB
+- Build ingestion pipeline
+- Start collecting real organizational data
+- Begin 30-day baseline calibration
+
+**Option C: Pilot Deployment (3 months)**
+- Deploy 10 indicators from Phase 3
+- Run on real organization
+- Validate with SOC team
+- Measure ROI
+
+---
+
+**The path from theory to practice is now clear.**
+
+**Which direction should we take?**
