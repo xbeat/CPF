@@ -784,6 +784,11 @@ class ScoreDisplay {
             description: 'Score calculated but maturity level not configured'
         };
 
+        // Safely extract values with defaults
+        const redFlagsCount = this.score.details?.red_flags?.count ?? 0;
+        const answeredItems = this.score.details?.conversation_depth?.answered_items ?? 0;
+        const totalItems = this.score.details?.conversation_depth?.total_items ?? 0;
+
         this.container.innerHTML = `
             <div class="score-card" style="border-left: 5px solid ${maturityConfig.color};">
                 <h3>Assessment Score</h3>
@@ -795,8 +800,8 @@ class ScoreDisplay {
                 </div>
                 <div class="score-details">
                     <p><strong>Confidence:</strong> ${(this.score.confidence * 100).toFixed(0)}%</p>
-                    <p><strong>Red Flags:</strong> ${this.score.details.red_flags.count}</p>
-                    <p><strong>Completion:</strong> ${this.score.details.conversation_depth.answered_items}/${this.score.details.conversation_depth.total_items} items</p>
+                    <p><strong>Red Flags:</strong> ${redFlagsCount}</p>
+                    <p><strong>Completion:</strong> ${answeredItems}/${totalItems} items</p>
                 </div>
                 <button class="btn btn-light" onclick="window.CPFClient.toggleScoreDetails()">
                     📊 Show Details
