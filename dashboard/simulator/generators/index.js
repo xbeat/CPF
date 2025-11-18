@@ -172,28 +172,112 @@ class SimulatorOrchestrator {
 
   /**
    * Genera eventi normali (non-scenario)
+   *
+   * Lista espansa per coprire tutti i 100 indicatori CPF
+   * Eventi distribuiti su tutte le 10 categorie psicologiche
    */
   generateNormalEvents(orgConfig) {
     const events = [];
-    const normalEventTypes = [
-      'authentication_success',
-      'authentication_failed',
-      'network_traffic_anomaly',
-      'policy_violation'
-    ];
 
-    // Genera 1-3 eventi per iterazione
-    const count = Math.floor(Math.random() * 3) + 1;
+    // Eventi normali categorizzati per probabilità
+    const normalEventTypes = {
+      // Alta frequenza (operazioni quotidiane)
+      common: [
+        'authentication_failed',
+        'policy_violation',
+        'information_overload',
+        'multitasking_detected',
+        'after_hours_access'
+      ],
+
+      // Media frequenza (attività regolari)
+      medium: [
+        'phishing_clicked',
+        'email_phishing',
+        'scheduled_task_anomaly',
+        'attention_fragmentation',
+        'decision_fatigue',
+        'habitual_behavior',
+        'routine_violation',
+        'ai_recommendation_followed'
+      ],
+
+      // Bassa frequenza (eventi occasionali ma importanti)
+      uncommon: [
+        'privilege_escalation',
+        'brute_force_attack',
+        'urgent_action_required',
+        'social_engineering',
+        'impersonation',
+        'pretexting',
+        'trust_exploitation',
+        'emotional_manipulation',
+        'complexity_exploit',
+        'groupthink_indicator',
+        'diffusion_responsibility',
+        'organizational_pressure',
+        'burnout_indicator',
+        'implicit_bias_indicator',
+        'autopilot_mode',
+        'automation_bias',
+        'algorithmic_deference',
+        'behavioral_detection',
+        'suspicious_process',
+        'data_exfiltration'
+      ],
+
+      // Rara (eventi critici)
+      rare: [
+        'ransomware_activity',
+        'fear_based_alert',
+        'crisis_event',
+        'panic_button',
+        'overwhelm_detected',
+        'malware_detected',
+        'muscle_memory_exploit',
+        'ai_hallucination',
+        'ml_model_poisoning',
+        'cascading_failure',
+        'perfect_storm',
+        'system_critical',
+        'lateral_movement'
+      ]
+    };
+
+    // Genera 2-5 eventi per iterazione (aumentato per più coverage)
+    const count = Math.floor(Math.random() * 4) + 2;
 
     for (let i = 0; i < count; i++) {
       const source = orgConfig.sources[Math.floor(Math.random() * orgConfig.sources.length)];
-      const eventType = normalEventTypes[Math.floor(Math.random() * normalEventTypes.length)];
+
+      // Selezione ponderata per tipo di evento
+      const rand = Math.random();
+      let eventType;
+      let severity = 'low';
+
+      if (rand < 0.50) {
+        // 50% eventi comuni
+        eventType = normalEventTypes.common[Math.floor(Math.random() * normalEventTypes.common.length)];
+        severity = 'low';
+      } else if (rand < 0.80) {
+        // 30% eventi medi
+        eventType = normalEventTypes.medium[Math.floor(Math.random() * normalEventTypes.medium.length)];
+        severity = 'medium';
+      } else if (rand < 0.95) {
+        // 15% eventi non comuni
+        eventType = normalEventTypes.uncommon[Math.floor(Math.random() * normalEventTypes.uncommon.length)];
+        severity = 'medium';
+      } else {
+        // 5% eventi rari
+        eventType = normalEventTypes.rare[Math.floor(Math.random() * normalEventTypes.rare.length)];
+        severity = 'high';
+      }
 
       const event = this.siemGenerator.generateEvent(
         source,
         eventType,
         'normal',
-        'low'
+        severity
       );
 
       events.push(event);

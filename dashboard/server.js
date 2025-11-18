@@ -155,11 +155,11 @@ app.get('/api/organizations/:orgId', (req, res) => {
 /**
  * POST /api/organizations
  * Create new organization
- * Body: { id, name, industry, size, country, language, created_by, notes, fetch_indicators }
+ * Body: { id, name, industry, size, country, language, created_by, notes, sede_sociale, partita_iva, fetch_indicators }
  */
 app.post('/api/organizations', async (req, res) => {
   try {
-    const { id, name, industry, size, country, language, created_by, notes, fetch_indicators } = req.body;
+    const { id, name, industry, size, country, language, created_by, notes, sede_sociale, partita_iva, fetch_indicators } = req.body;
 
     // Validate required fields
     if (!id || !name || !industry || !size || !country) {
@@ -187,7 +187,9 @@ app.post('/api/organizations', async (req, res) => {
       country,
       language: language || 'en-US',
       created_by: created_by || 'System',
-      notes: notes || ''
+      notes: notes || '',
+      sede_sociale: sede_sociale || '',
+      partita_iva: partita_iva || ''
     });
 
     console.log(`\n✅ [API] Created organization: ${id} (${name})`);
@@ -275,6 +277,8 @@ app.put('/api/organizations/:orgId', (req, res) => {
     if (updates.country) orgData.metadata.country = updates.country;
     if (updates.language) orgData.metadata.language = updates.language;
     if (updates.notes !== undefined) orgData.metadata.notes = updates.notes;
+    if (updates.sede_sociale !== undefined) orgData.metadata.sede_sociale = updates.sede_sociale;
+    if (updates.partita_iva !== undefined) orgData.metadata.partita_iva = updates.partita_iva;
 
     // Save
     dataManager.writeOrganization(orgData);
@@ -932,6 +936,188 @@ app.get('/api/organizations/:orgId/export/pdf', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/organizations/:orgId/export/zip
+ * Export all organization's assessment cards (schede) as ZIP file
+ */
+app.get('/api/organizations/:orgId/export/zip', async (req, res) => {
+  try {
+    const { orgId } = req.params;
+    const user = req.query.user || 'Dashboard User';
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const { stream } = await dataManager.generateZIPExport(orgId, user);
+    const orgData = dataManager.readOrganization(orgId);
+
+    console.log(`\n📦 [API] Generating ZIP export for: ${orgId}\n`);
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="CPF_Audit_${orgData.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.zip"`);
+
+    // Pipe ZIP stream to response
+    stream.pipe(res);
+
+    stream.on('end', () => {
+      console.log(`\n✅ [API] ZIP export completed: ${orgId}\n`);
+    });
+
+  } catch (error) {
+    console.error(`[API] Error generating ZIP export for ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// API ENDPOINTS - SOC DATA
+// ============================================
+
+/**
+ * GET /api/soc/:orgId
+ * Get SOC indicator data from {org-name}-soc.json file
+ */
+app.get('/api/soc/:orgId', (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    // Prima ottieni i dati dell'organizzazione per il nome
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const orgData = dataManager.readOrganization(orgId);
+
+    // Normalizza il nome dell'organizzazione per il file SOC
+    const normalizedOrgName = orgData.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    const socFilePath = path.join(__dirname, 'data', 'organizations', `${normalizedOrgName}-soc.json`);
+
+    // Verifica se il file SOC esiste
+    if (!fs.existsSync(socFilePath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'SOC data file not found',
+        message: 'No SOC data available for this organization',
+        orgId,
+        expectedFile: `${normalizedOrgName}-soc.json`
+      });
+    }
+
+    // Leggi il file SOC
+    const socData = JSON.parse(fs.readFileSync(socFilePath, 'utf8'));
+
+    res.json({
+      success: true,
+      data: socData
+    });
+
+  } catch (error) {
+    console.error(`[API] Error reading SOC data for ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/indicators/:indicatorId/metadata/:lang
+ * Get indicator metadata from GitHub (auditor field kit interactive)
+ */
+app.get('/api/indicators/:indicatorId/metadata/:lang', (req, res) => {
+  try {
+    const { indicatorId, lang } = req.params;
+
+    // Parse indicator ID (es. "1.1" -> category=1, indicator=1)
+    const parts = indicatorId.split('.');
+    if (parts.length !== 2) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid indicator ID format. Expected format: X.Y'
+      });
+    }
+
+    const category = parts[0];
+    const indicator = parts[1];
+
+    // Map category to folder name
+    const categoryMap = {
+      '1': '1.x-authority',
+      '2': '2.x-temporal',
+      '3': '3.x-social',
+      '4': '4.x-affective',
+      '5': '5.x-cognitive',
+      '6': '6.x-group',
+      '7': '7.x-stress',
+      '8': '8.x-unconscious',
+      '9': '9.x-ai',
+      '10': '10.x-convergent'
+    };
+
+    const categoryFolder = categoryMap[category];
+    if (!categoryFolder) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid category: ${category}`
+      });
+    }
+
+    // Costruisci il path al file JSON
+    const metadataPath = path.join(
+      __dirname,
+      '..',
+      'auditor field kit',
+      'interactive',
+      lang,
+      categoryFolder,
+      `indicator_${indicatorId}.json`
+    );
+
+    // Verifica se il file esiste
+    if (!fs.existsSync(metadataPath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Indicator metadata not found',
+        indicatorId,
+        lang,
+        expectedPath: `auditor field kit/interactive/${lang}/${categoryFolder}/indicator_${indicatorId}.json`
+      });
+    }
+
+    // Leggi il file JSON
+    const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+
+    res.json({
+      success: true,
+      data: metadata
+    });
+
+  } catch (error) {
+    console.error(`[API] Error reading indicator metadata:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // ============================================
 // API ENDPOINTS - LEGACY (BACKWARD COMPATIBILITY)
 // ============================================
@@ -1570,7 +1756,7 @@ app.post('/api/simulator/emit', async (req, res) => {
 
 server.listen(PORT, () => {
   console.log('\n╔════════════════════════════════════════════════════════════╗');
-  console.log('║          🛡️  CPF Dashboard Server v2.0 - RUNNING           ║');
+  console.log('║          🛡️  CPF Dashboard Server v2.0 - RUNNING            ║');
   console.log('╚════════════════════════════════════════════════════════════╝\n');
   console.log(`📡 Server listening on: http://localhost:${PORT}`);
   console.log(`🔌 WebSocket server ready\n`);

@@ -1,831 +1,417 @@
-# CPF SOC/SIEM Simulator
+# CPF SOC Simulator - Logica e Funzionamento
 
-## 📋 Panoramica
-
-Il **CPF SOC/SIEM Simulator** è un sistema di simulazione che genera dati realistici provenienti da SIEM, SOC e EDR per alimentare la Dashboard SOC durante lo sviluppo, senza dipendere da infrastrutture di sicurezza reali.
-
-### Architettura
-
-```
-Dashboard SOC ← API ← Connettori ← Simulatore
-                         ↑
-                    (Dev: Simulatore)
-                    (Prod: SIEM/SOC reali)
-```
-
-### Vantaggi
-
-✅ **Sviluppo Indipendente**: Nessuna dipendenza da SIEM/SOC reali
-✅ **Testing Riproducibile**: Scenari controllati e ripetibili
-✅ **Transizione Facile**: Stessi connettori per dev e produzione
-✅ **Dati Realistici**: Basati su CPF Dense Foundation e matematica formale
+## 📋 Indice
+- [Come Funziona](#come-funziona)
+- [Logica Attuale](#logica-attuale)
+- [Distribuzione Eventi](#distribuzione-eventi)
+- [Perché Diventano Tutti Rossi](#perché-diventano-tutti-rossi)
+- [Prossimi Passi Consigliati](#prossimi-passi-consigliati)
 
 ---
 
-## 🚀 Quick Start
+## 🔄 Come Funziona
 
-### 1. Avviare il Simulatore
-
-```bash
-cd dashboard
-SIMULATOR_MODE=true npm start
+### 1. Avvio Simulatore
 ```
-
-Il server partirà su `http://localhost:3000` con il simulatore attivo.
-
-### 2. Verificare lo Stato
-
-```bash
-curl http://localhost:3000/api/simulator/status
-```
-
-Risposta:
-```json
+POST /api/simulator/start
 {
-  "enabled": true,
-  "running": false,
-  "sources": ["splunk", "qradar", "sentinel", "crowdstrike"],
-  "uptime": 0
+  orgId: "uuid",
+  sources: ["splunk", "qradar", "sentinel", "crowdstrike"],
+  scenario: "normal",
+  rate: 10  // eventi/secondo
 }
 ```
 
-### 3. Avviare la Simulazione
-
-```bash
-curl -X POST http://localhost:3000/api/simulator/start \
-  -H "Content-Type: application/json" \
-  -d '{"orgId": "acme-corp-001", "sources": ["splunk", "crowdstrike"]}'
+### 2. Flusso Dati
 ```
-
-### 4. Visualizzare nella Dashboard
-
-Apri `http://localhost:3000/dashboard/soc/` e seleziona l'organizzazione simulata.
-
----
-
-## 🎯 Hands-On Guide - Workflow Completo
-
-### Opzione A: Workflow Browser + Terminale (Raccomandato per iniziare)
-
-#### Step 1: Avvia Server
-```bash
-cd dashboard
-SIMULATOR_MODE=true npm start
-```
-
-Vedrai nel log:
-```
-🎭 [Simulator] Mode ENABLED
-📚 [DenseLoader] Loaded 100 indicators from 10 categories
-🔌 [Simulator] API routes registered
-```
-
-#### Step 2: Crea Organizzazione (via terminale)
-```bash
-curl -X POST http://localhost:3000/api/organizations \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "demo-company-001",
-    "name": "Demo Company",
-    "industry": "Technology",
-    "size": "medium",
-    "country": "IT",
-    "language": "it-IT"
-  }'
-```
-
-Oppure usa la dashboard auditing: http://localhost:3000/dashboard/auditing/
-
-#### Step 3: Avvia Simulazione (via terminale)
-```bash
-# Scenario normale (baseline)
-curl -X POST http://localhost:3000/api/simulator/start \
-  -H "Content-Type: application/json" \
-  -d '{
-    "orgId": "demo-company-001",
-    "scenario": "normal",
-    "sources": ["splunk", "crowdstrike"],
-    "rate": 10
-  }'
-```
-
-**Risposta:**
-```json
-{
-  "success": true,
-  "message": "Simulator started",
-  "orgId": "demo-company-001",
-  "config": {
-    "sources": ["splunk", "crowdstrike"],
-    "scenario": "normal",
-    "rate": 10
-  }
-}
-```
-
-#### Step 4: Apri Dashboard nel Browser
-1. Vai a: **http://localhost:3000/dashboard/soc/**
-2. Nella sidebar sinistra, clicca su **"Demo Company"**
-3. Vedrai in tempo reale:
-   - 📊 **Overall Risk** che si aggiorna
-   - 🔥 **Category Heatmap** che si popola
-   - 🎯 **Indicator Grid** con indicatori colorati
-   - 📋 **Prioritization Table** con raccomandazioni
-
-#### Step 5: Prova Scenari di Attacco
-```bash
-# Ferma simulazione normale
-curl -X POST http://localhost:3000/api/simulator/stop \
-  -H "Content-Type: application/json" \
-  -d '{"orgId": "demo-company-001"}'
-
-# Avvia scenario phishing
-curl -X POST http://localhost:3000/api/simulator/scenario \
-  -H "Content-Type: application/json" \
-  -d '{
-    "orgId": "demo-company-001",
-    "scenario": "phishing-campaign",
-    "duration": 300,
-    "intensity": "high"
-  }'
-```
-
-**Torna al browser** → Vedrai i valori di rischio salire drammaticamente nelle categorie Social (3.x) e Affective (4.x)! 🚨
-
-#### Step 6: Monitora Stato
-```bash
-# Stato simulatore
-curl http://localhost:3000/api/simulator/status | jq
-
-# Report scenario attivo
-curl http://localhost:3000/api/simulator/scenario/demo-company-001 | jq
-
-# Dati organizzazione aggiornati
-curl http://localhost:3000/api/organizations/demo-company-001 | jq
+┌─────────────────────────────────────────────────────────────┐
+│ 1. GENERAZIONE EVENTI                                       │
+│    ├─ Ogni 100ms (rate=10/sec)                             │
+│    ├─ Genera 2-5 eventi casuali                            │
+│    └─ Distribuzione ponderata per tipo                      │
+└─────────────────────────────────────────────────────────────┘
+                           ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 2. SELEZIONE EVENTO                                         │
+│    ├─ 50% comuni (low severity)                            │
+│    ├─ 30% medi (medium severity)                           │
+│    ├─ 15% non comuni (medium severity)                     │
+│    └─ 5% rari (high severity)                              │
+└─────────────────────────────────────────────────────────────┘
+                           ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 3. CONVERSIONE CPF (cpf-adapter.js)                        │
+│    ├─ Cerca evento in EVENT_BASELINE matrix                │
+│    ├─ Trova indicatori triggati                            │
+│    └─ Per ogni indicatore:                                  │
+│       ├─ Score = baseline (EVENT_BASELINE)                 │
+│       ├─ + modulazione dinamica (event count, severity)    │
+│       └─ × Bayesian context (time, pattern, user, geo)     │
+└─────────────────────────────────────────────────────────────┘
+                           ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 4. SALVATAGGIO (saveSocIndicator)                          │
+│    ├─ Scrive {org-name}-soc.json                           │
+│    ├─ Aggiorna previous_value                              │
+│    └─ Emette WebSocket indicator_update                    │
+└─────────────────────────────────────────────────────────────┘
+                           ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 5. DASHBOARD UPDATE (real-time)                            │
+│    ├─ Riceve WebSocket event                               │
+│    ├─ Ricarica SOC data                                    │
+│    └─ Aggiorna celle matrice con colori/trend              │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Opzione B: Workflow Solo Terminale (Advanced)
+## 🧮 Logica Attuale
 
-```bash
-# 1. Avvia server
-SIMULATOR_MODE=true npm start &
+### Calcolo Bayesian Score
 
-# 2. Attendi 2 secondi
-sleep 2
-
-# 3. Crea organizzazione
-curl -X POST http://localhost:3000/api/organizations \
-  -H "Content-Type: application/json" \
-  -d '{"id":"test-001","name":"Test Org","industry":"Tech","size":"small","country":"US"}'
-
-# 4. Lista scenari disponibili
-curl http://localhost:3000/api/simulator/scenarios | jq '.scenarios[] | {id, name, intensity}'
-
-# 5. Avvia scenario ransomware (critico!)
-curl -X POST http://localhost:3000/api/simulator/scenario \
-  -H "Content-Type: application/json" \
-  -d '{
-    "orgId": "test-001",
-    "scenario": "ransomware-attack",
-    "duration": 60,
-    "intensity": "critical"
-  }'
-
-# 6. Monitora progress
-watch -n 2 'curl -s http://localhost:3000/api/simulator/scenario/test-001 | jq ".report.status"'
-
-# 7. Dopo 60 secondi, verifica dati
-curl http://localhost:3000/api/organizations/test-001/aggregates | jq
-
-# 8. Ferma simulatore
-curl -X POST http://localhost:3000/api/simulator/stop \
-  -H "Content-Type: application/json" \
-  -d '{"orgId":"test-001"}'
-```
-
----
-
-### Opzione C: Demo Veloce (1 minuto)
-
-```bash
-# Terminal 1: Avvia server
-cd dashboard && SIMULATOR_MODE=true npm start
-
-# Terminal 2: Demo script
-curl -X POST http://localhost:3000/api/organizations \
-  -d '{"id":"quick-demo","name":"Quick Demo","industry":"Finance","size":"large","country":"IT"}' \
-  -H "Content-Type: application/json" && \
-curl -X POST http://localhost:3000/api/simulator/start \
-  -d '{"orgId":"quick-demo","scenario":"phishing-campaign","rate":20}' \
-  -H "Content-Type: application/json" && \
-sleep 5 && \
-curl http://localhost:3000/api/organizations/quick-demo | jq '.aggregates.overall_risk'
-```
-
-**Poi apri browser**: http://localhost:3000/dashboard/soc/ → Seleziona "Quick Demo" ✅
-
----
-
-## 📺 Cosa Vedere nella Dashboard
-
-Quando apri **http://localhost:3000/dashboard/soc/** con simulazione attiva vedrai:
-
-### 1. Sidebar - Lista Organizzazioni
-- 🏢 Nome organizzazione
-- 📊 Statistiche: Assessments, Risk Level, Confidence
-- ✅ Clicca per selezionare
-
-### 2. Overall Risk Card
-- 🎯 Risk Value (0-100%)
-- 📈 Trend (increasing/stable/decreasing)
-- 🔒 Confidence Level
-- 📅 Last Updated (si aggiorna in tempo reale)
-
-### 3. Category Heatmap
-- 🔥 10 tile (Authority, Temporal, Social, Affective, Cognitive, Group, Stress, Unconscious, AI, Convergent)
-- Colori: 🟢 Low → 🟡 Medium → 🔴 High
-- **Durante phishing**: Social (3.x) e Affective (4.x) diventano rossi
-- **Durante ransomware**: Stress (7.x) e Convergent (10.x) esplodono
-
-### 4. Indicator Grid (10x10)
-- 100 celle (1.1 → 10.10)
-- Click su cella → Dettaglio indicatore
-- Colori cambiano in base al rischio
-
-### 5. Prioritization Table
-- Categorie ordinate per priorità
-- Raccomandazioni: Monitor / Review / Critical
-- Downstream Impact
-
----
-
-## 🎬 Scenari Disponibili
-
-| Scenario | Durata | Intensità | Indicatori Principali | Descrizione |
-|----------|--------|-----------|----------------------|-------------|
-| **normal** | continuo | low | 1.1, 2.1, 3.1 | Operazioni baseline normali |
-| **phishing-campaign** | 1h | high | 3.x, 4.x, 8.x | Campagna phishing mirata |
-| **ransomware-attack** | 2h | critical | 4.x, 7.x, 10.x | Ransomware multi-stage |
-| **insider-threat** | 3h | medium | 1.x, 6.x, 8.x | Minaccia interna |
-| **apt-intrusion** | 24h | critical | 5.x, 8.x, 10.x | Advanced Persistent Threat |
-| **credential-stuffing** | 30min | high | 1.x, 7.x | Credential stuffing automatizzato |
-| **supply-chain-compromise** | 4h | critical | 3.x, 9.x, 10.x | Compromissione supply chain |
-| **ddos-attack** | 1h | high | 5.x, 7.x | DDoS con stress operativo |
-
----
-
-## 🔧 Comandi Utili
-
-```bash
-# Status simulatore
-curl http://localhost:3000/api/simulator/status | jq
-
-# Lista SIEM disponibili
-curl http://localhost:3000/api/simulator/sources | jq '.sources[] | {id, name, type}'
-
-# Lista scenari
-curl http://localhost:3000/api/simulator/scenarios | jq '.scenarios[] | {id, name, duration, intensity}'
-
-# Verifica organizzazioni
-curl http://localhost:3000/api/organizations | jq
-
-# Dettagli organizzazione
-curl http://localhost:3000/api/organizations/ORGID | jq
-
-# Aggregati (rischio totale)
-curl http://localhost:3000/api/organizations/ORGID/aggregates | jq
-
-# Ferma simulatore per org
-curl -X POST http://localhost:3000/api/simulator/stop \
-  -d '{"orgId":"ORGID"}' -H "Content-Type: application/json"
-
-# Verifica assessments creati
-curl http://localhost:3000/api/organizations/ORGID/assessments | jq '. | length'
-```
-
----
-
-## ⚠️ Note Importanti
-
-### Simulatore NON Attivo
-Se avvii il server **senza** `SIMULATOR_MODE=true`:
-```bash
-npm start  # Simulatore DISABILITATO
-```
-
-Le API simulatore ritorneranno:
-```json
-{
-  "success": false,
-  "error": "Simulator not enabled",
-  "message": "Set SIMULATOR_MODE=true to enable simulator"
-}
-```
-
-### Rate Limiting
-- Default rate: **10 eventi/secondo**
-- Per test veloci: `"rate": 50`
-- Per test realistici: `"rate": 5`
-
-### Durata Scenari
-- `duration: 0` = infinito (fino a stop manuale)
-- `duration: 300` = 5 minuti
-- Lo scenario si ferma automaticamente alla fine
-
-### Refresh Dashboard
-La dashboard **non** fa auto-refresh. Per vedere nuovi dati:
-1. Ricarica pagina (F5)
-2. Oppure ri-seleziona l'organizzazione dalla sidebar
-
-**TODO**: Implementare WebSocket per aggiornamenti real-time
-
----
-
-## 📁 Struttura
-
-```
-simulator/
-├── config/
-│   ├── sources.json       # Configurazione SIEM/SOC/EDR
-│   └── scenarios.json     # Scenari di attacco predefiniti
-├── generators/
-│   ├── index.js              # Orchestratore principale
-│   ├── dense-loader.js       # Carica CPF dense foundation
-│   ├── siem-data-generator.js # Genera eventi SIEM-like
-│   └── scenario-engine.js    # Simula scenari di attacco
-├── connectors/
-│   ├── base-connector.js      # Interfaccia comune
-│   ├── splunk-connector.js    # Connettore Splunk
-│   ├── qradar-connector.js    # Connettore IBM QRadar
-│   ├── sentinel-connector.js  # Connettore Microsoft Sentinel
-│   └── crowdstrike-connector.js # Connettore CrowdStrike
-├── adapters/
-│   └── cpf-adapter.js         # Mappa SIEM data → CPF indicators
-└── README.md
-```
-
----
-
-## 🔌 API Endpoints
-
-### GET `/api/simulator/status`
-Restituisce lo stato corrente del simulatore.
-
-**Risposta:**
-```json
-{
-  "enabled": true,
-  "running": false,
-  "sources": ["splunk", "qradar", "sentinel", "crowdstrike"],
-  "activeOrganizations": [],
-  "uptime": 0,
-  "eventsGenerated": 0
-}
-```
-
-### POST `/api/simulator/start`
-Avvia il simulatore per una specifica organizzazione.
-
-**Body:**
-```json
-{
-  "orgId": "acme-corp-001",
-  "sources": ["splunk", "crowdstrike"],
-  "scenario": "normal",
-  "rate": 10
-}
-```
-
-**Parametri:**
-- `orgId`: ID organizzazione target
-- `sources`: Array di SIEM/EDR da simulare (opzionale, default: tutti)
-- `scenario`: Scenario da simulare (opzionale, default: "normal")
-- `rate`: Eventi/secondo (opzionale, default: 10)
-
-**Risposta:**
-```json
-{
-  "success": true,
-  "message": "Simulator started",
-  "orgId": "acme-corp-001",
-  "sources": ["splunk", "crowdstrike"],
-  "scenario": "normal"
-}
-```
-
-### POST `/api/simulator/stop`
-Ferma il simulatore.
-
-**Body:**
-```json
-{
-  "orgId": "acme-corp-001"
-}
-```
-
-### GET `/api/simulator/sources`
-Lista tutti i SIEM/SOC/EDR disponibili.
-
-**Risposta:**
-```json
-{
-  "sources": [
-    {
-      "id": "splunk",
-      "name": "Splunk Enterprise",
-      "type": "SIEM",
-      "version": "9.x",
-      "enabled": true
-    },
-    {
-      "id": "qradar",
-      "name": "IBM QRadar",
-      "type": "SIEM",
-      "version": "7.5",
-      "enabled": true
-    }
-  ]
-}
-```
-
-### POST `/api/simulator/scenario`
-Esegue uno scenario specifico.
-
-**Body:**
-```json
-{
-  "orgId": "acme-corp-001",
-  "scenario": "phishing-campaign",
-  "duration": 3600,
-  "intensity": "high"
-}
-```
-
-**Scenari disponibili:**
-- `normal`: Operazioni normali
-- `phishing-campaign`: Campagna phishing
-- `ransomware-attack`: Attacco ransomware
-- `insider-threat`: Minaccia interna
-- `apt-intrusion`: Advanced Persistent Threat
-- `credential-stuffing`: Credential stuffing
-
-### GET `/api/simulator/events/stream` (SSE)
-Stream eventi in tempo reale (Server-Sent Events).
-
-**Esempio (JavaScript):**
 ```javascript
-const eventSource = new EventSource('/api/simulator/events/stream?orgId=acme-corp-001');
+// TIER 1: Baseline Deterministico
+baseRisk = EVENT_BASELINE[eventType][indicatorId]
+// Esempio: phishing_clicked → 1.1 = 0.70
 
-eventSource.addEventListener('siem-event', (e) => {
-  const event = JSON.parse(e.data);
-  console.log('SIEM Event:', event);
+// TIER 2: Modulazione Dinamica
+score = baseRisk
+score += Math.log10(eventCount + 1) / 2 * 0.2  // Event frequency
+score += avgSeverity * 0.15                      // Severity impact
+score += maxSeverity * 0.1                       // Peak severity
+
+// TIER 3: Bayesian Context Adjustment
+contextFactor = 1.0
+if (after_hours) contextFactor += 0.20          // Time of day
+if (regular_pattern) contextFactor += 0.25      // Request pattern
+if (mfa_verified) contextFactor -= 0.30         // Verification
+if (privileged_user) contextFactor += 0.15      // User context
+if (vpn_tor) contextFactor += 0.30              // Geo context
+
+score *= contextFactor
+
+// TIER 4: Scenario Multiplier
+if (scenario !== 'normal') score *= 1.3
+
+// Final score: clamp to [0, 1]
+finalScore = Math.max(0, Math.min(1, score))
+```
+
+### Soglie Rischio
+```
+0.00 - 0.33: 🟢 Low Risk (verde)
+0.34 - 0.66: 🟡 Medium Risk (giallo)
+0.67 - 1.00: 🔴 High Risk (rosso)
+```
+
+---
+
+## 📊 Distribuzione Eventi
+
+### Eventi per Categoria (40+ tipi totali)
+
+| Frequenza | % | Severità | Esempi | Indicatori Triggati |
+|-----------|---|----------|--------|---------------------|
+| **Comuni** | 50% | Low | authentication_failed, policy_violation, information_overload | 5-8 per evento |
+| **Medi** | 30% | Medium | phishing_clicked, multitasking_detected, ai_recommendation_followed | 6-10 per evento |
+| **Non Comuni** | 15% | Medium | privilege_escalation, social_engineering, groupthink_indicator | 8-12 per evento |
+| **Rari** | 5% | High | ransomware_activity, crisis_event, ml_model_poisoning | 10-15 per evento |
+
+### Coverage per Categoria CPF
+
+| Categoria | Eventi Disponibili | Indicatori Coperti | Coverage |
+|-----------|-------------------|-------------------|----------|
+| 1. Authority-Based | 5 | 8-10 / 10 | 80-100% |
+| 2. Temporal-Based | 3 | 6-8 / 10 | 60-80% |
+| 3. Social-Based | 4 | 8-10 / 10 | 80-100% |
+| 4. Affective-Based | 4 | 7-9 / 10 | 70-90% |
+| 5. Cognitive-Based | 5 | 8-10 / 10 | 80-100% |
+| 6. Group-Based | 3 | 6-7 / 10 | 60-70% |
+| 7. Stress-Based | 5 | 7-8 / 10 | 70-80% |
+| 8. Unconscious-Based | 4 | 6-8 / 10 | 60-80% |
+| 9. AI-Enhanced | 4 | 6-7 / 10 | 60-70% |
+| 10. Convergent | 3 | 5-6 / 10 | 50-60% |
+
+**Coverage Totale**: ~60-80 indicatori su 100 (60-80%)
+
+---
+
+## ⚠️ Perché Diventano Tutti Rossi
+
+### Problema Identificato
+
+**TUTTI gli indicatori diventano rossi (>0.67) troppo velocemente (~1-2 minuti)**
+
+### Cause
+
+#### 1. **Baseline Già Alti**
+```javascript
+// Molti eventi hanno baseline naturalmente alti
+'ransomware_activity': {
+  '4.1': 0.85,  // Fear paralysis - già ROSSO dal primo evento!
+  '7.1': 0.88,  // Acute stress - CRITICO
+}
+
+'phishing_clicked': {
+  '1.1': 0.70,  // Unquestioning compliance - già borderline
+  '1.3': 0.65,  // Authority impersonation
+}
+```
+
+**Risultato**: Molti indicatori partono già in zona gialla/rossa dal primo evento.
+
+#### 2. **Accumulo Senza Decay**
+```javascript
+// Ogni nuovo evento INCREMENTA sempre lo score
+score += eventFactor * 0.2
+score += avgSeverity * 0.15
+
+// NON c'è decay temporale!
+// previous_value NON viene mai ridotto
+```
+
+**Risultato**: Gli score possono solo SALIRE, mai scendere.
+
+#### 3. **Event Frequency Troppo Alta**
+```
+Rate default: 10 eventi/sec
+Ogni ciclo: 2-5 eventi generati
+→ 20-50 eventi/sec effettivi!
+
+In 60 secondi: 1200-3000 eventi
+In 2 minuti: 2400-6000 eventi
+```
+
+**Risultato**: Saturazione rapida degli indicatori.
+
+#### 4. **Stessi Indicatori Triggati Ripetutamente**
+```javascript
+// Eventi comuni (50%) triggano sempre gli stessi indicatori:
+authentication_failed → sempre 1.1, 1.3, 1.5
+policy_violation → sempre 1.7, 1.8
+information_overload → sempre 5.1, 5.2
+```
+
+**Risultato**: ~15-20 indicatori bombardati continuamente, gli altri mai triggerati.
+
+#### 5. **Context Multiplier Sempre Positivo**
+```javascript
+// Bayesian context tende ad AUMENTARE sempre lo score:
+if (after_hours) +20%
+if (privileged_user) +15%
+if (vpn) +30%
+
+// Riduzioni sono rare:
+if (mfa_verified) -30%  // Quanto spesso succede?
+```
+
+**Risultato**: Context multiplier medio ~1.2-1.5x invece di ~1.0x.
+
+---
+
+## 🚀 Prossimi Passi Consigliati
+
+### 1. **URGENT: Implementare Time Decay**
+
+```javascript
+// Decay esponenziale: score si riduce nel tempo
+const DECAY_RATE = 0.95;  // 5% riduzione ogni aggiornamento
+const MIN_THRESHOLD = 0.10; // Floor minimo
+
+function applyTimeDecay(currentScore, lastUpdated) {
+  const hoursSince = (Date.now() - new Date(lastUpdated)) / 3600000;
+  const decayFactor = Math.pow(DECAY_RATE, hoursSince);
+  const decayedScore = currentScore * decayFactor;
+
+  return Math.max(MIN_THRESHOLD, decayedScore);
+}
+```
+
+**Beneficio**: Gli score si normalizzano nel tempo, evitando saturazione permanente.
+
+### 2. **Ridurre Baseline Values**
+
+```javascript
+// Scalare tutti i baseline del 30-40%
+'phishing_clicked': {
+  '1.1': 0.45,  // era 0.70
+  '1.3': 0.40,  // era 0.65
+}
+
+'ransomware_activity': {
+  '4.1': 0.60,  // era 0.85
+  '7.1': 0.65,  // era 0.88
+}
+```
+
+**Beneficio**: Partenza da valori realistici, crescita graduale.
+
+### 3. **Diminuire Event Rate**
+
+```javascript
+// Opzioni:
+rate: 2,  // 2 eventi/sec invece di 10
+// Oppure
+eventsPerCycle: 1,  // 1 evento invece di 2-5
+```
+
+**Beneficio**: Accumulo più lento e controllato.
+
+### 4. **Implementare Indicator Cooldown**
+
+```javascript
+// Non triggerare lo stesso indicatore troppo spesso
+const COOLDOWN_MS = 30000; // 30 secondi
+const lastTriggered = {}; // indicatorId → timestamp
+
+function canTrigger(indicatorId) {
+  const last = lastTriggered[indicatorId];
+  if (!last) return true;
+  return (Date.now() - last) > COOLDOWN_MS;
+}
+```
+
+**Beneficio**: Distribuzione più uniforme su tutti i 100 indicatori.
+
+### 5. **Rotazione Event Types**
+
+```javascript
+// Evitare ripetizioni dello stesso evento
+const recentEvents = []; // Queue ultimi 20 eventi
+const MAX_SAME_EVENT = 2; // Max 2 volte stesso evento in queue
+
+function selectEvent(eventTypes) {
+  const available = eventTypes.filter(type => {
+    const count = recentEvents.filter(e => e === type).length;
+    return count < MAX_SAME_EVENT;
+  });
+
+  return available[Math.floor(Math.random() * available.length)];
+}
+```
+
+**Beneficio**: Maggiore varietà, coverage più uniforme.
+
+### 6. **Contextual Balancing**
+
+```javascript
+// Context deve oscillare intorno a 1.0, non sempre >1.0
+function calculateBalancedContext(event) {
+  let adjustment = 1.0;
+
+  // Fattori positivi
+  if (after_hours) adjustment += 0.15;
+  if (privileged_user) adjustment += 0.10;
+
+  // Fattori negativi (più probabili)
+  if (business_hours) adjustment -= 0.10;
+  if (known_user) adjustment -= 0.15;
+  if (from_office) adjustment -= 0.10;
+
+  return Math.max(0.6, Math.min(1.4, adjustment));
+}
+```
+
+**Beneficio**: Context bilanciato, non sempre amplificante.
+
+### 7. **Organization Profile**
+
+```javascript
+// Diversità tra organizzazioni
+const ORG_PROFILES = {
+  'finance': { baseline_multiplier: 1.2, decay_rate: 0.90 },
+  'healthcare': { baseline_multiplier: 1.1, decay_rate: 0.92 },
+  'retail': { baseline_multiplier: 0.9, decay_rate: 0.95 },
+  'tech': { baseline_multiplier: 0.8, decay_rate: 0.97 }
+};
+```
+
+**Beneficio**: Diversità realistica tra settori.
+
+### 8. **Learning Period**
+
+```javascript
+// Prime 24h: baseline ridotti del 50%
+// Giorni 2-7: incremento graduale
+// Dopo 7 giorni: baseline normali
+
+function getLearningMultiplier(orgStartDate) {
+  const hoursSince = (Date.now() - orgStartDate) / 3600000;
+
+  if (hoursSince < 24) return 0.5;
+  if (hoursSince < 168) return 0.5 + (hoursSince / 168) * 0.5;
+  return 1.0;
+}
+```
+
+**Beneficio**: Crescita realistica, non esplosione immediata.
+
+---
+
+## 🎯 Implementazione Priorità
+
+### FASE 1 (URGENTE - 1-2 ore)
+1. ✅ Implementare Time Decay
+2. ✅ Ridurre Event Rate (10 → 3 eventi/sec)
+3. ✅ Scalare Baseline Values (-30%)
+
+### FASE 2 (IMPORTANTE - 2-3 ore)
+4. ⬜ Indicator Cooldown
+5. ⬜ Event Type Rotation
+6. ⬜ Contextual Balancing
+
+### FASE 3 (ENHANCEMENT - 4-5 ore)
+7. ⬜ Organization Profiles
+8. ⬜ Learning Period
+9. ⬜ Scenario-based Generation
+
+---
+
+## 📈 Comportamento Atteso (Dopo Fix)
+
+### Timeline Realistica
+
+```
+T+0min:   ░░░░░░░░░░ 0-5 indicatori verdi (5%)
+T+5min:   ░░░░░░░░░░ 10-15 indicatori verdi (15%)
+T+15min:  ░░░░▓▓░░░░ 20-30 indicatori gialli (30%)
+T+30min:  ░░▓▓▓▓▓░░░ 40-50 indicatori, mix verde/giallo (50%)
+T+1h:     ░▓▓▓▓▓▓▓░░ 60-70 indicatori, alcuni rossi iniziano (70%)
+T+2h:     ▓▓▓▓▓▓█▓▓░ 70-80 indicatori, 10-15% rossi (80%)
+T+4h:     ▓▓▓███▓▓▓▓ 80-90 indicatori, 20-30% rossi (90%)
+T+8h:     ██████████ Coverage completo, 30-40% rossi (100%)
+```
+
+### Distribuzione Finale (Dopo 8h)
+```
+🟢 Low (0-33%):    20-30 indicatori (20-30%)
+🟡 Medium (34-66%): 40-50 indicatori (40-50%)
+🔴 High (67-100%):  20-30 indicatori (20-30%)
+```
+
+**Curva bell-shaped realistica, non tutto rosso!**
+
+---
+
+## 🔍 Debug & Monitoring
+
+### Log Events
+```bash
+tail -f /tmp/server.log | grep "SOC"
+```
+
+### Statistiche Real-time
+```javascript
+// Nel browser console (SOC/Simulator dashboard)
+console.log('Coverage:', Object.keys(socData.indicators).length + '/100');
+console.log('Distribuzione:', {
+  low: Object.values(socData.indicators).filter(i => i.value < 0.33).length,
+  medium: Object.values(socData.indicators).filter(i => i.value >= 0.33 && i.value < 0.67).length,
+  high: Object.values(socData.indicators).filter(i => i.value >= 0.67).length
 });
 ```
 
 ---
 
-## ⚙️ Configurazione
-
-### sources.json
-
-Configurazione dei SIEM/SOC/EDR da simulare:
-
-```json
-{
-  "sources": [
-    {
-      "id": "splunk",
-      "name": "Splunk Enterprise",
-      "type": "SIEM",
-      "version": "9.x",
-      "enabled": true,
-      "eventTypes": [
-        "authentication",
-        "network_traffic",
-        "malware_detected",
-        "policy_violation"
-      ],
-      "connector": "./connectors/splunk-connector.js"
-    }
-  ]
-}
-```
-
-### scenarios.json
-
-Scenari di attacco predefiniti:
-
-```json
-{
-  "scenarios": [
-    {
-      "id": "phishing-campaign",
-      "name": "Phishing Campaign",
-      "description": "Simulates a targeted phishing campaign",
-      "duration": 3600,
-      "indicators": {
-        "3.1": 0.85,
-        "4.2": 0.72,
-        "8.3": 0.68
-      },
-      "events": [
-        {
-          "type": "email_suspicious",
-          "count": 150,
-          "distribution": "normal"
-        }
-      ]
-    }
-  ]
-}
-```
-
----
-
-## 🔄 Modalità Operative
-
-### Development Mode (con Simulatore)
-
-```bash
-# Avvia con simulatore attivo
-SIMULATOR_MODE=true npm start
-
-# Oppure modifica .env
-echo "SIMULATOR_MODE=true" >> .env
-npm start
-```
-
-In questa modalità:
-- ✅ Simulatore disponibile
-- ✅ Genera dati sintetici
-- ✅ Connettori mappano dati simulati → CPF
-- ✅ Dashboard SOC riceve dati in tempo reale
-
-### Production Mode (con SIEM reali)
-
-```bash
-# Avvia senza simulatore
-npm start
-
-# Oppure
-SIMULATOR_MODE=false npm start
-```
-
-In questa modalità:
-- ❌ Simulatore disabilitato
-- ✅ Connettori si collegano a SIEM/SOC reali
-- ✅ Stessi endpoint API
-- ✅ Nessun cambio di codice richiesto
-
----
-
-## 📊 SIEM/SOC/EDR Supportati
-
-### SIEM (Security Information and Event Management)
-
-| Sistema | Tipo | Simulato | Produzione |
-|---------|------|----------|------------|
-| **Splunk Enterprise** | SIEM | ✅ | 🔧 WIP |
-| **IBM QRadar** | SIEM | ✅ | 🔧 WIP |
-| **Microsoft Sentinel** | SIEM (Cloud) | ✅ | 🔧 WIP |
-| **Elastic Security** | SIEM | 🔧 Planned | 🔧 Planned |
-
-### EDR/XDR (Endpoint Detection and Response)
-
-| Sistema | Tipo | Simulato | Produzione |
-|---------|------|----------|------------|
-| **CrowdStrike Falcon** | EDR | ✅ | 🔧 WIP |
-| **SentinelOne** | EDR | 🔧 Planned | 🔧 Planned |
-| **Microsoft Defender** | EDR | 🔧 Planned | 🔧 Planned |
-
-### SOC Tools
-
-| Sistema | Tipo | Simulato | Produzione |
-|---------|------|----------|------------|
-| **TheHive** | Case Management | 🔧 Planned | 🔧 Planned |
-| **MISP** | Threat Intelligence | 🔧 Planned | 🔧 Planned |
-| **Cortex** | Automation | 🔧 Planned | 🔧 Planned |
-
----
-
-## 🧪 Testing
-
-### Test di Base
-
-```bash
-# 1. Avvia simulatore
-SIMULATOR_MODE=true npm start
-
-# 2. In un altro terminale, verifica status
-curl http://localhost:3000/api/simulator/status
-
-# 3. Crea organizzazione di test
-curl -X POST http://localhost:3000/api/organizations \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "test-org-001",
-    "name": "Test Organization",
-    "industry": "Technology",
-    "size": "medium",
-    "country": "IT",
-    "language": "it-IT"
-  }'
-
-# 4. Avvia simulazione
-curl -X POST http://localhost:3000/api/simulator/start \
-  -H "Content-Type: application/json" \
-  -d '{
-    "orgId": "test-org-001",
-    "sources": ["splunk"],
-    "scenario": "normal"
-  }'
-
-# 5. Controlla eventi generati
-curl http://localhost:3000/api/organizations/test-org-001
-```
-
-### Test Scenari
-
-```bash
-# Simula phishing attack
-curl -X POST http://localhost:3000/api/simulator/scenario \
-  -H "Content-Type: application/json" \
-  -d '{
-    "orgId": "test-org-001",
-    "scenario": "phishing-campaign",
-    "duration": 60,
-    "intensity": "high"
-  }'
-
-# Attendi 60 secondi, poi verifica dati
-curl http://localhost:3000/api/organizations/test-org-001/aggregates
-```
-
----
-
-## 🔧 Estensione
-
-### Aggiungere un nuovo SIEM
-
-1. **Crea connettore** in `connectors/`
-
-```javascript
-// connectors/custom-siem-connector.js
-const BaseConnector = require('./base-connector');
-
-class CustomSIEMConnector extends BaseConnector {
-  constructor(config) {
-    super('custom-siem', config);
-  }
-
-  async connect() {
-    // Implementa logica connessione
-  }
-
-  async fetchEvents(filters) {
-    // Implementa fetch eventi
-  }
-
-  async sendEvent(event) {
-    // Implementa invio evento
-  }
-}
-
-module.exports = CustomSIEMConnector;
-```
-
-2. **Aggiungi in** `config/sources.json`
-
-```json
-{
-  "id": "custom-siem",
-  "name": "Custom SIEM",
-  "type": "SIEM",
-  "version": "1.0",
-  "enabled": true,
-  "connector": "./connectors/custom-siem-connector.js"
-}
-```
-
-3. **Riavvia server**
-
-### Aggiungere uno scenario
-
-Modifica `config/scenarios.json`:
-
-```json
-{
-  "id": "custom-scenario",
-  "name": "My Custom Scenario",
-  "description": "Custom attack scenario",
-  "duration": 1800,
-  "indicators": {
-    "1.1": 0.90,
-    "2.3": 0.75
-  },
-  "events": [
-    {
-      "type": "custom_event",
-      "count": 100,
-      "distribution": "poisson"
-    }
-  ]
-}
-```
-
----
-
-## 📖 Mappatura SIEM → CPF
-
-Il **CPF Adapter** (`adapters/cpf-adapter.js`) mappa eventi SIEM ai 100 indicatori CPF.
-
-### Esempi
-
-| Evento SIEM | Indicatore CPF | Descrizione |
-|-------------|----------------|-------------|
-| `failed_login` | 1.x (Authority) | Vulnerabilità legate all'autorità |
-| `after_hours_access` | 2.x (Temporal) | Vulnerabilità temporali |
-| `phishing_clicked` | 3.x (Social) | Influenza sociale |
-| `panic_button` | 7.x (Stress) | Risposta allo stress |
-| `ai_hallucination` | 9.x (AI) | Bias AI-specifici |
-
-### Logica di Mappatura
-
-```javascript
-// Esempio semplificato
-function mapEventToIndicators(event) {
-  const mappings = {
-    'failed_login': ['1.3', '1.5'],
-    'phishing_clicked': ['3.1', '4.2', '8.3'],
-    'after_hours_access': ['2.1', '2.4', '7.2']
-  };
-
-  return mappings[event.type] || [];
-}
-```
-
----
-
-## 🐛 Troubleshooting
-
-### Il simulatore non parte
-
-```bash
-# Verifica che SIMULATOR_MODE sia true
-echo $SIMULATOR_MODE
-
-# Verifica logs
-SIMULATOR_MODE=true npm start | grep SIMULATOR
-```
-
-### Nessun evento generato
-
-```bash
-# Verifica organizzazione esista
-curl http://localhost:3000/api/organizations/YOUR_ORG_ID
-
-# Verifica simulatore sia running
-curl http://localhost:3000/api/simulator/status
-
-# Riavvia simulazione
-curl -X POST http://localhost:3000/api/simulator/stop -d '{"orgId":"YOUR_ORG_ID"}'
-curl -X POST http://localhost:3000/api/simulator/start -d '{"orgId":"YOUR_ORG_ID"}'
-```
-
-### Errori connettori
-
-```bash
-# Verifica configurazione sources.json
-cat dashboard/simulator/config/sources.json | jq
-
-# Controlla logs connettore
-tail -f dashboard/logs/simulator.log
-```
-
----
-
-## 📚 Riferimenti
-
-- **CPF Dense Foundation**: `/CPF Implementation Companion - Dense Foundation Paper.tex`
-- **Math Formalization**: `/math-formalization/`
-- **Dashboard SOC**: `/dashboard/soc/`
-- **API Documentation**: `/dashboard/README.md`
-
----
-
-## 🤝 Contribuire
-
-Per aggiungere nuovi connettori o scenari:
-
-1. Crea un branch: `git checkout -b feature/new-connector`
-2. Implementa seguendo `base-connector.js`
-3. Aggiungi test
-4. Apri PR con descrizione dettagliata
-
----
-
-## 📝 License
-
-ISC
+**Vuoi che implementi le fix della FASE 1 (urgente) per rendere la simulazione più realistica?**

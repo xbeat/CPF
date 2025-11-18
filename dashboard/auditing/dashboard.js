@@ -7,6 +7,8 @@ let deletingOrgId = null;
 let selectedIndicatorId = null;
 let categoryFilter = null;
 let sortDirection = 'desc'; // 'asc' or 'desc'
+let categoryDescriptions = null; // Category descriptions (multilingual)
+let currentOrgLanguage = 'en-US'; // Current organization language
 // Note: modalStack is now in ui-utils.js as window.modalStack
 
 // ===== INITIALIZATION =====
@@ -48,6 +50,9 @@ window.addEventListener('keydown', (event) => {
                     window.CPFClient.closeQuickReference();
                 }
                 break;
+            case 'category-modal':
+                closeCategoryModal();
+                break;
             case 'indicator-details-modal':
                 if (window.CPFClient && window.CPFClient.closeIndicatorDetails) {
                     window.CPFClient.closeIndicatorDetails();
@@ -64,6 +69,9 @@ async function loadAllData() {
         const data = await response.json();
 
         organizations = data.organizations || [];
+
+        // Load category descriptions
+        await loadCategoryDescriptions();
 
         // Load trash count for badge
         await loadTrashCount();
@@ -86,6 +94,9 @@ async function loadOrganizationDetails(orgId) {
 
         if (result.success) {
             selectedOrgData = result.data;
+            // Update current organization language for category modal
+            // Language is stored in metadata.language, not in language field
+            currentOrgLanguage = selectedOrgData.metadata?.language || 'en-US';
             renderAssessmentDetails();
         } else {
             showAlert('Failed to load organization details', 'error');
@@ -288,11 +299,19 @@ function selectOrganization(orgId) {
     selectedOrgId = orgId;
     renderOrganizations();
     loadOrganizationDetails(orgId);
+
+    // Hide empty state and show assessment section
+    const emptyState = document.getElementById('emptyState');
+    if (emptyState) emptyState.style.display = 'none';
     document.getElementById('assessmentSection').classList.remove('hidden');
 
-    // Show export buttons
-    document.getElementById('exportXLSXBtn').style.display = 'inline-block';
-    document.getElementById('exportPDFBtn').style.display = 'inline-block';
+    // Show export buttons (if they exist)
+    const xlsxBtn = document.getElementById('exportXLSXBtn');
+    const pdfBtn = document.getElementById('exportPDFBtn');
+    const zipBtn = document.getElementById('exportZIPBtn');
+    if (xlsxBtn) xlsxBtn.style.display = 'inline-block';
+    if (pdfBtn) pdfBtn.style.display = 'inline-block';
+    if (zipBtn) zipBtn.style.display = 'inline-block';
 
     // Scroll to assessment section
     document.getElementById('assessmentSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -335,15 +354,17 @@ function renderProgressSummary(org) {
     const el = document.getElementById('progressSummary');
     const completion = org.aggregates.completion.percentage;
     const assessed = org.aggregates.completion.assessed_indicators;
+    const lang = getCategoryLanguage(currentOrgLanguage);
+    const t = getTranslations(lang);
 
     el.innerHTML = `
         <div style="display: flex; gap: 30px; align-items: center; margin-top: 10px;">
             <div>
-                <span style="font-size: 14px; color: var(--text-light);">Completion:</span>
+                <span style="font-size: 14px; color: var(--text-light);">${t.completion}</span>
                 <span style="font-size: 24px; font-weight: 700; color: var(--primary); margin-left: 10px;">${completion}%</span>
             </div>
             <div>
-                <span style="font-size: 14px; color: var(--text-light);">Assessed:</span>
+                <span style="font-size: 14px; color: var(--text-light);">${t.assessed}</span>
                 <span style="font-size: 24px; font-weight: 700; color: var(--primary); margin-left: 10px;">${assessed}/100</span>
             </div>
             <div style="flex: 1;">
@@ -360,16 +381,18 @@ function renderRiskSummary(org) {
     const risk = org.aggregates.overall_risk;
     const riskPercent = (risk * 100).toFixed(1);
     const riskClass = risk < 0.3 ? 'risk-low' : risk < 0.7 ? 'risk-medium' : 'risk-high';
-    const riskLabel = risk < 0.3 ? '🟢 Low Risk' : risk < 0.7 ? '🟡 Medium Risk' : '🔴 High Risk';
+    const lang = getCategoryLanguage(currentOrgLanguage);
+    const t = getTranslations(lang);
+    const riskLabel = risk < 0.3 ? t.lowRisk : risk < 0.7 ? t.mediumRisk : t.highRisk;
 
     el.innerHTML = `
         <div style="display: flex; gap: 30px; align-items: center; margin-top: 10px;">
             <div>
-                <span style="font-size: 14px; color: var(--text-light);">Overall Risk:</span>
+                <span style="font-size: 14px; color: var(--text-light);">${t.overallRisk}</span>
                 <span style="font-size: 24px; font-weight: 700; margin-left: 10px;" class="${riskClass}">${riskLabel}</span>
             </div>
             <div>
-                <span style="font-size: 14px; color: var(--text-light);">Risk Score:</span>
+                <span style="font-size: 14px; color: var(--text-light);">${t.riskScore}</span>
                 <span style="font-size: 24px; font-weight: 700; color: var(--primary); margin-left: 10px;">${riskPercent}%</span>
             </div>
             <div style="flex: 1;">
@@ -384,7 +407,11 @@ function renderRiskSummary(org) {
 function renderProgressMatrix(org) {
     const matrix = document.getElementById('progressMatrix');
     const filterDiv = document.getElementById('progressFilter');
+
+    // AUDITING DASHBOARD: Usa SOLO assessments manuali (valutazioni dell'auditor umano)
     const assessments = org.assessments || {};
+    const lang = getCategoryLanguage(currentOrgLanguage);
+    const t = getTranslations(lang);
 
     // Render filter info if active
     if (categoryFilter) {
@@ -412,31 +439,41 @@ function renderProgressMatrix(org) {
 
         for (let ind = 1; ind <= 10; ind++) {
             const indicatorId = `${cat}.${ind}`;
+
+            // AUDITING DASHBOARD: Usa SOLO assessments manuali
             const assessment = assessments[indicatorId];
 
-            // Gli assessments sono già filtrati da filterAuditingAssessments
-            // quindi qui consideriamo solo se l'assessment esiste
-            const completed = !!assessment;
+            // Un assessment è completato se:
+            // 1. Esiste l'oggetto assessment E
+            // 2. Ha un bayesian_score definito (anche 0 è valido!) E
+            // 3. Ha qualche risposta O uno score > 0 (per distinguere da reset vuoto)
+            const hasResponses = assessment?.raw_data?.client_conversation?.responses &&
+                                 Object.keys(assessment.raw_data.client_conversation.responses).length > 0;
+            const hasScore = assessment && typeof assessment.bayesian_score === 'number';
+            const completed = hasScore && (hasResponses || assessment.bayesian_score > 0);
 
             let cellClass = '';
-            let riskLevel = 'Not assessed';
+            let riskLevel = t.notAssessed;
+            let score = null;
 
             if (completed) {
-                const score = assessment.bayesian_score;
-                if (score < 0.33) {
+                score = assessment.bayesian_score;
+
+                // Score 0 = Low Risk (green), not empty!
+                if (score <= 0.33) {
                     cellClass = 'risk-low';
-                    riskLevel = 'Low Risk';
-                } else if (score < 0.66) {
+                    riskLevel = t.lowRisk;
+                } else if (score <= 0.66) {
                     cellClass = 'risk-medium';
-                    riskLevel = 'Medium Risk';
+                    riskLevel = t.mediumRisk;
                 } else {
                     cellClass = 'risk-high';
-                    riskLevel = 'High Risk';
+                    riskLevel = t.highRisk;
                 }
             }
 
-            const riskPercent = completed ? (assessment.bayesian_score * 100).toFixed(1) : '';
-            const title = completed ? `${indicatorId} - ${riskLevel} (${riskPercent}%)` : `${indicatorId} - Not assessed`;
+            const riskPercent = completed ? (score * 100).toFixed(0) : '';
+            const title = completed ? `${indicatorId} - ${riskLevel} (${riskPercent}%)` : `${indicatorId} - ${t.notAssessed}`;
             const cellStyle = isFiltered ? 'opacity: 0.3; cursor: default;' : '';
 
             const onclickHandler = isFiltered ? '' : `openIndicatorDetail('${indicatorId}', '${org.id}')`;
@@ -445,8 +482,8 @@ function renderProgressMatrix(org) {
                         title="${title}"
                         style="${cellStyle}"
                         onclick="${onclickHandler}">
-                    <div style="font-weight: 600; font-size: 11px;">${indicatorId}</div>
-                    ${completed ? `<div style="font-size: 10px; margin-top: 2px; opacity: 0.9;">${riskPercent}%</div>` : ''}
+                    <div style="font-weight: 700; font-size: 13px;">${indicatorId}</div>
+                    ${completed ? `<div style="font-weight: 600; font-size: 16px; margin-top: 4px;">${riskPercent}%</div>` : ''}
                 </div>
             `;
         }
@@ -458,6 +495,8 @@ function renderProgressMatrix(org) {
 function renderRiskHeatmap(org) {
     const heatmap = document.getElementById('riskHeatmap');
     const categories = org.aggregates.by_category || {};
+    const lang = getCategoryLanguage(currentOrgLanguage);
+    const t = getTranslations(lang);
 
     const categoryNames = {
         '1': 'Authority-Based',
@@ -484,30 +523,44 @@ function renderRiskHeatmap(org) {
                                 catData.avg_score < 0.7 ? 'risk-medium' : 'risk-high';
 
             html += `
-                <div class="category-card" onclick="filterByCategory('${catKey}')">
-                    <div class="category-title">${cat}. ${categoryNames[catKey]}</div>
+                <div class="category-card" onclick="filterByCategory('${catKey}')" style="position: relative;">
+                    <div class="category-title">
+                        ${cat}. ${categoryNames[catKey]}
+                        <span onclick="event.stopPropagation(); openCategoryModal('${catKey}')"
+                              style="cursor: pointer; float: right; font-size: 16px; opacity: 0.7; transition: opacity 0.2s;"
+                              onmouseover="this.style.opacity='1'"
+                              onmouseout="this.style.opacity='0.7'"
+                              title="${t.viewCategoryDetails}">❓</span>
+                    </div>
                     <div class="category-stats">
                         <div class="category-risk ${riskClass}">${riskPercent}%</div>
-                        <div class="category-completion">${catData.completion_percentage}% complete</div>
+                        <div class="category-completion">${catData.completion_percentage}% ${t.completeSuffix}</div>
                     </div>
                     <div class="progress-bar-container">
                         <div class="progress-bar-fill" style="width: ${catData.completion_percentage}%"></div>
                     </div>
                     <div style="font-size: 12px; color: var(--text-light); margin-top: 8px;">
-                        ${catData.total_assessments}/10 assessed • Conf: ${(catData.avg_confidence * 100).toFixed(0)}%
+                        ${catData.total_assessments}/10 ${t.assessedSuffix} • ${t.confAbbr} ${(catData.avg_confidence * 100).toFixed(0)}%
                     </div>
                 </div>
             `;
         } else {
             html += `
-                <div class="category-card" style="opacity: 0.5;">
-                    <div class="category-title">${cat}. ${categoryNames[catKey]}</div>
+                <div class="category-card" style="opacity: 0.5; position: relative;">
+                    <div class="category-title">
+                        ${cat}. ${categoryNames[catKey]}
+                        <span onclick="event.stopPropagation(); openCategoryModal('${catKey}')"
+                              style="cursor: pointer; float: right; font-size: 16px; opacity: 0.7; transition: opacity 0.2s;"
+                              onmouseover="this.style.opacity='1'"
+                              onmouseout="this.style.opacity='0.7'"
+                              title="${t.viewCategoryDetails}">❓</span>
+                    </div>
                     <div class="category-stats">
                         <div class="category-risk">--</div>
-                        <div class="category-completion">No data</div>
+                        <div class="category-completion">${t.noData}</div>
                     </div>
                     <div style="font-size: 12px; color: var(--text-light); margin-top: 8px;">
-                        No assessments yet
+                        ${t.noAssessmentsYet}
                     </div>
                 </div>
             `;
@@ -524,6 +577,8 @@ function renderSecurityRadarChart(org) {
     const canvas = document.getElementById('securityRadarChart');
     const statsDiv = document.getElementById('radarStats');
     const categories = org.aggregates.by_category || {};
+    const lang = getCategoryLanguage(currentOrgLanguage);
+    const t = getTranslations(lang);
 
     const categoryNames = {
         '1': 'Authority',
@@ -559,6 +614,9 @@ function renderSecurityRadarChart(org) {
         securityRadarChartInstance.destroy();
     }
 
+    // Save translation for tooltip callback (must be outside callback scope)
+    const completionLabel = t.completionTooltip;
+
     // Create radar chart
     const ctx = canvas.getContext('2d');
     securityRadarChartInstance = new Chart(ctx, {
@@ -567,7 +625,7 @@ function renderSecurityRadarChart(org) {
             labels: labels,
             datasets: [
                 {
-                    label: 'Risk Level (%)',
+                    label: t.riskLevelPercent,
                     data: riskData,
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     borderColor: 'rgba(255, 99, 132, 1)',
@@ -580,7 +638,7 @@ function renderSecurityRadarChart(org) {
                     pointHoverRadius: 6
                 },
                 {
-                    label: 'Confidence (%)',
+                    label: t.confidencePercent,
                     data: confidenceData,
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     borderColor: 'rgba(54, 162, 235, 1)',
@@ -625,7 +683,7 @@ function renderSecurityRadarChart(org) {
                         },
                         afterLabel: function(context) {
                             const catIndex = context.dataIndex;
-                            return `Completion: ${completionData[catIndex].toFixed(0)}%`;
+                            return `${completionLabel} ${completionData[catIndex].toFixed(0)}%`;
                         }
                     }
                 }
@@ -672,30 +730,30 @@ function renderSecurityRadarChart(org) {
 
     statsDiv.innerHTML = `
         <div style="margin-bottom: 15px;">
-            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Average Risk</div>
+            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">${t.averageRisk}</div>
             <div style="font-size: 28px; font-weight: 700; color: ${avgRisk >= 70 ? '#ff6b6b' : avgRisk >= 40 ? '#ffd93d' : '#6bcf7f'};">${avgRisk.toFixed(1)}%</div>
         </div>
         <div style="margin-bottom: 15px;">
-            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Average Confidence</div>
+            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">${t.averageConfidence}</div>
             <div style="font-size: 28px; font-weight: 700; color: var(--primary);">${avgConfidence.toFixed(1)}%</div>
         </div>
         <div style="margin-bottom: 20px;">
-            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Overall Completion</div>
+            <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">${t.overallCompletion}</div>
             <div style="font-size: 28px; font-weight: 700; color: var(--primary);">${avgCompletion.toFixed(1)}%</div>
         </div>
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
-        <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">Risk Distribution:</div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px;">${t.riskDistribution}</div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 13px;">🔴 High Risk (≥70%)</span>
+                <span style="font-size: 13px;">${t.highRiskRange}</span>
                 <span style="font-weight: 700; color: #ff6b6b;">${highRiskCategories}</span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 13px;">🟡 Medium Risk (40-69%)</span>
+                <span style="font-size: 13px;">${t.mediumRiskRange}</span>
                 <span style="font-weight: 700; color: #ffd93d;">${mediumRiskCategories}</span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 13px;">🟢 Low Risk (<40%)</span>
+                <span style="font-size: 13px;">${t.lowRiskRange}</span>
                 <span style="font-weight: 700; color: #6bcf7f;">${lowRiskCategories}</span>
             </div>
         </div>
@@ -769,7 +827,9 @@ function renderPrioritizationTable(org) {
     priorityData.forEach((item, idx) => {
         const riskClass = item.risk < 0.33 ? 'risk-low' : item.risk < 0.66 ? 'risk-medium' : 'risk-high';
         html += `
-            <tr>
+            <tr onclick="openCategoryModal('${item.category}')" style="cursor: pointer; transition: background-color 0.2s;"
+                onmouseover="this.style.backgroundColor='var(--bg-gray)'"
+                onmouseout="this.style.backgroundColor='transparent'">
                 <td style="font-weight: 600; color: var(--text-light);">${idx + 1}</td>
                 <td style="font-weight: 600;">${item.category}. ${item.name}</td>
                 <td><span class="stat-value ${riskClass}" style="font-size: 14px;">${(item.risk * 100).toFixed(1)}%</span></td>
@@ -784,6 +844,218 @@ function renderPrioritizationTable(org) {
     tbody.innerHTML = html;
 }
 
+// ===== CATEGORY DESCRIPTIONS & MODAL =====
+
+/**
+ * Load category descriptions from JSON file
+ */
+async function loadCategoryDescriptions() {
+    try {
+        const response = await fetch('category-descriptions.json');
+        if (!response.ok) {
+            console.warn('Failed to load category descriptions');
+            return;
+        }
+        categoryDescriptions = await response.json();
+    } catch (error) {
+        console.error('Error loading category descriptions:', error);
+    }
+}
+
+/**
+ * Open category description modal
+ */
+function openCategoryModal(categoryId) {
+    if (!categoryDescriptions || !categoryDescriptions.categories[categoryId]) {
+        console.warn('Category description not found:', categoryId);
+        return;
+    }
+
+    // Determine language based on current organization's language
+    const lang = getCategoryLanguage(currentOrgLanguage);
+    const category = categoryDescriptions.categories[categoryId][lang];
+
+    // Set modal title
+    document.getElementById('category-modal-title').textContent = category.name;
+
+    // Build modal body with localized labels
+    const labels = getCategoryLabels(lang);
+    const body = document.getElementById('category-modal-body');
+    body.innerHTML = `
+        <div style="line-height: 1.6;">
+            <p style="font-size: 16px; font-weight: 500; color: var(--primary); margin-bottom: 15px;">
+                ${category.short_description}
+            </p>
+            <p style="margin-bottom: 20px; color: var(--text);">
+                ${category.description}
+            </p>
+
+            <h4 style="color: var(--primary); margin: 20px 0 10px 0; font-size: 16px;">
+                ${labels.examples}
+            </h4>
+            <ul style="margin: 0 0 20px 0; padding-left: 20px; color: var(--text);">
+                ${category.examples.map(ex => `<li style="margin-bottom: 8px;">${ex}</li>`).join('')}
+            </ul>
+
+            <h4 style="color: var(--primary); margin: 20px 0 10px 0; font-size: 16px;">
+                ${labels.mitigation}
+            </h4>
+            <p style="margin: 0; padding: 15px; background: #f0f9ff; border-left: 4px solid var(--primary); border-radius: 4px; color: var(--text);">
+                ${category.mitigation}
+            </p>
+        </div>
+    `;
+
+    // Show modal
+    const modal = document.getElementById('category-modal');
+    modal.style.display = 'flex';
+    window.pushModal('category-modal');
+}
+
+/**
+ * Close category description modal
+ */
+function closeCategoryModal() {
+    const modal = document.getElementById('category-modal');
+    modal.style.display = 'none';
+    window.popModal();
+}
+
+/**
+ * Get language code from organization language setting
+ * Supports: en, it (with fallback to en)
+ */
+function getCategoryLanguage(orgLanguage) {
+    if (!orgLanguage) return 'en';
+
+    // Extract language code from locale (e.g., 'it-IT' -> 'it')
+    const langCode = orgLanguage.split('-')[0].toLowerCase();
+
+    // Check if language is available in descriptions
+    if (categoryDescriptions &&
+        categoryDescriptions.categories &&
+        Object.keys(categoryDescriptions.categories).length > 0) {
+        const firstCategory = Object.values(categoryDescriptions.categories)[0];
+        if (firstCategory[langCode]) {
+            return langCode;
+        }
+    }
+
+    // Fallback to English
+    return 'en';
+}
+
+/**
+ * Get all localized translations for the dashboard
+ */
+function getTranslations(lang) {
+    const translations = {
+        en: {
+            // Category modal
+            examples: '📌 Examples',
+            mitigation: '🛡️ Mitigation',
+            viewCategoryDetails: 'View category details',
+
+            // Dashboard labels
+            completion: 'Completion:',
+            assessed: 'Assessed:',
+            overallRisk: 'Overall Risk:',
+            riskScore: 'Risk Score:',
+
+            // Risk levels
+            lowRisk: '🟢 Low Risk',
+            mediumRisk: '🟡 Medium Risk',
+            highRisk: '🔴 High Risk',
+
+            // Status messages
+            notAssessed: 'Not assessed',
+            noData: 'No data',
+            noAssessmentsYet: 'No assessments yet',
+
+            // Suffixes
+            completeSuffix: 'complete',
+            assessedSuffix: 'assessed',
+            confAbbr: 'Conf:',
+
+            // Risk ranges for radar
+            highRiskRange: '🔴 High Risk (≥70%)',
+            mediumRiskRange: '🟡 Medium Risk (40-69%)',
+            lowRiskRange: '🟢 Low Risk (<40%)',
+
+            // Tooltips in radar chart
+            completionTooltip: 'Completion:',
+
+            // Radar chart stats
+            averageRisk: 'Average Risk',
+            averageConfidence: 'Average Confidence',
+            overallCompletion: 'Overall Completion',
+            riskDistribution: 'Risk Distribution:',
+
+            // Chart labels
+            riskLevelPercent: 'Risk Level (%)',
+            confidencePercent: 'Confidence (%)'
+        },
+        it: {
+            // Category modal
+            examples: '📌 Esempi',
+            mitigation: '🛡️ Mitigazione',
+            viewCategoryDetails: 'Visualizza dettagli categoria',
+
+            // Dashboard labels
+            completion: 'Completamento:',
+            assessed: 'Valutati:',
+            overallRisk: 'Rischio Complessivo:',
+            riskScore: 'Punteggio Rischio:',
+
+            // Risk levels
+            lowRisk: '🟢 Rischio Basso',
+            mediumRisk: '🟡 Rischio Medio',
+            highRisk: '🔴 Rischio Alto',
+
+            // Status messages
+            notAssessed: 'Non valutato',
+            noData: 'Nessun dato',
+            noAssessmentsYet: 'Nessuna valutazione',
+
+            // Suffixes
+            completeSuffix: 'completato',
+            assessedSuffix: 'valutati',
+            confAbbr: 'Conf:',
+
+            // Risk ranges for radar
+            highRiskRange: '🔴 Rischio Alto (≥70%)',
+            mediumRiskRange: '🟡 Rischio Medio (40-69%)',
+            lowRiskRange: '🟢 Rischio Basso (<40%)',
+
+            // Tooltips in radar chart
+            completionTooltip: 'Completamento:',
+
+            // Radar chart stats
+            averageRisk: 'Rischio Medio',
+            averageConfidence: 'Confidenza Media',
+            overallCompletion: 'Completamento Complessivo',
+            riskDistribution: 'Distribuzione Rischio:',
+
+            // Chart labels
+            riskLevelPercent: 'Livello Rischio (%)',
+            confidencePercent: 'Confidenza (%)'
+        }
+    };
+
+    return translations[lang] || translations.en;
+}
+
+/**
+ * Get localized labels for category modal UI elements (backward compatibility)
+ */
+function getCategoryLabels(lang) {
+    const t = getTranslations(lang);
+    return {
+        examples: t.examples,
+        mitigation: t.mitigation
+    };
+}
+
 async function openIndicatorDetail(indicatorId, orgId) {
     console.log('🎯 openIndicatorDetail called with:', { indicatorId, orgId });
 
@@ -792,8 +1064,14 @@ async function openIndicatorDetail(indicatorId, orgId) {
 
     console.log('📊 Assessment exists?', !!assessment);
 
-    // ALWAYS open integrated client (either new or edit mode)
-    await openIntegratedClient(indicatorId, orgId, assessment);
+    // AUDITING DASHBOARD: Apre SEMPRE il client integrato (no SOC data)
+    if (assessment) {
+        // Apri client con assessment esistente
+        await openIntegratedClient(indicatorId, orgId, assessment);
+    } else {
+        // No data available - apri client per nuovo assessment
+        await openIntegratedClient(indicatorId, orgId, null);
+    }
 }
 
 async function showAssessmentDetails(indicatorId, assessment) {
@@ -885,15 +1163,49 @@ async function showAssessmentDetails(indicatorId, assessment) {
                 </div>
                 ` : ''}
 
+                ${fieldKit && fieldKit.description && fieldKit.description.psychological_basis ? `
+                <!-- Psychological Basis -->
+                <div style="background: #e0e7ff; padding: 15px; border-radius: 8px; border-left: 4px solid #6366f1;">
+                    <h4 style="margin: 0 0 10px 0; color: #4338ca;">🧠 Psychological Basis</h4>
+                    <p style="margin: 0; line-height: 1.6; color: #1e1b4b;">${fieldKit.description.psychological_basis}</p>
+                </div>
+                ` : ''}
+
+                ${fieldKit && fieldKit.scoring && fieldKit.scoring.maturity_levels ? `
+                <!-- Maturity Levels -->
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: var(--primary);">📊 Maturity Levels</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        ${Object.entries(fieldKit.scoring.maturity_levels).map(([level, data]) => {
+                            const bgColor = level === 'green' ? '#d4edda' : level === 'yellow' ? '#fff3cd' : '#f8d7da';
+                            const textColor = level === 'green' ? '#155724' : level === 'yellow' ? '#856404' : '#721c24';
+                            return '<div style="background: ' + bgColor + '; padding: 15px; border-radius: 8px;">' +
+                                '<h5 style="margin: 0 0 10px 0; color: ' + textColor + '; text-transform: capitalize;">' +
+                                    level + ' (' + (data.score_range ? data.score_range.join(' - ') : 'N/A') + ')' +
+                                '</h5>' +
+                                '<p style="margin: 0; font-size: 14px; color: ' + textColor + '; line-height: 1.5;">' +
+                                    (data.description || 'No description') +
+                                '</p>' +
+                            '</div>';
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
                 ${fieldKit && fieldKit.risk_scenarios && fieldKit.risk_scenarios.length > 0 ? `
                 <!-- Risk Scenarios -->
-                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
-                    <h4 style="margin: 0 0 10px 0; color: var(--warning);">⚠️ Risk Scenarios</h4>
-                    ${fieldKit.risk_scenarios.slice(0, 3).map((scenario, idx) => `
-                        <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
-                            <strong>${scenario.title || 'Scenario ' + (idx + 1)}</strong>
-                            <p style="margin: 5px 0 0 0;">${scenario.description || ''}</p>
-                            ${scenario.likelihood ? `<small style="color: var(--text-light);">Likelihood: ${scenario.likelihood}</small>` : ''}
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: #856404;">🔥 Risk Scenarios</h4>
+                    ${fieldKit.risk_scenarios.map((scenario, idx) => `
+                        <div style="background: #fff3cd; padding: 20px; border-left: 4px solid #f39c12; margin-bottom: 15px; border-radius: 6px;">
+                            <h5 style="margin: 0 0 10px 0; color: #856404; font-size: 16px;">
+                                ${scenario.title || 'Scenario ' + (idx + 1)}
+                            </h5>
+                            <p style="margin: 0 0 10px 0; line-height: 1.6; color: #856404;">
+                                ${scenario.description || ''}
+                            </p>
+                            ${scenario.likelihood ? '<p style="margin: 0; font-size: 14px;"><strong>Likelihood:</strong> ' + scenario.likelihood + '</p>' : ''}
+                            ${scenario.impact ? '<p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Impact:</strong> ' + scenario.impact + '</p>' : ''}
                         </div>
                     `).join('')}
                 </div>
@@ -1155,20 +1467,18 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                 <div class="toolbar" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <button class="btn btn-info" onclick="window.CPFClient.showQuickReference()">📚 Quick Reference</button>
-                        <button class="btn btn-success" onclick="window.CPFClient.showIndicatorDetails()">📄 Indicator Details</button>
                         <button class="btn btn-info" onclick="window.CPFClient.toggleDetailedAnalysis()">📊 Show/Hide Analysis</button>
-                        <button class="btn btn-light" onclick="document.getElementById('file-input-integrated').click()">📂 Import JSON</button>
+                        <button class="btn btn-light" onclick="document.getElementById('file-input-integrated').click()">📂 Import Data</button>
                         <input type="file" id="file-input-integrated" accept=".json" onchange="window.CPFClient.importJSON(event)" style="display: none;">
-                        <button class="btn btn-danger" onclick="if(confirm('Reset all data?')) window.CPFClient.resetAll()" title="Clear all data and reset">🗑️ Reset</button>
+                        <button class="btn btn-danger" onclick="resetCompileForm()" title="Reset assessment">🗑️ Reset</button>
                         <button class="btn btn-primary" onclick="viewAssessmentDetailsFromEdit('${indicatorId}')">📋 View Details</button>
                         <button class="btn btn-warning" onclick="openHistoryModal()">📜 History</button>
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <span id="auto-save-status" style="color: #4CAF50; font-size: 14px; display: none;">✓ Auto-saved</span>
-                        <button class="btn btn-secondary" onclick="window.CPFClient.saveData()">💾 Save Local</button>
+                        <button class="btn btn-secondary" onclick="window.CPFClient.saveData()">💾 Save</button>
                         <button class="btn btn-success" onclick="window.CPFClient.exportData()">💾 Export Data</button>
                         <button class="btn btn-primary" onclick="window.CPFClient.generateReport()">📊 Report</button>
-                        <button class="btn btn-success" onclick="window.CPFClient.saveToAPI()" id="save-to-dashboard-btn">💾 Save Assessment</button>
                         <button class="btn btn-secondary" onclick="closeIndicatorModal()">Close</button>
                     </div>
                 </div>
@@ -1195,18 +1505,6 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                 </div>
             </div>
 
-            <!-- Indicator Details Modal -->
-            <div id="indicator-details-modal" class="cpf-client modal" style="display: none;" onclick="if(event.target.id==='indicator-details-modal') window.CPFClient.closeIndicatorDetails()">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2 id="indicator-details-title">📄 Indicator Details</h2>
-                        <button class="modal-close" onclick="window.CPFClient.closeIndicatorDetails()">✕</button>
-                    </div>
-                    <div class="modal-body" id="indicator-details-content">
-                        <p style="text-align: center; color: #7f8c8d; padding: 40px;">No indicator loaded</p>
-                    </div>
-                </div>
-            </div>
         </div>
     `;
 
@@ -1604,15 +1902,49 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
                 </div>
                 ` : ''}
 
+                ${fieldKit && fieldKit.description && fieldKit.description.psychological_basis ? `
+                <!-- Psychological Basis -->
+                <div style="background: #e0e7ff; padding: 15px; border-radius: 8px; border-left: 4px solid #6366f1;">
+                    <h4 style="margin: 0 0 10px 0; color: #4338ca;">🧠 Psychological Basis</h4>
+                    <p style="margin: 0; line-height: 1.6; color: #1e1b4b;">${fieldKit.description.psychological_basis}</p>
+                </div>
+                ` : ''}
+
+                ${fieldKit && fieldKit.scoring && fieldKit.scoring.maturity_levels ? `
+                <!-- Maturity Levels -->
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: var(--primary);">📊 Maturity Levels</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        ${Object.entries(fieldKit.scoring.maturity_levels).map(([level, data]) => {
+                            const bgColor = level === 'green' ? '#d4edda' : level === 'yellow' ? '#fff3cd' : '#f8d7da';
+                            const textColor = level === 'green' ? '#155724' : level === 'yellow' ? '#856404' : '#721c24';
+                            return '<div style="background: ' + bgColor + '; padding: 15px; border-radius: 8px;">' +
+                                '<h5 style="margin: 0 0 10px 0; color: ' + textColor + '; text-transform: capitalize;">' +
+                                    level + ' (' + (data.score_range ? data.score_range.join(' - ') : 'N/A') + ')' +
+                                '</h5>' +
+                                '<p style="margin: 0; font-size: 14px; color: ' + textColor + '; line-height: 1.5;">' +
+                                    (data.description || 'No description') +
+                                '</p>' +
+                            '</div>';
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
                 ${fieldKit && fieldKit.risk_scenarios && fieldKit.risk_scenarios.length > 0 ? `
                 <!-- Risk Scenarios -->
-                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
-                    <h4 style="margin: 0 0 10px 0; color: var(--warning);">⚠️ Risk Scenarios</h4>
-                    ${fieldKit.risk_scenarios.slice(0, 3).map((scenario, idx) => `
-                        <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
-                            <strong>${scenario.title || 'Scenario ' + (idx + 1)}</strong>
-                            <p style="margin: 5px 0 0 0;">${scenario.description || ''}</p>
-                            ${scenario.likelihood ? `<small style="color: var(--text-light);">Likelihood: ${scenario.likelihood}</small>` : ''}
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: #856404;">🔥 Risk Scenarios</h4>
+                    ${fieldKit.risk_scenarios.map((scenario, idx) => `
+                        <div style="background: #fff3cd; padding: 20px; border-left: 4px solid #f39c12; margin-bottom: 15px; border-radius: 6px;">
+                            <h5 style="margin: 0 0 10px 0; color: #856404; font-size: 16px;">
+                                ${scenario.title || 'Scenario ' + (idx + 1)}
+                            </h5>
+                            <p style="margin: 0 0 10px 0; line-height: 1.6; color: #856404;">
+                                ${scenario.description || ''}
+                            </p>
+                            ${scenario.likelihood ? '<p style="margin: 0; font-size: 14px;"><strong>Likelihood:</strong> ' + scenario.likelihood + '</p>' : ''}
+                            ${scenario.impact ? '<p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Impact:</strong> ' + scenario.impact + '</p>' : ''}
                         </div>
                     `).join('')}
                 </div>
@@ -1819,6 +2151,8 @@ function editOrganization(orgId) {
     document.getElementById('orgSize').value = org.size;
     document.getElementById('orgCountry').value = org.country;
     document.getElementById('orgLanguage').value = org.language;
+    document.getElementById('orgSedeSociale').value = org.sede_sociale || '';
+    document.getElementById('orgPartitaIva').value = org.partita_iva || '';
     // Note: we'd need to fetch full org data to get notes
     document.getElementById('fetchIndicators').parentElement.parentElement.classList.add('hidden');
     document.getElementById('orgModal').classList.add('active');
@@ -1834,6 +2168,8 @@ async function saveOrganization(event) {
     const orgSize = document.getElementById('orgSize').value;
     const orgCountry = document.getElementById('orgCountry').value.trim().toUpperCase();
     const orgLanguage = document.getElementById('orgLanguage').value;
+    const orgSedeSociale = document.getElementById('orgSedeSociale').value.trim();
+    const orgPartitaIva = document.getElementById('orgPartitaIva').value.trim();
     const orgNotes = document.getElementById('orgNotes').value.trim();
     const fetchIndicators = document.getElementById('fetchIndicators').checked;
 
@@ -1844,6 +2180,8 @@ async function saveOrganization(event) {
         size: orgSize,
         country: orgCountry,
         language: orgLanguage,
+        sede_sociale: orgSedeSociale,
+        partita_iva: orgPartitaIva,
         notes: orgNotes
     };
 
@@ -2001,6 +2339,8 @@ async function confirmDelete() {
                 selectedOrgId = null;
                 selectedOrgData = null;
                 document.getElementById('assessmentSection').classList.add('hidden');
+                const emptyState = document.getElementById('emptyState');
+                if (emptyState) emptyState.style.display = 'block';
             }
 
             await loadAllData();
@@ -2327,11 +2667,8 @@ async function saveAssessmentToOrg() {
 
         // Refresh organization details
         setTimeout(() => {
-            renderOrganizationDetails(selectedOrganization);
+            loadOrganizationDetails(selectedOrganization);
         }, 1000);
-
-        // Reset form
-        resetCompileForm();
 
         // Switch back to progress tab
         switchTab('progress');
@@ -2352,52 +2689,151 @@ function getMaturityLevel(score) {
     return 1;
 }
 
-// Reset Assessment - Clears all form values and saves empty assessment
+// Reset Assessment - Clears form and saves empty values
 async function resetCompileForm() {
-    if (!currentIndicatorId) {
-        showAlert('No indicator loaded to reset', 'warning');
+    // Use selectedIndicatorId and selectedOrgId for integrated form
+    const indicatorId = selectedIndicatorId || currentIndicatorId;
+    const orgId = selectedOrgId || selectedOrganization;
+
+    if (!indicatorId || !orgId) {
+        console.warn('Reset: No indicator or organization selected');
         return;
     }
 
-    if (!selectedOrganization) {
-        showAlert('No organization selected', 'warning');
+    // Show confirmation dialog
+    if (!confirm('⚠️ Reset this assessment?\n\nThis will clear all form data and save an empty assessment.\n\nYou can undo this action using the History button.')) {
         return;
     }
 
-    // Confirm before resetting
-    if (!confirm('⚠️ This will clear all values in this assessment and save it as empty.\n\nAre you sure you want to continue?')) {
-        return;
-    }
+    console.log('🗑️ Resetting assessment:', { indicatorId, orgId });
 
-    // Clear all form field values
-    document.getElementById('compile-assessor').value = '';
-    document.getElementById('compile-date').value = '';
-    document.getElementById('compile-confidence').value = '0.7';
+    // SAVE CURRENT STATE TO HISTORY BEFORE RESET
+    // This ensures undo is possible via history
+    if (window.CPFClient && window.CPFClient.currentData) {
+        const currentResponses = window.CPFClient.currentData.responses || {};
+        const hasData = Object.keys(currentResponses).length > 0;
 
-    // Clear form content (all questions/answers)
-    const formContent = document.getElementById('compileFormContent');
-    if (formContent) {
-        // Reset all inputs in the form
-        const inputs = formContent.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            if (input.type === 'checkbox' || input.type === 'radio') {
-                input.checked = false;
-            } else {
-                input.value = '';
+        if (hasData) {
+            console.log('💾 Saving current state to history before reset...');
+
+            // Get indicator data from CPFClient if available
+            const indicatorData = window.CPFClient?.currentData?.fieldKit || currentIndicatorData;
+
+            // Build current assessment data
+            const currentAssessment = {
+                indicator_id: indicatorId,
+                title: indicatorData?.title || '',
+                category: indicatorData?.category || '',
+                bayesian_score: window.CPFClient.currentData.score?.bayesian_score || 0,
+                confidence: window.CPFClient.currentData.score?.confidence || 0.5,
+                maturity_level: window.CPFClient.currentData.score?.maturity_level || 'green',
+                assessor: window.CPFClient.currentData.metadata?.auditor || '',
+                assessment_date: new Date().toISOString(),
+                raw_data: {
+                    quick_assessment: {},
+                    client_conversation: {
+                        responses: currentResponses,
+                        scores: window.CPFClient.currentData.score || null,
+                        metadata: window.CPFClient.currentData.metadata || {
+                            date: new Date().toISOString().split('T')[0],
+                            auditor: '',
+                            client: selectedOrgData?.name || '',
+                            status: 'in-progress',
+                            notes: ''
+                        },
+                        notes: window.CPFClient.currentData.notes || '',
+                        red_flags: window.CPFClient.currentData.redFlags || []
+                    }
+                }
+            };
+
+            try {
+                // Save current state first (this creates a history entry)
+                const saveResponse = await fetch(`/api/organizations/${orgId}/assessments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentAssessment)
+                });
+
+                const saveResult = await saveResponse.json();
+                if (saveResult.success) {
+                    console.log('✅ Current state saved to history before reset');
+                } else {
+                    console.warn('⚠️ Could not save current state to history:', saveResult.error);
+                }
+            } catch (error) {
+                console.warn('⚠️ Error saving current state to history:', error);
             }
-        });
+        }
     }
 
-    // Hide score display
-    document.getElementById('scoreDisplay').style.display = 'none';
+    // Clear all form inputs in both possible containers
+    const containers = [
+        document.getElementById('compileFormContent'),
+        document.getElementById('indicatorModalContent'),
+        document.getElementById('content')
+    ];
 
-    // Create empty assessment data
+    containers.forEach(container => {
+        if (container) {
+            const inputs = container.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                    input.checked = false;
+                    // Also remove visual feedback
+                    const parent = input.closest('.checkbox-item');
+                    if (parent) parent.classList.remove('checked');
+                } else if (input.type !== 'hidden') {
+                    input.value = '';
+                }
+            });
+        }
+    });
+
+    // Reset metadata fields
+    const assessorField = document.getElementById('compile-assessor');
+    const dateField = document.getElementById('compile-date');
+    const confidenceField = document.getElementById('compile-confidence');
+    if (assessorField) assessorField.value = '';
+    if (dateField) dateField.value = '';
+    if (confidenceField) confidenceField.value = '0.7';
+
+    // Reset CPFClient data
+    if (window.CPFClient && window.CPFClient.currentData) {
+        window.CPFClient.currentData.responses = {};
+        window.CPFClient.currentData.metadata = {
+            date: new Date().toISOString().split('T')[0],
+            auditor: '',
+            client: selectedOrgData?.name || '',
+            status: 'in-progress',
+            notes: ''
+        };
+        window.CPFClient.currentData.score = null;
+
+        console.log('✅ CPFClient data reset');
+    }
+
+    // REMOVE score displays entirely so they get recreated fresh by calculateIndicatorScore
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    if (scoreDisplay) scoreDisplay.style.display = 'none';
+    const scoreBar = document.getElementById('score-bar');
+    if (scoreBar) {
+        scoreBar.remove(); // Remove entirely so it gets recreated
+        console.log('✅ Removed score-bar for fresh recreation');
+    }
+    const scoreSummary = document.getElementById('score-summary-section');
+    if (scoreSummary) scoreSummary.remove();
+
+    // Get indicator data from CPFClient if available
+    const indicatorData = window.CPFClient?.currentData?.fieldKit || currentIndicatorData;
+
+    // Save empty assessment to API
     const emptyAssessment = {
-        indicator_id: currentIndicatorId,
-        title: currentIndicatorData?.title || '',
-        category: currentIndicatorData?.category || '',
+        indicator_id: indicatorId,
+        title: indicatorData?.title || '',
+        category: indicatorData?.category || '',
         bayesian_score: 0,
-        confidence: 0.7,
+        confidence: 0.5,
         maturity_level: 'green',
         assessor: '',
         assessment_date: new Date().toISOString(),
@@ -2405,14 +2841,23 @@ async function resetCompileForm() {
             quick_assessment: {},
             client_conversation: {
                 responses: {},
-                notes: ''
+                scores: null,
+                metadata: {
+                    date: new Date().toISOString().split('T')[0],
+                    auditor: '',
+                    client: selectedOrgData?.name || '',
+                    status: 'in-progress',
+                    notes: ''
+                },
+                notes: '',
+                red_flags: []
             }
         }
     };
 
     try {
-        // Save empty assessment to organization
-        const response = await fetch(`/api/organizations/${selectedOrganization}/assessments`, {
+        console.log('💾 Saving empty assessment to API...');
+        const response = await fetch(`/api/organizations/${orgId}/assessments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(emptyAssessment)
@@ -2421,14 +2866,24 @@ async function resetCompileForm() {
         const result = await response.json();
 
         if (result.success) {
-            showAlert('✅ Assessment cleared and saved', 'success');
-            // Form remains open with empty fields
+            console.log('✅ Empty assessment saved successfully');
+            showAlert('Assessment reset successfully!', 'success');
+
+            // Refresh organization data to update matrix
+            if (selectedOrgData) {
+                await loadOrganizationDetails(orgId);
+            }
+
+            // Recalculate score to update UI
+            if (window.CPFClient && typeof window.CPFClient.calculateIndicatorScore === 'function') {
+                window.CPFClient.calculateIndicatorScore();
+            }
         } else {
-            showAlert('Failed to save empty assessment: ' + result.error, 'error');
+            throw new Error(result.error || 'Failed to save');
         }
     } catch (error) {
-        console.error('Error saving empty assessment:', error);
-        showAlert('Failed to save empty assessment: ' + error.message, 'error');
+        console.error('❌ Error saving reset:', error);
+        showAlert('Failed to reset assessment: ' + error.message, 'error');
     }
 }
 
@@ -2454,18 +2909,20 @@ async function loadTrashCount() {
             const count = data.count;
             const badge = document.getElementById('trashCount');
 
-            if (count > 0) {
-                badge.textContent = count;
-                badge.style.display = 'inline-block';
-                badge.style.marginLeft = '5px';
-                badge.style.background = 'var(--danger)';
-                badge.style.color = 'white';
-                badge.style.padding = '2px 8px';
-                badge.style.borderRadius = '12px';
-                badge.style.fontSize = '11px';
-                badge.style.fontWeight = '600';
-            } else {
-                badge.style.display = 'none';
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                    badge.style.marginLeft = '5px';
+                    badge.style.background = 'var(--danger)';
+                    badge.style.color = 'white';
+                    badge.style.padding = '2px 8px';
+                    badge.style.borderRadius = '12px';
+                    badge.style.fontSize = '11px';
+                    badge.style.fontWeight = '600';
+                } else {
+                    badge.style.display = 'none';
+                }
             }
         }
     } catch (error) {
@@ -2695,8 +3152,12 @@ function closeHistoryModal() {
 async function revertToVersion(versionNumber) {
     if (!confirm(`Revert to version ${versionNumber}?\n\nThis will create a new version based on the selected one.`)) return;
 
+    // IMPORTANT: Save IDs before closing modal (closeHistoryModal nullifies them!)
+    const orgId = currentHistoryOrgId;
+    const indicatorId = currentHistoryIndicatorId;
+
     try {
-        const response = await fetch(`/api/organizations/${currentHistoryOrgId}/assessments/${currentHistoryIndicatorId}/revert`, {
+        const response = await fetch(`/api/organizations/${orgId}/assessments/${indicatorId}/revert`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2712,8 +3173,34 @@ async function revertToVersion(versionNumber) {
             closeHistoryModal();
 
             // Reload organization data
-            await loadOrganizationDetails(currentHistoryOrgId);
+            await loadOrganizationDetails(orgId);
             renderAssessmentDetails();
+
+            // CRITICAL: Reload the integrated form if it's open
+            // Update CPFClient with reverted data
+            if (window.CPFClient && window.CPFClient.currentData && selectedOrgData) {
+                const revertedAssessment = selectedOrgData.assessments[indicatorId];
+
+                if (revertedAssessment && revertedAssessment.raw_data && revertedAssessment.raw_data.client_conversation) {
+                    // Update CPFClient internal data
+                    window.CPFClient.currentData.responses = revertedAssessment.raw_data.client_conversation.responses || {};
+                    window.CPFClient.currentData.score = revertedAssessment.raw_data.client_conversation.scores || null;
+
+                    if (revertedAssessment.raw_data.client_conversation.metadata) {
+                        window.CPFClient.currentData.metadata = {
+                            ...window.CPFClient.currentData.metadata,
+                            ...revertedAssessment.raw_data.client_conversation.metadata
+                        };
+                    }
+
+                    // Re-render the form with reverted data
+                    if (window.CPFClient.currentData.fieldKit) {
+                        console.log('🔄 Reloading form with reverted data...');
+                        window.CPFClient.renderFieldKit(window.CPFClient.currentData.fieldKit);
+                        showAlert(`Form reloaded with version ${versionNumber} data`, 'info');
+                    }
+                }
+            }
         } else {
             throw new Error(result.error);
         }
@@ -2724,7 +3211,7 @@ async function revertToVersion(versionNumber) {
 }
 
 // ============================================================================
-// EXPORT FUNCTIONS (XLSX & PDF)
+// EXPORT FUNCTIONS (XLSX, PDF & ZIP)
 // ============================================================================
 
 /**
@@ -2794,6 +3281,41 @@ async function exportCurrentOrgPDF() {
     } catch (error) {
         console.error('Error exporting PDF:', error);
         showAlert(`Failed to export PDF: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Export current organization to ZIP (all assessment cards/schede)
+ */
+async function exportCurrentOrgZIP() {
+    if (!selectedOrgData) {
+        showAlert('No organization selected', 'error');
+        return;
+    }
+
+    try {
+        const orgId = selectedOrgData.id;
+        const url = `/api/organizations/${orgId}/export/zip?user=Dashboard User`;
+
+        showAlert('Generating ZIP export with all assessment cards...', 'info');
+
+        // Get organization name with fallbacks
+        const orgName = (selectedOrgData.metadata?.name || selectedOrgData.name || orgId || 'Organization').replace(/\s/g, '_');
+
+        // Create temporary link and trigger download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `CPF_Audit_${orgName}_${new Date().toISOString().split('T')[0]}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => {
+            showAlert('ZIP export started! Check your downloads.', 'success');
+        }, 1000);
+    } catch (error) {
+        console.error('Error exporting ZIP:', error);
+        showAlert(`Failed to export ZIP: ${error.message}`, 'error');
     }
 }
 

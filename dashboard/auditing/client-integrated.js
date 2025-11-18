@@ -552,14 +552,13 @@ async function saveData() {
     if (organizationContext.orgId && currentScore) {
         try {
             await saveToAPI();
-            alert('✅ Assessment saved successfully!');
+            // No dialog - auto-save indicator already shows status
         } catch (error) {
             console.error('❌ Save to API failed:', error);
-            alert('⚠️ Saved locally, but API save failed. Check console for details.');
+            // Silent fail - user can see auto-save indicator
         }
-    } else {
-        alert('✅ Assessment saved to browser storage!');
     }
+    // No dialog for local storage save - auto-save indicator is sufficient
 }
 
 // ============================================
@@ -712,13 +711,23 @@ function generateReport() {
         alert('No assessment loaded');
         return;
     }
-    
+
     // Calculate score if not already calculated
-    if (!currentData.score) {
+    if (!currentScore || !currentScore.final_score) {
         calculateIndicatorScore();
     }
-    
-    const maturityConfig = currentData.fieldKit.scoring?.maturity_levels?.[currentScore.maturity_level];
+
+    // Check if score calculation was successful
+    if (!currentScore || currentScore.final_score === undefined) {
+        alert('Unable to calculate score. Please fill in the Quick Assessment section first.');
+        return;
+    }
+
+    const maturityConfig = currentData.fieldKit.scoring?.maturity_levels?.[currentScore.maturity_level] || {
+        color: '#888888',
+        label: 'Unknown',
+        description: 'Score calculated but maturity level not configured'
+    };
     const scorePercentage = (currentScore.final_score * 100).toFixed(1);
     
     const report = document.createElement('div');
@@ -770,25 +779,25 @@ function generateReport() {
             ${currentData.fieldKit.sections.map((section, sIdx) => `
                 <div style="margin-bottom: 20px; page-break-inside: avoid;">
                     <div style="background: #e0e0e0; padding: 10px; margin-bottom: 10px;">
-                        <strong>${section.icon} ${section.title}</strong>
+                        <strong>${section.icon || '📋'} ${section.title}</strong>
                     </div>
-                    ${section.items.map((item, iIdx) => {
+                    ${(section.items || []).map((item, iIdx) => {
                         const itemId = `s${sIdx}_i${iIdx}`;
                         const response = currentData.responses[itemId];
                         if (item.type === 'radio-list' || item.type === 'radio-group') {
-                            const selectedOption = item.options.find(opt => opt.value === response);
+                            const selectedOption = item.options ? item.options.find(opt => opt.value === response) : null;
                             const selectedLabel = selectedOption ? selectedOption.label : 'N/A';
                             return `<div style="margin: 10px 0;">
-                                <div><strong>${item.number ? item.number + '. ' : ''}${item.title}</strong></div>
+                                <div><strong>${item.number ? item.number + '. ' : ''}${item.title || ''}</strong></div>
                                 <div style="margin-left: 20px;">→ ${selectedLabel}</div>
                             </div>`;
                         }
                         else if (item.type === 'checkbox') {
-                            return `<div style="margin: 5px 0;">${response ? '[✓]' : '[ ]'} ${item.label}</div>`;
+                            return `<div style="margin: 5px 0;">${response ? '[✓]' : '[ ]'} ${item.label || ''}</div>`;
                         }
                         else if (item.type === 'input') {
                             return `<div style="margin: 10px 0;">
-                                <strong>${item.label}:</strong><br>
+                                <strong>${item.label || ''}:</strong><br>
                                 <div style="margin-left: 20px;">${response || '_____'}</div>
                             </div>`;
                         }
@@ -796,24 +805,24 @@ function generateReport() {
                     }).join('')}
                     ${(section.subsections || []).map((sub, subIdx) => `
                         <div style="margin: 15px 0; padding-left: 10px; border-left: 3px solid #ccc;">
-                            <h3 style="font-size: 14px; margin: 10px 0;">${sub.title}</h3>
-                            ${sub.items.map((item, iIdx) => {
+                            <h3 style="font-size: 14px; margin: 10px 0;">${sub.title || ''}</h3>
+                            ${(sub.items || []).map((item, iIdx) => {
                                 const itemId = `s${sIdx}_sub${subIdx}_i${iIdx}`;
                                 const response = currentData.responses[itemId];
                                if (item.type === 'radio-list' || item.type === 'radio-group') {
-                                    const selectedOption = item.options.find(opt => opt.value === response);
+                                    const selectedOption = item.options ? item.options.find(opt => opt.value === response) : null;
                                     const selectedLabel = selectedOption ? selectedOption.label : 'N/A';
                                     return `<div style="margin: 10px 0;">
-                                        <div><strong>${item.number ? item.number + '. ' : ''}${item.title}</strong></div>
+                                        <div><strong>${item.number ? item.number + '. ' : ''}${item.title || ''}</strong></div>
                                         <div style="margin-left: 20px;">→ ${selectedLabel}</div>
                                     </div>`;
                                 }
                                 else if (item.type === 'checkbox') {
-                                    return `<div style="margin: 5px 0;">${response ? '[✓]' : '[ ]'} ${item.label}</div>`;
+                                    return `<div style="margin: 5px 0;">${response ? '[✓]' : '[ ]'} ${item.label || ''}</div>`;
                                 }
                                 else if (item.type === 'question') {
                                     let questionHTML = `<div style="margin: 15px 0;">
-                                        <div style="font-weight: bold; color: #1a1a2e; margin-bottom: 8px;">${item.text}</div>`;
+                                        <div style="font-weight: bold; color: #1a1a2e; margin-bottom: 8px;">${item.text || ''}</div>`;
                                     
                                     if (item.followups) {
                                         item.followups.forEach((followup, fIdx) => {
@@ -851,16 +860,34 @@ function generateReport() {
     document.body.appendChild(report);
     const opt = {
         margin: 10,
-        filename: `cpf_${currentData.fieldKit.indicator}_${currentData.metadata.client}_${currentData.metadata.date}_SCORED.pdf`,
+        filename: `cpf_${currentData.fieldKit.indicator}_${currentData.metadata.client || 'client'}_${currentData.metadata.date}_SCORED.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, logging: false },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
-    
-    html2pdf().from(report).set(opt).save();
-    document.body.removeChild(report);
-    alert('✅ PDF generated with score analysis');
+
+    // Check if html2pdf library is loaded
+    if (typeof html2pdf === 'undefined') {
+        document.body.removeChild(report);
+        alert('❌ PDF generation library not loaded. Please check your internet connection and reload the page.');
+        return;
+    }
+
+    try {
+        html2pdf().from(report).set(opt).save().then(() => {
+            document.body.removeChild(report);
+            console.log('✅ PDF generated successfully');
+        }).catch(err => {
+            document.body.removeChild(report);
+            console.error('PDF generation error:', err);
+            alert('❌ PDF generation failed: ' + err.message);
+        });
+    } catch (error) {
+        document.body.removeChild(report);
+        console.error('PDF generation error:', error);
+        alert('❌ PDF generation failed: ' + error.message);
+    }
 }
 
 function selectRadioOption(itemId, value) {
@@ -983,13 +1010,27 @@ let currentScore = {
 
 function calculateIndicatorScore() {
     if (!currentData.fieldKit || !currentData.fieldKit.scoring) {
-        alert('⚠️ No field kit loaded or scoring configuration missing');
+        console.warn('⚠️ No field kit loaded or scoring configuration missing');
         return;
     }
 
     const scoring = currentData.fieldKit.scoring;
     const sections = currentData.fieldKit.sections;
-    
+
+    // CRITICAL DEBUG: Log what we're working with
+    console.log('🔍 calculateIndicatorScore DEBUG:', {
+        hasFieldKit: !!currentData.fieldKit,
+        hasSections: !!sections,
+        sectionsIsArray: Array.isArray(sections),
+        sectionsLength: sections ? sections.length : 0,
+        sectionTitles: sections ? sections.map(s => ({ id: s.id, title: s.title })) : []
+    });
+
+    if (!sections || !Array.isArray(sections) || sections.length === 0) {
+        console.error('❌ CRITICAL: sections is empty or not an array!');
+        return;
+    }
+
     // Reset score
     currentScore = {
         quick_assessment: 0,
@@ -999,7 +1040,12 @@ function calculateIndicatorScore() {
         maturity_level: 'green',
         details: {
             quick_assessment_breakdown: [],
-            conversation_breakdown: [],
+            conversation_breakdown: {
+                total_questions: 0,
+                answered_questions: 0,
+                completion_rate: 0,
+                is_informational: true
+            },
             red_flags_list: []
         }
     };
@@ -1037,26 +1083,62 @@ function calculateIndicatorScore() {
     }
 
     // 2. TRACK CONVERSATION COMPLETENESS (informational only, not part of vulnerability score)
-    const convSection = sections.find(s => s.id === 'client-conversation');
+    // Try multiple methods to find the conversation section (handles different JSON formats)
+    let convSectionIndex = sections.findIndex(s => s.id === 'client-conversation');
+
+    // Fallback 1: Search by type
+    if (convSectionIndex < 0) {
+        convSectionIndex = sections.findIndex(s => s.type === 'conversation');
+    }
+
+    // Fallback 2: Search by title keywords (works for all languages)
+    if (convSectionIndex < 0) {
+        convSectionIndex = sections.findIndex(s =>
+            s.title && (
+                s.title.toLowerCase().includes('conversation') ||
+                s.title.toLowerCase().includes('conversazione') ||
+                s.title.toLowerCase().includes('cliente') ||
+                s.title.toLowerCase().includes('client')
+            )
+        );
+    }
+
+    const convSection = convSectionIndex >= 0 ? sections[convSectionIndex] : null;
+
+    console.log('📊 Conversation completeness calculation:', {
+        convSectionIndex,
+        hasConvSection: !!convSection,
+        sectionCount: sections.length,
+        sectionIds: sections.map(s => s.id || 'NO_ID'),
+        sectionTitles: sections.map(s => s.title || 'NO_TITLE')
+    });
+
     if (convSection) {
         let totalQuestions = 0;
         let answeredQuestions = 0;
 
         // Handle both structures: subsections (EN) OR direct items (IT)
         const processItems = (items, baseId) => {
+            if (!items || !Array.isArray(items)) {
+                console.warn('⚠️ processItems: items is not an array', items);
+                return;
+            }
+
             items.forEach((item, iIdx) => {
                 if (item.type === 'question') {
                     // Use item.id from Field Kit if available, otherwise use baseId
                     const itemId = item.id || `${baseId}_i${iIdx}`;
 
                     // Only count follow-ups (main questions don't have input fields, only text)
-                    if (item.followups || item.followup) {
-                        const followups = item.followups || item.followup || [];
+                    const followups = item.followups || item.followup || [];
+
+                    if (Array.isArray(followups) && followups.length > 0) {
                         followups.forEach((followup, fIdx) => {
                             totalQuestions++;
                             const followupId = `${itemId}_f${fIdx}`;
                             const followupResponse = currentData.responses[followupId];
-                            if (followupResponse && followupResponse.trim().length > 0) {
+
+                            if (followupResponse && String(followupResponse).trim().length > 0) {
                                 answeredQuestions++;
                             }
                         });
@@ -1066,17 +1148,19 @@ function calculateIndicatorScore() {
         };
 
         // Process subsections if they exist (EN structure)
-        if (convSection.subsections && convSection.subsections.length > 0) {
+        if (convSection.subsections && Array.isArray(convSection.subsections) && convSection.subsections.length > 0) {
+            console.log('📋 Processing subsections:', convSection.subsections.length);
             convSection.subsections.forEach((subsection, subIdx) => {
-                if (subsection.items) {
-                    processItems(subsection.items, `s1_sub${subIdx}`);
+                if (subsection.items && Array.isArray(subsection.items)) {
+                    processItems(subsection.items, `s${convSectionIndex}_sub${subIdx}`);
                 }
             });
         }
 
         // Process direct items if they exist (IT structure)
-        if (convSection.items && convSection.items.length > 0) {
-            processItems(convSection.items, 's1');
+        if (convSection.items && Array.isArray(convSection.items) && convSection.items.length > 0) {
+            console.log('📋 Processing direct items:', convSection.items.length);
+            processItems(convSection.items, `s${convSectionIndex}`);
         }
 
         // Conversation completeness (for reference only, NOT part of vulnerability score)
@@ -1088,6 +1172,21 @@ function calculateIndicatorScore() {
             answered_questions: answeredQuestions,
             completion_rate: completionRate,
             is_informational: true // Flag to indicate this is NOT a vulnerability score
+        };
+
+        console.log('✅ Conversation completeness calculated:', {
+            totalQuestions,
+            answeredQuestions,
+            completionRate: (completionRate * 100).toFixed(1) + '%'
+        });
+    } else {
+        // Fallback: if no client-conversation section found, set defaults
+        console.warn('⚠️ No client-conversation section found, setting defaults');
+        currentScore.details.conversation_breakdown = {
+            total_questions: 0,
+            answered_questions: 0,
+            completion_rate: 0,
+            is_informational: true
         };
     }
 
@@ -1296,53 +1395,79 @@ function updateScoreDisplay() {
 
     } else {
         // SUBSEQUENT UPDATES: Only update values, NO HTML regeneration
-        document.getElementById('score-val').textContent = scorePercentage + '%';
+        const scoreValEl = document.getElementById('score-val');
+        if (scoreValEl) scoreValEl.textContent = scorePercentage + '%';
 
         const fill = document.getElementById('score-bar-fill');
-        fill.className = `progress-bar-fill ${currentScore.maturity_level}`;
-        fill.style.width = scorePercentage + '%';
-        fill.textContent = scorePercentage + '%';
+        if (fill) {
+            fill.className = `progress-bar-fill ${currentScore.maturity_level}`;
+            fill.style.width = scorePercentage + '%';
+            fill.textContent = scorePercentage + '%';
+        }
 
         const badge = document.getElementById('maturity-badge');
-        badge.className = `maturity-badge ${currentScore.maturity_level}`;
-        badge.textContent = maturityConfig.label;
+        if (badge) {
+            badge.className = `maturity-badge ${currentScore.maturity_level}`;
+            badge.textContent = maturityConfig.label;
+        }
 
-        document.getElementById('quick-val').textContent = (currentScore.quick_assessment * 100).toFixed(1) + '%';
-        document.getElementById('quick-count').textContent = currentScore.details.quick_assessment_breakdown.length;
+        const quickValEl = document.getElementById('quick-val');
+        if (quickValEl) quickValEl.textContent = (currentScore.quick_assessment * 100).toFixed(1) + '%';
 
-        document.getElementById('flags-val').textContent = (currentScore.red_flags * 100).toFixed(1) + '%';
-        document.getElementById('flags-count').textContent = currentScore.details.red_flags_list.length;
+        const quickCountEl = document.getElementById('quick-count');
+        if (quickCountEl) quickCountEl.textContent = currentScore.details.quick_assessment_breakdown.length;
 
-        document.getElementById('conv-val').textContent = (currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0) + '%';
-        document.getElementById('conv-answered').textContent = currentScore.details.conversation_breakdown.answered_questions;
-        document.getElementById('conv-total').textContent = currentScore.details.conversation_breakdown.total_questions;
+        const flagsValEl = document.getElementById('flags-val');
+        if (flagsValEl) flagsValEl.textContent = (currentScore.red_flags * 100).toFixed(1) + '%';
 
-        document.getElementById('interp-text').innerHTML = `<strong style="color: ${maturityConfig.color};">${maturityConfig.label}:</strong> ${maturityConfig.description}`;
+        const flagsCountEl = document.getElementById('flags-count');
+        if (flagsCountEl) flagsCountEl.textContent = currentScore.details.red_flags_list.length;
 
-        document.getElementById('quick-breakdown').innerHTML = currentScore.details.quick_assessment_breakdown.map(item => `
-            <div class="detail-row">
-                <span class="detail-label">${item.question}</span>
-                <span class="detail-value">${(item.weighted_score * 100).toFixed(1)}%</span>
-            </div>
-        `).join('');
+        const convValEl = document.getElementById('conv-val');
+        if (convValEl) convValEl.textContent = (currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0) + '%';
 
-        document.getElementById('flags-breakdown').innerHTML = currentScore.details.red_flags_list.length > 0 ? `
-            <h4 style="margin: 20px 0 15px; color: var(--danger);">Red Flags Detected</h4>
-            ${currentScore.details.red_flags_list.map(flag => `
+        const convAnsweredEl = document.getElementById('conv-answered');
+        if (convAnsweredEl) convAnsweredEl.textContent = currentScore.details.conversation_breakdown.answered_questions;
+
+        const convTotalEl = document.getElementById('conv-total');
+        if (convTotalEl) convTotalEl.textContent = currentScore.details.conversation_breakdown.total_questions;
+
+        const interpTextEl = document.getElementById('interp-text');
+        if (interpTextEl) interpTextEl.innerHTML = `<strong style="color: ${maturityConfig.color};">${maturityConfig.label}:</strong> ${maturityConfig.description}`;
+
+        const quickBreakdownEl = document.getElementById('quick-breakdown');
+        if (quickBreakdownEl) {
+            quickBreakdownEl.innerHTML = currentScore.details.quick_assessment_breakdown.map(item => `
                 <div class="detail-row">
-                    <span class="detail-label">⚠️ ${flag.flag}</span>
-                    <span class="detail-value" style="color: var(--danger);">+${(flag.impact * 100).toFixed(1)}%</span>
+                    <span class="detail-label">${item.question}</span>
+                    <span class="detail-value">${(item.weighted_score * 100).toFixed(1)}%</span>
                 </div>
-            `).join('')}
-        ` : '';
+            `).join('');
+        }
 
-        document.getElementById('calc-formula').innerHTML = `
-            <strong>Vulnerability Score Calculation:</strong><br>
-            Final Score = (Quick Assessment × ${weights.quick_assessment}) + (Red Flags × ${weights.red_flags})<br>
-            Final Score = (${currentScore.quick_assessment.toFixed(3)} × ${weights.quick_assessment}) + (${currentScore.red_flags.toFixed(3)} × ${weights.red_flags})<br>
-            <strong>Final Score = ${currentScore.final_score.toFixed(3)} (${scorePercentage}%)</strong><br>
-            <em style="color: #888; font-size: 12px;">Note: Conversation completeness is tracked separately for reference</em>
-        `;
+        const flagsBreakdownEl = document.getElementById('flags-breakdown');
+        if (flagsBreakdownEl) {
+            flagsBreakdownEl.innerHTML = currentScore.details.red_flags_list.length > 0 ? `
+                <h4 style="margin: 20px 0 15px; color: var(--danger);">Red Flags Detected</h4>
+                ${currentScore.details.red_flags_list.map(flag => `
+                    <div class="detail-row">
+                        <span class="detail-label">⚠️ ${flag.flag}</span>
+                        <span class="detail-value" style="color: var(--danger);">+${(flag.impact * 100).toFixed(1)}%</span>
+                    </div>
+                `).join('')}
+            ` : '';
+        }
+
+        const calcFormulaEl = document.getElementById('calc-formula');
+        if (calcFormulaEl) {
+            calcFormulaEl.innerHTML = `
+                <strong>Vulnerability Score Calculation:</strong><br>
+                Final Score = (Quick Assessment × ${weights.quick_assessment}) + (Red Flags × ${weights.red_flags})<br>
+                Final Score = (${currentScore.quick_assessment.toFixed(3)} × ${weights.quick_assessment}) + (${currentScore.red_flags.toFixed(3)} × ${weights.red_flags})<br>
+                <strong>Final Score = ${currentScore.final_score.toFixed(3)} (${scorePercentage}%)</strong><br>
+                <em style="color: #888; font-size: 12px;">Note: Conversation completeness is tracked separately for reference</em>
+            `;
+        }
     }
 }
 
@@ -1586,163 +1711,6 @@ function closeQuickReference() {
 
 // NOTE: batchImportAndViewDashboard() and generateSyntheticData() removed in v2.0
 // These functions are no longer needed with direct API integration
-
-// ============================================
-// INDICATOR DETAILS MODAL
-// ============================================
-
-/**
- * Show detailed information about the current indicator
- */
-function showIndicatorDetails() {
-    if (!currentData.fieldKit) {
-        alert('❌ No indicator loaded.\n\nPlease load an indicator first before viewing details.');
-        return;
-    }
-
-    const fieldKit = currentData.fieldKit;
-    const modal = document.getElementById('indicator-details-modal');
-    const title = document.getElementById('indicator-details-title');
-    const content = document.getElementById('indicator-details-content');
-
-    title.textContent = `📄 Indicator ${fieldKit.indicator} - Details`;
-
-    // Render detailed information
-    let html = `
-        <div class="indicator-detail" style="max-width: 900px; margin: 0 auto;">
-            <!-- Title & Category -->
-            <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #e0e0e0;">
-                <h3 style="margin: 0 0 10px 0; font-size: 24px; color: #1a1a2e;">${fieldKit.title || 'N/A'}</h3>
-                <p style="font-size: 16px; color: #7f8c8d; margin-bottom: 15px;">${fieldKit.subtitle || ''}</p>
-                <div style="background: #f8f9fa; padding: 10px 15px; border-radius: 6px; display: inline-block;">
-                    <strong>Category:</strong> ${fieldKit.category || 'N/A'}
-                </div>
-            </div>
-
-            <!-- Description -->
-            <div style="margin-bottom: 25px;">
-                <h4 style="color: #1a1a2e; margin-bottom: 10px; font-size: 18px;">📝 Description</h4>
-                <p style="line-height: 1.7; color: #2c3e50;">${fieldKit.description?.short || 'No description available'}</p>
-            </div>
-
-            ${fieldKit.description?.context ? `
-            <div style="margin-bottom: 25px;">
-                <h4 style="color: #1a1a2e; margin-bottom: 10px; font-size: 18px;">🌍 Context</h4>
-                <p style="line-height: 1.7; color: #2c3e50;">${fieldKit.description.context}</p>
-            </div>
-            ` : ''}
-
-            ${fieldKit.description?.impact ? `
-            <div style="margin-bottom: 25px;">
-                <h4 style="color: #1a1a2e; margin-bottom: 10px; font-size: 18px;">⚠️ Impact</h4>
-                <p style="line-height: 1.7; color: #2c3e50;">${fieldKit.description.impact}</p>
-            </div>
-            ` : ''}
-
-            ${fieldKit.description?.psychological_basis ? `
-            <div style="margin-bottom: 25px;">
-                <h4 style="color: #1a1a2e; margin-bottom: 10px; font-size: 18px;">🧠 Psychological Basis</h4>
-                <p style="line-height: 1.7; color: #2c3e50;">${fieldKit.description.psychological_basis}</p>
-            </div>
-            ` : ''}
-
-            ${fieldKit.risk_scenarios && fieldKit.risk_scenarios.length > 0 ? `
-            <div style="margin-bottom: 25px;">
-                <h4 style="color: #1a1a2e; margin-bottom: 15px; font-size: 18px;">🔥 Risk Scenarios</h4>
-                ${fieldKit.risk_scenarios.map((scenario, idx) => `
-                    <div style="background: #fff3cd; padding: 20px; border-left: 4px solid #f39c12; margin-bottom: 15px; border-radius: 6px;">
-                        <h5 style="margin: 0 0 10px 0; color: #856404; font-size: 16px;">
-                            ${scenario.title || 'Scenario ' + (idx + 1)}
-                        </h5>
-                        <p style="margin: 0 0 10px 0; line-height: 1.6; color: #856404;">
-                            ${scenario.description || ''}
-                        </p>
-                        ${scenario.likelihood ? `<p style="margin: 0; font-size: 14px;"><strong>Likelihood:</strong> ${scenario.likelihood}</p>` : ''}
-                        ${scenario.impact ? `<p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Impact:</strong> ${scenario.impact}</p>` : ''}
-                    </div>
-                `).join('')}
-            </div>
-            ` : ''}
-
-            ${fieldKit.scoring && fieldKit.scoring.maturity_levels ? `
-            <div style="margin-bottom: 25px;">
-                <h4 style="color: #1a1a2e; margin-bottom: 15px; font-size: 18px;">📊 Maturity Levels</h4>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                    ${Object.entries(fieldKit.scoring.maturity_levels).map(([level, data]) => {
-                        const bgColor = level === 'green' ? '#d4edda' : level === 'yellow' ? '#fff3cd' : '#f8d7da';
-                        const textColor = level === 'green' ? '#155724' : level === 'yellow' ? '#856404' : '#721c24';
-                        return `
-                            <div style="background: ${bgColor}; padding: 15px; border-radius: 8px;">
-                                <h5 style="margin: 0 0 10px 0; color: ${textColor}; text-transform: capitalize;">
-                                    ${level} (${data.score_range ? data.score_range.join(' - ') : 'N/A'})
-                                </h5>
-                                <p style="margin: 0; font-size: 14px; color: ${textColor}; line-height: 1.5;">
-                                    ${data.description || 'No description'}
-                                </p>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            </div>
-            ` : ''}
-
-            ${fieldKit.remediation && fieldKit.remediation.actions ? `
-            <div style="margin-bottom: 25px;">
-                <h4 style="color: #1a1a2e; margin-bottom: 15px; font-size: 18px;">🛠️ Remediation Actions</h4>
-                <ul style="line-height: 1.8; color: #2c3e50; padding-left: 20px;">
-                    ${fieldKit.remediation.actions.map(action => `
-                        <li style="margin-bottom: 10px;">${action}</li>
-                    `).join('')}
-                </ul>
-            </div>
-            ` : ''}
-
-            <!-- Metadata -->
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
-                <h4 style="color: #1a1a2e; margin-bottom: 10px; font-size: 18px;">ℹ️ Metadata</h4>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                    <div>
-                        <strong>Version:</strong> ${fieldKit.version || 'N/A'}
-                    </div>
-                    <div>
-                        <strong>Indicator:</strong> ${fieldKit.indicator}
-                    </div>
-                    ${fieldKit.metadata?.difficulty ? `
-                    <div>
-                        <strong>Difficulty:</strong> ${fieldKit.metadata.difficulty}
-                    </div>
-                    ` : ''}
-                    ${fieldKit.metadata?.time_to_assess ? `
-                    <div>
-                        <strong>Time to Assess:</strong> ${fieldKit.metadata.time_to_assess}
-                    </div>
-                    ` : ''}
-                </div>
-            </div>
-        </div>
-    `;
-
-    content.innerHTML = html;
-    modal.style.display = 'flex';
-
-    // Add to modal stack
-    if (typeof pushModal === 'function') {
-        pushModal('indicator-details-modal');
-    }
-}
-
-/**
- * Close indicator details modal
- */
-function closeIndicatorDetails() {
-    const modal = document.getElementById('indicator-details-modal');
-    modal.style.display = 'none';
-
-    // Remove from modal stack
-    if (typeof popModal === 'function') {
-        popModal('indicator-details-modal');
-    }
-}
 
 /**
  * Load existing export from server (edit mode)
@@ -2021,9 +1989,7 @@ window.CPFClient = {
     showQuickReference: showQuickReference,
     closeQuickReference: closeQuickReference,
     toggleCategory: toggleCategory,
-    loadIndicatorFromReference: loadIndicatorFromReference,
-    showIndicatorDetails: showIndicatorDetails,
-    closeIndicatorDetails: closeIndicatorDetails
+    loadIndicatorFromReference: loadIndicatorFromReference
 
     // Validation removed - use standalone script instead
     // validateCurrentJSON: validateCurrentJSON

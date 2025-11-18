@@ -40,6 +40,9 @@ window.addEventListener('keydown', (event) => {
             case 'category-modal':
                 closeCategoryModal();
                 break;
+            case 'org-modal':
+                closeOrgModal();
+                break;
         }
     }
 });
@@ -258,6 +261,8 @@ async function editOrganization(orgId) {
         document.getElementById('edit-org-size').value = org.metadata.size;
         document.getElementById('edit-org-country').value = org.metadata.country;
         document.getElementById('edit-org-language').value = org.metadata.language;
+        document.getElementById('edit-org-sede-sociale').value = org.metadata.sede_sociale || '';
+        document.getElementById('edit-org-partita-iva').value = org.metadata.partita_iva || '';
         document.getElementById('edit-org-notes').value = org.metadata.notes || '';
 
         // Show modal
@@ -283,13 +288,13 @@ async function saveOrganizationEdit(event) {
 
     const data = {
         name: document.getElementById('edit-org-name').value,
-        metadata: {
-            industry: document.getElementById('edit-org-industry').value,
-            size: document.getElementById('edit-org-size').value,
-            country: document.getElementById('edit-org-country').value.toUpperCase(),
-            language: document.getElementById('edit-org-language').value,
-            notes: document.getElementById('edit-org-notes').value
-        }
+        industry: document.getElementById('edit-org-industry').value,
+        size: document.getElementById('edit-org-size').value,
+        country: document.getElementById('edit-org-country').value.toUpperCase(),
+        language: document.getElementById('edit-org-language').value,
+        sede_sociale: document.getElementById('edit-org-sede-sociale').value.trim(),
+        partita_iva: document.getElementById('edit-org-partita-iva').value.trim(),
+        notes: document.getElementById('edit-org-notes').value
     };
 
     try {
@@ -377,6 +382,12 @@ async function selectOrganization(orgId) {
     document.getElementById('empty-state').style.display = 'none';
     document.getElementById('org-detail').style.display = 'block';
 
+    // Show export buttons
+    const xlsxBtn = document.getElementById('exportXLSXBtn');
+    const pdfBtn = document.getElementById('exportPDFBtn');
+    if (xlsxBtn) xlsxBtn.style.display = 'inline-flex';
+    if (pdfBtn) pdfBtn.style.display = 'inline-flex';
+
     // Setup WebSocket for real-time updates
     setupWebSocket(orgId);
 
@@ -386,28 +397,80 @@ async function selectOrganization(orgId) {
 
 async function loadAndRenderOrganization(orgId) {
     try {
-        // Fetch complete organization data from API
-        const response = await fetch(`/api/organizations/${orgId}`);
-        if (!response.ok) {
-            throw new Error(`Failed to load organization: ${response.status}`);
+        // Fetch SOC data (NON usare assessments di auditing)
+        const socResponse = await fetch(`/api/soc/${orgId}`);
+        if (!socResponse.ok) {
+            throw new Error(`Failed to load SOC data: ${socResponse.status}`);
         }
-        const result = await response.json();
-        const org = result.data;
+        const socResult = await socResponse.json();
 
-        renderOrganizationDetail(org);
+        if (!socResult.success) {
+            throw new Error(socResult.error || 'No SOC data available');
+        }
+
+        renderOrganizationDetail(socResult.data);
     } catch (error) {
         console.error('Error loading organization:', error);
         document.getElementById('org-detail').innerHTML = `
             <div class="error-message">
-                <h3>⚠️ Error Loading Organization</h3>
+                <h3>⚠️ Error Loading SOC Data</h3>
                 <p>${error.message}</p>
+                <p>Make sure the simulator has generated data for this organization</p>
             </div>
         `;
     }
 }
 
 /**
- * Convert API v2.0 organization format to bayesian.js expected format
+ * Convert SOC data format to bayesian.js expected format
+ * SOC format: {org_id, org_name, indicators: {indicatorId: {value, previous_value, last_updated}}}
+ * Bayesian format: {indicators: {indicatorId: {soc_values: [...], human_values: [...], current_bayesian: value}}}
+ */
+function convertSocDataForBayesian(socData) {
+    const indicators = {};
+
+    if (socData.indicators) {
+        for (const [indicatorId, socIndicator] of Object.entries(socData.indicators)) {
+            // Create soc_values array with current and previous values
+            const socValues = [];
+
+            if (socIndicator.previous_value !== null && socIndicator.previous_value !== undefined) {
+                // Add previous value (older timestamp)
+                socValues.push({
+                    timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+                    value: socIndicator.previous_value,
+                    confidence: 0.8,
+                    source: 'soc'
+                });
+            }
+
+            if (socIndicator.value !== undefined) {
+                // Add current value
+                socValues.push({
+                    timestamp: socIndicator.last_updated || new Date().toISOString(),
+                    value: socIndicator.value,
+                    confidence: 0.8,
+                    source: 'soc'
+                });
+            }
+
+            indicators[indicatorId] = {
+                soc_values: socValues,
+                human_values: [], // No human assessments in SOC data
+                current_bayesian: socIndicator.value || 0
+            };
+        }
+    }
+
+    return {
+        org_id: socData.org_id,
+        org_name: socData.org_name,
+        indicators
+    };
+}
+
+/**
+ * Convert API v2.0 organization format to bayesian.js expected format (DEPRECATED - use convertSocDataForBayesian)
  * API v2.0 has 'assessments' with bayesian_score
  * bayesian.js expects 'indicators' with current_bayesian, soc_values, human_values
  */
@@ -455,16 +518,15 @@ function convertOrgDataForBayesian(org) {
     return result;
 }
 
-function renderOrganizationDetail(org) {
-    // Save organization language for indicator detail modal
-    // Full org object has language in metadata, not at root level
-    currentOrgLanguage = org.metadata?.language || 'en-US';
+function renderOrganizationDetail(socData) {
+    // SOC data format: {org_id, org_name, indicators: {indicatorId: {value, previous_value, ...}}}
+    currentOrgLanguage = 'en-US'; // Default language (TODO: get from org metadata)
 
     // Save current org data for WebSocket updates
-    currentOrgData = org;
+    currentOrgData = socData;
 
-    // Convert API v2.0 format (assessments) to bayesian.js format (indicators)
-    const orgDataForBayesian = convertOrgDataForBayesian(org);
+    // Convert SOC format to bayesian.js format (indicators)
+    const orgDataForBayesian = convertSocDataForBayesian(socData);
 
     // Run Bayesian analysis
     const analysis = BAYESIAN.analyzeOrganization(orgDataForBayesian);
@@ -757,18 +819,22 @@ function renderIndicatorGrid(indicators) {
             const tile = document.createElement('div');
 
             if (indicator) {
-                // Indicator exists - show with risk color
+                // Indicator exists - show with risk color and percentage
                 const risk = indicator.current_bayesian;
                 const riskClass = risk > 0.66 ? 'high' : risk > 0.33 ? 'medium' : 'low';
+                const percentage = (risk * 100).toFixed(0);
 
                 tile.className = `indicator-tile ${riskClass}`;
-                tile.textContent = id;
-                tile.title = `Indicator ${id}: ${(risk * 100).toFixed(0)}%`;
+                tile.innerHTML = `
+                    <div style="font-weight: 700; font-size: 13px; display: block;">${id}</div>
+                    <div style="font-weight: 600; font-size: 16px; display: block; margin-top: 4px;">${percentage}%</div>
+                `;
+                tile.title = `Indicator ${id}: ${percentage}%`;
                 tile.onclick = () => showIndicatorDetail(id, indicator);
             } else {
                 // Indicator missing - show gray placeholder
                 tile.className = 'indicator-tile missing';
-                tile.textContent = id;
+                tile.innerHTML = `<div style="font-weight: 600; font-size: 13px;">${id}</div>`;
                 tile.title = `Indicator ${id}: No data`;
                 tile.style.cursor = 'default';
                 tile.style.opacity = '0.4';
@@ -1027,7 +1093,7 @@ function updateIndicatorCell(indicatorId, assessment, trend) {
     // Add new risk class
     targetTile.classList.add(riskClass);
 
-    // Update content with trend indicator
+    // Update content with percentage and trend indicator
     let trendSymbol = '';
     let trendText = '';
     if (trend === 'up') {
@@ -1038,7 +1104,10 @@ function updateIndicatorCell(indicatorId, assessment, trend) {
         trendText = ' (decreasing)';
     }
 
-    targetTile.innerHTML = `${indicatorId}${trendSymbol}`;
+    targetTile.innerHTML = `
+        <div style="font-weight: 700; font-size: 13px; display: block;">${indicatorId}${trendSymbol}</div>
+        <div style="font-weight: 600; font-size: 16px; display: block; margin-top: 4px;">${percentage}%</div>
+    `;
     targetTile.title = `Indicator ${indicatorId}: ${percentage}%${trendText}`;
     targetTile.style.cursor = 'pointer';
     targetTile.style.opacity = '1';
@@ -1253,3 +1322,347 @@ function closeCategoryModal() {
     modal.style.display = 'none';
     window.popModal();
 }
+
+// ============================================================================
+// CREATE ORGANIZATION FUNCTIONS
+// ============================================================================
+
+/**
+ * Open the create organization modal
+ */
+function openCreateOrgModal() {
+    document.getElementById('org-modal-title').textContent = 'Create New Organization';
+    document.getElementById('org-form').reset();
+    document.getElementById('org-id-input').disabled = false;
+    document.getElementById('save-org-btn').textContent = 'Create Organization';
+    document.getElementById('org-modal').style.display = 'flex';
+    pushModal('org-modal');
+}
+
+/**
+ * Close the organization modal
+ */
+function closeOrgModal() {
+    document.getElementById('org-modal').style.display = 'none';
+    popModal('org-modal');
+}
+
+/**
+ * Save new organization
+ */
+async function saveOrganization(event) {
+    event.preventDefault();
+
+    const orgId = document.getElementById('org-id-input').value.trim();
+    const orgName = document.getElementById('org-name-input').value.trim();
+    const industry = document.getElementById('org-industry-input').value;
+    const size = document.getElementById('org-size-input').value;
+    const country = document.getElementById('org-country-input').value.toUpperCase();
+    const language = document.getElementById('org-language-input').value;
+    const sedeSociale = document.getElementById('org-sede-sociale-input').value.trim();
+    const partitaIva = document.getElementById('org-partita-iva-input').value.trim();
+    const notes = document.getElementById('org-notes-input').value.trim();
+
+    // Validate org ID format
+    if (!/^org-[a-z0-9-]+$/.test(orgId)) {
+        alert('Organization ID must follow format: org-yourname-001 (lowercase, hyphens allowed)');
+        return;
+    }
+
+    const saveBtn = document.getElementById('save-org-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Creating...';
+
+    try {
+        const response = await fetch('/api/organizations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: orgId,
+                name: orgName,
+                industry: industry,
+                size: size,
+                country: country,
+                language: language,
+                sede_sociale: sedeSociale,
+                partita_iva: partitaIva,
+                notes: notes
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || `HTTP ${response.status}`);
+        }
+
+        const newOrg = await response.json();
+        console.log('Created organization:', newOrg);
+
+        // Refresh organizations list
+        await loadOrganizationsData();
+
+        closeOrgModal();
+        alert(`Organization "${orgName}" created successfully!`);
+
+    } catch (error) {
+        console.error('Error creating organization:', error);
+        alert(`Failed to create organization: ${error.message}`);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Create Organization';
+    }
+}
+
+// ===== EXPORT FUNCTIONS =====
+
+/**
+ * Export current organization data to XLSX format
+ */
+async function exportCurrentOrgXLSX() {
+    if (!currentOrgId) {
+        alert('Please select an organization first');
+        return;
+    }
+
+    try {
+        const orgId = currentOrgId;
+        const url = `/api/organizations/${orgId}/export/xlsx?user=SOC Dashboard User`;
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        // Create download link
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+
+        // Get org name for filename
+        const org = organizationsData?.organizations?.find(o => o.id === orgId);
+        const orgName = org ? org.name.replace(/[^a-zA-Z0-9]/g, '_') : orgId;
+        const date = new Date().toISOString().split('T')[0];
+        link.download = `CPF_SOC_${orgName}_${date}.xlsx`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+
+        console.log('XLSX export successful');
+    } catch (error) {
+        console.error('Error exporting XLSX:', error);
+        alert(`Failed to export XLSX: ${error.message}`);
+    }
+}
+
+/**
+ * Export current organization data to PDF format
+ */
+async function exportCurrentOrgPDF() {
+    if (!currentOrgId) {
+        alert('Please select an organization first');
+        return;
+    }
+
+    try {
+        const orgId = currentOrgId;
+        const url = `/api/organizations/${orgId}/export/pdf?user=SOC Dashboard User`;
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        // Create download link
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+
+        // Get org name for filename
+        const org = organizationsData?.organizations?.find(o => o.id === orgId);
+        const orgName = org ? org.name.replace(/[^a-zA-Z0-9]/g, '_') : orgId;
+        const date = new Date().toISOString().split('T')[0];
+        link.download = `CPF_SOC_${orgName}_${date}.pdf`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+
+        console.log('PDF export successful');
+    } catch (error) {
+        console.error('Error exporting PDF:', error);
+        alert(`Failed to export PDF: ${error.message}`);
+    }
+}
+
+// ===== TRASH & RESTORE FUNCTIONS =====
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+async function loadTrashCount() {
+    try {
+        const response = await fetch('/api/trash');
+        const data = await response.json();
+
+        if (data.success) {
+            const count = data.count;
+            const badge = document.getElementById('trashCount');
+
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                    badge.style.marginLeft = '5px';
+                    badge.style.background = 'var(--danger)';
+                    badge.style.color = 'white';
+                    badge.style.padding = '2px 8px';
+                    badge.style.borderRadius = '12px';
+                    badge.style.fontSize = '11px';
+                    badge.style.fontWeight = '600';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error loading trash count:', error);
+    }
+}
+
+async function openTrashModal() {
+    document.getElementById('trashModal').style.display = 'flex';
+
+    try {
+        const response = await fetch('/api/trash');
+        const data = await response.json();
+
+        if (!data.success || data.count === 0) {
+            document.getElementById('trashContent').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🗑️</div>
+                    <div class="empty-state-title">Trash is Empty</div>
+                    <div class="empty-state-text">No deleted organizations</div>
+                </div>
+            `;
+            return;
+        }
+
+        // Render trash items
+        let html = '<div style="padding: 20px;">';
+        html += '<p style="color: var(--text-light); font-size: 14px; margin-bottom: 20px;">Organizations will be automatically deleted after 30 days</p>';
+
+        data.organizations.forEach(org => {
+            const daysLeft = org.days_until_permanent_delete;
+            const warningClass = daysLeft <= 5 ? 'var(--danger)' : 'var(--text-light)';
+
+            html += `
+                <div style="background: var(--bg-gray); border: 2px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 8px 0; color: var(--primary);">${escapeHtml(org.name)}</h4>
+                            <div style="font-size: 13px; color: var(--text-light);">
+                                <div>ID: <code>${escapeHtml(org.id)}</code></div>
+                                <div>Industry: ${escapeHtml(org.industry)}</div>
+                                <div>Assessments: ${org.stats.total_assessments}/100</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 12px; color: ${warningClass}; font-weight: 600; margin-bottom: 10px;">
+                                ${daysLeft > 0 ? `${daysLeft} days left` : 'Expires today'}
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-primary btn-small" onclick="restoreFromTrash('${escapeHtml(org.id)}')" style="padding: 6px 12px; font-size: 12px;">
+                                    Restore
+                                </button>
+                                <button class="btn btn-danger btn-small" onclick="permanentDeleteOrg('${escapeHtml(org.id)}', '${escapeHtml(org.name)}')" style="padding: 6px 12px; font-size: 12px;">
+                                    Delete Forever
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-light); padding-top: 12px; border-top: 1px solid var(--border);">
+                        Deleted: ${new Date(org.deleted_at).toLocaleString()}
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        document.getElementById('trashContent').innerHTML = html;
+
+    } catch (error) {
+        console.error('Error loading trash:', error);
+        alert('Failed to load trash');
+    }
+}
+
+function closeTrashModal() {
+    document.getElementById('trashModal').style.display = 'none';
+}
+
+async function restoreFromTrash(orgId) {
+    if (!confirm('Restore this organization?')) return;
+
+    try {
+        const response = await fetch(`/api/organizations/${orgId}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: 'Dashboard User' })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('Organization restored successfully!');
+            closeTrashModal();
+            await loadOrganizationsData();
+            await loadTrashCount();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error restoring organization:', error);
+        alert(`Failed to restore: ${error.message}`);
+    }
+}
+
+async function permanentDeleteOrg(orgId, orgName) {
+    if (!confirm(`PERMANENTLY DELETE "${orgName}"?\n\nThis action CANNOT be undone!\n\nAll assessment data will be lost forever.`)) return;
+
+    // Double confirmation
+    if (!confirm(`Are you absolutely sure? This will permanently delete "${orgName}".`)) return;
+
+    try {
+        const response = await fetch(`/api/organizations/${orgId}/permanent?user=Dashboard%20User`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('Organization permanently deleted');
+            closeTrashModal();
+            await loadTrashCount();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error permanently deleting organization:', error);
+        alert(`Failed to delete: ${error.message}`);
+    }
+}
+
+// Load trash count on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadTrashCount();
+});

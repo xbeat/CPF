@@ -246,6 +246,8 @@ function updateOrganizationInIndex(orgData) {
     size: orgData.metadata.size,
     country: orgData.metadata.country,
     language: orgData.metadata.language,
+    sede_sociale: orgData.metadata.sede_sociale || '',
+    partita_iva: orgData.metadata.partita_iva || '',
     created_at: orgData.metadata.created_at,
     updated_at: orgData.metadata.updated_at,
     deleted_at: orgData.metadata.deleted_at || null,
@@ -451,7 +453,9 @@ function createOrganization(orgConfig) {
       created_at: now,
       updated_at: now,
       created_by: user,
-      notes: orgConfig.notes || ''
+      notes: orgConfig.notes || '',
+      sede_sociale: orgConfig.sede_sociale || '',
+      partita_iva: orgConfig.partita_iva || ''
     },
     assessments: {},
     aggregates: {
@@ -714,6 +718,26 @@ function saveSocIndicator(orgId, assessmentData) {
   // Write SOC file
   writeJsonFile(socFilePath, socData);
 
+  // Emit WebSocket event for real-time dashboard update
+  if (global.io) {
+    const category = indicatorId.split('.')[0];
+    const trend = previousValue !== null
+      ? (assessmentData.bayesian_score > previousValue ? 'up' : assessmentData.bayesian_score < previousValue ? 'down' : 'stable')
+      : null;
+
+    global.io.to(`org:${orgId}`).emit('indicator_update', {
+      orgId,
+      indicatorId,
+      category,
+      assessment: assessmentData,
+      previousScore: previousValue,
+      newScore: assessmentData.bayesian_score,
+      trend,
+      source: 'soc',
+      timestamp: new Date().toISOString()
+    });
+  }
+
   return socData;
 }
 
@@ -782,7 +806,10 @@ function calculateAggregates(assessments) {
 
   // Completion
   const allIndicators = generateAllIndicatorIds();
-  const assessedIndicators = Object.keys(assessments);
+  // Conta solo assessment con score > 0 (score=0 significa reset/non valutato)
+  const assessedIndicators = Object.keys(assessments).filter(id =>
+    assessments[id] && assessments[id].bayesian_score > 0
+  );
   const missingIndicators = allIndicators.filter(id => !assessedIndicators.includes(id));
 
   return {
@@ -1122,6 +1149,162 @@ async function generatePDFExport(orgId, user = 'System') {
   return doc;
 }
 
+/**
+ * Generate ZIP export containing all assessment cards (schede) as separate JSON files
+ */
+async function generateZIPExport(orgId, user = 'System') {
+  const archiver = require('archiver');
+  const { PassThrough } = require('stream');
+  const orgData = readOrganization(orgId);
+
+  // Log audit event
+  logAuditEvent('export', 'organization', orgId, { format: 'zip' }, user);
+
+  // Create a pass-through stream for the archive
+  const archive = archiver('zip', {
+    zlib: { level: 9 } // Maximum compression
+  });
+
+  const stream = new PassThrough();
+  archive.pipe(stream);
+
+  // 1. Add organization_info.json
+  const orgInfo = {
+    id: orgData.id,
+    name: orgData.name,
+    metadata: orgData.metadata,
+    export_date: new Date().toISOString(),
+    exported_by: user
+  };
+  archive.append(JSON.stringify(orgInfo, null, 2), { name: 'organization_info.json' });
+
+  // 2. Add summary.json with aggregates
+  const summary = {
+    organization: orgData.name,
+    organization_id: orgData.id,
+    export_date: new Date().toISOString(),
+    overall_risk: orgData.aggregates.overall_risk,
+    overall_confidence: orgData.aggregates.overall_confidence,
+    completion: orgData.aggregates.completion,
+    category_breakdown: {}
+  };
+
+  // Add category statistics
+  for (let cat = 1; cat <= 10; cat++) {
+    const catKey = cat.toString();
+    const catData = orgData.aggregates.by_category[catKey];
+    summary.category_breakdown[catKey] = {
+      name: CATEGORY_NAMES[catKey],
+      ...catData
+    };
+  }
+  archive.append(JSON.stringify(summary, null, 2), { name: 'summary.json' });
+
+  // 3. Add individual assessment files organized by category
+  const categoryFolders = {
+    '1': '1_authority',
+    '2': '2_temporal',
+    '3': '3_social',
+    '4': '4_affective',
+    '5': '5_cognitive',
+    '6': '6_group',
+    '7': '7_stress',
+    '8': '8_unconscious',
+    '9': '9_ai_enhanced',
+    '10': '10_convergent'
+  };
+
+  const allIndicators = generateAllIndicatorIds();
+  let assessedCount = 0;
+
+  allIndicators.forEach(indicatorId => {
+    const catNum = indicatorId.split('.')[0];
+    const assessment = orgData.assessments[indicatorId];
+
+    if (assessment) {
+      assessedCount++;
+      const scheda = {
+        indicator_id: indicatorId,
+        category: CATEGORY_NAMES[catNum],
+        ...assessment,
+        organization_id: orgData.id,
+        organization_name: orgData.name,
+        export_timestamp: new Date().toISOString()
+      };
+
+      const folderName = categoryFolders[catNum];
+      const fileName = `assessments/${folderName}/indicator_${indicatorId}.json`;
+      archive.append(JSON.stringify(scheda, null, 2), { name: fileName });
+    }
+  });
+
+  // 4. Add text report summary
+  const reportLines = [
+    '═══════════════════════════════════════════════════════════════',
+    '                    CPF AUDIT EXPORT REPORT',
+    '═══════════════════════════════════════════════════════════════',
+    '',
+    `Organization: ${orgData.name}`,
+    `ID: ${orgData.id}`,
+    `Industry: ${orgData.metadata.industry}`,
+    `Size: ${orgData.metadata.size}`,
+    `Country: ${orgData.metadata.country}`,
+    `Export Date: ${new Date().toISOString()}`,
+    `Exported By: ${user}`,
+    '',
+    '───────────────────────────────────────────────────────────────',
+    '                      EXECUTIVE SUMMARY',
+    '───────────────────────────────────────────────────────────────',
+    '',
+    `Overall Risk Score: ${(orgData.aggregates.overall_risk * 100).toFixed(1)}%`,
+    `Overall Confidence: ${(orgData.aggregates.overall_confidence * 100).toFixed(1)}%`,
+    `Assessment Completion: ${orgData.aggregates.completion.percentage.toFixed(1)}%`,
+    `Indicators Assessed: ${assessedCount}/100`,
+    '',
+    '───────────────────────────────────────────────────────────────',
+    '                    CATEGORY BREAKDOWN',
+    '───────────────────────────────────────────────────────────────',
+    ''
+  ];
+
+  for (let cat = 1; cat <= 10; cat++) {
+    const catKey = cat.toString();
+    const catData = orgData.aggregates.by_category[catKey];
+    if (catData && catData.assessed_count > 0) {
+      reportLines.push(`${cat}. ${CATEGORY_NAMES[catKey]}`);
+      reportLines.push(`   Risk: ${(catData.avg_score * 100).toFixed(1)}% | Confidence: ${(catData.avg_confidence * 100).toFixed(1)}% | Completion: ${catData.completion_percentage.toFixed(1)}%`);
+      reportLines.push('');
+    } else {
+      reportLines.push(`${cat}. ${CATEGORY_NAMES[catKey]}`);
+      reportLines.push(`   Not assessed`);
+      reportLines.push('');
+    }
+  }
+
+  reportLines.push('───────────────────────────────────────────────────────────────');
+  reportLines.push('                      CONTENTS OF ZIP');
+  reportLines.push('───────────────────────────────────────────────────────────────');
+  reportLines.push('');
+  reportLines.push('This ZIP archive contains:');
+  reportLines.push('');
+  reportLines.push('• organization_info.json - Complete organization metadata');
+  reportLines.push('• summary.json - Aggregated statistics and risk scores');
+  reportLines.push('• assessments/ - Individual assessment cards (schede) by category');
+  reportLines.push(`  └─ ${assessedCount} assessed indicators in categorized folders`);
+  reportLines.push('• report.txt - This summary report');
+  reportLines.push('');
+  reportLines.push('═══════════════════════════════════════════════════════════════');
+  reportLines.push('Generated by CPF Auditing Dashboard');
+  reportLines.push('═══════════════════════════════════════════════════════════════');
+
+  archive.append(reportLines.join('\n'), { name: 'report.txt' });
+
+  // Finalize the archive
+  archive.finalize();
+
+  return { archive, stream };
+}
+
 // ============================================================================
 // Exports
 // ============================================================================
@@ -1170,6 +1353,7 @@ module.exports = {
   // Export functions
   generateXLSXExport,
   generatePDFExport,
+  generateZIPExport,
 
   // Constants
   DATA_DIR,

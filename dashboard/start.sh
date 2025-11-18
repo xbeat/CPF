@@ -1,7 +1,13 @@
 #!/bin/bash
 
+# Set PATH FIRST before any command
+export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:$PATH"
+
 # CPF Dashboard Launcher
 # Starts Node server and opens browser
+
+# Change to the script's directory
+cd "$(/usr/bin/dirname "$0")"
 
 echo "🚀 Starting CPF Dashboard..."
 echo ""
@@ -16,15 +22,18 @@ fi
 # Start Node server
 echo "🌐 Starting server on http://localhost:3000"
 echo ""
+echo "🏠 Landing: http://localhost:3000/"
 echo "📊 Dashboard: http://localhost:3000/dashboard/"
 echo "📋 Auditing: http://localhost:3000/dashboard/auditing/"
 echo "🔄 SOC: http://localhost:3000/dashboard/soc/"
+echo "🎮 Simulator: http://localhost:3000/dashboard/simulator/"
 echo ""
 echo "Press Ctrl+C to stop"
 echo ""
 
-# Open browser after 2 seconds
-(sleep 2 && open http://localhost:3000/dashboard/ 2>/dev/null || xdg-open http://localhost:3000/dashboard/ 2>/dev/null) &
+# Open browser after 2 seconds (landing page at root)
+# Add timestamp to force reload without cache
+(/bin/sleep 2 && open "http://localhost:3000/?nocache=$(/bin/date +%s)" 2>/dev/null || xdg-open "http://localhost:3000/?nocache=$(/bin/date +%s)" 2>/dev/null) &
 
 # Start server
 npm start
