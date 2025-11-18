@@ -1,83 +1,121 @@
 name: Convert Markdown to PDF
 
 on:
-  # Si attiva quando pushi modifiche ai file .md in docs/
-  push:
-    paths:
-      - 'cpf-soc-integration/docs/**/*.md'
-      - '.github/workflows/md-to-pdf.yml'
-
-  # Permette di eseguirla manualmente da GitHub
   workflow_dispatch:
+    inputs:
+      source_folder:
+        description: 'Cartella con i file .md da convertire (es: cpf-soc-integration/docs/en-US, cpf-soc-integration/docs/it-IT)'
+        required: true
+        default: 'cpf-soc-integration/docs/en-US'
+        type: string
+      output_folder:
+        description: 'Cartella dove salvare i PDF (lascia vuoto per stessa cartella del .md)'
+        required: false
+        default: ''
+        type: string
 
 jobs:
-  convert-to-pdf:
+  convert:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      # 1. Checkout del repository
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2. Installa Pandoc e LaTeX (per PDF di alta qualità)
-      - name: Install Pandoc and LaTeX
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y pandoc texlive-latex-base texlive-fonts-recommended texlive-latex-extra texlive-xetex
+    - name: Install Pandoc and LaTeX
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pandoc texlive-latex-base texlive-fonts-recommended texlive-latex-extra texlive-xetex
 
-      # 3. Converti tutti i file MD in PDF
-      - name: Convert MD to PDF
-        run: |
-          # Trova tutti i file .md in cpf-soc-integration/docs/
-          find cpf-soc-integration/docs -name "*.md" -type f | while read mdfile; do
-            # Ottieni il percorso senza estensione
-            base="${mdfile%.md}"
-            pdffile="${base}.pdf"
+    - name: Convert Markdown files to PDF
+      run: |
+        SOURCE_FOLDER="${{ github.event.inputs.source_folder }}"
+        OUTPUT_FOLDER="${{ github.event.inputs.output_folder }}"
 
-            echo "Converting: $mdfile → $pdffile"
+        echo "Source folder: $SOURCE_FOLDER"
+        echo "Output folder: ${OUTPUT_FOLDER:-same as source}"
 
-            # Converti usando pandoc con opzioni per PDF professionale
-            pandoc "$mdfile" \
-              -o "$pdffile" \
-              --pdf-engine=xelatex \
-              -V geometry:margin=1in \
-              -V fontsize=11pt \
-              -V documentclass=article \
-              --toc \
-              --highlight-style=tango \
-              2>&1 | tee -a conversion.log || echo "Warning: Failed to convert $mdfile"
-          done
+        # Verify source folder exists
+        if [ ! -d "$SOURCE_FOLDER" ]; then
+          echo "Error: Folder '$SOURCE_FOLDER' does not exist"
+          exit 1
+        fi
 
-          echo "Conversion completed!"
-          cat conversion.log 2>/dev/null || true
+        # Create output folder if specified
+        if [ -n "$OUTPUT_FOLDER" ]; then
+          mkdir -p "$OUTPUT_FOLDER"
+        fi
 
-      # 4. Verifica cosa è stato generato
-      - name: List generated PDFs
-        run: |
-          echo "=== Generated PDF files ==="
-          find cpf-soc-integration/docs -name "*.pdf" -type f
+        # Find .md files in the specified folder (not recursive)
+        find "$SOURCE_FOLDER" -maxdepth 1 -name "*.md" -type f | while read mdfile; do
+          echo "========================================"
+          echo "Converting: $mdfile"
 
-      # 5. Configura Git
-      - name: Configure Git
-        run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
+          dir=$(dirname "$mdfile")
+          filename=$(basename "$mdfile" .md)
 
-      # 6. Committa i PDF generati
-      - name: Commit PDFs
-        run: |
-          git add cpf-soc-integration/docs/**/*.pdf
-
-          # Verifica se ci sono cambiamenti da committare
-          if git diff --staged --quiet; then
-            echo "No new PDFs to commit"
+          # Convert using pandoc with professional PDF settings
+          if [ -n "$OUTPUT_FOLDER" ]; then
+            output_path="$OUTPUT_FOLDER/$filename.pdf"
           else
-            git commit -m "docs: Auto-generate PDF versions of markdown documentation
-
-[skip ci]"
-            git push
+            output_path="$dir/$filename.pdf"
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          pandoc "$mdfile" \
+            -o "$output_path" \
+            --pdf-engine=xelatex \
+            -V geometry:margin=1in \
+            -V fontsize=11pt \
+            -V documentclass=article \
+            --toc \
+            --toc-depth=3 \
+            --highlight-style=tango \
+            --shift-heading-level-by=-1 \
+            2>&1 || echo "✗ Failed: $mdfile"
+
+          if [ -f "$output_path" ]; then
+            echo "✓ Created: $output_path"
+          else
+            echo "✗ Failed to create PDF for: $mdfile"
+          fi
+        done
+
+    - name: List generated PDFs
+      run: |
+        OUTPUT_FOLDER="${{ github.event.inputs.output_folder }}"
+        SOURCE_FOLDER="${{ github.event.inputs.source_folder }}"
+
+        if [ -n "$OUTPUT_FOLDER" ]; then
+          echo "PDFs in $OUTPUT_FOLDER:"
+          ls -la "$OUTPUT_FOLDER"/*.pdf 2>/dev/null || echo "No PDFs found"
+        else
+          echo "PDFs in $SOURCE_FOLDER:"
+          ls -la "$SOURCE_FOLDER"/*.pdf 2>/dev/null || echo "No PDFs found"
+        fi
+
+    - name: Commit PDFs to repository
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+
+        OUTPUT_FOLDER="${{ github.event.inputs.output_folder }}"
+        SOURCE_FOLDER="${{ github.event.inputs.source_folder }}"
+
+        # Add PDFs from the correct folder
+        if [ -n "$OUTPUT_FOLDER" ]; then
+          git add "$OUTPUT_FOLDER"/*.pdf 2>/dev/null || true
+        else
+          git add "$SOURCE_FOLDER"/*.pdf 2>/dev/null || true
+        fi
+
+        if git diff --staged --quiet; then
+          echo "No new PDFs to commit"
+        else
+          git commit -m "docs: Add PDF versions from ${{ github.event.inputs.source_folder }}"
+          git push
+          echo "PDFs committed and pushed to repository"
+        fi
