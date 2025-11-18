@@ -139,7 +139,8 @@ function renderOrganizations() {
         if (selectedOrgId === org.id) {
             item.classList.add('active');
         }
-        item.onclick = () => selectOrganization(org.id);
+        item.dataset.action = 'select-organization';
+        item.dataset.orgId = org.id;
 
         const overallRisk = org.stats?.overall_risk || 0;
         const riskClass = overallRisk > 0.66 ? 'high' :
@@ -172,9 +173,9 @@ function renderOrganizations() {
                         ${org.industry} • ${capitalizeFirst(org.size)} • ${countryFlag} ${org.country}
                     </div>
                 </div>
-                <div class="org-card-actions" onclick="event.stopPropagation()">
-                    <button class="icon-btn" onclick="editOrganization('${org.id}')" title="Edit">✏️</button>
-                    <button class="icon-btn" onclick="deleteOrganization('${org.id}', '${escapeHtml(org.name)}')" title="Delete">🗑️</button>
+                <div class="org-card-actions">
+                    <button class="icon-btn" data-action="edit-organization" data-org-id="${org.id}" title="Edit">✏️</button>
+                    <button class="icon-btn" data-action="delete-organization" data-org-id="${org.id}" data-org-name="${escapeHtml(org.name)}" title="Delete">🗑️</button>
                 </div>
             </div>
             <div class="org-stats-detailed">
@@ -423,7 +424,7 @@ function renderProgressMatrix(org) {
         filterDiv.innerHTML = `
             <div class="filter-active">
                 <div class="filter-text">🔍 Filter active: Category ${categoryFilter} - ${categoryNames[categoryFilter]}</div>
-                <button onclick="clearCategoryFilter()" class="filter-clear-btn">Clear Filter</button>
+                <button data-action="clear-category-filter" class="filter-clear-btn">Clear Filter</button>
             </div>
         `;
     } else {
@@ -476,12 +477,12 @@ function renderProgressMatrix(org) {
             const title = completed ? `${indicatorId} - ${riskLevel} (${riskPercent}%)` : `${indicatorId} - ${t.notAssessed}`;
             const cellStyle = isFiltered ? 'opacity: 0.3; cursor: default;' : '';
 
-            const onclickHandler = isFiltered ? '' : `openIndicatorDetail('${indicatorId}', '${org.id}')`;
+            const dataAttributes = isFiltered ? '' : `data-action="open-indicator-detail" data-indicator-id="${indicatorId}" data-org-id="${org.id}"`;
             html += `
                 <div class="matrix-cell indicator ${cellClass}"
                         title="${title}"
                         style="${cellStyle}"
-                        onclick="${onclickHandler}">
+                        ${dataAttributes}>
                     <div style="font-weight: 700; font-size: 13px;">${indicatorId}</div>
                     ${completed ? `<div style="font-weight: 600; font-size: 16px; margin-top: 4px;">${riskPercent}%</div>` : ''}
                 </div>
@@ -523,13 +524,11 @@ function renderRiskHeatmap(org) {
                                 catData.avg_score < 0.7 ? 'risk-medium' : 'risk-high';
 
             html += `
-                <div class="category-card" onclick="filterByCategory('${catKey}')" style="position: relative;">
+                <div class="category-card" data-action="filter-by-category" data-category-key="${catKey}" style="position: relative;">
                     <div class="category-title">
                         ${cat}. ${categoryNames[catKey]}
-                        <span onclick="event.stopPropagation(); openCategoryModal('${catKey}')"
-                              style="cursor: pointer; float: right; font-size: 16px; opacity: 0.7; transition: opacity 0.2s;"
-                              onmouseover="this.style.opacity='1'"
-                              onmouseout="this.style.opacity='0.7'"
+                        <span data-action="open-category-modal" data-category-key="${catKey}"
+                              class="category-info-icon"
                               title="${t.viewCategoryDetails}">❓</span>
                     </div>
                     <div class="category-stats">
@@ -549,10 +548,8 @@ function renderRiskHeatmap(org) {
                 <div class="category-card" style="opacity: 0.5; position: relative;">
                     <div class="category-title">
                         ${cat}. ${categoryNames[catKey]}
-                        <span onclick="event.stopPropagation(); openCategoryModal('${catKey}')"
-                              style="cursor: pointer; float: right; font-size: 16px; opacity: 0.7; transition: opacity 0.2s;"
-                              onmouseover="this.style.opacity='1'"
-                              onmouseout="this.style.opacity='0.7'"
+                        <span data-action="open-category-modal" data-category-key="${catKey}"
+                              class="category-info-icon"
                               title="${t.viewCategoryDetails}">❓</span>
                     </div>
                     <div class="category-stats">
@@ -827,9 +824,7 @@ function renderPrioritizationTable(org) {
     priorityData.forEach((item, idx) => {
         const riskClass = item.risk < 0.33 ? 'risk-low' : item.risk < 0.66 ? 'risk-medium' : 'risk-high';
         html += `
-            <tr onclick="openCategoryModal('${item.category}')" style="cursor: pointer; transition: background-color 0.2s;"
-                onmouseover="this.style.backgroundColor='var(--bg-gray)'"
-                onmouseout="this.style.backgroundColor='transparent'">
+            <tr data-action="open-category-modal" data-category-key="${item.category}" class="priority-table-row">
                 <td style="font-weight: 600; color: var(--text-light);">${idx + 1}</td>
                 <td style="font-weight: 600;">${item.category}. ${item.name}</td>
                 <td><span class="stat-value ${riskClass}" style="font-size: 14px;">${(item.risk * 100).toFixed(1)}%</span></td>
@@ -1468,18 +1463,18 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <button class="btn btn-info" onclick="window.CPFClient.showQuickReference()">📚 Quick Reference</button>
                         <button class="btn btn-info" onclick="window.CPFClient.toggleDetailedAnalysis()">📊 Show/Hide Analysis</button>
-                        <button class="btn btn-light" onclick="document.getElementById('file-input-integrated').click()">📂 Import Data</button>
+                        <button class="btn btn-light" data-action="trigger-file-input" data-file-input-id="file-input-integrated">📂 Import Data</button>
                         <input type="file" id="file-input-integrated" accept=".json" onchange="window.CPFClient.importJSON(event)" style="display: none;">
-                        <button class="btn btn-danger" onclick="resetCompileForm()" title="Reset assessment">🗑️ Reset</button>
-                        <button class="btn btn-primary" onclick="viewAssessmentDetailsFromEdit('${indicatorId}')">📋 View Details</button>
-                        <button class="btn btn-warning" onclick="openHistoryModal()">📜 History</button>
+                        <button class="btn btn-danger" data-action="reset-compile-form" title="Reset assessment">🗑️ Reset</button>
+                        <button class="btn btn-primary" data-action="view-assessment-details-from-edit" data-indicator-id="${indicatorId}">📋 View Details</button>
+                        <button class="btn btn-warning" data-action="open-history-modal">📜 History</button>
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <span id="auto-save-status" style="color: #4CAF50; font-size: 14px; display: none;">✓ Auto-saved</span>
                         <button class="btn btn-secondary" onclick="window.CPFClient.saveData()">💾 Save</button>
                         <button class="btn btn-success" onclick="window.CPFClient.exportData()">💾 Export Data</button>
                         <button class="btn btn-primary" onclick="window.CPFClient.generateReport()">📊 Report</button>
-                        <button class="btn btn-secondary" onclick="closeIndicatorModal()">Close</button>
+                        <button class="btn btn-secondary" data-action="close-indicator-modal">Close</button>
                     </div>
                 </div>
                 <div class="metadata-bar" id="metadata-bar" style="display: none;"></div>
@@ -2973,10 +2968,10 @@ async function openTrashModal() {
                                 ${daysLeft > 0 ? `${daysLeft} days left` : 'Expires today'}
                             </div>
                             <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-primary btn-small" onclick="restoreFromTrash('${escapeHtml(org.id)}')">
+                                <button class="btn btn-primary btn-small" data-action="restore-from-trash" data-org-id="${escapeHtml(org.id)}">
                                     ♻️ Restore
                                 </button>
-                                <button class="btn btn-danger btn-small" onclick="permanentDeleteOrg('${escapeHtml(org.id)}', '${escapeHtml(org.name)}')">
+                                <button class="btn btn-danger btn-small" data-action="permanent-delete-org" data-org-id="${escapeHtml(org.id)}" data-org-name="${escapeHtml(org.name)}">
                                     🔥 Delete Forever
                                 </button>
                             </div>
@@ -3123,7 +3118,7 @@ async function openHistoryModal() {
                         </div>
                         ${!isCurrent ? `
                         <div>
-                            <button class="btn btn-warning btn-small" onclick="revertToVersion(${version.version})">
+                            <button class="btn btn-warning btn-small" data-action="revert-to-version" data-version="${version.version}">
                                 ↩️ Revert to This
                             </button>
                         </div>
@@ -3372,3 +3367,239 @@ function restoreMatrixZoom() {
         }
     });
 }
+
+// ===== EVENT DELEGATION SYSTEM =====
+/**
+ * Setup event delegation for all dashboard interactions
+ * This eliminates inline onclick handlers for better CSP compliance and maintainability
+ */
+function setupEventDelegation() {
+    // Delegate all clicks on document
+    document.addEventListener('click', (e) => {
+        // Find the closest element with data-action attribute
+        const target = e.target.closest('[data-action]');
+
+        if (!target) return;
+
+        const action = target.dataset.action;
+
+        // Prevent default for buttons
+        if (target.tagName === 'BUTTON') {
+            e.preventDefault();
+        }
+
+        switch (action) {
+            // Sidebar actions
+            case 'open-sidebar':
+                openSidebar();
+                break;
+            case 'close-sidebar':
+                closeSidebar();
+                break;
+
+            // Modal actions
+            case 'open-create-org-modal':
+                openCreateOrgModal();
+                break;
+            case 'close-org-modal':
+                closeOrgModal();
+                break;
+            case 'open-trash-modal':
+                openTrashModal();
+                break;
+            case 'close-trash-modal':
+                closeTrashModal();
+                break;
+            case 'close-delete-modal':
+                closeDeleteModal();
+                break;
+            case 'confirm-delete':
+                confirmDelete();
+                break;
+            case 'close-indicator-modal':
+                closeIndicatorModal();
+                break;
+            case 'open-history-modal':
+                openHistoryModal();
+                break;
+            case 'open-integrated-version':
+                openIntegratedVersion();
+                break;
+            case 'delete-assessment-from-modal':
+                deleteAssessmentFromModal();
+                break;
+            case 'close-assessment-details-modal':
+                closeAssessmentDetailsModal();
+                break;
+            case 'open-history-modal-from-details':
+                openHistoryModalFromDetails();
+                break;
+            case 'delete-assessment-from-details':
+                deleteAssessmentFromDetails();
+                break;
+            case 'close-history-modal':
+                closeHistoryModal();
+                break;
+            case 'close-category-modal':
+                closeCategoryModal();
+                break;
+
+            // Export actions
+            case 'export-xlsx':
+                exportCurrentOrgXLSX();
+                break;
+            case 'export-pdf':
+                exportCurrentOrgPDF();
+                break;
+            case 'export-zip':
+                exportCurrentOrgZIP();
+                break;
+
+            // Filter and sort actions
+            case 'toggle-sort-direction':
+                toggleSortDirection();
+                break;
+            case 'reset-filters':
+                resetFilters();
+                break;
+            case 'clear-category-filter':
+                clearCategoryFilter();
+                break;
+
+            // Tab actions
+            case 'switch-tab':
+                const tab = target.dataset.tab;
+                if (tab) switchTab(tab);
+                break;
+
+            // Zoom actions
+            case 'set-matrix-zoom':
+                const matrixType = target.dataset.matrixType;
+                const zoomLevel = parseInt(target.dataset.zoomLevel);
+                if (matrixType && zoomLevel) setMatrixZoom(matrixType, zoomLevel);
+                break;
+
+            // Compile actions
+            case 'load-indicator-for-compile':
+                loadIndicatorForCompile();
+                break;
+            case 'reset-compile-form':
+                resetCompileForm();
+                break;
+            case 'save-assessment-to-org':
+                saveAssessmentToOrg();
+                break;
+
+            // Organization actions (with parameters)
+            case 'edit-organization':
+                const editOrgId = target.dataset.orgId;
+                if (editOrgId) editOrganization(editOrgId);
+                break;
+            case 'delete-organization':
+                const deleteOrgId = target.dataset.orgId;
+                const deleteOrgName = target.dataset.orgName;
+                if (deleteOrgId && deleteOrgName) deleteOrganization(deleteOrgId, deleteOrgName);
+                break;
+            case 'select-organization':
+                const selectOrgId = target.dataset.orgId;
+                if (selectOrgId) selectOrganization(selectOrgId);
+                break;
+
+            // Indicator actions (with parameters)
+            case 'open-indicator-detail':
+                const indicatorId = target.dataset.indicatorId;
+                const orgId = target.dataset.orgId;
+                if (indicatorId && orgId) openIndicatorDetail(indicatorId, orgId);
+                break;
+            case 'filter-by-category':
+                const categoryKey = target.dataset.categoryKey;
+                if (categoryKey) filterByCategory(categoryKey);
+                break;
+            case 'open-category-modal':
+                const catKey = target.dataset.categoryKey;
+                if (catKey) openCategoryModal(catKey);
+                break;
+            case 'view-assessment-details-from-edit':
+                const viewIndicatorId = target.dataset.indicatorId;
+                if (viewIndicatorId) viewAssessmentDetailsFromEdit(viewIndicatorId);
+                break;
+
+            // Trash actions (with parameters)
+            case 'restore-from-trash':
+                const restoreOrgId = target.dataset.orgId;
+                if (restoreOrgId) restoreFromTrash(restoreOrgId);
+                break;
+            case 'permanent-delete-org':
+                const permDeleteOrgId = target.dataset.orgId;
+                const permDeleteOrgName = target.dataset.orgName;
+                if (permDeleteOrgId && permDeleteOrgName) permanentDeleteOrg(permDeleteOrgId, permDeleteOrgName);
+                break;
+
+            // Version actions (with parameters)
+            case 'revert-to-version':
+                const version = parseInt(target.dataset.version);
+                if (!isNaN(version)) revertToVersion(version);
+                break;
+
+            // File input triggers
+            case 'trigger-file-input':
+                const fileInputId = target.dataset.fileInputId;
+                if (fileInputId) {
+                    const fileInput = document.getElementById(fileInputId);
+                    if (fileInput) fileInput.click();
+                }
+                break;
+        }
+    });
+
+    // Delegate change events (for selects and inputs)
+    document.addEventListener('change', (e) => {
+        const target = e.target;
+        const action = target.dataset.action;
+
+        if (!action) return;
+
+        switch (action) {
+            case 'filter-and-sort':
+                filterAndSortOrganizations();
+                break;
+            case 'update-indicator-preview':
+                updateIndicatorPreview();
+                break;
+        }
+    });
+
+    // Delegate input events (for search)
+    document.addEventListener('input', (e) => {
+        const target = e.target;
+        const action = target.dataset.action;
+
+        if (!action) return;
+
+        switch (action) {
+            case 'filter-and-sort':
+                filterAndSortOrganizations();
+                break;
+        }
+    });
+
+    // Delegate submit events (for forms)
+    document.addEventListener('submit', (e) => {
+        const target = e.target;
+        const action = target.dataset.action;
+
+        if (!action) return;
+
+        switch (action) {
+            case 'save-organization':
+                e.preventDefault();
+                saveOrganization(e);
+                break;
+        }
+    });
+}
+
+// Initialize event delegation when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    setupEventDelegation();
+});
