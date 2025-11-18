@@ -231,19 +231,19 @@ function renderFieldKit(data) {
     metadataBar.innerHTML = `
         <div class="meta-field">
             <label>Assessment Date</label>
-            <input type="date" value="${currentData.metadata.date}" onchange="window.CPFClient.updateMeta('date', this.value)">
+            <input type="date" value="${currentData.metadata.date}" data-meta-field="date">
         </div>
         <div class="meta-field">
             <label>Auditor</label>
-            <input type="text" value="${currentData.metadata.auditor}" onchange="window.CPFClient.updateMeta('auditor', this.value)" placeholder="Your name">
+            <input type="text" value="${currentData.metadata.auditor}" data-meta-field="auditor" placeholder="Your name">
         </div>
         <div class="meta-field">
             <label>Client</label>
-            <input type="text" value="${currentData.metadata.client}" onchange="window.CPFClient.updateMeta('client', this.value)" placeholder="Client name">
+            <input type="text" value="${currentData.metadata.client}" data-meta-field="client" placeholder="Client name">
         </div>
         <div class="meta-field">
             <label>Status</label>
-            <select onchange="window.CPFClient.updateMeta('status', this.value)">
+            <select data-meta-field="status">
                 <option value="in-progress" ${currentData.metadata.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
                 <option value="completed" ${currentData.metadata.status === 'completed' ? 'selected' : ''}>Completed</option>
                 <option value="review" ${currentData.metadata.status === 'review' ? 'selected' : ''}>Under Review</option>
@@ -254,8 +254,7 @@ function renderFieldKit(data) {
             <textarea id="assessment-notes"
                       placeholder="Assessment notes..."
                       style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; min-height: 80px; font-family: inherit; font-size: 14px; resize: vertical;"
-                      onchange="window.CPFClient.updateMeta('notes', this.value)"
-                      onblur="window.CPFClient.updateMeta('notes', this.value)">${currentData.metadata.notes || ''}</textarea>
+                      data-meta-field="notes">${currentData.metadata.notes || ''}</textarea>
         </div>
     `;
     
@@ -307,9 +306,9 @@ function renderFieldKit(data) {
     document.getElementById('action-bar').style.display = 'flex';
     document.getElementById('action-bar').innerHTML = `
         <div style="display: flex; gap: 15px;">
-            <button class="btn btn-secondary" onclick="window.CPFClient.saveData()">💾 Save</button>
-            <button class="btn btn-success" onclick="window.CPFClient.exportData()">📥 Export</button>
-            <button class="btn btn-primary" onclick="window.CPFClient.generateReport()">📊 Report</button>
+            <button class="btn btn-secondary" data-action="save">💾 Save</button>
+            <button class="btn btn-success" data-action="export">📥 Export</button>
+            <button class="btn btn-primary" data-action="generate-report">📊 Report</button>
         </div>
     `;
 
@@ -330,7 +329,7 @@ function renderItem(item, itemId) {
     if (item.type === 'radio-group') {
         return `
             <div class="question-group">
-                <div class="question-title">                        
+                <div class="question-title">
                     ${item.number ? `<span class="question-number">${item.number}</span>` : ''}
                     <span>${item.title}</span>
                 </div>
@@ -339,7 +338,7 @@ function renderItem(item, itemId) {
                         <div class="radio-option ${opt.value}">
                             <input type="radio" name="${itemId}" id="${itemId}_${opt.value}" value="${opt.value}"
                                     ${value === opt.value ? 'checked' : ''}
-                                    onchange="window.CPFClient.updateResponseWithAutoScore('${itemId}', '${opt.value}')">
+                                    data-response-id="${itemId}" data-auto-score="true">
                             <label for="${itemId}_${opt.value}" class="radio-label">
                                 ${opt.label}
                             </label>
@@ -353,7 +352,7 @@ function renderItem(item, itemId) {
     else if (item.type === 'radio-list') {
         return `
             <div class="question-group" data-item-id="${itemId}">
-                <div class="question-title">                        
+                <div class="question-title">
                     ${item.number ? `<span class="question-number">${item.number}</span>` : ''}
                     <span>${item.title}</span>
                 </div>
@@ -361,11 +360,11 @@ function renderItem(item, itemId) {
                     ${item.options.map(opt => {
                         const isChecked = value === opt.value;
                         return `
-                            <label class="checkbox-item ${isChecked ? 'checked' : ''}" 
+                            <label class="checkbox-item ${isChecked ? 'checked' : ''}"
                                    data-value="${opt.value}">
-                                <input type="checkbox" 
+                                <input type="checkbox"
                                        ${isChecked ? 'checked' : ''}
-                                       onchange="window.CPFClient.selectRadioOption('${itemId}', '${opt.value}')">
+                                       data-radio-group="${itemId}" data-radio-value="${opt.value}">
                                 <span class="checkbox-label">${opt.label}</span>
                             </label>
                         `;
@@ -379,7 +378,7 @@ function renderItem(item, itemId) {
         const checked = value ? 'checked' : '';
         let html = `
             <div class="checkbox-item ${checked}">
-                <input type="checkbox" id="${itemId}" ${checked} onchange="window.CPFClient.updateResponseWithAutoScore('${itemId}', this.checked)">
+                <input type="checkbox" id="${itemId}" ${checked} data-response-id="${itemId}" data-auto-score="true">
                 <label for="${itemId}">${item.label}</label>
             </div>
         `;
@@ -393,8 +392,8 @@ function renderItem(item, itemId) {
                     const subValue = currentData.responses[subItemId] || false;
                     html += `
                         <div class="checkbox-item ${subValue ? 'checked' : ''}" style="display: inline-block; margin-right: 15px;">
-                            <input type="checkbox" id="${subItemId}" ${subValue ? 'checked' : ''} 
-                                   onchange="window.CPFClient.updateResponse('${subItemId}', this.checked)">
+                            <input type="checkbox" id="${subItemId}" ${subValue ? 'checked' : ''}
+                                   data-response-id="${subItemId}">
                             <label for="${subItemId}">${sub.label}</label>
                         </div>
                     `;
@@ -403,9 +402,9 @@ function renderItem(item, itemId) {
                     const subValue = currentData.responses[`${itemId}_radio_value`];
                     html += `
                         <div class="radio-option" style="display: inline-block; margin-right: 15px;">
-                            <input type="radio" name="${itemId}_radio" id="${subItemId}" value="${sub.label}" 
+                            <input type="radio" name="${itemId}_radio" id="${subItemId}" value="${sub.label}"
                                    ${subValue === sub.label ? 'checked' : ''}
-                                   onchange="window.CPFClient.updateResponse('${itemId}_radio_value', this.value)">
+                                   data-response-id="${itemId}_radio_value">
                             <label for="${subItemId}">${sub.label}</label>
                         </div>
                     `;
@@ -414,7 +413,7 @@ function renderItem(item, itemId) {
                     html += `
                         <div class="input-group" style="margin: 10px 0;">
                             <input type="text" id="${subItemId}" value="${currentData.responses[subItemId] || ''}"
-                                   placeholder="${sub.label}" onchange="window.CPFClient.updateResponse('${subItemId}', this.value)"
+                                   placeholder="${sub.label}" data-response-id="${subItemId}"
                                    style="padding: 6px; width: 200px;">
                         </div>
                     `;
@@ -429,7 +428,7 @@ function renderItem(item, itemId) {
         return `
             <div class="input-group">
                 <label>${item.label}</label>
-                <input type="text" id="${itemId}" value="${value || ''}" onchange="window.CPFClient.updateResponse('${itemId}', this.value)">
+                <input type="text" id="${itemId}" value="${value || ''}" data-response-id="${itemId}">
             </div>
         `;
     }
@@ -454,8 +453,7 @@ function renderItem(item, itemId) {
                         <textarea id="${followupId}"
                                   placeholder="Notes..."
                                   style="width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; min-height: 60px; font-family: inherit; font-size: 14px;"
-                                  onchange="window.CPFClient.updateResponseWithAutoScore('${followupId}', this.value)"
-                                  onblur="window.CPFClient.updateResponseWithAutoScore('${followupId}', this.value)">${followupValue}</textarea>
+                                  data-response-id="${followupId}" data-auto-score="true">${followupValue}</textarea>
                     </div>
                 `;
             });
@@ -1322,7 +1320,7 @@ function updateScoreDisplay() {
             </div>
 
             <div class="score-details-toggle">
-                <button class="btn btn-light" onclick="window.CPFClient.toggleScoreDetails()">
+                <button class="btn btn-light" data-action="toggle-score-details">
                     📈 Show Question Breakdown
                 </button>
             </div>
@@ -1577,7 +1575,7 @@ function renderReferenceContent(container, data) {
     data.categories.forEach(category => {
         html += `
             <div class="category-accordion">
-                <div class="category-header" onclick="window.CPFClient.toggleCategory(${category.id})">
+                <div class="category-header" data-action="toggle-category" data-category-id="${category.id}">
                     <div class="category-title">
                         <span class="category-badge">${category.id}.x</span>
                         <div style="flex: 1;">
@@ -1590,7 +1588,7 @@ function renderReferenceContent(container, data) {
                 <div class="category-body" id="category-${category.id}">
                     <div class="indicator-list">
                         ${category.indicators.map(indicator => `
-                            <div class="indicator-item" onclick="window.CPFClient.loadIndicatorFromReference('${indicator.id}')" title="Click to load this indicator">
+                            <div class="indicator-item" data-action="load-indicator" data-indicator-id="${indicator.id}" title="Click to load this indicator">
                                 <span class="indicator-code">${indicator.id}</span>
                                 <span class="indicator-title">${indicator.title}</span>
                             </div>
@@ -1824,6 +1822,84 @@ function getCategoryName(categoryNum) {
     return categoryMap[categoryNum] || 'unknown';
 }
 
+/**
+ * Setup event delegation for all client interactions
+ * This eliminates the need for window.CPFClient and inline onclick handlers
+ */
+function setupEventDelegation() {
+    // Delegate all clicks on document
+    document.addEventListener('click', (e) => {
+        const action = e.target.dataset.action;
+        if (!action) return;
+
+        // Handle button actions
+        switch (action) {
+            case 'save':
+                saveData();
+                break;
+            case 'export':
+                exportData();
+                break;
+            case 'generate-report':
+                generateReport();
+                break;
+            case 'toggle-score-details':
+                toggleScoreDetails();
+                break;
+            case 'toggle-category':
+                const categoryId = e.target.dataset.categoryId;
+                if (categoryId) toggleCategory(parseInt(categoryId));
+                break;
+            case 'load-indicator':
+                const indicatorId = e.target.dataset.indicatorId;
+                if (indicatorId) loadIndicatorFromReference(indicatorId);
+                break;
+        }
+    });
+
+    // Delegate all change events
+    document.addEventListener('change', (e) => {
+        const target = e.target;
+        const metaField = target.dataset.metaField;
+        const responseId = target.dataset.responseId;
+        const autoScore = target.dataset.autoScore === 'true';
+
+        if (metaField) {
+            // Metadata update
+            updateMeta(metaField, target.value);
+        } else if (responseId) {
+            // Response update
+            const value = target.type === 'checkbox' ? target.checked : target.value;
+            if (autoScore) {
+                updateResponseWithAutoScore(responseId, value);
+            } else {
+                updateResponse(responseId, value);
+            }
+        } else if (target.dataset.radioGroup) {
+            // Radio option (checkbox-style)
+            const itemId = target.dataset.radioGroup;
+            const value = target.dataset.radioValue;
+            if (itemId && value) selectRadioOption(itemId, value);
+        }
+    });
+
+    // Delegate blur events (for textareas)
+    document.addEventListener('blur', (e) => {
+        const target = e.target;
+        const metaField = target.dataset.metaField;
+        const responseId = target.dataset.responseId;
+        const autoScore = target.dataset.autoScore === 'true';
+
+        if (metaField) {
+            updateMeta(metaField, target.value);
+        } else if (responseId && autoScore) {
+            updateResponseWithAutoScore(responseId, target.value);
+        }
+    }, true); // Use capture for blur
+
+    console.log('✅ Event delegation setup complete');
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     // IMPORTANT: Skip auto-init if we're integrated into dashboard
     // Check if we're in dashboard context by looking for dashboard-specific elements
@@ -1832,6 +1908,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (isDashboardIntegrated) {
         console.log('🎯 Client detected dashboard integration - skipping auto-init');
         console.log('✅ CPFClient namespace available for manual initialization');
+
+        // Setup event delegation for client interactions (works in both modes)
+        setupEventDelegation();
         return; // Exit early, let dashboard code initialize manually
     }
 
@@ -1922,7 +2001,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================
-// ES6 MODULE EXPORTS (modern approach)
+// ES6 MODULE EXPORTS
 // ============================================
 export {
     // Data
@@ -1958,27 +2037,22 @@ export {
 };
 
 // ============================================
-// GLOBAL NAMESPACE (for onclick compatibility)
+// BACKWARDS COMPATIBILITY: Global Namespace
 // ============================================
-// Keep window.CPFClient for backwards compatibility with inline onclick handlers
-// TODO: Gradually migrate onclick to addEventListener and remove this
+// Expose exports to window.CPFClient for dashboard.js compatibility
+// NOTE: Client internally uses event delegation (no inline onclick handlers)
+//       Dashboard.js still accesses functions via window.CPFClient
+//       This allows gradual migration of dashboard.js to ES6 modules
 window.CPFClient = {
-    // Data
     organizationContext,
     currentData,
-
-    // Core functions
     renderFieldKit,
     saveToAPI,
     calculateIndicatorScore,
-
-    // Response handling (CRITICAL for auto-save)
     updateResponse,
     updateResponseWithAutoScore,
     selectRadioOption,
     updateMeta,
-
-    // Utility functions
     loadJSON,
     importJSON,
     saveData,
@@ -1987,12 +2061,10 @@ window.CPFClient = {
     resetAll,
     toggleDetailedAnalysis,
     toggleScoreDetails,
-
-    // Modal functions
     showQuickReference,
     closeQuickReference,
     toggleCategory,
     loadIndicatorFromReference
 };
 
-// End of client-integrated.js v3.0
+// End of client-integrated.js v3.0 - Hybrid ES6 Module + Global Compat
