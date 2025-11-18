@@ -1,0 +1,83 @@
+name: Convert Markdown to PDF
+
+on:
+  # Si attiva quando pushi modifiche ai file .md in docs/
+  push:
+    paths:
+      - 'cpf-soc-integration/docs/**/*.md'
+      - '.github/workflows/md-to-pdf.yml'
+
+  # Permette di eseguirla manualmente da GitHub
+  workflow_dispatch:
+
+jobs:
+  convert-to-pdf:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout del repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2. Installa Pandoc e LaTeX (per PDF di alta qualità)
+      - name: Install Pandoc and LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-latex-base texlive-fonts-recommended texlive-latex-extra texlive-xetex
+
+      # 3. Converti tutti i file MD in PDF
+      - name: Convert MD to PDF
+        run: |
+          # Trova tutti i file .md in cpf-soc-integration/docs/
+          find cpf-soc-integration/docs -name "*.md" -type f | while read mdfile; do
+            # Ottieni il percorso senza estensione
+            base="${mdfile%.md}"
+            pdffile="${base}.pdf"
+
+            echo "Converting: $mdfile → $pdffile"
+
+            # Converti usando pandoc con opzioni per PDF professionale
+            pandoc "$mdfile" \
+              -o "$pdffile" \
+              --pdf-engine=xelatex \
+              -V geometry:margin=1in \
+              -V fontsize=11pt \
+              -V documentclass=article \
+              --toc \
+              --highlight-style=tango \
+              2>&1 | tee -a conversion.log || echo "Warning: Failed to convert $mdfile"
+          done
+
+          echo "Conversion completed!"
+          cat conversion.log 2>/dev/null || true
+
+      # 4. Verifica cosa è stato generato
+      - name: List generated PDFs
+        run: |
+          echo "=== Generated PDF files ==="
+          find cpf-soc-integration/docs -name "*.pdf" -type f
+
+      # 5. Configura Git
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+      # 6. Committa i PDF generati
+      - name: Commit PDFs
+        run: |
+          git add cpf-soc-integration/docs/**/*.pdf
+
+          # Verifica se ci sono cambiamenti da committare
+          if git diff --staged --quiet; then
+            echo "No new PDFs to commit"
+          else
+            git commit -m "docs: Auto-generate PDF versions of markdown documentation
+
+[skip ci]"
+            git push
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
