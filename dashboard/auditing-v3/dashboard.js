@@ -1570,27 +1570,11 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
             // Render the field kit
             renderFieldKit(indicatorData);
 
-            // After rendering, close modal on successful save
-            // Override saveToAPI to close modal after save
-            const originalSaveToAPI = saveToAPI;
-            saveToAPI = async function() {
-                try {
-                    await originalSaveToAPI();
-                    showAlert('Assessment saved successfully!', 'success');
-
-                    // Reload organization data and close modal
-                    setTimeout(async () => {
-                        await loadOrganizationDetails(orgId);
-                        closeIndicatorModal();
-                    }, 1000);
-                } catch (error) {
-                    console.error('Error saving assessment:', error);
-                    showAlert('Failed to save assessment: ' + error.message, 'error');
-                }
-            };
+            // Note: Save behavior is handled in event delegation
+            // See 'save-data' action in setupEventDelegation()
 
         } else {
-            console.error('❌ CPFClient not found! Client script may not be loaded yet.');
+            console.error('❌ renderFieldKit not available');
             content.innerHTML = `
                 <div style="padding: 40px; text-align: center;">
                     <div style="background: #fee2e2; padding: 20px; border-radius: 8px;">
@@ -3574,7 +3558,26 @@ function setupEventDelegation() {
                 toggleDetailedAnalysis();
                 break;
             case 'save-data':
-                saveData();
+                // Call saveData and handle post-save if in indicator modal
+                (async () => {
+                    try {
+                        await saveData();
+
+                        // If we're in the indicator modal, reload org data
+                        const modal = document.getElementById('indicatorModal');
+                        if (modal && modal.style.display !== 'none' && selectedOrgId) {
+                            showAlert('Assessment saved successfully!', 'success');
+
+                            // Reload organization data after short delay
+                            setTimeout(async () => {
+                                await loadOrganizationDetails(selectedOrgId);
+                            }, 1000);
+                        }
+                    } catch (error) {
+                        console.error('Error saving assessment:', error);
+                        showAlert('Failed to save assessment: ' + error.message, 'error');
+                    }
+                })();
                 break;
             case 'export-data':
                 exportData();
