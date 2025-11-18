@@ -1922,42 +1922,77 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================
-// EXPORT TO GLOBAL SCOPE (for dashboard integration)
+// ES6 MODULE EXPORTS (modern approach)
 // ============================================
-window.CPFClient = {
+export {
     // Data
-    organizationContext: organizationContext,
-    currentData: currentData,
+    organizationContext,
+    currentData,
 
     // Core functions
-    renderFieldKit: renderFieldKit,
-    saveToAPI: saveToAPI,
-    calculateIndicatorScore: calculateIndicatorScore,
+    renderFieldKit,
+    saveToAPI,
+    calculateIndicatorScore,
 
     // Response handling (CRITICAL for auto-save)
-    updateResponse: updateResponse,
-    updateResponseWithAutoScore: updateResponseWithAutoScore,
-    selectRadioOption: selectRadioOption,
-    updateMeta: updateMeta,
+    updateResponse,
+    updateResponseWithAutoScore,
+    selectRadioOption,
+    updateMeta,
 
     // Utility functions
-    loadJSON: loadJSON,
-    importJSON: importJSON,
-    saveData: saveData,
-    exportData: exportData,
-    generateReport: generateReport,
-    resetAll: resetAll,
-    toggleDetailedAnalysis: toggleDetailedAnalysis,
-    toggleScoreDetails: toggleScoreDetails,
+    loadJSON,
+    importJSON,
+    saveData,
+    exportData,
+    generateReport,
+    resetAll,
+    toggleDetailedAnalysis,
+    toggleScoreDetails,
 
     // Modal functions
-    showQuickReference: showQuickReference,
-    closeQuickReference: closeQuickReference,
-    toggleCategory: toggleCategory,
-    loadIndicatorFromReference: loadIndicatorFromReference
+    showQuickReference,
+    closeQuickReference,
+    toggleCategory,
+    loadIndicatorFromReference
+};
 
-    // Validation removed - use standalone script instead
-    // validateCurrentJSON: validateCurrentJSON
+// ============================================
+// GLOBAL NAMESPACE (for onclick compatibility)
+// ============================================
+// Keep window.CPFClient for backwards compatibility with inline onclick handlers
+// TODO: Gradually migrate onclick to addEventListener and remove this
+window.CPFClient = {
+    // Data
+    organizationContext,
+    currentData,
+
+    // Core functions
+    renderFieldKit,
+    saveToAPI,
+    calculateIndicatorScore,
+
+    // Response handling (CRITICAL for auto-save)
+    updateResponse,
+    updateResponseWithAutoScore,
+    selectRadioOption,
+    updateMeta,
+
+    // Utility functions
+    loadJSON,
+    importJSON,
+    saveData,
+    exportData,
+    generateReport,
+    resetAll,
+    toggleDetailedAnalysis,
+    toggleScoreDetails,
+
+    // Modal functions
+    showQuickReference,
+    closeQuickReference,
+    toggleCategory,
+    loadIndicatorFromReference
 };
 
 // End of client-integrated.js v3.0
