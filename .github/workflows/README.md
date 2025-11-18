@@ -1,80 +1,80 @@
-# GitHub Actions - Documentazione
+# GitHub Actions - Documentation
 
-Questo repository utilizza GitHub Actions per automatizzare la generazione di PDF da file sorgente.
+This repository uses GitHub Actions to automate PDF generation from source files.
 
-## 📑 Indice
+## 📑 Table of Contents
 
-1. [LaTeX to PDF](#-latex-to-pdf) - Compila file .tex in PDF
-2. [Markdown to PDF](#-markdown-to-pdf) - Converte file .md in PDF
-3. [Permessi Richiesti](#-permessi-richiesti)
+1. [LaTeX to PDF](#-latex-to-pdf) - Compile .tex files to PDF
+2. [Markdown to PDF](#-markdown-to-pdf) - Convert .md files to PDF
+3. [Required Permissions](#-required-permissions)
 4. [Troubleshooting](#-troubleshooting)
 
 ---
 
 ## 📘 LaTeX to PDF
 
-### Descrizione
+### Description
 
-Il workflow `latex-to-pdf.yml` compila automaticamente file LaTeX (.tex) in PDF di alta qualità usando pdflatex.
+The `latex-to-pdf.yml` workflow automatically compiles LaTeX (.tex) files into high-quality PDFs using pdflatex.
 
-### Come Usarlo
+### How to Use
 
-#### 1. Vai su GitHub Actions
+#### 1. Go to GitHub Actions
 ```
 https://github.com/xbeat/CPF/actions
 ```
 
-#### 2. Seleziona "Compile LaTeX to PDF"
+#### 2. Select "Compile LaTeX to PDF"
 
-#### 3. Clicca "Run workflow"
+#### 3. Click "Run workflow"
 
-#### 4. Inserisci i parametri:
+#### 4. Enter the parameters:
 
-**Source Folder** (obbligatorio):
-- Cartella contenente i file .tex da compilare
-- Esempio: `research`, `cpf-soc-integration/docs/en-US`, `.`
-- Default: `.` (root del repository)
+**Source Folder** (required):
+- Folder containing .tex files to compile
+- Example: `research`, `cpf-soc-integration/docs/en-US`, `.`
+- Default: `.` (repository root)
 
-**Output Folder** (opzionale):
-- Dove salvare i PDF generati
-- Se vuoto: PDF salvati nella stessa cartella del file .tex
-- Esempio: `output/pdfs`, `build`
+**Output Folder** (optional):
+- Where to save generated PDFs
+- If empty: PDFs saved in the same folder as the .tex file
+- Example: `output/pdfs`, `build`
 
-#### 5. Clicca "Run workflow" per avviare
+#### 5. Click "Run workflow" to start
 
-### Esempi di Utilizzo
+### Usage Examples
 
-**Esempio 1: Compila tutti i .tex nella cartella research**
+**Example 1: Compile all .tex files in the research folder**
 ```yaml
 Source folder: research
-Output folder: (lascia vuoto)
+Output folder: (leave empty)
 ```
-Risultato: `research/paper.tex` → `research/paper.pdf`
+Result: `research/paper.tex` → `research/paper.pdf`
 
-**Esempio 2: Compila e salva in cartella separata**
+**Example 2: Compile and save to a separate folder**
 ```yaml
 Source folder: cpf-soc-integration/docs/en-US
 Output folder: pdfs/en-US
 ```
-Risultato: `docs/en-US/paper.tex` → `pdfs/en-US/paper.pdf`
+Result: `docs/en-US/paper.tex` → `pdfs/en-US/paper.pdf`
 
-**Esempio 3: Compila tutto nel repository**
+**Example 3: Compile everything in the repository**
 ```yaml
 Source folder: .
-Output folder: (lascia vuoto)
+Output folder: (leave empty)
 ```
 
-### Caratteristiche
+### Features
 
-- ✅ Compila con `pdflatex` (doppia esecuzione per riferimenti)
-- ✅ Pulisce automaticamente file ausiliari (.aux, .log, etc.)
-- ✅ Gestisce errori e continua con i file successivi
-- ✅ Committa automaticamente i PDF generati
-- ✅ Non ricorsivo (solo file nella cartella specificata)
+- ✅ Compiles with `pdflatex` (double execution for references)
+- ✅ Automatically cleans auxiliary files (.aux, .log, etc.)
+- ✅ Handles errors and continues with next files
+- ✅ Automatically commits generated PDFs
+- ✅ Non-recursive (only files in specified folder)
 
 ### Output
 
-I PDF sono committati automaticamente al repository con messaggio:
+PDFs are automatically committed to the repository with message:
 ```
 Add compiled PDFs from [source_folder]
 ```
@@ -83,159 +83,159 @@ Add compiled PDFs from [source_folder]
 
 ## 📄 Markdown to PDF
 
-### Descrizione
+### Description
 
-Il workflow `md-to-pdf.yml` converte automaticamente file Markdown (.md) in PDF professionali usando Pandoc con XeLaTeX.
+The `md-to-pdf.yml` workflow automatically converts Markdown (.md) files into professional PDFs using Pandoc with XeLaTeX.
 
-### Come Usarlo
+### How to Use
 
-#### 1. Vai su GitHub Actions
+#### 1. Go to GitHub Actions
 ```
 https://github.com/xbeat/CPF/actions
 ```
 
-#### 2. Seleziona "Convert Markdown to PDF"
+#### 2. Select "Convert Markdown to PDF"
 
-#### 3. Clicca "Run workflow"
+#### 3. Click "Run workflow"
 
-#### 4. Inserisci i parametri:
+#### 4. Enter the parameters:
 
-**Source Folder** (obbligatorio):
-- Cartella contenente i file .md da convertire
-- Esempio: `cpf-soc-integration/docs/en-US`, `cpf-soc-integration/docs/it-IT`
+**Source Folder** (required):
+- Folder containing .md files to convert
+- Example: `cpf-soc-integration/docs/en-US`, `cpf-soc-integration/docs/it-IT`
 - Default: `cpf-soc-integration/docs/en-US`
 
-**Output Folder** (opzionale):
-- Dove salvare i PDF generati
-- Se vuoto: PDF salvati nella stessa cartella del file .md
-- Esempio: `pdfs/en-US`, `output`
+**Output Folder** (optional):
+- Where to save generated PDFs
+- If empty: PDFs saved in the same folder as the .md file
+- Example: `pdfs/en-US`, `output`
 
-#### 5. Clicca "Run workflow" per avviare
+#### 5. Click "Run workflow" to start
 
-### Esempi di Utilizzo
+### Usage Examples
 
-**Esempio 1: Converti tutti i .md in inglese**
+**Example 1: Convert all English .md files**
 ```yaml
 Source folder: cpf-soc-integration/docs/en-US
-Output folder: (lascia vuoto)
+Output folder: (leave empty)
 ```
-Risultato: `docs/en-US/README.md` → `docs/en-US/README.pdf`
+Result: `docs/en-US/README.md` → `docs/en-US/README.pdf`
 
-**Esempio 2: Converti tutti i .md in italiano**
+**Example 2: Convert all Italian .md files**
 ```yaml
 Source folder: cpf-soc-integration/docs/it-IT
-Output folder: (lascia vuoto)
+Output folder: (leave empty)
 ```
-Risultato: `docs/it-IT/README.md` → `docs/it-IT/README.pdf`
+Result: `docs/it-IT/README.md` → `docs/it-IT/README.pdf`
 
-**Esempio 3: Salva in cartella separata**
+**Example 3: Save to a separate folder**
 ```yaml
 Source folder: cpf-soc-integration/docs/en-US
 Output folder: pdfs/en-US
 ```
 
-### Caratteristiche PDF Generati
+### Generated PDF Features
 
-I PDF sono creati con queste impostazioni professionali:
+PDFs are created with these professional settings:
 
-- **Engine**: XeLaTeX (supporto Unicode completo)
-- **Margini**: 1 pollice su tutti i lati
+- **Engine**: XeLaTeX (full Unicode support)
+- **Margins**: 1 inch on all sides
 - **Font**: 11pt
-- **Indice**: Generato automaticamente (TOC) fino a 3 livelli
-- **Syntax Highlighting**: Stile Tango per blocchi di codice
-- **Layout**: Professionale con document class article
+- **Table of Contents**: Automatically generated (TOC) up to 3 levels
+- **Syntax Highlighting**: Tango style for code blocks
+- **Layout**: Professional with article document class
 
 ### Output
 
-I PDF sono committati automaticamente al repository con messaggio:
+PDFs are automatically committed to the repository with message:
 ```
 docs: Add PDF versions from [source_folder]
 ```
 
 ---
 
-## 🔒 Permessi Richiesti
+## 🔒 Required Permissions
 
-Entrambi i workflow richiedono i seguenti permessi:
+Both workflows require the following permissions:
 
 ### GitHub Actions Settings
 
-1. Vai su: `Settings` → `Actions` → `General`
-2. Sotto "Workflow permissions":
-   - ✅ Seleziona **"Read and write permissions"**
-   - ✅ Abilita **"Allow GitHub Actions to create and approve pull requests"**
-3. Clicca "Save"
+1. Go to: `Settings` → `Actions` → `General`
+2. Under "Workflow permissions":
+   - ✅ Select **"Read and write permissions"**
+   - ✅ Enable **"Allow GitHub Actions to create and approve pull requests"**
+3. Click "Save"
 
-**⚠️ Importante**: Senza questi permessi, i workflow non potranno committare i PDF generati.
+**⚠️ Important**: Without these permissions, workflows will not be able to commit generated PDFs.
 
 ---
 
 ## 🔧 Troubleshooting
 
-### Workflow non si avvia
+### Workflow doesn't start
 
-**Problema**: Workflow non disponibile in Actions
-- ✅ Verifica che i file `.yml` siano nella cartella `.github/workflows/`
-- ✅ Controlla che la sintassi YAML sia corretta
-- ✅ Pusha i file workflow al repository
+**Problem**: Workflow not available in Actions
+- ✅ Verify that `.yml` files are in the `.github/workflows/` folder
+- ✅ Check that YAML syntax is correct
+- ✅ Push workflow files to the repository
 
-### Errori di compilazione LaTeX
+### LaTeX compilation errors
 
-**Problema**: File .tex non compila
-- 📋 Controlla i log in GitHub Actions per errori specifici
-- 📋 Verifica che il file .tex sia valido
-- 📋 Assicurati che tutti i package LaTeX richiesti siano disponibili
-- 💡 Il workflow installa `texlive-full` che include la maggior parte dei package
+**Problem**: .tex file doesn't compile
+- 📋 Check GitHub Actions logs for specific errors
+- 📋 Verify that the .tex file is valid
+- 📋 Ensure all required LaTeX packages are available
+- 💡 The workflow installs `texlive-full` which includes most packages
 
-### Errori di conversione Markdown
+### Markdown conversion errors
 
-**Problema**: File .md non converte in PDF
-- 📋 Controlla i log per errori Pandoc
-- 📋 Verifica che il markdown sia valido
-- 📋 Alcuni caratteri speciali potrebbero richiedere escape
-- 💡 Tabelle complesse potrebbero non convertire perfettamente
+**Problem**: .md file doesn't convert to PDF
+- 📋 Check logs for Pandoc errors
+- 📋 Verify that markdown is valid
+- 📋 Some special characters may require escaping
+- 💡 Complex tables may not convert perfectly
 
-### PDF non committati
+### PDFs not committed
 
-**Problema**: PDF generati ma non committati al repository
-- 🔐 Verifica permessi GitHub Actions (vedi sezione [Permessi](#-permessi-richiesti))
-- 📋 Controlla che non ci siano errori nel step "Commit PDFs"
-- 📋 Assicurati che almeno un PDF sia stato generato con successo
+**Problem**: PDFs generated but not committed to repository
+- 🔐 Verify GitHub Actions permissions (see [Permissions](#-required-permissions) section)
+- 📋 Check for errors in "Commit PDFs" step
+- 📋 Ensure at least one PDF was generated successfully
 
-### Cartella non trovata
+### Folder not found
 
-**Problema**: Error: Folder 'xyz' does not exist
-- 📁 Verifica che la cartella esista nel repository
-- 📁 Usa path relativi dalla root del repository
-- 📁 Controlla maiuscole/minuscole nel path
+**Problem**: Error: Folder 'xyz' does not exist
+- 📁 Verify that the folder exists in the repository
+- 📁 Use relative paths from repository root
+- 📁 Check case sensitivity in path
 
-### Workflow troppo lento
+### Workflow too slow
 
-**Problema**: Compilazione impiega troppo tempo
-- ⏱️ L'installazione di TeX Live Full richiede ~2-3 minuti
-- ⏱️ La conversione Markdown richiede ~30-60 secondi
-- 💡 Considera di limitare il numero di file da processare
+**Problem**: Compilation takes too long
+- ⏱️ Installing TeX Live Full requires ~2-3 minutes
+- ⏱️ Markdown conversion requires ~30-60 seconds
+- 💡 Consider limiting the number of files to process
 
 ---
 
-## 📊 Confronto Workflow
+## 📊 Workflow Comparison
 
 | Feature | LaTeX to PDF | Markdown to PDF |
 |---------|-------------|-----------------|
-| **Formato Input** | .tex | .md |
+| **Input Format** | .tex | .md |
 | **Engine** | pdflatex | Pandoc + XeLaTeX |
-| **Esecuzioni** | 2x (per riferimenti) | 1x |
-| **Indice (TOC)** | Automatico se presente | Sempre generato |
+| **Executions** | 2x (for references) | 1x |
+| **TOC** | Automatic if present | Always generated |
 | **Syntax Highlighting** | ❌ | ✅ (Tango) |
-| **Tempo medio** | ~3-5 min | ~2-3 min |
-| **File ausiliari** | Rimossi automaticamente | N/A |
-| **Output folder** | ✅ Supportato | ✅ Supportato |
+| **Average Time** | ~3-5 min | ~2-3 min |
+| **Auxiliary Files** | Automatically removed | N/A |
+| **Output folder** | ✅ Supported | ✅ Supported |
 
 ---
 
 ## 🎯 Best Practices
 
-### 1. Organizzazione File
+### 1. File Organization
 ```
 repository/
 ├── docs/
@@ -245,29 +245,29 @@ repository/
 │   └── it-IT/
 │       ├── README.md
 │       └── guide.md
-└── pdfs/           ← Output folder opzionale
+└── pdfs/           ← Optional output folder
     ├── en-US/
     └── it-IT/
 ```
 
 ### 2. Naming Conventions
-- Usa nomi file descrittivi senza spazi
-- Preferisci `snake_case` o `kebab-case`
-- Evita caratteri speciali nei nomi file
+- Use descriptive file names without spaces
+- Prefer `snake_case` or `kebab-case`
+- Avoid special characters in file names
 
 ### 3. Testing
-- Testa prima con una singola cartella
-- Verifica il risultato prima di processare tutto
-- Controlla sempre i log per warnings
+- Test first with a single folder
+- Verify results before processing everything
+- Always check logs for warnings
 
 ### 4. Version Control
-- I PDF committati sono tracciati da Git
-- Considera di usare `.gitignore` se preferisci non tracciare i PDF
-- Usa Output Folder separata per organizzazione migliore
+- Committed PDFs are tracked by Git
+- Consider using `.gitignore` if you prefer not to track PDFs
+- Use separate Output Folder for better organization
 
 ---
 
-## 📚 Risorse Utili
+## 📚 Useful Resources
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [Pandoc Manual](https://pandoc.org/MANUAL.html)
@@ -276,17 +276,17 @@ repository/
 
 ---
 
-## 🆘 Supporto
+## 🆘 Support
 
-Per problemi, domande o suggerimenti:
-1. Controlla la sezione [Troubleshooting](#-troubleshooting)
-2. Verifica i log di GitHub Actions
-3. Crea un issue nel repository con:
-   - Nome del workflow
-   - Input forniti
-   - Log di errore completo
-   - Screenshot se utile
+For issues, questions, or suggestions:
+1. Check the [Troubleshooting](#-troubleshooting) section
+2. Review GitHub Actions logs
+3. Create an issue in the repository with:
+   - Workflow name
+   - Input provided
+   - Complete error log
+   - Screenshot if helpful
 
 ---
 
-**Ultimo aggiornamento**: 2025-11-18
+**Last updated**: 2025-11-18
