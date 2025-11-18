@@ -1,447 +1,309 @@
-# SIEM Event Generators
+# Event Generators
 
-Generatori di eventi SIEM realistici per il simulatore CPF.
+Generators for creating realistic SIEM events, scenarios, and test data for CPF simulator.
 
-## Contenuto
+## Overview
 
-### `siem-data-generator.js`
+The generator layer creates realistic security events for:
+- Testing CPF dashboard functionality
+- Demonstrating indicator behavior
+- Training and demonstrations
+- Scenario-based simulations (normal, attack, crisis)
 
-Generatore principale di eventi di sicurezza per simulare traffico SIEM realistico.
+## Files
 
-**Funzionalità:**
-- Generazione 40+ tipi di eventi
-- Distribuzione ponderata per frequenza
-- Context enrichment (time, user, geo)
-- Severity assignment
-- Source attribution (Splunk, QRadar, etc.)
+### siem-data-generator.js
+**Main event generator** - Creates realistic SIEM events with proper metadata.
 
-### `scenario-engine.js`
+**Features:**
+- 40+ event types (phishing, malware, auth failures, policy violations)
+- Weighted distribution (common 50%, medium 30%, uncommon 15%, rare 5%)
+- Metadata generation (timestamps, users, IPs, severity)
+- Scenario-based modulation (normal, attack, crisis)
 
-Motore per la generazione di scenari predefiniti (normal, attack, crisis).
-
-**Funzionalità:**
-- Scenario presets
-- Event rate modulation
-- Severity distribution adjustment
-- Attack pattern simulation
-- Crisis event injection
-
-### `dense-loader.js`
-
-Generatore ad alta densità per testing di carico e stress test.
-
-**Funzionalità:**
-- High-volume event generation (1000+ eventi/sec)
-- Batch processing
-- Memory-efficient streaming
-- Performance monitoring
-
-### `index.js`
-
-Entry point e orchestrator per tutti i generatori.
-
-## SIEM Data Generator
-
-### Event Types (40+)
-
-#### Authentication Events
+**Usage:**
 ```javascript
-{
-  type: 'authentication_failed',
-  user: 'john.doe@company.com',
-  source_ip: '192.168.1.100',
-  attempts: 3,
-  reason: 'invalid_password',
-  timestamp: '2025-11-18T10:30:45Z'
-}
+const { SIEMDataGenerator } = require('./siem-data-generator');
+
+const generator = new SIEMDataGenerator();
+
+// Generate single event
+const event = generator.generateSingleEvent();
+
+// Generate batch
+const events = generator.generateEvents(count=100);
+
+// Generate for specific scenario
+const crisisEvents = generator.generateEvents(100, 'crisis');
 ```
 
-**Variants:**
-- `authentication_failed`
-- `authentication_successful`
-- `mfa_challenge`
-- `password_reset_requested`
-
-#### Phishing Events
+**Event Structure:**
 ```javascript
 {
+  id: 'evt_1234567890',
   type: 'phishing_clicked',
-  user: 'jane.smith@company.com',
-  email_subject: 'Urgent: Verify Your Account',
-  link_clicked: true,
-  reported: false,
-  severity: 'medium'
-}
-```
-
-**Variants:**
-- `phishing_clicked`
-- `phishing_reported`
-- `phishing_email_delivered`
-- `social_engineering_attempt`
-
-#### Malware Events
-```javascript
-{
-  type: 'malware_detected',
-  host: 'WKS-001',
-  malware_type: 'trojan',
-  action_taken: 'quarantined',
-  file_hash: 'a3f5b12...',
-  severity: 'high'
-}
-```
-
-**Variants:**
-- `malware_detected`
-- `malware_quarantined`
-- `ransomware_activity`
-- `suspicious_file_execution`
-
-#### Policy & Compliance
-```javascript
-{
-  type: 'policy_violation',
-  user: 'admin@company.com',
-  policy: 'data_classification',
-  action: 'unauthorized_file_share',
-  severity: 'medium'
-}
-```
-
-**Variants:**
-- `policy_violation`
-- `compliance_violation`
-- `unauthorized_access`
-- `data_exfiltration_attempt`
-
-#### User Behavior
-```javascript
-{
-  type: 'after_hours_access',
-  user: 'john.doe@company.com',
-  time: '02:30 AM',
-  resource: 'financial_database',
-  location: 'Remote VPN',
-  severity: 'medium'
-}
-```
-
-**Variants:**
-- `after_hours_access`
-- `privilege_escalation`
-- `multitasking_detected`
-- `information_overload`
-- `alert_fatigue`
-
-#### AI & Automation
-```javascript
-{
-  type: 'ai_recommendation_followed',
-  user: 'operator@company.com',
-  ai_system: 'security_copilot',
-  recommendation: 'block_ip',
-  confidence: 0.85,
-  followed: true
-}
-```
-
-**Variants:**
-- `ai_recommendation_followed`
-- `ai_recommendation_ignored`
-- `automation_failure`
-- `ml_model_drift`
-
-#### Crisis Events
-```javascript
-{
-  type: 'crisis_event',
-  category: 'data_breach',
-  impact: 'critical',
-  affected_users: 5000,
-  media_attention: true,
-  severity: 'critical'
-}
-```
-
-**Variants:**
-- `crisis_event`
-- `major_incident`
-- `regulatory_investigation`
-
-### Event Distribution
-
-Il generatore produce eventi con questa distribuzione:
-
-```javascript
-const EVENT_DISTRIBUTION = {
-  // 50% - Eventi comuni (low severity)
-  common: [
-    'authentication_failed',
-    'policy_violation',
-    'information_overload',
-    'multitasking_detected',
-    // ...
-  ],
-
-  // 30% - Eventi medi (medium severity)
-  medium: [
-    'phishing_clicked',
-    'unauthorized_access',
-    'after_hours_access',
-    'ai_recommendation_followed',
-    // ...
-  ],
-
-  // 15% - Eventi non comuni (medium-high severity)
-  uncommon: [
-    'privilege_escalation',
-    'social_engineering',
-    'malware_detected',
-    // ...
-  ],
-
-  // 5% - Eventi rari (high-critical severity)
-  rare: [
-    'ransomware_activity',
-    'crisis_event',
-    'data_breach',
-    // ...
-  ]
-};
-```
-
-### Context Enrichment
-
-Ogni evento viene arricchito con:
-
-```javascript
-{
-  // Event base
-  type: 'phishing_clicked',
-  severity: 'medium',
-
-  // Context enrichment
-  context: {
-    // Time context
+  severity: 'high',
+  timestamp: '2025-01-15T14:30:00Z',
+  source: 'email_gateway',
+  user: 'alice@example.com',
+  metadata: {
     after_hours: false,
-    weekend: false,
-    unusual_time: false,
-
-    // Pattern context
-    repeated_attempts: false,
-    regular_pattern: true,
-    burst_activity: false,
-
-    // User context
     privileged_user: false,
-    new_user: false,
-    suspicious_user: false,
-
-    // Verification context
     mfa_verified: true,
-    known_device: true,
-    corporate_network: true,
-
-    // Geo context
-    vpn_detected: false,
-    tor_detected: false,
-    foreign_ip: false,
-    location_change: false
+    vpn: false,
+    // ... contextual data
   }
 }
 ```
 
-## Scenario Engine
+### scenario-engine.js
+**Scenario orchestration** - Creates realistic attack scenarios with temporal progression.
 
-### Scenario Types
+**Scenarios:**
 
-#### Normal Operations
+1. **Normal Operations**
+   - Low event volume
+   - Mostly common events
+   - Minimal high-severity alerts
+
+2. **Phishing Campaign**
+   - Increased phishing events
+   - Social engineering patterns
+   - Escalating severity over time
+
+3. **Ransomware Attack**
+   - Initial compromise events
+   - Lateral movement indicators
+   - Encryption activity spike
+   - Crisis-level stress markers
+
+4. **Insider Threat**
+   - Gradual privilege escalation
+   - After-hours access patterns
+   - Data exfiltration indicators
+
+5. **Crisis Scenario**
+   - Multiple concurrent incidents
+   - Time pressure indicators
+   - Organizational stress markers
+   - Converging vulnerabilities
+
+**Usage:**
 ```javascript
-{
-  name: 'normal',
-  event_rate: 10,  // eventi/sec
-  severity_distribution: {
-    low: 0.60,
-    medium: 0.30,
-    high: 0.08,
-    critical: 0.02
-  },
-  event_types: 'all'
-}
-```
-
-#### Attack Scenario
-```javascript
-{
-  name: 'attack',
-  event_rate: 25,  // eventi/sec aumentato
-  severity_distribution: {
-    low: 0.20,
-    medium: 0.40,
-    high: 0.30,
-    critical: 0.10
-  },
-  event_types: ['phishing', 'malware', 'privilege_escalation'],
-  inject_patterns: ['credential_stuffing', 'lateral_movement']
-}
-```
-
-#### Crisis Scenario
-```javascript
-{
-  name: 'crisis',
-  event_rate: 50,  // eventi/sec molto alto
-  severity_distribution: {
-    low: 0.10,
-    medium: 0.20,
-    high: 0.40,
-    critical: 0.30
-  },
-  event_types: ['ransomware', 'data_breach', 'crisis_event'],
-  convergent_indicators: true  // Triggera indicatori 10.x
-}
-```
-
-#### Custom Scenario
-```javascript
-{
-  name: 'custom',
-  event_rate: 15,
-  custom_events: [
-    { type: 'phishing_clicked', weight: 0.30 },
-    { type: 'ai_recommendation_followed', weight: 0.25 },
-    { type: 'alert_fatigue', weight: 0.20 }
-  ]
-}
-```
-
-### Utilizzo
-
-```javascript
-const ScenarioEngine = require('./scenario-engine');
+const { ScenarioEngine } = require('./scenario-engine');
 
 const engine = new ScenarioEngine();
 
-// Carica scenario
-engine.loadScenario('attack');
+// Load scenario
+const scenario = engine.loadScenario('ransomware_attack');
 
-// Genera eventi
-const events = engine.generate(100);  // 100 eventi
+// Generate event sequence
+const eventSequence = scenario.generateSequence(duration_minutes=60);
 
-// Modifica runtime
-engine.setEventRate(30);
-engine.setSeverity('high', 0.40);
+// Execute scenario
+for (const event of eventSequence) {
+  await injectEvent(event);
+  await sleep(event.delay);
+}
 ```
 
-## Dense Loader
+### dense-loader.js
+**CPF Dense Foundation loader** - Loads indicator structure from Dense Foundation Paper.
 
-Generatore ad alta densità per stress testing:
+**Responsibilities:**
+- Load 100 CPF indicators (10 categories × 10 indicators)
+- Define baseline risk levels
+- Calculate indicator weights
+- Define interdependencies
+- Provide temporal patterns
 
+**Key Functions:**
 ```javascript
-const DenseLoader = require('./dense-loader');
+class DenseLoader {
+  // Load all indicators
+  load()
 
-const loader = new DenseLoader({
-  eventsPerSecond: 1000,
-  duration: 60,  // secondi
-  batchSize: 100,
-  streaming: true
-});
+  // Get specific indicator
+  getIndicator(id)  // e.g., '5.1'
 
-// Avvia generazione
-loader.start((batch) => {
-  // Processa batch di 100 eventi
-  sendToSIEM(batch);
-});
+  // Get all indicators in category
+  getCategoryIndicators(category)  // e.g., 5
 
-// Statistiche
-console.log(loader.getStats());
-// {
-//   totalEvents: 60000,
-//   eventsPerSecond: 1000,
-//   memoryUsage: '150 MB',
-//   duration: 60
-// }
+  // Generate risk score for event
+  generateRiskFromEvent(indicatorId, event, scenario)
+
+  // Calculate confidence from observations
+  calculateConfidence(observationCount)
+}
 ```
 
-## Utilizzo Completo
-
-### Nel Simulatore
-
+**Indicator Structure:**
 ```javascript
-const { SiemDataGenerator } = require('./generators');
-const ScenarioEngine = require('./generators/scenario-engine');
-
-// Setup
-const generator = new SiemDataGenerator();
-const scenario = new ScenarioEngine();
-
-// Carica scenario
-scenario.loadScenario('normal');
-
-// Avvia generazione
-setInterval(() => {
-  // Genera 2-5 eventi
-  const eventCount = Math.floor(Math.random() * 3) + 2;
-
-  for (let i = 0; i < eventCount; i++) {
-    const event = generator.generateEvent(scenario);
-
-    // Invia a SIEM connector
-    await siemConnector.sendEvent(event);
-
-    // Converti in CPF updates
-    const updates = cpfAdapter.convertEvent(event);
-    await saveIndicatorUpdates(updates);
-  }
-}, 100);  // Ogni 100ms (10 eventi/sec)
-```
-
-## Configurazione
-
-I generatori sono configurabili via `/simulator/config/`:
-
-```json
 {
-  "generator": {
-    "default_rate": 10,
-    "max_rate": 1000,
-    "event_types": "all",
-    "enrichment": {
-      "enable_context": true,
-      "enable_geo": true,
-      "enable_user_profiles": true
-    }
+  id: '5.1',
+  category: '5',
+  categoryName: 'Cognitive',
+  index: 1,
+  baselineRisk: 0.22,
+  weight: 1.0,
+  influences: { '7.2': 0.15, '4.10': 0.12 },
+  temporalPattern: 'increasing',
+  thresholds: {
+    low: 0.33,
+    medium: 0.66,
+    high: 0.85,
+    critical: 0.95
   }
 }
+```
+
+### index.js
+**Generator exports** - Main entry point for all generators.
+
+## Event Types by Category
+
+### Authentication (10 types)
+- `authentication_failed`
+- `suspicious_login`
+- `brute_force_attempt`
+- `credential_stuffing`
+
+### Email Security (8 types)
+- `phishing_clicked`
+- `malicious_attachment`
+- `business_email_compromise`
+- `spam_outbreak`
+
+### Endpoint Security (12 types)
+- `malware_detected`
+- `ransomware_activity`
+- `suspicious_process`
+- `privilege_escalation`
+
+### Network Security (6 types)
+- `network_anomaly`
+- `data_exfiltration`
+- `c2_communication`
+- `port_scan`
+
+### Behavioral (14 types)
+- `policy_violation`
+- `after_hours_access`
+- `multitasking_detected`
+- `groupthink_indicator`
+- `information_overload`
+
+## Scenario Progression
+
+### Ransomware Attack Timeline
+
+```
+T+0min:   Initial compromise (phishing_clicked)
+T+5min:   Reconnaissance (network_scan)
+T+15min:  Privilege escalation
+T+30min:  Lateral movement
+T+60min:  Data staging
+T+90min:  Encryption begins (ransomware_activity)
+T+120min: Crisis state, multiple converging indicators
+```
+
+### Event Frequency by Scenario
+
+| Scenario | Events/Hour | High Severity % | Convergent Risk |
+|----------|-------------|-----------------|-----------------|
+| Normal   | 50-100      | 5%              | Low             |
+| Phishing | 100-200     | 15%             | Medium          |
+| Ransomware | 200-500   | 30%             | High            |
+| Crisis   | 500-1000    | 50%             | Critical        |
+
+## Configuration
+
+### Adjust Event Rate
+```javascript
+// In simulator dashboard or API
+const simulatorConfig = {
+  rate: 3,  // events per second (default: 10)
+  scenario: 'normal',
+  sources: ['splunk', 'qradar']
+};
+```
+
+### Customize Event Distribution
+```javascript
+// In siem-data-generator.js
+const EVENT_WEIGHTS = {
+  common: 0.50,    // 50% of events
+  medium: 0.30,    // 30%
+  uncommon: 0.15,  // 15%
+  rare: 0.05       // 5%
+};
+```
+
+### Add New Event Type
+```javascript
+// Add to EVENT_TYPES in siem-data-generator.js
+EVENT_TYPES.common.push({
+  type: 'new_event_type',
+  severity: 'medium',
+  source: 'custom_system',
+  triggers: ['1.1', '2.3', '5.1']  // CPF indicators
+});
 ```
 
 ## Testing
 
-```bash
-# Test generatore base
-node simulator/test-generator.js
+```javascript
+// Generate test dataset
+const generator = new SIEMDataGenerator();
+const testEvents = generator.generateEvents(1000);
 
-# Test scenario
-node simulator/test-scenario.js attack
+// Validate event structure
+testEvents.forEach(event => {
+  assert(event.id);
+  assert(event.type);
+  assert(event.severity);
+  assert(event.timestamp);
+});
 
-# Stress test
-node simulator/test-dense-loader.js 1000  # 1000 eventi/sec
+// Test scenario
+const scenario = new ScenarioEngine().loadScenario('phishing');
+const sequence = scenario.generateSequence(30);
+assert(sequence.length > 0);
 ```
 
 ## Performance
 
-### Benchmark
+### Memory Usage
+- Each event: ~1KB
+- 1000 events: ~1MB
+- Batch generation preferred for efficiency
 
-| Generatore | Eventi/sec | Memoria | CPU |
-|------------|-----------|---------|-----|
-| SIEM Data Gen | 100-500 | 50 MB | 10% |
-| Scenario Engine | 200-1000 | 80 MB | 15% |
-| Dense Loader | 1000-5000 | 150 MB | 30% |
+### Generation Speed
+- ~10,000 events/second single-threaded
+- Limited by JSON serialization, not generation logic
 
-## Riferimenti
+### Recommendations
+- Generate events in batches of 100-1000
+- Use scenario engine for realistic temporal distribution
+- Clear old events periodically to prevent memory bloat
 
-- **Simulatore**: `/dashboard/simulator/README.md`
-- **CPF Adapter**: `/dashboard/simulator/adapters/README.md`
-- **Event Baseline**: `/dashboard/simulator/adapters/event-baseline.js`
-- **Connectors**: `/dashboard/simulator/connectors/README.md`
+## Integration with CPF Pipeline
+
+```
+Generators (THIS)
+    ↓
+Events with metadata
+    ↓
+CPF Adapter (../adapters/cpf-adapter.js)
+    ↓
+Bayesian Scoring
+    ↓
+SOC Dashboard (../../soc/)
+```
+
+## Related Resources
+
+- **CPF Adapter**: `../adapters/cpf-adapter.js` - Event to CPF conversion
+- **Dense Foundation**: `/foundation docs/core/en-US/` - Indicator structure
+- **Event Baseline**: `../adapters/event-baseline.js` - Risk mappings
+- **Simulator Dashboard**: `../index.html` - UI for controlling generation

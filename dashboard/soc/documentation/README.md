@@ -1,292 +1,170 @@
-# SOC Dashboard Documentation
+# CPF SOC Documentation
 
-Documentazione tecnica per la SOC Dashboard CPF.
+This directory contains comprehensive documentation for the CPF SOC/SIEM integration.
 
-## Contenuto
+## Contents
 
-### `CPF_SOC_SIEM_Integration_Comprehensive_Paper.html`
+### CPF_SOC_SIEM_Integration_Comprehensive_Paper.html
 
-Paper comprensivo sull'integrazione SOC/SIEM con il framework CPF.
+**Comprehensive technical paper** covering the entire CPF SOC integration methodology.
 
-**Formato**: HTML interattivo
-**Argomenti:**
-- Architettura integrazione SOC-CPF
-- Metodologia Bayesiana cross-indicatore
-- Analisi multi-organizzazione
-- Visualizzazioni e dashboard
-- Case studies
+**Topics Covered:**
 
-### `index.html`
+1. **Introduction & Overview**
+   - CPF framework fundamentals
+   - SOC integration rationale
+   - Expected outcomes (73-81% prediction accuracy, 48-72h lead time)
 
-Pagina indice della documentazione con link a tutte le risorse.
+2. **OFTLISRV Implementation Schema**
+   - Observables (O): Behavioral patterns to detect
+   - Data Sources (F): SIEM, email, AD, PAM, ticketing
+   - Temporality (T): Time windows and decay functions
+   - Detection Logic (L): Deterministic + statistical methods
+   - Interdependencies (I): Bayesian network correlations
+   - Thresholds (S): Risk level definitions
+   - Responses (R): Mitigation actions
+   - Validation (V): Human audit protocols
 
-## Paper Principale
+3. **Mathematical Formalization**
+   - Temporal state functions: T_i(t) = α·X_i(t) + (1-α)·T_i(t-1)
+   - Detection functions: D_i = w₁·R_i + w₂·A_i + w₃·C_i
+   - Bayesian probability: P(legitimate|factors)
+   - Mahalanobis distance for anomaly detection
 
-### Sezioni del Paper
+4. **Category Implementations (1.x through 10.x)**
+   - Authority-Based vulnerabilities
+   - Temporal pressure exploitation
+   - Social influence patterns
+   - Affective (emotional) manipulation
+   - Cognitive overload effects
+   - Group dynamic failures
+   - Stress response degradation
+   - Unconscious bias exploitation
+   - AI-specific vulnerabilities
+   - Critical convergent states
 
-1. **Executive Summary**
-   - Overview integrazione
-   - Benefici chiave
-   - ROI stimato
+5. **Data Sources & Integration**
+   - Active Directory (authentication, privilege escalation)
+   - Email gateways (phishing, social engineering)
+   - SIEM platforms (Splunk, QRadar, Sentinel, Elastic)
+   - Ticketing systems (Jira, ServiceNow)
+   - Project management (deadlines, stress markers)
+   - Communication tools (Slack, Teams)
 
-2. **CPF Framework Fundamentals**
-   - 10 categorie vulnerabilità psicologiche
-   - 100 indicatori
-   - Modello di scoring
+6. **Deployment Guide**
+   - Baseline establishment (30-90 day periods)
+   - Correlation rule deployment
+   - Dashboard configuration
+   - Alert tuning and threshold calibration
+   - Organization-specific customization
 
-3. **SIEM Integration Architecture**
-   - Event ingestion pipeline
-   - Connector architecture
-   - Real-time processing
-   - Storage layer
+7. **Validation & ROI**
+   - Prediction accuracy metrics
+   - Lead time analysis
+   - False positive reduction
+   - Cost-benefit analysis
+   - Case studies
 
-4. **Bayesian Inference Engine**
-   - Cross-indicator analysis
-   - Category dependencies
-   - Overall risk calculation
-   - Confidence modeling
+## How to Use
 
-5. **Multi-Organization Analysis**
-   - Organization management
-   - Comparative analytics
-   - Benchmarking
-   - Industry verticals
+### For Technical Implementation
 
-6. **Dashboard & Visualizations**
-   - Overall Risk Score
-   - Category Heatmap
-   - Security Radar Chart
-   - Prioritization Matrix
-   - Convergence Timeline
-   - Indicator Matrix 10×10
+1. **Start Here**: Read the comprehensive paper end-to-end
+2. **Reference**: Use as lookup for specific indicator implementations
+3. **Customize**: Adapt formulas and thresholds to your organization
+4. **Deploy**: Follow deployment guide for production rollout
 
-7. **Real-time Updates**
-   - WebSocket architecture
-   - Event streaming
-   - Dashboard synchronization
-   - Performance optimization
+### For Research & Understanding
 
-8. **Export & Reporting**
-   - PDF generation
-   - Excel export
-   - Custom reports
-   - API access
+1. **Foundation**: Understand the OFTLISRV methodology
+2. **Mathematics**: Review formalization for academic rigor
+3. **Examples**: Study category implementations for real-world context
+4. **Validation**: Examine metrics and case studies
 
-9. **Case Studies**
-   - Enterprise deployment
-   - Healthcare scenario
-   - Financial services
-   - Government sector
+### For Presentations
 
-10. **Performance & Scalability**
-    - Throughput metrics
-    - Memory optimization
-    - Database performance
-    - Concurrent users
+The HTML paper is formatted for:
+- Executive briefings (focus on ROI section)
+- Technical deep-dives (mathematical formalization)
+- Training sessions (category implementations)
+- Conference presentations (validation & metrics)
 
-11. **Security & Compliance**
-    - Authentication
-    - Authorization
-    - Data protection
-    - Audit logging
+## Accessing Documentation
 
-12. **Future Developments**
-    - ML/AI integration
-    - Predictive analytics
-    - Advanced correlation
-    - Mobile access
-
-## Visualizzazioni
-
-Il paper include:
-
-### Diagrammi Architetturali
-```
-┌────────────────────────────────────────────────┐
-│  SIEM Platforms (12+)                         │
-│  Splunk | QRadar | Sentinel | CrowdStrike...  │
-└──────────────────┬─────────────────────────────┘
-                   ↓
-┌────────────────────────────────────────────────┐
-│  SOC Simulator                                 │
-│  - Event Generator                             │
-│  - Scenario Engine                             │
-│  - CPF Adapter                                 │
-└──────────────────┬─────────────────────────────┘
-                   ↓
-┌────────────────────────────────────────────────┐
-│  Bayesian Inference Engine                     │
-│  - Score Calculation                           │
-│  - Category Dependencies                       │
-│  - Overall Risk                                │
-└──────────────────┬─────────────────────────────┘
-                   ↓
-┌────────────────────────────────────────────────┐
-│  SOC Dashboard                                 │
-│  - Real-time Updates (WebSocket)               │
-│  - Multi-org Management                        │
-│  - Visualizations & Charts                     │
-└────────────────────────────────────────────────┘
-```
-
-### Screenshot Dashboard
-- Overall risk score display
-- Category heatmap visualization
-- Security radar chart
-- Indicator matrix 10×10
-- Prioritization table
-- Convergence timeline
-
-### Formule Matematiche
-
-#### Overall Risk Score
-```
-R_overall = Σ(R_cat_i × W_i)
-
-dove:
-R_cat_i = Risk score categoria i
-W_i = Peso categoria i
-Σ(W_i) = 1.0
-```
-
-#### Category Risk
-```
-R_cat = Σ(I_j × C_j) / Σ(C_j)
-
-dove:
-I_j = Indicator score (0.0-1.0)
-C_j = Confidence indicator j
-```
-
-#### Bayesian Network
-```
-P(V_i | E) = P(E | V_i) × P(V_i) / P(E)
-
-dove:
-V_i = Vulnerabilità indicatore i
-E = Eventi SIEM osservati
-```
-
-## Utilizzo Paper
-
-### Lettura Online
-
+### Web Browser
 ```bash
-# Apri in browser
-open dashboard/soc/documentation/CPF_SOC_SIEM_Integration_Comprehensive_Paper.html
+# Open in browser
+open /dashboard/soc/documentation/CPF_SOC_SIEM_Integration_Comprehensive_Paper.html
 
-# O con server HTTP
-cd dashboard/soc/documentation
-python3 -m http.server 8080
-# Vai a http://localhost:8080
+# Or via server
+http://localhost:3000/dashboard/soc/documentation/
 ```
 
-### Navigation
+### PDF Export
+Use browser print function → Save as PDF for offline distribution.
 
-Il paper HTML include:
-- **Table of Contents** - Navigazione rapida
-- **Anchor links** - Link tra sezioni
-- **Code blocks** - Esempi interattivi
-- **Image galleries** - Screenshot dashboard
-- **References** - Bibliografia e link
+## Related Documentation
 
-### Interattività
+### Implementation Guides
+- **cpf-soc-integration/docs/** - Markdown guides and papers
+- **cpf-soc-integration/implementation/** - OFTLISRV schemas for all 100 indicators
+- **cpf-soc-integration/papers/** - Academic papers (PDF/LaTeX)
 
-Features HTML:
-- Collapse/expand sezioni
-- Copy code blocks
-- Zoom immagini
-- Dark/light theme (se implementato)
+### Foundation Papers
+- **foundation docs/core/en-US/CPF Implementation Companion - Dense Foundation Paper.pdf** - Mathematical formalization
+- **A_Method_for_Quantifying_Human_Risk.pdf** - Original CPF framework paper
 
-## Utilizzo per Stakeholder
+### Code Documentation
+- **dashboard/simulator/README.md** - Simulator documentation
+- **dashboard/simulator/docs/** - Technical implementation details
 
-### Per Management
-- **Executive Summary** - Overview high-level
-- **Case Studies** - Esempi reali
-- **ROI Analysis** - Benefici economici
+## Updating Documentation
 
-### Per Security Teams
-- **Architecture** - Design tecnico
-- **Integration Guide** - Setup pratico
-- **Performance Metrics** - Benchmark
+To update the comprehensive paper:
 
-### Per Developers
-- **API Documentation** - Endpoint completi
-- **Code Examples** - Esempi funzionanti
-- **Extension Guide** - Come estendere
+1. Edit the HTML file directly (it's self-contained)
+2. Update version number and date in header
+3. Test rendering in multiple browsers
+4. Regenerate PDF if needed
+5. Commit changes with descriptive message
 
-### Per Auditors
-- **Security Section** - Compliance
-- **Data Protection** - Privacy
-- **Audit Logging** - Tracciabilità
+## Versioning
 
-## Formati Disponibili
+Current version: 1.0 (2025)
 
-| Formato | File | Uso |
-|---------|------|-----|
-| HTML | `CPF_SOC_SIEM_Integration_Comprehensive_Paper.html` | Lettura interattiva online |
-| PDF | (generabile da HTML) | Distribuzione offline |
-| Markdown | (disponibile se richiesto) | Editing e versioning |
+**Changelog:**
+- v1.0: Initial comprehensive paper release
 
-### Generare PDF da HTML
+## Contributing
 
-```bash
-# Con wkhtmltopdf
-wkhtmltopdf CPF_SOC_SIEM_Integration_Comprehensive_Paper.html \
-  CPF_SOC_SIEM_Integration_Paper.pdf
+To contribute to documentation:
 
-# Con Chrome headless
-chrome --headless --print-to-pdf=output.pdf \
-  CPF_SOC_SIEM_Integration_Comprehensive_Paper.html
+1. Submit corrections via PR
+2. Propose new sections or topics
+3. Add implementation examples
+4. Improve clarity and readability
+
+## Citation
+
+When citing this documentation:
+
+```bibtex
+@techreport{canale2025cpfsoc,
+  title={CPF SOC/SIEM Integration: Comprehensive Implementation Guide},
+  author={Canale, Giuseppe},
+  year={2025},
+  institution={CPF Project},
+  type={Technical Documentation},
+  url={https://github.com/xbeat/CPF}
+}
 ```
 
-## Citazioni
+## License
 
-Se utilizzi questo paper in ricerca o presentazioni:
+MIT License - See project root LICENSE file
 
-```
-[Da completare con dettagli pubblicazione]
-CPF SOC/SIEM Integration: A Comprehensive Framework
-for Psychological Vulnerability Detection in Cybersecurity
-Authors: [...]
-Organization: CPF Team
-Year: 2025
-```
+## Contact
 
-## Versioni
-
-- **v1.0** (2025-11-18) - Release iniziale
-- Future: aggiornamenti con ML/AI integration
-
-## Riferimenti Correlati
-
-### Documentazione Tecnica
-- **SOC Dashboard**: `/dashboard/soc/README.md`
-- **Simulatore**: `/dashboard/simulator/README.md`
-- **Bayesian Engine**: `/dashboard/soc/bayesian.js`
-- **API Docs**: `/dashboard/docs/API_DOCUMENTATION.md`
-
-### Paper Accademici
-- **Dense Foundation Paper**: `/CPF_Implementation_Companion___Dense_Foundation_Paper.pdf`
-- **Bayesian Cross-Indicator**: `/dashboard/docs/papers/`
-
-### Implementazioni
-- **Detection Engine**: `/dashboard/cpf-detection-engine/README.md`
-- **Practical Guide**: `/dashboard/cpf-detection-engine/CPF_PRACTICAL_IMPLEMENTATION_GUIDE.md`
-
-## Feedback e Contributi
-
-Per feedback sul paper:
-- Issues GitHub
-- Email authors
-- Discussion forum
-
-Per contribuire:
-1. Proponi modifiche/aggiunte
-2. Fornisci esempi aggiuntivi
-3. Segnala errori o imprecisioni
-4. Suggerisci nuove sezioni
-
-## Licenza
-
-[Da specificare]
+Giuseppe Canale, CISSP
+Email: g.canale@cpf3.org
+ORCID: [0009-0007-3263-6897](https://orcid.org/0009-0007-3263-6897)
