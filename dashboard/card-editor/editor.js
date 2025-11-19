@@ -146,13 +146,18 @@ function renderCardList() {
     }
 
     const html = filteredCards.map(card => `
-        <div class="card-list-item" data-card-id="${card.id}" onclick="loadCard('${card.id}')">
+        <div class="card-list-item" data-card-id="${card.id}">
             <div class="card-list-item-title">${card.id}</div>
             <div class="card-list-item-subtitle">${card.category || 'Unknown'}</div>
         </div>
     `).join('');
 
     cardList.innerHTML = html;
+
+    // Add click listeners using event delegation
+    document.querySelectorAll('.card-list-item').forEach(item => {
+        item.addEventListener('click', () => loadCard(item.dataset.cardId));
+    });
 }
 
 function filterCards() {
@@ -179,13 +184,18 @@ function renderFilteredCards(filteredCards) {
     }
 
     const html = filteredCards.map(card => `
-        <div class="card-list-item ${currentCard && currentCard.id === card.id ? 'active' : ''}" data-card-id="${card.id}" onclick="loadCard('${card.id}')">
+        <div class="card-list-item ${currentCard && currentCard.id === card.id ? 'active' : ''}" data-card-id="${card.id}">
             <div class="card-list-item-title">${card.id}</div>
             <div class="card-list-item-subtitle">${card.category || 'Unknown'}</div>
         </div>
     `).join('');
 
     cardList.innerHTML = html;
+
+    // Add click listeners using event delegation
+    document.querySelectorAll('.card-list-item').forEach(item => {
+        item.addEventListener('click', () => loadCard(item.dataset.cardId));
+    });
 }
 
 async function loadCard(cardId) {
