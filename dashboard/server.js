@@ -203,6 +203,33 @@ app.post('/api/cards/propose', async (req, res) => {
 });
 
 // ============================================
+// ORGANIZATION MANAGEMENT API
+// ============================================
+
+// Recalculate aggregates for a specific organization
+app.post('/api/organizations/:orgId/recalculate', async (req, res) => {
+  try {
+    const { orgId } = req.params;
+    const result = await dataManager.recalculateAggregates(orgId);
+    res.json({ success: true, message: 'Aggregates recalculated successfully', data: result });
+  } catch (error) {
+    console.error('[API] Error recalculating aggregates:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Recalculate aggregates for all organizations
+app.post('/api/organizations/recalculate-all', async (req, res) => {
+  try {
+    const results = await dataManager.recalculateAllAggregates();
+    res.json({ success: true, message: 'All aggregates recalculated', results });
+  } catch (error) {
+    console.error('[API] Error recalculating all aggregates:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============================================
 // BACKWARD COMPATIBILITY REDIRECTS
 // ============================================
 

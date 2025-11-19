@@ -332,27 +332,45 @@ function calculateROI(currentLevel) {
  * Calculate complete maturity model
  */
 function calculateMaturityModel(assessments, byCategory, industry) {
-  const cpfScore = calculateCPFScore(assessments, byCategory);
-  const convergenceIndex = calculateConvergenceIndex(byCategory);
-  const { greenCount, yellowCount, redCount } = countDomainsByMaturity(byCategory);
-  const maturityLevel = determineMaturityLevel(cpfScore, convergenceIndex, redCount);
-  const compliance = checkCompliance(maturityLevel.level);
-  const sectorBenchmark = getSectorBenchmark(industry, cpfScore);
-  const certificationPath = determineCertificationPath(maturityLevel.level);
-  const roiAnalysis = calculateROI(maturityLevel.level);
-  return {
-    cpf_score: cpfScore,
-    maturity_level: maturityLevel.level,
-    level_name: maturityLevel.name,
-    convergence_index: convergenceIndex,
-    red_domains_count: redCount,
-    yellow_domains_count: yellowCount,
-    green_domains_count: greenCount,
-    compliance: compliance,
-    sector_benchmark: sectorBenchmark,
-    certification_path: certificationPath,
-    roi_analysis: roiAnalysis
-  };
+  try {
+    const cpfScore = calculateCPFScore(assessments, byCategory);
+    const convergenceIndex = calculateConvergenceIndex(byCategory);
+    const { greenCount, yellowCount, redCount } = countDomainsByMaturity(byCategory);
+    const maturityLevel = determineMaturityLevel(cpfScore, convergenceIndex, redCount);
+    const compliance = checkCompliance(maturityLevel.level);
+    const sectorBenchmark = getSectorBenchmark(industry, cpfScore);
+    const certificationPath = determineCertificationPath(maturityLevel.level);
+    const roiAnalysis = calculateROI(maturityLevel.level);
+    return {
+      cpf_score: cpfScore,
+      maturity_level: maturityLevel.level,
+      level_name: maturityLevel.name,
+      convergence_index: convergenceIndex,
+      red_domains_count: redCount,
+      yellow_domains_count: yellowCount,
+      green_domains_count: greenCount,
+      compliance: compliance,
+      sector_benchmark: sectorBenchmark,
+      certification_path: certificationPath,
+      roi_analysis: roiAnalysis
+    };
+  } catch (error) {
+    console.error('Error calculating maturity model:', error);
+    // Return a basic maturity model with safe defaults
+    return {
+      cpf_score: 50,
+      maturity_level: 0,
+      level_name: 'Unaware',
+      convergence_index: 0,
+      red_domains_count: 0,
+      yellow_domains_count: 0,
+      green_domains_count: 0,
+      compliance: { gdpr: {}, nis2: {}, dora: {}, iso27001: {} },
+      sector_benchmark: { industry: industry || 'Other', percentile: 0, z_score: 0 },
+      certification_path: { eligible: [], required_improvements: [] },
+      roi_analysis: { current_level: 0, next_level: 1, estimated_roi: '0%' }
+    };
+  }
 }
 
 /**
@@ -405,9 +423,9 @@ function calculateAggregates(assessments, industry = 'Other') {
   );
   const missingIndicators = allIndicators.filter(id => !assessedIndicators.includes(id));
 
-  // Maturity model
+  // Maturity model - only calculate if we have category data
   const maturityModel = Object.keys(byCategory).length > 0
-    ? calculateMaturityModel(assessments, byCategory, industry)
+    ? calculateMaturityModel(assessments, byCategory, industry || 'Other')
     : null;
 
   return {
@@ -426,11 +444,51 @@ function calculateAggregates(assessments, industry = 'Other') {
   };
 }
 
+/**
+ * Recalculate aggregates for an organization (useful for migration or data repair)
+ */
+async function recalculateAggregates(orgId) {
+  const organization = await readOrganization(orgId);
+  if (!organization) throw new Error(`Organization with ID ${orgId} not found.`);
+
+  organization.aggregates = calculateAggregates(
+    organization.assessments,
+    organization.metadata.industry || 'Other'
+  );
+  organization.metadata.updated_at = new Date().toISOString();
+
+  await writeOrganization(orgId, organization);
+  return { success: true, aggregates: organization.aggregates };
+}
+
+/**
+ * Recalculate aggregates for all organizations
+ */
+async function recalculateAllAggregates() {
+  const index = await readOrganizationsIndex();
+  if (!index || !index.organizations) return [];
+
+  const results = [];
+
+  for (const orgSummary of index.organizations) {
+    try {
+      const result = await recalculateAggregates(orgSummary.id);
+      results.push({ id: orgSummary.id, name: orgSummary.name, success: true });
+    } catch (error) {
+      results.push({ id: orgSummary.id, name: orgSummary.name, success: false, error: error.message });
+    }
+  }
+
+  return results;
+}
+
 module.exports = {
   createOrganization,
   readOrganization,
   saveAssessment,
   calculateAggregates,
+  recalculateAggregates,
+  recalculateAllAggregates,
   readOrganizationsIndex,
   writeOrganizationsIndex,
   writeOrganization,

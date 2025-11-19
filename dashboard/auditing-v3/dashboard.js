@@ -2379,8 +2379,24 @@ function switchTab(tabName) {
 
 // ===== MATURITY MODEL TAB =====
 function renderMaturityTab() {
-    if (!selectedOrgData || !selectedOrgData.aggregates || !selectedOrgData.aggregates.maturity_model) {
-        console.warn('No maturity model data available');
+    if (!selectedOrgData) {
+        console.warn('No organization data selected');
+        document.getElementById('maturityTab').innerHTML = '<div style="padding: 40px; text-align: center;"><h3>⚠️ No organization selected</h3><p>Please select an organization to view maturity model.</p></div>';
+        return;
+    }
+    if (!selectedOrgData.aggregates) {
+        console.warn('No aggregates data available. Please generate assessment data first.');
+        document.getElementById('maturityTab').innerHTML = '<div style="padding: 40px; text-align: center;"><h3>⚠️ No assessment data</h3><p>Please complete some assessments first to generate maturity model.</p></div>';
+        return;
+    }
+    if (!selectedOrgData.aggregates.maturity_model) {
+        console.warn('Maturity model not calculated. Debug info:', {
+            hasAggregates: !!selectedOrgData.aggregates,
+            assessmentCount: selectedOrgData.assessments ? Object.keys(selectedOrgData.assessments).length : 0,
+            industry: selectedOrgData.metadata?.industry,
+            aggregates: selectedOrgData.aggregates
+        });
+        document.getElementById('maturityTab').innerHTML = '<div style="padding: 40px; text-align: center;"><h3>⚠️ Maturity model not calculated</h3><p>Assessment data exists but maturity model was not calculated.</p><p style="margin-top: 10px;">Please re-save an assessment to trigger recalculation.</p></div>';
         return;
     }
 
