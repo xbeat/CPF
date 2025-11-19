@@ -1,0 +1,166 @@
+name: Convert Markdown to PDF (Recursive)
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_folder:
+        description: 'Cartella di partenza - processa ricorsivamente tutte le sottocartelle (es: cpf-soc-integration/docs)'
+        required: true
+        default: 'cpf-soc-integration/docs'
+        type: string
+      output_folder:
+        description: 'Cartella dove salvare i PDF (lascia vuoto per stessa cartella del .md, preserva struttura)'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install Pandoc and LaTeX
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pandoc texlive-latex-base texlive-fonts-recommended texlive-latex-extra texlive-xetex
+
+    - name: Convert Markdown files to PDF (Recursive)
+      run: |
+        SOURCE_FOLDER="${{ github.event.inputs.source_folder }}"
+        OUTPUT_FOLDER="${{ github.event.inputs.output_folder }}"
+
+        echo "Source folder: $SOURCE_FOLDER"
+        echo "Output folder: ${OUTPUT_FOLDER:-same as source}"
+        echo "Processing mode: RECURSIVE (includes all subfolders)"
+
+        # Verify source folder exists
+        if [ ! -d "$SOURCE_FOLDER" ]; then
+          echo "Error: Folder '$SOURCE_FOLDER' does not exist"
+          exit 1
+        fi
+
+        # Create output folder if specified
+        if [ -n "$OUTPUT_FOLDER" ]; then
+          mkdir -p "$OUTPUT_FOLDER"
+        fi
+
+        # Count total files
+        TOTAL_FILES=$(find "$SOURCE_FOLDER" -name "*.md" -type f | wc -l)
+        echo "Found $TOTAL_FILES Markdown files to convert"
+        echo ""
+
+        CURRENT=0
+        # Find .md files recursively in the specified folder and all subfolders
+        find "$SOURCE_FOLDER" -name "*.md" -type f | sort | while read mdfile; do
+          CURRENT=$((CURRENT + 1))
+          echo "========================================"
+          echo "[$CURRENT/$TOTAL_FILES] Converting: $mdfile"
+
+          dir=$(dirname "$mdfile")
+          filename=$(basename "$mdfile" .md)
+
+          # Convert using pandoc with professional PDF settings
+          if [ -n "$OUTPUT_FOLDER" ]; then
+            # Preserve directory structure in output folder
+            relative_dir=${dir#$SOURCE_FOLDER}
+            relative_dir=${relative_dir#/}
+            if [ -n "$relative_dir" ]; then
+              mkdir -p "$OUTPUT_FOLDER/$relative_dir"
+              output_path="$OUTPUT_FOLDER/$relative_dir/$filename.pdf"
+            else
+              output_path="$OUTPUT_FOLDER/$filename.pdf"
+            fi
+          else
+            output_path="$dir/$filename.pdf"
+          fi
+
+          pandoc "$mdfile" \
+            -o "$output_path" \
+            --pdf-engine=xelatex \
+            -V geometry:margin=1in \
+            -V fontsize=11pt \
+            -V documentclass=article \
+            --toc \
+            --toc-depth=3 \
+            --highlight-style=tango \
+            --shift-heading-level-by=-1 \
+            2>&1 || echo "✗ Failed: $mdfile"
+
+          if [ -f "$output_path" ]; then
+            echo "✓ Created: $output_path"
+          else
+            echo "✗ Failed to create PDF for: $mdfile"
+          fi
+        done
+
+    - name: List generated PDFs
+      run: |
+        OUTPUT_FOLDER="${{ github.event.inputs.output_folder }}"
+        SOURCE_FOLDER="${{ github.event.inputs.source_folder }}"
+
+        if [ -n "$OUTPUT_FOLDER" ]; then
+          echo "PDFs in $OUTPUT_FOLDER (recursive):"
+          PDF_COUNT=$(find "$OUTPUT_FOLDER" -name "*.pdf" -type f | wc -l)
+          echo "Total: $PDF_COUNT PDFs"
+          echo ""
+          find "$OUTPUT_FOLDER" -name "*.pdf" -type f -exec ls -lh {} \; 2>/dev/null || echo "No PDFs found"
+        else
+          echo "PDFs in $SOURCE_FOLDER (recursive):"
+          PDF_COUNT=$(find "$SOURCE_FOLDER" -name "*.pdf" -type f | wc -l)
+          echo "Total: $PDF_COUNT PDFs"
+          echo ""
+          find "$SOURCE_FOLDER" -name "*.pdf" -type f -exec ls -lh {} \; 2>/dev/null || echo "No PDFs found"
+        fi
+
+    - name: Commit and push PDFs to repository
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+
+        OUTPUT_FOLDER="${{ github.event.inputs.output_folder }}"
+        SOURCE_FOLDER="${{ github.event.inputs.source_folder }}"
+
+        # Add PDFs recursively
+        echo "Attempting to add PDFs recursively..."
+        if [ -n "$OUTPUT_FOLDER" ]; then
+          PDF_COUNT=$(find "$OUTPUT_FOLDER" -name "*.pdf" -type f | wc -l)
+          echo "Found $PDF_COUNT PDFs in $OUTPUT_FOLDER"
+          find "$OUTPUT_FOLDER" -name "*.pdf" -type f -exec git add -fv {} \; 2>&1
+        else
+          PDF_COUNT=$(find "$SOURCE_FOLDER" -name "*.pdf" -type f | wc -l)
+          echo "Found $PDF_COUNT PDFs in $SOURCE_FOLDER"
+          find "$SOURCE_FOLDER" -name "*.pdf" -type f -exec git add -fv {} \; 2>&1
+        fi
+
+        # Show git status
+        echo ""
+        echo "Git status after add:"
+        git status
+
+        if git diff --staged --quiet; then
+          echo ""
+          echo "No new PDFs to commit"
+          echo "Checking if PDFs are already tracked..."
+          if [ -n "$OUTPUT_FOLDER" ]; then
+            git ls-files "$OUTPUT_FOLDER/**/*.pdf" || echo "PDFs not tracked"
+          else
+            git ls-files "$SOURCE_FOLDER/**/*.pdf" || echo "PDFs not tracked"
+          fi
+        else
+          echo ""
+          git commit -m "docs: Add PDF versions from ${{ github.event.inputs.source_folder }} (recursive)"
+          echo "Pushing to repository..."
+          if git push; then
+            echo "✓ PDFs committed and pushed to repository successfully"
+          else
+            echo "✗ ERROR: Failed to push to repository"
+            exit 1
+          fi
+        fi
