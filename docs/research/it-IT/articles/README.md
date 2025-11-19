@@ -12,7 +12,7 @@ Articoli accademici e tecnici che esplorano vari aspetti delle vulnerabilità ps
 - Psicologia cognitiva nei contesti di sicurezza
 - Vulnerabilità psicologiche specifiche dell'AI
 - Dinamiche di gruppo nelle operazioni di sicurezza
-- Case study e validazione empirica
+- Casi di studio e validazione empirica
 
 ## Formato
 
