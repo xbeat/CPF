@@ -1,0 +1,629 @@
+{
+  "indicator": "7.9",
+  "title": "KIT SUL CAMPO INDICATORE 7.9",
+  "subtitle": "Cascate di Contagio da Stress",
+  "category": "Vulnerabilità da Risposta allo Stress",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 7.x",
+  "description": {
+    "short": "Misura la vulnerabilità organizzativa alla rapida propagazione dello stress attraverso i team creando cicli di feedback amplificanti che degradano progressivamente la capacità decisionale collettiva sulla sicurezza",
+    "context": "Le cascate di contagio da stress rappresentano una vulnerabilità organizzativa sistemica in cui gli stati di stress acuto si diffondono rapidamente attraverso team e dipartimenti interconnessi. Questo fenomeno opera attraverso il contagio emotivo tramite l'attivazione dei neuroni specchio e la mimesi inconscia dei comportamenti di stress, meccanismi di amplificazione in cui lo stress di ogni individuo intensifica il campo di stress collettivo creando un'escalation esponenziale, e collasso sistemico quando lo stress raggiunge soglie critiche attraverso più nodi contemporaneamente degradando la valutazione collettiva delle minacce e la capacità di risposta agli incidenti.",
+    "impact": "La violazione Target 2013 si è verificata durante i picchi di stress delle festività quando la pressione a cascata ha degradato la vigilanza del team di sicurezza. Equifax 2017 ha mostrato che lo stress organizzativo da più vulnerabilità ha creato condizioni di cascata impedendo un coordinamento adeguato. NotPetya/WannaCry 2017 hanno dimostrato che le organizzazioni con condizioni di stress preesistenti hanno subito impatti più gravi poiché le cascate hanno impedito una risposta coordinata efficace. SolarWinds 2020 ha mostrato stress prolungato che si è propagato attraverso più organizzazioni amplificando l'impatto complessivo e i tempi di recupero.",
+    "psychological_basis": "La ricerca sui neuroni specchio (Rizzolatti 2004) dimostra la mimesi neurologica automatica degli stati emotivi osservati. La teoria polivagale (Porges 2011) spiega come gli stati del sistema nervoso autonomo si sincronizzano tra gli individui attraverso il rilevamento inconscio di segnali di sicurezza/minaccia. La ricerca sul contagio emotivo di Hatfield mostra che gli stati di stress si diffondono attraverso le organizzazioni tramite mimesi automatica e sincronizzazione fisiologica. Gli studi di rete di Christakis & Fowler rivelano che gli stati emotivi si propagano attraverso le reti sociali fino a tre gradi di separazione."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Esistono protocolli formali di gestione dello stress con procedure di rotazione documentate, formazione sulla gestione dello stress per la leadership completata, singolo canale di comunicazione primario mantenuto durante gli incidenti, processi regolari di risoluzione dei conflitti del team, gerarchie decisionali chiare che rimangono intatte sotto pressione.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Esiste una certa consapevolezza sulla gestione dello stress ma i protocolli sono informali o applicati in modo incoerente, occasionale moltiplicazione dei canali di comunicazione durante gli incidenti, bypass intermittente delle procedure sotto pressione, aumenti moderati dei conflitti del team durante periodi ad alto stress.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Nessuna procedura formale di gestione dello stress, lo stress della leadership si propaga visibilmente attraverso i team, più canali di comunicazione concorrenti durante gli incidenti, abbandono regolare delle procedure sotto pressione, conflitti frequenti del team durante eventi di sicurezza, l'autorità decisionale diventa poco chiara durante i periodi di stress.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_team_attendance": 0.17,
+      "q2_leadership_stress": 0.18,
+      "q3_communication_channels": 0.16,
+      "q4_rotation_policy": 0.15,
+      "q5_team_conflicts": 0.13,
+      "q6_decision_quality": 0.12,
+      "q7_procedure_bypass": 0.09
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_7.9(t) = w1·CI(t) + w2·SCC(t) + w3·CPR(t)",
+      "components": {
+        "contagion_dynamics": {
+          "formula": "dS_i/dt = -λ_i·S_i + Σ(α_ij·S_j·(1-S_i)) + β_i·E_i(t)",
+          "description": "Network stress propagation model with individual decay, contagion from connected nodes, and external stressors"
+        },
+        "stress_correlation": {
+          "formula": "SCC(t) = Cov(S_i(t), S_j(t)) / sqrt(Var(S_i)·Var(S_j))",
+          "description": "Correlation coefficient measuring synchronized stress across organizational nodes"
+        },
+        "cascade_propagation": {
+          "formula": "CPR(t) = d/dt(Σ I_stressed(i,t))",
+          "description": "Rate of stress propagation through organization"
+        },
+        "contagion_index": {
+          "formula": "CI(t) = SCC(t)·CPR(t)·sqrt(network_density)",
+          "description": "Composite cascade severity measure"
+        }
+      },
+      "default_weights": {
+        "w1_ci": 0.45,
+        "w2_scc": 0.35,
+        "w3_cpr": 0.2
+      },
+      "temporal_decay": {
+        "formula": "T_7.9(t) = α·D_7.9(t) + (1-α)·T_7.9(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 3600
+      }
+    },
+    "detection_threshold": {
+      "formula": "R_7.9(t) = 1 if CI(t) > θ_cascade AND %_stressed > 0.3 else 0",
+      "theta_cascade": 0.65
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "team_attendance_patterns",
+        "leadership_behavior_observations",
+        "communication_channel_analysis",
+        "team_conflict_documentazione"
+      ],
+      "evidence_required": [
+        "post_incident_attendance_records",
+        "leadership_stress_training_certificates",
+        "communication_log_during_incidents",
+        "team_rotation_schedules"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "hr_systems",
+          "fields": [
+            "employee_id",
+            "sick_leave",
+            "stress_leave",
+            "incident_correlation",
+            "timestamp"
+          ],
+          "retention": "365_days"
+        },
+        {
+          "source": "collaboration_platforms",
+          "fields": [
+            "message_volume",
+            "sentiment_score",
+            "communication_urgency",
+            "channel_count",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "incident_management",
+          "fields": [
+            "incident_id",
+            "team_assignments",
+            "decision_reversals",
+            "stress_indicators"
+          ],
+          "retention": "365_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "cascade_correlation": {
+          "calculation": "Correlation between individual stress indicators and team-wide performance degradation"
+        },
+        "communication_multiplication": {
+          "calculation": "Number of active communication channels during stress periods"
+        }
+      }
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Impairment",
+        "probability": 0.8,
+        "factor": 1.55,
+        "description": "Individual acute stress initiates cascade propagation",
+        "formula": "P(7.9|7.1) = 0.80"
+      },
+      {
+        "indicator": "7.2",
+        "name": "Chronic Stress Burnout",
+        "probability": 0.85,
+        "factor": 1.75,
+        "description": "Chronic organizational stress crea persistent cascade vulnerability",
+        "formula": "P(7.9|7.2) = 0.85"
+      },
+      {
+        "indicator": "6.1",
+        "name": "Groupthink Conformity",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "Group dynamics amplify stress contagion through emotional convergence"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "7.2",
+        "name": "Chronic Stress Burnout",
+        "probability": 0.85,
+        "factor": 1.75,
+        "description": "Cascades accelerate transition from acute to chronic stress"
+      },
+      {
+        "indicator": "7.8",
+        "name": "Cortisol-Impaired Memory",
+        "probability": 0.65,
+        "factor": 1.35,
+        "description": "Collective stress elevation impairs organizational memory"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": [
+        "7.9",
+        "7.1",
+        "7.2"
+      ],
+      "convergence_formula": "CI = ∏(1 + v_i)",
+      "convergence_multiplier": 3.8,
+      "threshold_critical": 5.5,
+      "description": "Perfect storm: Stress cascades + Acute stress + Chronic burnout = 480% increased risk of systemic security failure"
+    }
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_team_attendance",
+          "weight": 0.17,
+          "title": "Presenza del Team Post-Incidente",
+          "question": "Con quale frequenza più membri del team di sicurezza richiedono simultaneamente permessi o si dichiarano malati dopo incidenti di sicurezza importanti?",
+          "options": [
+            {
+              "value": "rare",
+              "score": 0,
+              "label": "Rare - Nessuna correlazione tra incidenti e assenze del team"
+            },
+            {
+              "value": "occasional",
+              "score": 0.5,
+              "label": "Occasionale - Una certa correlazione con 1-2 membri del team interessati"
+            },
+            {
+              "value": "frequent",
+              "score": 1,
+              "label": "Frequente - Schema chiaro di assenze multiple che seguono gli incidenti"
+            }
+          ],
+          "evidence_required": "Registri di presenza correlati con le timeline degli incidenti",
+          "soc_mapping": "Correlazione dei congedi per malattia del sistema HR con le date degli incidenti"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_leadership_stress",
+          "weight": 0.18,
+          "title": "Gestione dello Stress della Leadership",
+          "question": "Qual è il vostro standard procedure when security team leaders exhibit visible stress during incidents (rapid speech, agitation, working excessive hours)?",
+          "options": [
+            {
+              "value": "protocols",
+              "score": 0,
+              "label": "Protocolli formali con formazione sulla gestione dello stress e interruttori di circuito"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Consapevolezza informale ma nessun intervento strutturato"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna procedura - lo stress della leadership si propaga visibilmente attraverso i team"
+            }
+          ],
+          "evidence_required": "Certificati di formazione sulla gestione dello stress della leadership, documentazione degli interruttori di circuito"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_communication_channels",
+          "weight": 0.16,
+          "title": "Disciplina dei Canali di Comunicazione",
+          "question": "Durante il vostro ultimo incidente di sicurezza importante, quanti canali di comunicazione diversi erano attivi simultaneamente per il coordinamento dell'incidente?",
+          "options": [
+            {
+              "value": "single",
+              "score": 0,
+              "label": "Canale primario singolo con disciplina documentata (1-2 canali)"
+            },
+            {
+              "value": "multiple",
+              "score": 0.5,
+              "label": "Canali multipli ma gestibili (3-4 canali)"
+            },
+            {
+              "value": "chaos",
+              "score": 1,
+              "label": "Caos comunicativo con 5+ canali concorrenti"
+            }
+          ],
+          "evidence_required": "Registro delle comunicazioni da incidenti recenti che mostra l'utilizzo dei canali"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_rotation_policy",
+          "weight": 0.15,
+          "title": "Rotazione del Personale Durante Incidenti Prolungati",
+          "question": "Qual è il vostro policy for rotating security personnel during extended incident response (lasting more than 8 hours)?",
+          "options": [
+            {
+              "value": "mandatory",
+              "score": 0,
+              "label": "Rotazione obbligatoria con pianificazione automatizzata e team di backup"
+            },
+            {
+              "value": "optional",
+              "score": 0.5,
+              "label": "Rotazione opzionale raccomandata ma non applicata"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna politica di rotazione - lo stesso team continua fino alla risoluzione"
+            }
+          ],
+          "evidence_required": "Documentazione della politica di rotazione, registro del personale da incidenti prolungati"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_team_conflicts",
+          "weight": 0.13,
+          "title": "Frequenza dei Conflitti del Team",
+          "question": "Con quale frequenza i conflitti o i disaccordi del team di sicurezza aumentano durante i periodi ad alto stress rispetto alle operazioni normali?",
+          "options": [
+            {
+              "value": "stable",
+              "score": 0,
+              "label": "Stabile - Nessun aumento dei conflitti durante i periodi di stress"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Aumento moderato ma risolto attraverso processi stabiliti"
+            },
+            {
+              "value": "significant",
+              "score": 1,
+              "label": "Aumento significativo di conflitti del team non risolti durante lo stress"
+            }
+          ],
+          "evidence_required": "Registri HR, report dei team leader, documentazione sulla risoluzione dei conflitti"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_decision_quality",
+          "weight": 0.12,
+          "title": "Mantenimento della Qualità Decisionale",
+          "question": "Qual è il vostro procedure for maintaining decision-making quality when multiple security issues si verificano simultaneously?",
+          "options": [
+            {
+              "value": "structured",
+              "score": 0,
+              "label": "Protocolli decisionali strutturati con requisiti di validazione"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Procedure informali applicate in modo incoerente sotto pressione"
+            },
+            {
+              "value": "improvised",
+              "score": 1,
+              "label": "Decisioni improvvisate senza approccio strutturato"
+            }
+          ],
+          "evidence_required": "Documentazione del framework decisionale, esempi recenti di incidenti multipli"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_procedure_bypass",
+          "weight": 0.09,
+          "title": "Frequenza di Bypass delle Procedure",
+          "question": "Con quale frequenza i team di sicurezza aggirano le procedure normali e i percorsi di escalation durante gli incidenti ad alto stress?",
+          "options": [
+            {
+              "value": "rare",
+              "score": 0,
+              "label": "Rare - Le procedure mantenute anche sotto pressione con eccezioni documentate"
+            },
+            {
+              "value": "occasional",
+              "score": 0.5,
+              "label": "Bypass occasionali durante i periodi di stress più elevato"
+            },
+            {
+              "value": "frequent",
+              "score": 1,
+              "label": "Frequente - Le procedure standard regolarmente abbandonate sotto pressione"
+            }
+          ],
+          "evidence_required": "Registro delle deviazioni dalle procedure, documentazione di risposta agli incidenti"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezionare UNA opzione per ciascuna domanda. Le evidenze dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Domande di Apertura",
+          "weight": 0.4,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Descriva il vostro team's attendance patterns after il vostro most recent significant security incident. Did multiple people call in sick or request time off?",
+              "scoring_guidance": {
+                "green": "No correlation between incidents and team absences",
+                "yellow": "Some pattern of absences but manageable",
+                "red": "Clear cascade pattern with multiple simultaneous absences"
+              }
+            }
+          ]
+        },
+        {
+          "title": "Leadership e Comunicazione",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Walk us through how leadership stress was managed during a recent high-pressure security situation. What happened with team morale?",
+              "scoring_guidance": {
+                "green": "Leadership maintained composure with formal stress management",
+                "yellow": "Some visible leadership stress but contained",
+                "red": "Leadership stress visibly cascaded creating team-wide panic"
+              }
+            }
+          ]
+        },
+        {
+          "title": "Dinamiche del Team e Qualità Decisionale",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Descriva any team tensions that emerged during a recent security crisis and how they were addressed.",
+              "scoring_guidance": {
+                "green": "No unusual tensions or effectively resolved through processes",
+                "yellow": "Some tensions requiring management intervention",
+                "red": "Significant unresolved conflicts degrading team effectiveness"
+              }
+            }
+          ]
+        },
+        {
+          "title": "Ricerca di Segnali di Allarme",
+          "weight": 0,
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Tutti diventano molto stressati quando la leadership va in panico durante gli incidenti...\"",
+              "severity": "critical",
+              "score_impact": 0.19,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Abbiamo molte persone che si dichiarano malate dopo incidenti di sicurezza importanti...\"",
+              "severity": "high",
+              "score_impact": 0.17,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"La comunicazione diventa caotica durante gli incidenti con tutti che usano canali diversi...\"",
+              "severity": "high",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"I conflitti del team aumentano decisamente durante i periodi di sicurezza ad alto stress...\"",
+              "severity": "medium",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Teniamo lo stesso team sugli incidenti fino alla risoluzione - nessuna politica di rotazione...\"",
+              "severity": "high",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Le procedure normali vengono abbandonate quando siamo sotto pressione...\"",
+              "severity": "medium",
+              "score_impact": 0.12,
+              "subitems": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "continuous_validation": {
+      "synthetic_testing": "Monitor stress cascade indicators during controlled simulations",
+      "correlation_analysis": "Compare individual vs collective stress patterns (target > 0.70)"
+    },
+    "success_metrics": [
+      {
+        "metric": "Cascade Prevention Rate",
+        "formula": "Correlation reduction between individual and team-wide performance degradation",
+        "target": "correlation coefficient < 0.3 within 90 days"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Automated Circuit Breaker System",
+        "description": "Implement monitoring that detects cascade indicators and automatically triggers stress reduction protocols",
+        "implementation": "Monitor communication volume spikes, error rate increases, simultaneous system access anomalies. Automatic activation of mandatory breaks and decision authority redistribution when thresholds exceeded.",
+        "technical_controls": "Stress indicator monitoring dashboard, automated circuit breaker triggers, mandatory pause protocols",
+        "roi": "380% average within 18 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Incident Command Structure Implementation",
+        "description": "Deploy formal incident command protocols maintaining clear authority hierarchies and structured decision-making resistant to stress cascade disruption",
+        "implementation": "Implement ICS with designated roles, single communication channel, structured decision processes, clear authority hierarchy that maintains integrity under stress.",
+        "technical_controls": "ICS workflow system, role assignment automation, communication discipline enforcement",
+        "roi": "420% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Security Team Rotation Automation",
+        "description": "Create automated scheduling enforcing mandatory rotation during extended incidents with pre-defined backup teams and seamless handoff procedures",
+        "implementation": "Automated 8-hour rotation triggers, pre-assigned backup teams, structured handoff protocols, fatigue monitoring with forced rotation.",
+        "technical_controls": "Automated scheduling system, handoff checklist workflow, fatigue indicator monitoring",
+        "roi": "340% average within 12 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Leadership Stress Contagion Training",
+        "description": "Provide specialized training for security leaders on maintaining calm demeanor and preventing cascade initiation",
+        "implementation": "Train leaders in stress recognition, emotional regulation, structured communication during incidents. Practice calm leadership under simulated high-stress scenarios.",
+        "technical_controls": "Leadership training platform, stress simulation exercises, performance feedback systems",
+        "roi": "310% average within 18 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      }
+    ]
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Coordinated Cascade Attack",
+      "description": "Advanced attackers deliberately trigger multiple simultaneous security alerts to overwhelm teams and induce stress cascades, then exploit degraded decision-making to deploy primary attack vector undetected",
+      "likelihood": "high",
+      "impact": "critical"
+    },
+    {
+      "id": "scenario_2",
+      "title": "Holiday/Peak Period Exploitation",
+      "description": "Attackers time major breaches to coincide with high organizational stress periods knowing existing stress will amplify into cascades impairing incident response",
+      "likelihood": "high",
+      "impact": "critical"
+    },
+    {
+      "id": "scenario_3",
+      "title": "Leadership Targeting",
+      "description": "Sophisticated social engineers specifically target security leadership with high-stress scenarios knowing their visible panic will cascade through teams",
+      "likelihood": "medium",
+      "impact": "high"
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "research_basis": [
+      "Rizzolatti & Craighero (2004). Mirror Neuron System",
+      "Porges, S. (2011). Polyvagal Theory",
+      "Hatfield et al. (1994). Emotional Contagion",
+      "Christakis & Fowler (2009). Social Network Effects",
+      "Barsade (2002). Emotional Contagion in Organizations"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready",
+    "translation_date": "2025-11-14"
+  }
+}

@@ -1,0 +1,995 @@
+{
+  "indicator": "3.2",
+  "title": "INDICATORE 3.2 FIELD KIT",
+  "subtitle": "Trappole di Escalation dell'Impegno",
+  "category": "Vulnerabilità di Social Engineering",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Categoria 3.x",
+  "description": {
+    "short": "Misura la vulnerabilità agli attaccanti che sfruttano il principio di impegno/coerenza per aumentare da piccole richieste iniziali a importanti compromessi di sicurezza",
+    "context": "Quando le organizzazioni fanno piccole eccezioni o impegni iniziali di sicurezza, la dissonanza cognitiva crea pressione psicologica per mantenere coerenza con le decisioni precedenti, consentendo agli attaccanti di aumentare progressivamente l'accesso, i privilegi o le violazioni delle policy attraverso tecniche foot-in-door (piede nella porta) e sfruttamento dei costi irrecuperabili.",
+    "impact": "Le organizzazioni con elevata suscettibilità subiscono espansione degli accessi dei fornitori, catene di escalation dei privilegi, pattern di eccezioni normalizzate e incapacità di invertire decisioni di sicurezza sbagliate a causa della fallacia dei costi irrecuperabili. Gli incidenti storici includono l'escalation dell'accesso dei fornitori Target 2013 (impatto >€180M) e campagne BEC progressive che iniziano in piccolo e aumentano nell'arco di settimane.",
+    "psychological_basis": "Principio di impegno/coerenza di Cialdini (2007) - gli esseri umani hanno un profondo desiderio di apparire coerenti con le azioni precedenti. Teoria della dissonanza cognitiva di Festinger (1957) - disagio psicologico nell'invertire impegni precedenti. Ricerca sull'escalation dell'impegno di Staw (1976) - la fallacia dei costi irrecuperabili spinge a continuare investimenti in percorsi fallimentari. Gli studi fMRI di Sharot (2010) mostrano l'attivazione del percorso della ricompensa nel mantenere la coerenza, creando pressione neurologica contro l'inversione."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Policy automatizzate di scadenza delle eccezioni con cicli di revisione obbligatori. Investimenti di sicurezza valutati indipendentemente dai costi irrecuperabili. Confini di accesso dei fornitori applicati con rilevamento di pattern di escalation. Protocolli di revisione delle decisioni proteggono esplicitamente le correzioni di rotta. Audit regolari identificano e terminano sequenze di eccezioni in escalation.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Esistono alcuni processi di revisione delle eccezioni ma applicazione incoerente. Le decisioni di sicurezza occasionalmente fanno riferimento a impegni precedenti. Accesso dei fornitori monitorato ma pattern di escalation non rilevati sistematicamente. Capacità limitata di invertire decisioni di sicurezza precedenti. Consapevolezza informale del bias dei costi irrecuperabili.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Forte pressione culturale per mantenere coerenza con decisioni di sicurezza precedenti. La fallacia dei costi irrecuperabili spinge a continuare investimenti in strumenti di sicurezza inefficaci. Espansione dell'accesso dei fornitori normalizzata come 'approfondimento della relazione'. Nessuna revisione sistematica delle eccezioni in escalation. Decisioni di sicurezza difese in base a impegni precedenti piuttosto che al panorama delle minacce attuale.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_exception_review": 0.16,
+      "q2_security_tool_investment": 0.14,
+      "q3_vendor_access_expansion": 0.14,
+      "q4_repeated_exceptions": 0.13,
+      "q5_investment_tracking": 0.12,
+      "q6_audit_adaptation": 0.11,
+      "q7_scope_creep": 0.1,
+      "q8_escalation_detection": 0.1
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_3.2(t) = w1·R_3.2(t) + w2·A_3.2(t) + w3·B_3.2(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_3.2(t) = 1 if ESI > 0.2 AND Sequence_Length > 3, else 0",
+          "description": "Rilevamento binario basato sull'Indice di Sequenza di Escalation che supera la soglia con lunghezza di sequenza sufficiente",
+          "threshold": {
+            "ESI": 0.2,
+            "Sequence_Length": 3
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_3.2(t) = ESI = Σlog(Risk_{i+1}/Risk_i) / (n-1)",
+          "description": "Indice di Sequenza di Escalation che misura l'aumento medio del rischio per passo nella sequenza di impegno",
+          "variables": {
+            "Risk_i": "punteggio di rischio della richiesta i nella sequenza",
+            "n": "numero di richieste nella sequenza",
+            "log_ratio": "rapporto di rischio logaritmico tra richieste consecutive"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_3.2(t) = P_accept(n) = P_0 · (C(n)/C_0)^β",
+          "factors": [
+            "prior_exception_count",
+            "commitment_magnitude",
+            "time_since_initial_commitment",
+            "consistency_pressure_markers",
+            "sunk_cost_references"
+          ],
+          "priors": {
+            "P_0": "probabilità di approvazione baseline (0.10 per richieste ad alto rischio)",
+            "beta": "parametro di sensibilità all'escalation (2.3)"
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.35,
+        "w2_anomaly": 0.4,
+        "w3_bayesian": 0.25
+      },
+      "temporal_decay": {
+        "formula": "T_3.2(t) = α·D_3.2(t) + (1-α)·T_3.2(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 14400,
+        "description": "Smoothing esponenziale con costante temporale di 4 ore per il rilevamento di sequenze di escalation"
+      }
+    },
+    "commitment_escalation": {
+      "formula": "C(n) = C_0 · ∏(1 + α_i · consistency_pressure_i)",
+      "description": "Magnitudine dell'impegno cumulativo dopo n passi di escalation",
+      "interpretation": "L'impegno cresce moltiplicativamente con ogni passo, creando resistenza esponenziale all'inversione",
+      "alpha_i": "coefficiente di pressione alla coerenza per il passo i (tipicamente 0.15-0.35)"
+    },
+    "foot_in_door_effect": {
+      "formula": "P_accept(n) = P_0 · (C(n)/C_0)^β",
+      "components": {
+        "P_0": "probabilità di accettazione baseline senza impegno precedente",
+        "C_n": "magnitudine dell'impegno dopo n passi dalla formula commitment_escalation",
+        "C_0": "magnitudine dell'impegno iniziale",
+        "beta": "sensibilità all'escalation (2.3 per decisioni di sicurezza)"
+      },
+      "interpretation": "La probabilità di accettazione aumenta esponenzialmente con il rapporto di impegno cumulativo"
+    },
+    "escalation_sequence_index": {
+      "formula": "ESI = Σlog(Risk_{i+1}/Risk_i) / (n-1)",
+      "description": "Misura l'aumento logaritmico medio del rischio per passo nella sequenza di escalation",
+      "interpretation": "ESI > 0.2 indica escalation sistematica del rischio; ESI > 0.5 indica sfruttamento aggressivo",
+      "threshold_detection": "R_3.2(t) = 1 if ESI > 0.2 AND Sequence_Length > 3"
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "exception_request_documentation",
+        "vendor_access_history_review",
+        "security_investment_analysis",
+        "policy_exception_logs",
+        "audit_finding_response_tracking"
+      ],
+      "evidence_required": [
+        "exception_sunset_policies",
+        "vendor_access_boundary_documentation",
+        "security_tool_ROI_analysis",
+        "escalation_pattern_detection_logs",
+        "decision_revision_protocols",
+        "commitment_sequence_examples"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "exception_request_logs",
+          "fields": [
+            "requester_id",
+            "exception_type",
+            "risk_level",
+            "prior_exceptions",
+            "approval_chain",
+            "timestamp"
+          ],
+          "retention": "365_days"
+        },
+        {
+          "source": "access_grant_logs",
+          "fields": [
+            "user_id",
+            "access_type",
+            "privilege_level",
+            "escalation_sequence",
+            "justification",
+            "timestamp"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "vendor_access_logs",
+          "fields": [
+            "vendor_id",
+            "access_scope",
+            "expansion_history",
+            "boundary_violations",
+            "timestamp"
+          ],
+          "retention": "730_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "security_investment_tracking",
+          "fields": [
+            "tool_id",
+            "sunk_cost",
+            "effectiveness_score",
+            "renewal_justification",
+            "timestamp"
+          ],
+          "retention": "1095_days"
+        },
+        {
+          "source": "audit_finding_logs",
+          "fields": [
+            "finding_id",
+            "severity",
+            "remediation_action",
+            "commitment_references",
+            "timestamp"
+          ],
+          "retention": "730_days"
+        },
+        {
+          "source": "policy_revision_history",
+          "fields": [
+            "policy_id",
+            "revision_type",
+            "reversal_indicator",
+            "justification",
+            "timestamp"
+          ],
+          "retention": "1095_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "ESI": {
+          "calculation": "Indice di Sequenza di Escalation da aumenti di rischio sequenziali",
+          "query": "SELECT AVG(LOG(risk_i+1 / risk_i)) FROM (SELECT risk_level, LAG(risk_level) OVER (PARTITION BY requester_id ORDER BY timestamp) as prev_risk FROM exception_requests WHERE requester_id=? AND time_window='90d') WHERE prev_risk IS NOT NULL"
+        },
+        "Sequence_Length": {
+          "calculation": "Conteggio di richieste di eccezione correlate consecutive",
+          "query": "SELECT COUNT(*) FROM exception_requests WHERE requester_id=? AND related_sequence_id=? AND timestamp > NOW() - INTERVAL '90 days'"
+        },
+        "C_n": {
+          "calculation": "Magnitudine dell'impegno cumulativo",
+          "query": "SELECT EXP(SUM(LOG(1 + 0.25 * consistency_pressure))) as commitment FROM exception_sequence WHERE sequence_id=?"
+        }
+      }
+    },
+    "integration_apis": {
+      "vendor_management": "API VMS - Cronologia accessi fornitori, tracciamento espansione dello scope, violazioni dei confini",
+      "pam_system": "API Privilege Access Management - Sequenze di escalation, pattern di concessione accessi",
+      "exception_management": "API Exception Tracking - Sequenze di richieste, pattern di approvazione, tracciamento scadenze",
+      "asset_management": "API CMDB - Inventario strumenti di sicurezza, tracciamento investimenti, metriche di efficacia"
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "3.1",
+        "name": "Sfruttamento della Reciprocità",
+        "probability": 0.7,
+        "factor": 1.5,
+        "description": "I favori iniziali creano una baseline di impegno che gli attaccanti amplificano attraverso la pressione alla coerenza",
+        "formula": "P(3.2|3.1) = 0.70",
+        "evidence": "L'accettazione di regali crea un piccolo impegno iniziale che gli attaccanti sfruttano per richieste in escalation"
+      },
+      {
+        "indicator": "1.1",
+        "name": "Conformità Acritica",
+        "probability": 0.65,
+        "factor": 1.4,
+        "description": "La cultura della conformità impedisce l'inversione degli impegni di sicurezza precedenti",
+        "formula": "P(3.2|1.1) = 0.65"
+      },
+      {
+        "indicator": "1.3",
+        "name": "Impersonificazione di Figure di Autorità",
+        "probability": 0.75,
+        "factor": 1.6,
+        "description": "Figure di autorità che invocano impegni precedenti amplificano la pressione alla coerenza",
+        "formula": "P(3.2|1.3) = 0.75",
+        "evidence": "Autorità + impegno precedente crea vulnerabilità composta"
+      },
+      {
+        "indicator": "1.8",
+        "name": "Normalizzazione delle Eccezioni Esecutive",
+        "probability": 0.8,
+        "factor": 1.7,
+        "description": "Le eccezioni normalizzate creano una baseline di escalation",
+        "formula": "P(3.2|1.8) = 0.80"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Affaticamento Decisionale",
+        "probability": 0.6,
+        "factor": 1.35,
+        "description": "L'esaurimento cognitivo riduce la capacità di riconoscere pattern di escalation",
+        "formula": "P(3.2|5.2) = 0.60"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "3.3",
+        "name": "Sfruttamento della Prova Sociale",
+        "probability": 0.65,
+        "factor": 1.4,
+        "description": "Gli impegni in escalation creano prova sociale per ulteriore conformità"
+      },
+      {
+        "indicator": "3.4",
+        "name": "Manipolazione della Simpatia",
+        "probability": 0.55,
+        "factor": 1.3,
+        "description": "Le sequenze di impegno costruiscono una base relazionale per lo sfruttamento"
+      },
+      {
+        "indicator": "4.2",
+        "name": "Aumento Graduale dei Privilegi",
+        "probability": 0.75,
+        "factor": 1.6,
+        "description": "L'escalation dell'impegno abilita direttamente l'accumulo di privilegi"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": [
+        "3.2",
+        "3.1",
+        "1.3"
+      ],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 3.2,
+      "threshold_critical": 4.2,
+      "description": "Tempesta perfetta: Reciprocità crea impegno iniziale + Autorità invoca coerenza + Sequenza di escalation = 420% di probabilità di violazione aumentata",
+      "real_world_example": "Target 2013 - Accesso fornitore concesso per monitoraggio HVAC, escalato attraverso approvazioni precedenti coerenti ad accesso a tutta la rete portando a violazione da €180M+"
+    },
+    "bayesian_network": {
+      "parent_nodes": [
+        "3.1",
+        "1.1",
+        "1.3",
+        "1.8",
+        "5.2"
+      ],
+      "child_nodes": [
+        "3.3",
+        "3.4",
+        "4.2"
+      ],
+      "conditional_probability_table": {
+        "P_3.2_base": 0.18,
+        "P_3.2_given_reciprocity": 0.42,
+        "P_3.2_given_authority": 0.48,
+        "P_3.2_given_fatigue": 0.35,
+        "P_3.2_given_all": 0.88
+      }
+    }
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_exception_review",
+          "weight": 0.16,
+          "title": "Revisione delle Eccezioni di Sicurezza e Processo di Scadenza",
+          "question": "Come rivede e termina la Sua organizzazione le eccezioni di sicurezza che sono state concesse in precedenza?",
+          "options": [
+            {
+              "value": "automated",
+              "score": 0,
+              "label": "Sistema automatizzato di scadenza delle eccezioni con cicli di revisione obbligatori (30/60/90 giorni), le eccezioni scadono automaticamente a meno che non siano ri-giustificate indipendentemente"
+            },
+            {
+              "value": "manual",
+              "score": 0.5,
+              "label": "La revisione manuale delle eccezioni avviene ma con frequenza incoerente o nessuna scadenza automatica"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Le eccezioni rimangono in vigore indefinitamente una volta concesse o 'non vogliamo rompere ciò che funziona'"
+            }
+          ],
+          "evidence_required": "Policy di scadenza delle eccezioni, log di scadenza automatica, documentazione dei cicli di revisione",
+          "soc_mapping": "Analisi della durata delle eccezioni da exception_request_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_security_tool_investment",
+          "weight": 0.14,
+          "title": "Valutazione dell'Efficacia degli Strumenti di Sicurezza",
+          "question": "Come valuta se continuare a investire negli strumenti e nelle soluzioni di sicurezza esistenti?",
+          "options": [
+            {
+              "value": "independent",
+              "score": 0,
+              "label": "Valutazioni di efficacia indipendenti che ignorano esplicitamente i costi irrecuperabili, strumenti dismessi se non soddisfano le esigenze attuali indipendentemente dall'investimento precedente"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "L'efficacia viene rivista ma l'investimento precedente influenza le decisioni di rinnovo"
+            },
+            {
+              "value": "committed",
+              "score": 1,
+              "label": "Investimento continuo giustificato dalla spesa precedente o 'abbiamo già investito così tanto in questo strumento'"
+            }
+          ],
+          "evidence_required": "Analisi ROI degli strumenti di sicurezza, decisioni di dismissione, documentazione della consapevolezza dei costi irrecuperabili",
+          "soc_mapping": "Tracciamento degli investimenti in sicurezza e metriche di efficacia"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_vendor_access_expansion",
+          "weight": 0.14,
+          "title": "Applicazione dei Confini dello Scope di Accesso dei Fornitori",
+          "question": "Quando i fornitori richiedono accesso espanso oltre il loro scope originale, come vengono gestite queste richieste di escalation?",
+          "options": [
+            {
+              "value": "strict",
+              "score": 0,
+              "label": "Applicazione rigorosa dei confini con valutazione indipendente delle richieste di espansione, rilevamento automatizzato di pattern di espansione dello scope"
+            },
+            {
+              "value": "flexible",
+              "score": 0.5,
+              "label": "Le richieste di espansione vengono riviste ma la cronologia degli accessi precedenti influenza le approvazioni"
+            },
+            {
+              "value": "incremental",
+              "score": 1,
+              "label": "L'accesso dei fornitori si espande naturalmente nel tempo man mano che 'la relazione si approfondisce' o 'ci fidiamo già di loro'"
+            }
+          ],
+          "evidence_required": "Policy sui confini di accesso dei fornitori, log di espansione dello scope, report di rilevamento escalation",
+          "soc_mapping": "Analisi dello scope di accesso dei fornitori da vendor_access_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_repeated_exceptions",
+          "weight": 0.13,
+          "title": "Rilevamento di Pattern di Richieste di Eccezione Ripetute",
+          "question": "Quando la stessa persona, team o fornitore richiede ripetutamente eccezioni di sicurezza, cosa attiva l'indagine?",
+          "options": [
+            {
+              "value": "automated",
+              "score": 0,
+              "label": "Rilevamento automatizzato di pattern di escalation che avvisa dopo 3+ eccezioni sequenziali con livelli di rischio crescenti (ESI > 0.2)"
+            },
+            {
+              "value": "manual",
+              "score": 0.5,
+              "label": "I pattern di eccezione vengono notati informalmente ma nessun rilevamento sistematico o soglie"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun tracciamento delle sequenze di eccezioni o 'hanno ragioni legittime per le eccezioni'"
+            }
+          ],
+          "evidence_required": "Sistema di rilevamento di pattern di escalation, log di calcolo ESI, trigger di indagine",
+          "soc_mapping": "ESI e Sequence_Length da exception_request_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_investment_tracking",
+          "weight": 0.12,
+          "title": "Tracciamento degli Investimenti di Sicurezza a Lungo Termine",
+          "question": "Come traccia gli investimenti cumulativi (tempo, denaro, capitale politico) in iniziative di sicurezza per identificare vulnerabilità da costi irrecuperabili?",
+          "options": [
+            {
+              "value": "tracked",
+              "score": 0,
+              "label": "Tracciamento sistematico degli investimenti cumulativi in sicurezza con consapevolezza esplicita del bias dei costi irrecuperabili e protocolli di protezione dell'inversione"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Consapevolezza generale degli investimenti principali ma nessun tracciamento formale delle vulnerabilità da costi irrecuperabili"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun tracciamento degli impegni cumulativi o il bias dei costi irrecuperabili non riconosciuto come problema di sicurezza"
+            }
+          ],
+          "evidence_required": "Database degli investimenti di sicurezza, tracciamento dei costi irrecuperabili, protocolli di inversione delle decisioni",
+          "soc_mapping": "Magnitudine dell'impegno cumulativo (C_n) da security_investment_tracking"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_audit_adaptation",
+          "weight": 0.11,
+          "title": "Adattamento ai Risultati dell'Audit vs. Difesa delle Decisioni Precedenti",
+          "question": "Quando gli audit identificano problemi con decisioni di sicurezza precedenti, come risponde la Sua organizzazione?",
+          "options": [
+            {
+              "value": "adaptive",
+              "score": 0,
+              "label": "Rapida correzione di rotta con protocolli espliciti di revisione delle decisioni che proteggono i dipendenti che invertono impegni precedenti"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Si verifica un certo adattamento ma sforzo significativo speso a difendere o giustificare decisioni precedenti"
+            },
+            {
+              "value": "defensive",
+              "score": 1,
+              "label": "La risposta primaria è difendere la coerenza con le decisioni precedenti o 'abbiamo fatto quella scelta per buone ragioni all'epoca'"
+            }
+          ],
+          "evidence_required": "Documentazione della risposta all'audit, esempi di inversione delle decisioni, documentazione del protocollo di revisione",
+          "soc_mapping": "Pattern di risposta ai risultati dell'audit da audit_finding_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_scope_creep",
+          "weight": 0.1,
+          "title": "Prevenzione dell'Espansione dello Scope di Progetti e Iniziative",
+          "question": "Come impedisce che i progetti di sicurezza subiscano un'espansione dello scope dove piccoli impegni iniziali si espandono in iniziative importanti?",
+          "options": [
+            {
+              "value": "controlled",
+              "score": 0,
+              "label": "Confini formali dello scope con processi di controllo delle modifiche, monitoraggio delle sequenze di escalation, ri-autorizzazione esplicita richiesta per espansione dello scope"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Gestione generale dello scope ma nessun rilevamento specifico di sequenze di escalation"
+            },
+            {
+              "value": "reactive",
+              "score": 1,
+              "label": "Lo scope si espande naturalmente dagli impegni iniziali o 'siamo già arrivati così lontano, tanto vale continuare'"
+            }
+          ],
+          "evidence_required": "Processo di controllo delle modifiche dello scope, rilevamento escalation per progetti, requisiti di ri-autorizzazione",
+          "soc_mapping": "Pattern di espansione dello scope del progetto dai log di gestione delle modifiche"
+        },
+        {
+          "type": "radio-list",
+          "number": 8,
+          "id": "q8_escalation_detection",
+          "weight": 0.1,
+          "title": "Rilevamento Automatizzato dell'Escalation dell'Impegno",
+          "question": "Quali controlli tecnici rilevano quando piccole decisioni di sicurezza iniziali vengono sistematicamente aumentate nel tempo?",
+          "options": [
+            {
+              "value": "automated",
+              "score": 0,
+              "label": "Calcolo automatizzato dell'ESI e avvisi quando l'Indice di Sequenza di Escalation > 0.2 con lunghezza sequenza > 3 richieste"
+            },
+            {
+              "value": "manual",
+              "score": 0.5,
+              "label": "La revisione manuale può identificare pattern di escalation ma nessun rilevamento automatizzato o soglie"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun controllo tecnico per rilevare sequenze di escalation dell'impegno"
+            }
+          ],
+          "evidence_required": "Configurazione del sistema di rilevamento escalation, regole di avviso ESI, esempi di rilevamento",
+          "soc_mapping": "Eventi di rilevamento R_3.2(t) dalla piattaforma di monitoraggio della sicurezza"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UNA opzione per ogni domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le prove dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Gestione delle Eccezioni e Escalation",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Mi illustri cosa succede alle eccezioni di sicurezza dopo che sono state concesse. Come vengono riviste e terminate?",
+              "scoring_guidance": {
+                "green": "Processo dettagliato automatizzato di scadenza con cicli di revisione specifici, esempi recenti di eccezioni auto-scadute, ri-giustificazione indipendente richiesta",
+                "yellow": "Esiste un processo di revisione manuale ma irregolare o le eccezioni persistono oltre il periodo di giustificazione originale",
+                "red": "Le eccezioni diventano permanenti una volta concesse o 'non rivisitamo le eccezioni approvate'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri la Sua eccezione di sicurezza attiva più vecchia - perché è ancora in vigore?",
+                  "evidence_type": "exception_persistence_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succede quando qualcuno cerca di terminare un'eccezione che è stata in vigore per molto tempo?",
+                  "evidence_type": "reversal_resistance_indicator"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Mi parli di una volta in cui qualcuno ha richiesto molteplici eccezioni di sicurezza nell'arco di settimane o mesi - quale pattern ha osservato?",
+              "scoring_guidance": {
+                "green": "Esempio specifico in cui il pattern di escalation è stato rilevato e indagato, calcolo ESI o analisi simile eseguita",
+                "yellow": "Pattern notato in retrospettiva ma nessun rilevamento sistematico al momento",
+                "red": "Non riesce a ricordare sequenze di escalation o 'ogni eccezione viene valutata indipendentemente'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Come segnalano i Suoi sistemi quando le richieste di eccezione stanno formando una sequenza in escalation?",
+                  "evidence_type": "escalation_detection_mechanism"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "A che punto in una sequenza di escalation indaga il pattern complessivo piuttosto che le singole richieste?",
+                  "evidence_type": "investigation_trigger"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Accesso dei Fornitori ed Espansione dello Scope",
+          "weight": 0.3,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Come è cambiato lo scope di accesso del Suo fornitore più grande da quando gli ha concesso l'accesso per la prima volta? Mi illustri quell'evoluzione.",
+              "scoring_guidance": {
+                "green": "Cronologia degli accessi documentata che mostra applicazione rigorosa dei confini, espansioni dello scope giustificate indipendentemente, richieste di espansione negate con esempi",
+                "yellow": "L'accesso si è espanso ma con qualche giustificazione, applicazione dei confini incoerente",
+                "red": "L'accesso si è espanso naturalmente nel tempo man mano che la relazione si è approfondita o 'avevano già accesso a X, quindi Y aveva senso'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può mostrarmi la Sua documentazione dei confini di accesso dei fornitori e i log di espansione dello scope?",
+                  "evidence_type": "access_tracking_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quando è stata l'ultima volta che ha ridotto o revocato l'accesso di un fornitore che era stato precedentemente concesso?",
+                  "evidence_type": "access_reversal_example"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Quando un fornitore dice 'abbiamo già accesso al sistema A, abbiamo solo bisogno del sistema B per completare l'integrazione' - come valuta quella richiesta?",
+              "scoring_guidance": {
+                "green": "Valutazione del rischio indipendente ignorando l'accesso precedente, riconoscimento esplicito della tecnica foot-in-door, esempi recenti di dinieghi nonostante l'accesso precedente",
+                "yellow": "La richiesta viene valutata ma l'accesso precedente è un fattore positivo nella decisione di approvazione",
+                "red": "L'accesso precedente crea presunzione di approvazione o 'sarebbe incoerente negare dopo aver già concesso A'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "I Suoi flussi di lavoro di approvazione segnalano quando le richieste fanno riferimento a concessioni di accesso precedenti?",
+                  "evidence_type": "consistency_pressure_detection"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come si protegge contro la tecnica foot-in-door nella gestione degli accessi dei fornitori?",
+                  "evidence_type": "mitigation_strategy"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Costi Irrecuperabili e Decisioni di Investimento",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Mi parli di uno strumento o iniziativa di sicurezza in cui ha investito risorse significative nell'arco di più anni - come decide se continuare?",
+              "scoring_guidance": {
+                "green": "Consapevolezza esplicita dei costi irrecuperabili, valutazione indipendente dell'efficacia, esempi documentati di dismissione di iniziative nonostante l'investimento precedente",
+                "yellow": "L'efficacia è considerata ma l'investimento precedente influenza le decisioni di continuazione",
+                "red": "Continuazione giustificata principalmente dall'investimento precedente o 'abbiamo già speso così tanto su questo'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può mostrarmi una decisione recente di dismettere uno strumento di sicurezza dove esisteva un investimento precedente significativo?",
+                  "evidence_type": "sunk_cost_reversal_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come contrastano esplicitamente i Suoi protocolli di decisione di investimento la fallacia dei costi irrecuperabili?",
+                  "evidence_type": "bias_mitigation_protocol"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Quando i risultati dell'audit o le valutazioni di sicurezza contraddicono decisioni di sicurezza precedenti prese dalla Sua organizzazione, cosa succede tipicamente?",
+              "scoring_guidance": {
+                "green": "Rapida correzione di rotta con protocolli di revisione delle decisioni, esempi recenti di inversione di impegni precedenti basati su nuove informazioni, protezione esplicita per i dipendenti che cambiano rotta",
+                "yellow": "Un certo adattamento ma anche sforzo a difendere decisioni precedenti, risposte miste",
+                "red": "La risposta primaria è difendere la coerenza o 'quelle decisioni furono prese per buone ragioni che ancora sosteniamo'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri l'ultimo risultato dell'audit che ha richiesto l'inversione di un impegno di sicurezza precedente - quale fu la discussione interna?",
+                  "evidence_type": "reversal_process_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "I dipendenti sono protetti dalla colpa quando invertono decisioni di sicurezza precedenti basate su nuove informazioni?",
+                  "evidence_type": "psychological_safety_protocol"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Fattori Culturali e Psicologia dell'Impegno",
+          "weight": 0.1,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Come vede la cultura della Sua organizzazione il cambiamento di rotta o l'inversione di decisioni di sicurezza precedenti?",
+              "scoring_guidance": {
+                "green": "La cultura celebra il processo decisionale adattivo, formazione esplicita sulla fallacia dei costi irrecuperabili e sull'escalation dell'impegno, esempi recenti di correzioni di rotta elogiate",
+                "yellow": "Messaggi culturali misti, una certa accettazione dei cambi di rotta ma anche pressione per la coerenza",
+                "red": "Forte pressione culturale per la coerenza con decisioni precedenti, le inversioni di rotta viste come debolezza o scarso giudizio iniziale"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quale formazione ricevono i dipendenti sul riconoscimento delle trappole di escalation dell'impegno e della fallacia dei costi irrecuperabili nelle decisioni di sicurezza?",
+                  "evidence_type": "training_program"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Può descrivere una situazione in cui qualcuno è stato elogiato per aver invertito un impegno di sicurezza precedente?",
+                  "evidence_type": "cultural_indicator"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare sequenze di escalation simulate trimestralmente con monitoraggio ESI",
+      "correlation_analysis": "Confrontare i punteggi di audit manuale con il rilevamento di escalation SOC (correlazione target > 0.82)",
+      "drift_detection": "Test Kolmogorov-Smirnov sulle distribuzioni ESI, ricalibrazione se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Garantire che la probabilità prevista di escalation dell'impegno corrisponda ai pattern di approvazione osservati",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Deriva rilevata o punteggio di validazione < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Tasso di Conformità alla Scadenza delle Eccezioni",
+        "formula": "% di eccezioni che scadono nei tempi previsti vs. rimangono attive oltre il periodo originale",
+        "baseline": "audit dei 180 giorni precedenti",
+        "target": "90% di conformità alla scadenza entro 90 giorni",
+        "measurement": "tracciamento automatizzato del ciclo di vita delle eccezioni + audit mensile"
+      },
+      {
+        "metric": "Tasso di Rilevamento di Sequenze di Escalation",
+        "formula": "% di sequenze di escalation dell'impegno rilevate prima di raggiungere la soglia critica (ESI > 0.5)",
+        "baseline": "capacità di rilevamento attuale",
+        "target": "rilevare l'85% delle sequenze a ESI > 0.2 entro 90 giorni",
+        "measurement": "monitoraggio automatizzato ESI con tracciamento timestamp di rilevamento"
+      },
+      {
+        "metric": "Inversioni di Decisioni da Costi Irrecuperabili",
+        "formula": "Conteggio di decisioni di sicurezza invertite nonostante investimento precedente significativo",
+        "baseline": "12 mesi precedenti",
+        "target": "dimostrare 3+ inversioni di decisioni per trimestre con consapevolezza documentata dei costi irrecuperabili",
+        "measurement": "audit trimestrale di revisione delle decisioni"
+      },
+      {
+        "metric": "Tasso di Espansione dello Scope di Accesso dei Fornitori",
+        "formula": "% di fornitori il cui scope di accesso si è espanso oltre i confini originali",
+        "baseline": "audit corrente degli accessi dei fornitori",
+        "target": "ridurre l'espansione dello scope non autorizzata del 75% entro 90 giorni",
+        "measurement": "analisi mensile dei confini di accesso dei fornitori"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Sistema Automatizzato di Scadenza delle Eccezioni",
+        "description": "Controlli tecnici che fanno scadere automaticamente le eccezioni di sicurezza su programmi predeterminati, richiedendo ri-giustificazione indipendente per il rinnovo",
+        "implementation": "Implementare piattaforma di gestione del ciclo di vita delle eccezioni con flussi di lavoro di scadenza automatizzati (cicli di 30/60/90 giorni basati sul rischio). Le eccezioni si revocano automaticamente a meno che non siano ri-giustificate indipendentemente dall'approvazione precedente. Integrazione con controllo accessi, firewall, PAM e sistemi di applicazione delle policy. Avvisare le parti interessate 7 giorni prima della scadenza con requisiti di ri-giustificazione.",
+        "technical_controls": "Database di tracciamento eccezioni, flussi di lavoro di scadenza automatizzati, integrazione API controllo accessi, applicazione requisiti ri-giustificazione, sistema di avvisi di scadenza",
+        "roi": "480% medio entro 18 mesi",
+        "effort": "high",
+        "timeline": "60-90 giorni di implementazione"
+      },
+      {
+        "id": "sol_2",
+        "title": "Monitoraggio dei Confini di Accesso dei Fornitori",
+        "description": "Tracciamento sistematico e applicazione dei confini dello scope di accesso dei fornitori con rilevamento automatizzato di pattern di escalation",
+        "implementation": "Definire confini di accesso espliciti per ogni relazione con fornitore nel sistema di gestione fornitori. Implementare monitoraggio automatizzato dello scope che segnala richieste di espansione. Calcolare ESI per sequenze di accesso dei fornitori. Richiedere valutazione del rischio indipendente per espansione dello scope ignorando concessioni di accesso precedenti. Report mensili di audit dei confini di accesso dei fornitori.",
+        "technical_controls": "Definizioni dello scope di accesso fornitori, rilevamento violazioni confini, calcolo ESI per sequenze fornitori, avvisi automatizzati di escalation, dashboard audit dello scope",
+        "roi": "420% medio entro 24 mesi",
+        "effort": "medium",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_3",
+        "title": "Processo di Revisione degli Investimenti di Sicurezza",
+        "description": "Framework di valutazione dell'efficacia indipendente che contrasta esplicitamente la fallacia dei costi irrecuperabili nelle decisioni su strumenti e iniziative di sicurezza",
+        "implementation": "Revisione trimestrale dell'efficacia degli investimenti di sicurezza con formazione esplicita sulla consapevolezza del bias dei costi irrecuperabili per i decisori. Criteri di valutazione indipendenti che escludono l'investimento precedente dalle decisioni di continuazione. Protocolli documentati di revisione delle decisioni che proteggono i dipendenti che raccomandano la dismissione. Analisi ROI basata sull'efficacia attuale, non sull'investimento cumulativo.",
+        "technical_controls": "Sistema di tracciamento investimenti, dashboard metriche efficacia, moduli formazione bias costi irrecuperabili, documentazione revisione decisioni, flussi lavoro approvazione dismissione",
+        "roi": "360% medio entro 24 mesi",
+        "effort": "medium",
+        "timeline": "30-45 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Team di Revisione Accessi Indipendenti",
+        "description": "Team di revisione separati che valutano richieste di accesso in escalation senza conoscenza della cronologia delle approvazioni precedenti per eliminare la pressione alla coerenza",
+        "implementation": "Stabilire comitato di revisione indipendente per richieste di accesso ad alto rischio che opera senza visibilità sulla cronologia delle eccezioni precedenti per lo stesso richiedente. Processo di revisione cieco rimuove la pressione alla coerenza. Formazione del comitato sulle tecniche foot-in-door e sfruttamento dell'escalation. Rotazione trimestrale dei membri del team di revisione.",
+        "technical_controls": "Sistema flusso lavoro revisione cieca, mascheramento dati storici, struttura comitato indipendente, tracciamento decisioni senza esposizione cronologia richiedente",
+        "roi": "340% medio entro 18 mesi",
+        "effort": "low",
+        "timeline": "30 giorni"
+      },
+      {
+        "id": "sol_5",
+        "title": "Sistema di Rilevamento Pattern di Escalation",
+        "description": "Calcolo automatizzato dell'Indice di Sequenza di Escalation (ESI) con avvisi quando i pattern di escalation dell'impegno superano le soglie",
+        "implementation": "Implementare motore di calcolo ESI che analizza richieste di eccezione, concessioni di accesso e violazioni di policy per sequenze di escalation. Avvisare i team di sicurezza quando ESI > 0.2 AND Sequence_Length > 3. Dashboard di visualizzazione dei pattern che mostra catene di escalation dell'impegno. Integrazione con SIEM per correlazione con altri indicatori di attacco. Report ESI mensile alla leadership di sicurezza.",
+        "technical_controls": "Motore calcolo ESI, algoritmi rilevamento sequenze escalation, avvisi automatizzati (soglia R_3.2(t)), dashboard visualizzazione pattern, integrazione SIEM",
+        "roi": "510% medio entro 12 mesi",
+        "effort": "high",
+        "timeline": "60-90 giorni"
+      },
+      {
+        "id": "sol_6",
+        "title": "Protocolli di Revisione delle Decisioni",
+        "description": "Policy organizzative esplicite e framework di sicurezza psicologica che proteggono e incoraggiano le correzioni di rotta quando emergono nuove informazioni",
+        "implementation": "Protocollo formale di revisione delle decisioni che celebra il processo decisionale di sicurezza adattivo. Programmi di formazione sulle trappole di escalation dell'impegno, fallacia dei costi irrecuperabili e dissonanza cognitiva nella sicurezza. Policy di protezione esplicite per i dipendenti che invertono impegni precedenti basati su nuove intelligence sulle minacce o risultati di audit. Comunicazione della leadership che enfatizza che le correzioni di rotta dimostrano forza, non debolezza. Programmi di riconoscimento per inversioni di decisioni esemplari.",
+        "technical_controls": "Sistema flusso lavoro revisione decisioni, moduli formazione bias impegno, documentazione policy protezione dipendenti, tracciamento riconoscimento correzioni rotta",
+        "roi": "290% medio entro 18 mesi",
+        "effort": "low",
+        "timeline": "30-45 giorni programma culturale continuo"
+      }
+    ],
+    "prioritization": {
+      "critical_first": [
+        "sol_1",
+        "sol_5"
+      ],
+      "high_value": [
+        "sol_2",
+        "sol_3"
+      ],
+      "cultural_foundation": [
+        "sol_6"
+      ],
+      "technical_enforcement": [
+        "sol_1",
+        "sol_5"
+      ],
+      "governance": [
+        "sol_4"
+      ]
+    }
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Escalation dell'Accesso dei Fornitori (Pattern Target 2013)",
+      "description": "Gli attaccanti ottengono accesso iniziale limitato come fornitori, poi aumentano sistematicamente lo scope attraverso la pressione alla coerenza, facendo riferimento ad approvazioni precedenti per giustificare ogni espansione fino a raggiungere compromissione a livello di rete",
+      "attack_vector": "Relazione iniziale legittima con fornitore per scopo limitato (monitoraggio HVAC, sistema badge, applicazione specifica), seguita da richieste incrementali di espansione dell'accesso invocando fiducia precedente",
+      "psychological_mechanism": "Effetto foot-in-door + pressione alla coerenza: P_accept(n) = P_0 · (C(n)/C_0)^β dove ogni approvazione aumenta esponenzialmente la magnitudine dell'impegno",
+      "historical_example": "Target 2013 - Accesso fornitore HVAC aumentato da gestione edifici ad accesso a tutta la rete attraverso serie di piccole espansioni, portando a violazione di 40M+ carte di credito e impatto totale di €180M+",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": [
+        "ESI > 0.3",
+        "vendor_access_expansion_sequence",
+        "consistency_justification_language",
+        "Sequence_Length > 4"
+      ]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Attacco di Normalizzazione delle Eccezioni",
+      "description": "Gli attaccanti richiedono piccole eccezioni di sicurezza apparentemente ragionevoli che diventano permanenti, poi fanno riferimento a questi precedenti per giustificare violazioni di policy progressivamente maggiori",
+      "attack_vector": "Richiesta iniziale di eccezione a basso rischio (regola firewall temporanea, concessione accesso una tantum, bypass monitoraggio breve) che rimane attiva indefinitamente, poi invocata come precedente per eccezioni più grandi",
+      "psychological_mechanism": "Escalation dell'impegno: C(n) = C_0 · ∏(1 + α_i · consistency_pressure_i) crea crescita esponenziale nella magnitudine dell'impegno e resistenza all'inversione",
+      "historical_example": "Campagne BEC che iniziano con piccole irregolarità nell'approvazione delle fatture, stabiliscono pattern di eccezioni, poi aumentano a importanti bonifici bancari fraudolenti invocando la pressione alla coerenza 'abbiamo fatto questo prima'",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": [
+        "exception_duration_exceeds_original_timeframe",
+        "ESI > 0.25",
+        "repeated_requester",
+        "precedent_references_in_justification"
+      ]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Persistenza dello Strumento di Sicurezza da Costi Irrecuperabili",
+      "description": "Le organizzazioni continuano a investire in strumenti di sicurezza inefficaci a causa dell'investimento precedente, mentre gli attaccanti sfruttano vulnerabilità note in quei sistemi obsoleti",
+      "attack_vector": "Gli attaccanti identificano organizzazioni che usano strumenti di sicurezza obsoleti o inefficaci (rilevabili attraverso fingerprinting tecnico, annunci di lavoro, partnership con fornitori), sfruttano limitazioni note mentre l'organizzazione resiste alla sostituzione a causa dei costi irrecuperabili",
+      "psychological_mechanism": "Fallacia dei costi irrecuperabili: investimento continuo giustificato dalla spesa precedente piuttosto che dall'efficacia attuale, creando lacune di sicurezza persistenti",
+      "historical_example": "Molteplici violazioni in cui le organizzazioni hanno mantenuto strumenti di sicurezza legacy inefficaci per 3-5 anni oltre la vita utile a causa del bias dei costi irrecuperabili, mentre gli attaccanti sfruttavano bypass ben noti",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": [
+        "security_tool_age > 5_years",
+        "low_effectiveness_metrics",
+        "renewal_justified_by_prior_investment",
+        "known_vulnerabilities_unpatched"
+      ]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Escalation dei Privilegi Attraverso Catene di Impegno",
+      "description": "Minacce interne o account compromessi aumentano i privilegi attraverso sequenze di piccole richieste, ciascuna giustificata da approvazioni precedenti, fino a raggiungere accesso amministrativo",
+      "attack_vector": "Accesso iniziale legittimo a basso privilegio, seguito da richieste sistematiche per aumenti incrementali di privilegi, ciascuna che fa riferimento a concessioni precedenti e stabilisce pressione alla coerenza sugli approvatori",
+      "psychological_mechanism": "Effetto foot-in-door combinato con autorità/reciprocità se il richiedente ha fornito favori o ha posizione di autorità: moltiplicatore di vulnerabilità convergente di 3.2x",
+      "historical_example": "Casi di minaccia interna in cui dipendenti sono aumentati da accesso base a domain admin nell'arco di 6-12 mesi attraverso 8-12 piccole richieste di privilegi, ciascuna approvata per coerenza con il pattern precedente",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": [
+        "ESI > 0.4",
+        "privilege_level_increasing_sequence",
+        "Sequence_Length > 5",
+        "time_between_requests_decreasing",
+        "C_n/C_0 > 4.0"
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-10",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-10",
+    "translator": "Claude Code AI Assistant",
+    "research_basis": [
+      "Cialdini, R. (2007). Influence: The Psychology of Persuasion - Principio di Impegno e Coerenza",
+      "Festinger, L. (1957). A Theory of Cognitive Dissonance",
+      "Staw, B.M. (1976). Knee-deep in the big muddy: A study of escalating commitment to a chosen course of action",
+      "Sharot, T., De Martino, B., Dolan, R.J. (2009). How choice reveals and shapes expected hedonic outcome - studi fMRI percorsi ricompensa",
+      "Freedman, J.L., & Fraser, S.C. (1966). Compliance without pressure: The foot-in-the-door technique",
+      "Arkes, H.R., & Blumer, C. (1985). The psychology of sunk cost",
+      "Analisi della Violazione Dati Target Corporation (2013) - caso studio escalation accesso fornitori",
+      "NIST Cybersecurity Framework - pattern di escalation Identity and Access Management"
+    ],
+    "validation_status": "peer_reviewed",
+    "deployment_status": "production_ready"
+  }
+}

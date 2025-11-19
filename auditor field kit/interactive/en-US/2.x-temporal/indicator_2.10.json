@@ -1,0 +1,937 @@
+{
+  "indicator": "2.10",
+  "title": "INDICATOR 2.10 FIELD KIT",
+  "subtitle": "Temporal Consistency Pressure",
+  "category": "Temporal Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 2.x",
+
+  "description": {
+    "short": "Measures vulnerability to security shortcuts when organizations prioritize maintaining consistent response times and schedules over security requirements",
+    "context": "Temporal consistency pressure occurs when organizations prioritize maintaining predictable response times and schedules over security requirements. This psychological vulnerability drives employees to bypass security procedures during time pressure to preserve their reputation for responsiveness. Attackers exploit this by creating artificial deadlines or leveraging known busy periods when security shortcuts are most likely to occur.",
+    "impact": "Organizations with high temporal consistency pressure experience successful CEO fraud during quarter-end, fraudulent wire transfers during busy periods, and compromised vendor relationships. Attackers exploit the tendency to bypass normal verification procedures to maintain consistent payment schedules and response times, resulting in millions in fraudulent payments and persistent network access during holiday periods.",
+    "psychological_basis": "Cognitive dissonance theory (Festinger, 1957) demonstrates that inconsistency between attitudes and behaviors creates psychological discomfort that individuals are motivated to reduce. In cybersecurity contexts, this manifests as pressure to maintain consistent response times even when security protocols suggest slower, more careful approaches. Prospect theory (Kahneman & Tversky, 1979) shows that established temporal patterns become reference points against which new decisions are evaluated, with deviations experienced as losses. Hyperbolic discounting research (Ainslie, 1975) reveals that maintaining immediate temporal consistency is over-weighted compared to future security benefits."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Resilient",
+        "description": "Organization consistently maintains security procedures regardless of time pressure. Has documented policies requiring security completion before deadline commitments. Examples show security requirements appropriately influencing timelines rather than being overridden by them.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Developing",
+        "description": "Organization sometimes bypasses security for urgent requests but has escalation procedures. Balances security and timing through risk assessment. Some documented cases of appropriate timeline adjustment for security requirements.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Critical",
+        "description": "Organization regularly bypasses security procedures to maintain consistent response times. Strong cultural pressure to meet deadlines regardless of security implications. Few or no examples of adjusting timelines to accommodate security requirements.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_security_bypass_frequency": 0.20,
+      "q2_deadline_vs_security": 0.18,
+      "q3_busy_period_shortcuts": 0.17,
+      "q4_executive_urgent_requests": 0.15,
+      "q5_competitor_response_time": 0.13,
+      "q6_schedule_conflict_resolution": 0.12,
+      "q7_timeline_integration": 0.05
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_2.10(t) = w1·R_2.10(t) + w2·A_2.10(t) + w3·T_2.10(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_2.10(t) = 1 if CPI(t) > τ_cpi AND QD(t) < Q_min, else 0",
+          "description": "Binary detection based on consistency pressure index exceeding threshold with quality degradation below minimum",
+          "threshold": {
+            "tau_cpi": 0.25,
+            "Q_min": 0.7
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_2.10(t) = (Var(Response_Times) - μ_var) / σ_var",
+          "description": "Normalized variance in security response times indicating temporal rigidity",
+          "variables": {
+            "Var(Response_Times)": "variance in security verification response times",
+            "μ_var": "baseline variance from historical normal periods",
+            "σ_var": "standard deviation of variance metric"
+          }
+        },
+        "temporal_pressure": {
+          "formula": "T_2.10(t) = Σ[Security_Bypasses(t) · Deadline_Proximity(t)] / Total_Requests(t)",
+          "description": "Correlation between deadline proximity and security procedure bypasses",
+          "variables": {
+            "Security_Bypasses": "count of procedures skipped or expedited",
+            "Deadline_Proximity": "inverse days to deadline (1/days)",
+            "Total_Requests": "total security-relevant requests in time window"
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.35,
+        "w2_anomaly": 0.35,
+        "w3_temporal": 0.30
+      },
+      "temporal_decay": {
+        "formula": "S_2.10(t) = α·D_2.10(t) + (1-α)·S_2.10(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200,
+        "description": "Exponential smoothing with 2-hour time constant for temporal consistency patterns"
+      }
+    },
+    "consistency_pressure_index": {
+      "formula": "CPI(t) = Var(Response_Times) / Mean(Response_Times)^2 · Penalty_Factor",
+      "description": "Measures organizational pressure to maintain consistent response times regardless of security context",
+      "interpretation": "Lower CPI indicates rigid temporal consistency (high vulnerability); higher CPI indicates appropriate variance based on security needs (low vulnerability)"
+    },
+    "shortcut_probability": {
+      "formula": "P_shortcut(CPI, deadline) = σ(α·CPI + β·deadline_pressure - θ)",
+      "components": {
+        "CPI": "Consistency pressure index",
+        "deadline_pressure": "Normalized urgency metric (0-1 scale)",
+        "θ": "Decision threshold (organization-specific calibration)"
+      },
+      "sigmoid": "σ(x) = 1/(1+e^(-x))"
+    },
+    "quality_degradation": {
+      "formula": "QD(t) = Q_0 · (1 - γ · P_shortcut(t))",
+      "description": "Security decision quality degradation as function of shortcut probability",
+      "variables": {
+        "Q_0": "baseline quality (1.0 = perfect)",
+        "γ": "shortcut impact severity coefficient",
+        "P_shortcut": "probability of taking security shortcuts"
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "policy_documentation_review",
+        "project_schedule_analysis",
+        "security_exception_logs",
+        "quarterly_business_period_reviews"
+      ],
+      "evidence_required": [
+        "security_timeline_integration_policies",
+        "emergency_access_usage_logs",
+        "executive_override_documentation",
+        "recent_deadline_security_conflict_examples",
+        "client_service_level_agreements"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "security_approval_workflow_logs",
+          "fields": ["request_id", "request_time", "approval_time", "bypass_flag", "deadline_date", "approver"],
+          "retention": "180_days"
+        },
+        {
+          "source": "project_management_systems",
+          "fields": ["project_id", "deadline", "security_checkpoint_dates", "checkpoint_status", "delay_reasons"],
+          "retention": "365_days"
+        },
+        {
+          "source": "emergency_access_logs",
+          "fields": ["user_id", "access_time", "justification", "authorization_chain", "expiration_time"],
+          "retention": "180_days"
+        },
+        {
+          "source": "response_time_metrics",
+          "fields": ["request_type", "submission_time", "completion_time", "security_steps_completed", "steps_bypassed"],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "calendar_systems",
+          "fields": ["meeting_schedules", "deadline_events", "quarter_end_dates", "busy_period_markers"],
+          "retention": "90_days"
+        },
+        {
+          "source": "performance_review_systems",
+          "fields": ["response_time_metrics", "efficiency_scores", "security_compliance_scores"],
+          "retention": "365_days"
+        },
+        {
+          "source": "incident_response_tickets",
+          "fields": ["ticket_id", "creation_time", "business_context", "timeline_pressure_flags", "procedure_adherence"],
+          "retention": "365_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "CPI": {
+          "calculation": "Variance of security response times divided by squared mean",
+          "query": "SELECT VAR(completion_time - submission_time) / POW(AVG(completion_time - submission_time), 2) FROM approval_logs WHERE time_window='7d' AND request_type='security_sensitive'"
+        },
+        "Security_Bypasses": {
+          "calculation": "Count of procedures marked as bypassed or expedited",
+          "query": "SELECT COUNT(*) FROM approval_logs WHERE (bypass_flag=true OR steps_bypassed > 0) AND timestamp > NOW() - INTERVAL '24 hours'"
+        },
+        "Deadline_Proximity": {
+          "calculation": "Inverse days to deadline for requests near critical dates",
+          "query": "SELECT AVG(1.0 / GREATEST(DATEDIFF(deadline_date, request_time), 1)) FROM approval_logs WHERE deadline_date IS NOT NULL AND time_window='24h'"
+        },
+        "override_rate": {
+          "calculation": "Executive overrides per total sensitive requests",
+          "query": "SELECT (COUNT(executive_override=true) / COUNT(*)) FROM requests WHERE sensitivity_level > 7 AND time_window='1w'"
+        }
+      }
+    },
+    "integration_apis": {
+      "project_management": "Jira/Asana API - Project Timelines, Milestone Dates, Deadline Tracking",
+      "approval_systems": "ServiceNow/Workflow API - Approval Chains, Exception Requests, Timeline Data",
+      "calendar_systems": "Exchange/Google Calendar API - Meeting Schedules, Business Cycles",
+      "pam_system": "CyberArk/BeyondTrust API - Emergency Access, Break-Glass Usage",
+      "siem": "Splunk/Sentinel API - Correlation Events, Temporal Pattern Analysis"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Security Bypass",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "Urgency pressure directly reinforces temporal consistency pressure by increasing deadline proximity",
+        "formula": "P(2.10|2.1) = 0.75",
+        "evidence": "Organizations with urgency bypass patterns show 50% higher temporal consistency rigidity"
+      },
+      {
+        "indicator": "1.3",
+        "name": "Authority Figure Impersonation",
+        "probability": 0.70,
+        "factor": 1.4,
+        "description": "Authority requests combined with deadline pressure create maximum temporal consistency vulnerability",
+        "formula": "P(2.10|1.3) = 0.70"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Cognitive depletion increases reliance on habitual temporal patterns rather than context-appropriate security responses",
+        "formula": "P(2.10|5.2) = 0.65"
+      },
+      {
+        "indicator": "6.4",
+        "name": "Organizational Rhythm Dependency",
+        "probability": 0.60,
+        "factor": 1.25,
+        "description": "Established organizational rhythms create structural pressure for temporal consistency",
+        "formula": "P(2.10|6.4) = 0.60"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "2.3",
+        "name": "Deadline-Driven Risk Acceptance",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Temporal consistency pressure normalizes deadline-driven security compromises"
+      },
+      {
+        "indicator": "1.8",
+        "name": "Executive Exception Normalization",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "Consistent patterns of temporal pressure increase frequency of executive security exceptions"
+      },
+      {
+        "indicator": "5.6",
+        "name": "Heuristic Substitution",
+        "probability": 0.50,
+        "factor": 1.15,
+        "description": "Time pressure encourages substitution of quick heuristics for thorough security analysis"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["2.10", "2.1", "1.3", "2.3"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 4.0,
+      "description": "Perfect storm: Temporal consistency pressure + Urgency bypass + Authority impersonation + Deadline risk acceptance = 380% increased breach probability during quarter-end periods",
+      "real_world_example": "CEO fraud attacks during quarter-end deadlines exploit temporal consistency pressure when finance teams bypass verification to maintain payment schedules"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["2.1", "1.3", "5.2", "6.4"],
+      "child_nodes": ["2.3", "1.8", "5.6"],
+      "conditional_probability_table": {
+        "P_2.10_base": 0.18,
+        "P_2.10_given_urgency": 0.42,
+        "P_2.10_given_authority": 0.38,
+        "P_2.10_given_fatigue": 0.35,
+        "P_2.10_given_all": 0.78
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_security_bypass_frequency",
+          "weight": 0.20,
+          "title": "Security Procedure Bypass Frequency Due to Deadlines",
+          "question": "How often in the past 6 months has your organization expedited or bypassed normal security approval processes due to urgent deadlines?",
+          "options": [
+            {
+              "value": "never",
+              "score": 0,
+              "label": "Never/Rarely (less than quarterly) - Security procedures are maintained regardless of deadlines"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.5,
+              "label": "Sometimes (monthly) - Occasional bypasses with documented risk assessment"
+            },
+            {
+              "value": "frequently",
+              "score": 1,
+              "label": "Frequently (weekly or more) - Regular bypasses to meet timeline commitments"
+            }
+          ],
+          "evidence_required": "Security exception logs from past 6 months, specific recent example with date and business justification",
+          "soc_mapping": "Security_Bypasses metric from detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_deadline_vs_security",
+          "weight": 0.18,
+          "title": "Customer Deadline vs Security Verification Priority",
+          "question": "What happens when security verification procedures would delay meeting a promised customer deadline or executive request?",
+          "options": [
+            {
+              "value": "security_priority",
+              "score": 0,
+              "label": "Security procedures are maintained regardless of timing, with customer notification of delay if necessary"
+            },
+            {
+              "value": "case_by_case",
+              "score": 0.5,
+              "label": "Case-by-case decision with security team involvement and risk assessment"
+            },
+            {
+              "value": "deadline_priority",
+              "score": 1,
+              "label": "Procedures are typically bypassed to meet customer commitments and maintain responsiveness reputation"
+            }
+          ],
+          "evidence_required": "Recent example of deadline-security conflict, written policy on priority ordering, customer communication example",
+          "soc_mapping": "override_rate metric from telemetry mapping"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_busy_period_shortcuts",
+          "weight": 0.17,
+          "title": "Busy Period Security Response Time Changes",
+          "question": "During quarter-end, year-end, or other busy periods, how do security response times and verification procedures change?",
+          "options": [
+            {
+              "value": "consistent",
+              "score": 0,
+              "label": "Response times remain consistent with normal security procedures regardless of business cycles"
+            },
+            {
+              "value": "some_delays",
+              "score": 0.5,
+              "label": "Some delays are acceptable but major security procedures are maintained"
+            },
+            {
+              "value": "shortcuts",
+              "score": 1,
+              "label": "Significant shortcuts are taken to maintain business velocity during busy periods"
+            }
+          ],
+          "evidence_required": "Response time metrics comparing normal vs busy periods, specific example from last quarter-end or year-end",
+          "soc_mapping": "Response time variance correlation with business cycle dates"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_executive_urgent_requests",
+          "weight": 0.15,
+          "title": "Executive Urgent Request Security Verification",
+          "question": "When executives or key clients make urgent requests, what is your typical response process regarding security verification?",
+          "options": [
+            {
+              "value": "standard_procedures",
+              "score": 0,
+              "label": "Standard security procedures apply to all requests regardless of urgency or requester authority level"
+            },
+            {
+              "value": "expedited_review",
+              "score": 0.5,
+              "label": "Expedited but complete security review process with documented justification for acceleration"
+            },
+            {
+              "value": "skip_verification",
+              "score": 1,
+              "label": "Security verification steps are often skipped for urgent executive or client requests to maintain responsiveness"
+            }
+          ],
+          "evidence_required": "Written procedure for urgent executive requests, recent example showing process followed",
+          "soc_mapping": "Executive request handling patterns from approval_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_competitor_response_time",
+          "weight": 0.13,
+          "title": "Security vs Competitive Response Time Perception",
+          "question": "How does your organization handle security requirements that would make you appear slower or less responsive than competitors?",
+          "options": [
+            {
+              "value": "security_priority",
+              "score": 0,
+              "label": "Security requirements take priority over response time perception, with client education on security value"
+            },
+            {
+              "value": "balance",
+              "score": 0.5,
+              "label": "Balanced approach with risk assessment weighing security needs against competitive positioning"
+            },
+            {
+              "value": "speed_priority",
+              "score": 1,
+              "label": "Response time consistency typically overrides security concerns to maintain competitive advantage"
+            }
+          ],
+          "evidence_required": "Specific example of security-speed trade-off decision, competitive positioning documentation",
+          "soc_mapping": "Client-facing response time targets vs security procedure duration"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_schedule_conflict_resolution",
+          "weight": 0.12,
+          "title": "Schedule Conflict Resolution with Security Requirements",
+          "question": "What is your policy when security procedures conflict with established meeting schedules or project timelines?",
+          "options": [
+            {
+              "value": "adjust_schedule",
+              "score": 0,
+              "label": "Schedules are adjusted to accommodate security requirements with stakeholder communication"
+            },
+            {
+              "value": "modify_security",
+              "score": 0.5,
+              "label": "Security procedures are modified or streamlined to fit existing schedules while maintaining core controls"
+            },
+            {
+              "value": "bypass_security",
+              "score": 1,
+              "label": "Security procedures are bypassed or deferred to maintain schedule consistency"
+            }
+          ],
+          "evidence_required": "Recent example of schedule-security conflict resolution, written policy on priority framework",
+          "soc_mapping": "Project timeline adjustment frequency due to security requirements"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_timeline_integration",
+          "weight": 0.05,
+          "title": "Security Timeline Integration in Project Planning",
+          "question": "How are security review timeframes integrated into initial project schedules and customer commitments?",
+          "options": [
+            {
+              "value": "integrated",
+              "score": 0,
+              "label": "Security review time is built into all project schedules and deadline commitments from the start"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.5,
+              "label": "Security time sometimes considered but not consistently included in initial timelines"
+            },
+            {
+              "value": "not_integrated",
+              "score": 1,
+              "label": "Security reviews are expected to fit within existing timelines without schedule adjustment"
+            }
+          ],
+          "evidence_required": "Project planning templates showing security timeline allocation, recent project schedule example",
+          "soc_mapping": "Security checkpoint timing in project_management_systems"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Provide specific examples and evidence for audit trail documentation.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Opening Questions - Temporal Consistency Patterns",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "How often in the past 6 months has your organization expedited or bypassed normal security approval processes due to urgent deadlines? Can you describe a specific recent example?",
+              "scoring_guidance": {
+                "green": "Rare exceptions (quarterly or less) with documented risk assessment, post-incident review, and executive approval required. Recent example shows proper escalation process followed.",
+                "yellow": "Monthly bypasses with informal justification, some documentation exists but inconsistent application. Example shows ad-hoc decision making.",
+                "red": "Weekly or more frequent bypasses normalized as standard practice. No systematic tracking or justification. Example reveals cultural expectation to maintain speed over security."
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What specific security steps were skipped or expedited in that example, and who authorized the bypass?",
+                  "evidence_type": "specific_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you track and review security bypasses to identify patterns or systemic issues?",
+                  "evidence_type": "governance_process"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "What happens when security verification procedures would delay meeting a promised customer deadline or executive request?",
+              "scoring_guidance": {
+                "green": "Security procedures maintained with customer notification of any delays. Recent example shows client accepted delay when security rationale explained. Clear policy prioritizing security over deadline promises.",
+                "yellow": "Case-by-case decisions with variable outcomes. Some clients accommodated, others receive expedited review. No consistent policy framework.",
+                "red": "Strong expectation to meet deadlines regardless of security implications. Customer satisfaction metrics drive decision-making. Security team not consulted before commitment made."
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Tell us about the last time a security requirement would have delayed a customer deliverable - what exactly happened?",
+                  "evidence_type": "specific_incident"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How are customer-facing teams trained to communicate security timeline requirements to clients?",
+                  "evidence_type": "training_methodology"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "During quarter-end, year-end, or other busy periods, how do your security response times and verification procedures change?",
+              "scoring_guidance": {
+                "green": "Consistent procedures maintained regardless of business cycles. May pre-plan additional security resources for busy periods. Metrics show stable response times year-round.",
+                "yellow": "Some procedural flexibility during busy periods but core controls maintained. Response times increase but verification not skipped. Informal understanding rather than documented policy.",
+                "red": "Significant shortcuts taken during busy periods. Security seen as impediment to business velocity. Response time metrics show dramatic reduction in verification steps during quarter-end."
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Compare your last quarter-end security procedures to a normal month - what specifically changed?",
+                  "evidence_type": "comparative_analysis"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Do you have data showing security exception rates or bypass frequency correlated with business cycle dates?",
+                  "evidence_type": "technical_control"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Timeline Integration & Planning",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "How are security review timeframes integrated into initial project schedules and customer commitments?",
+              "scoring_guidance": {
+                "green": "Security review time built into all project templates and timeline estimates. Project managers trained to include security buffers. Recent projects show realistic timeline planning with security checkpoints.",
+                "yellow": "Informal consideration of security time but not systematically included. Post-planning adjustments common. Some project types include security time, others don't.",
+                "red": "Security expected to adapt to pre-committed timelines. No systematic inclusion in planning phase. Security review seen as overhead rather than integral project component."
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show us a recent project schedule - where are the security review periods allocated?",
+                  "evidence_type": "technical_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What happens when security review takes longer than initially estimated - how is the schedule adjusted?",
+                  "evidence_type": "process_handling"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "What is your policy when security procedures conflict with established meeting schedules or project timelines?",
+              "scoring_guidance": {
+                "green": "Written policy requiring timeline adjustment to accommodate security needs. Recent examples show meetings rescheduled or project milestones delayed for security completion. Executive support for security-driven schedule changes.",
+                "yellow": "Ad-hoc negotiation between security and project teams. Outcomes vary by project importance and executive pressure. No clear priority framework documented.",
+                "red": "Strong cultural expectation that schedules are fixed and security must adapt. Meetings and milestones treated as immovable. Security procedures modified or skipped to avoid schedule impact."
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Describe the last time a security requirement would have delayed a major meeting or milestone - what was decided?",
+                  "evidence_type": "decision_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Do you have written policies or decision frameworks for resolving security-schedule conflicts?",
+                  "evidence_type": "policy_documentation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cultural & Psychological Factors",
+          "weight": 0.40,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "How does your organization handle security requirements that would make you appear slower or less responsive than competitors?",
+              "scoring_guidance": {
+                "green": "Security positioned as competitive advantage with client education programs. Marketing materials highlight security rigor. Willing to sacrifice response time for security differentiation.",
+                "yellow": "Tension between security and competitive positioning acknowledged. Case-by-case risk assessment. Some clients receive full security, others expedited service.",
+                "red": "Response time viewed as primary competitive metric. Security seen as cost rather than value. Strong pressure to match or beat competitor response times regardless of security implications."
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Has your organization ever lost business or received client complaints due to security-related delays? How did leadership respond?",
+                  "evidence_type": "cultural_indicator"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How are client-facing staff incentivized and measured - response time vs security compliance?",
+                  "evidence_type": "incentive_structure"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "When executives or key clients make urgent requests, what is your typical response process regarding security verification?",
+              "scoring_guidance": {
+                "green": "Standard procedures apply to all requests with no executive exemptions. Recent example shows executive request properly verified despite urgency claims. Written policy prohibits urgency-based bypasses.",
+                "yellow": "Expedited review process exists with executive involvement but verification still occurs. Some steps streamlined but not eliminated. Documented risk acceptance when procedures modified.",
+                "red": "Executive and key client requests receive minimal verification. Strong cultural norm that important people get fast service. Security team not empowered to delay executive requests."
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Tell us about the last urgent executive request - what security steps were followed and what was the timeline?",
+                  "evidence_type": "specific_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do employees feel about asking executives or important clients to wait for security verification?",
+                  "evidence_type": "cultural_attitude"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"We can't slow down for security - our clients expect immediate responses...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"During quarter-end, we have to keep things moving - security understands...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"We're measured on response time, so security needs to fit our schedule...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Our competitors are faster, we can't afford security delays...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Executives don't have time to wait for security approvals...\"",
+              "severity": "medium",
+              "score_impact": 0.10,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"We've never built security time into our project schedules...\"",
+              "severity": "medium",
+              "score_impact": 0.09,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Security is important, but meeting deadlines is how we keep clients happy...\"",
+              "severity": "medium",
+              "score_impact": 0.08,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "\"We track response time metrics religiously but don't measure security compliance...\"",
+              "severity": "medium",
+              "score_impact": 0.07,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject simulated deadline pressure scenarios quarterly to test bypass detection",
+      "correlation_analysis": "Compare manual audit scores with automated CPI metrics (target correlation > 0.80)",
+      "drift_detection": "Kolmogorov-Smirnov test on response time distributions, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted temporal consistency pressure matches observed bypass frequencies",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Security Override Reduction Rate",
+        "formula": "% reduction in monthly security procedure bypasses due to time pressure",
+        "baseline": "Measure monthly count of bypasses in previous 90 days",
+        "target": "50% reduction within 90 days, zero unauthorized bypasses within 6 months",
+        "measurement": "Weekly exception log review with categorization by bypass reason"
+      },
+      {
+        "metric": "Timeline Compliance Accuracy",
+        "formula": "% of projects where initial timeline estimates included and met security review requirements",
+        "baseline": "Audit recent 20 projects for security timeline integration",
+        "target": "80% accuracy within 90 days, improving to 95% within 6 months",
+        "measurement": "Monthly project schedule audit comparing planned vs actual security checkpoint timing"
+      },
+      {
+        "metric": "Emergency Access Audit Compliance",
+        "formula": "% of emergency access usage following proper authorization, documentation, and expiration procedures",
+        "baseline": "Review all emergency access grants in past 90 days",
+        "target": "100% compliance within 30 days with automated enforcement preventing non-compliant usage",
+        "measurement": "Real-time automated monitoring with weekly compliance reporting"
+      },
+      {
+        "metric": "Response Time Variance Appropriateness",
+        "formula": "Correlation between security context complexity and response time variance",
+        "baseline": "Calculate current CPI and variance metrics",
+        "target": "Positive correlation > 0.6 within 90 days (higher complexity = appropriate longer times)",
+        "measurement": "Quarterly statistical analysis of response times vs request complexity classification"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Security-Integrated Timeline Planning",
+        "description": "Build security review time into all project schedules and deadline commitments from inception",
+        "implementation": "Create standard security duration estimates for different request types (simple: 4 hours, moderate: 2 days, complex: 5 days). Implement automated calendar blocking for security review periods in project management tools. Establish 'security buffer' requirements (15-20% of total timeline) in all customer-facing timeline commitments. Train project managers and account executives on realistic security timeline integration.",
+        "technical_controls": "Project management system integration with security workflow automation, calendar API integration for automated blocking, template modification to include security checkpoints, timeline estimation tools with security duration database",
+        "roi": "380% average within 18 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Escalation Authority Framework",
+        "description": "Designate specific executives authorized to override security procedures with formal risk acceptance process",
+        "implementation": "Designate maximum 3-5 executives authorized to override security procedures (typically CISO, CTO, CEO). Require written justification and explicit risk acceptance signature for any security bypasses. Implement automatic post-incident security review within 48 hours for all bypassed procedures. Create comprehensive audit trail showing decision maker, business rationale, risk assessment, and outcome for each override. Publish quarterly executive override reports to board.",
+        "technical_controls": "Digital workflow for override requests with approval routing, automated notifications to security team, post-incident review ticket generation, dashboard showing override frequency and trends, board reporting automation",
+        "roi": "320% average within 12 months",
+        "effort": "medium",
+        "timeline": "30-45 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Emergency Access Controls",
+        "description": "Deploy break-glass access systems with automatic security team notification and strict expiration",
+        "implementation": "Deploy break-glass access systems requiring dual authorization for any emergency access activation (requester + one approver from pre-authorized list). Implement automatic security team notification within 5 minutes of emergency access grant. Configure automatic access expiration between 4-24 hours maximum based on access scope. Create real-time monitoring alerts for all emergency access usage with automated incident creation. Require post-use justification and security review within 24 hours.",
+        "technical_controls": "Privileged Access Management (PAM) system with break-glass capabilities, SIEM integration for real-time alerts, automated ticket creation, access expiration enforcement, compliance dashboard",
+        "roi": "290% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Cultural Reinforcement Program",
+        "description": "Modify organizational culture to value security-conscious responsiveness over pure speed",
+        "implementation": "Modify performance reviews to include 'security-conscious responsiveness' metrics (balanced scorecard approach). Publicly recognize examples of appropriate security timeline integration in company communications. Train managers to support staff who prioritize security over speed with specific coaching scripts. Create and distribute success stories showing how security diligence prevented major incidents. Implement 'Security Champion' recognition program rewarding employees who properly integrate security into timelines.",
+        "technical_controls": "Performance management system metric updates, internal communications platform for recognition, learning management system (LMS) integration for manager training, incident case study database",
+        "roi": "280% average within 18 months",
+        "effort": "low",
+        "timeline": "30 days initial, ongoing"
+      },
+      {
+        "id": "sol_5",
+        "title": "Client Expectation Management",
+        "description": "Develop standard language explaining security requirements in service agreements and client communications",
+        "implementation": "Develop standard language for service agreements explaining security review timelines and their value. Create client education materials on how security steps protect their interests and data. Implement transparent status updates during security review processes (client portal showing 'In Security Review' status). Establish security review time as standard component of service delivery expectations in all proposals and contracts. Train sales and account management on positioning security as value-add rather than delay.",
+        "technical_controls": "Contract template updates, client portal enhancement with status tracking, proposal automation with security timeline integration, CRM integration for client communication templates",
+        "roi": "250% average within 18 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Automated Security Workflow Integration",
+        "description": "Deploy security approval workflows integrated with existing project management and business tools",
+        "implementation": "Deploy security approval workflows that integrate natively with existing project management tools (Jira, Asana, ServiceNow). Implement automatic security checkpoint triggers based on request characteristics (data sensitivity, access level, financial impact). Create parallel processing capabilities for security reviews to minimize timeline impact. Establish automated escalation paths when security reviews approach deadline conflicts with intelligent routing to available reviewers. Configure real-time visibility dashboards showing security review status and bottlenecks.",
+        "technical_controls": "Workflow automation platform, project management API integrations, intelligent routing engine, real-time dashboard, mobile approval capabilities for accelerated reviews",
+        "roi": "350% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_2"],
+      "high_value": ["sol_3", "sol_6"],
+      "cultural_foundation": ["sol_4", "sol_5"],
+      "governance": ["sol_2"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "CEO Fraud During Quarter-End",
+      "description": "Attackers impersonate executives during busy quarter-end periods, knowing finance teams will bypass normal verification procedures to meet quarterly deadlines, resulting in millions in fraudulent wire transfers during the 48-hour window before quarter close",
+      "attack_vector": "Email impersonation of CFO or CEO during final days of fiscal quarter requesting urgent wire transfers to 'close critical deal' or 'meet vendor payment deadline'",
+      "psychological_mechanism": "Temporal consistency pressure combines with authority compliance during period of maximum deadline stress when bypassing verification feels necessary to maintain quarterly closing rhythm",
+      "historical_example": "Multiple BEC incidents targeting finance teams during quarter-end periods, exploiting predictable busy periods when verification shortcuts are most likely",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["CPI(t) > 0.25", "deadline_proximity < 2 days", "quarter_end_period=true", "financial_request", "verification_bypassed"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Holiday Emergency Exploitation",
+      "description": "Cybercriminals launch attacks during holidays when skeleton IT staff feel pressure to maintain service levels, exploiting the tendency to use emergency access procedures without full verification to maintain uptime, gaining persistent network access",
+      "attack_vector": "Fake urgent IT issues or system failures during holiday periods requiring emergency access grants, or impersonation of on-call staff requesting elevated privileges",
+      "psychological_mechanism": "Reduced staffing creates pressure to maintain consistent service levels with fewer resources, incentivizing emergency procedure usage and verification shortcuts",
+      "historical_example": "Numerous ransomware and network intrusion campaigns timed to holiday periods when temporal consistency pressure is highest and security staffing lowest",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["holiday_period=true", "emergency_access_grant", "reduced_staffing", "response_time_variance_low", "verification_steps < normal"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Vendor Payment Rush Attacks",
+      "description": "Attackers create fake urgent vendor payment requests near month-end, exploiting accounts payable teams' pressure to maintain consistent payment schedules, bypassing normal vendor verification procedures and resulting in fraudulent payments and compromised vendor relationships",
+      "attack_vector": "Email impersonation of legitimate vendors with urgent payment requests, often claiming account changes or past-due amounts requiring immediate payment to maintain vendor relationship",
+      "psychological_mechanism": "Accounts payable departments measured on timely payment performance feel pressure to maintain payment schedule consistency, making vendor verification feel like impediment to operational efficiency",
+      "historical_example": "Vendor impersonation fraud campaigns targeting month-end and quarter-end payment cycles when temporal pressure overrides normal verification",
+      "likelihood": "high",
+      "impact": "medium",
+      "detection_indicators": ["month_end_proximity < 3 days", "vendor_payment_request", "account_change_flag", "urgency_language", "verification_bypassed"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Project Deadline Social Engineering",
+      "description": "Attackers research project timelines and launch targeted phishing during final delivery phases, knowing team members will click suspicious links or provide access to avoid appearing to delay critical deliverables",
+      "attack_vector": "Spear phishing emails with malicious links or credential harvesting disguised as critical project resources, vendor tools, or stakeholder feedback arriving during final project phases",
+      "psychological_mechanism": "Project team members under deadline pressure prioritize project completion over security verification, with career consequences for missing deadlines creating strong temporal consistency pressure",
+      "historical_example": "APT campaigns targeting specific organizations with precision timing based on public project announcements, product launch schedules, or acquisition integration timelines",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["project_deadline < 7 days", "external_sender", "link_click", "credential_submission", "after_hours_activity", "no_verification"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Festinger, L. (1957). A Theory of Cognitive Dissonance",
+      "Kahneman, D., & Tversky, A. (1979). Prospect Theory: An analysis of decision under risk",
+      "Ainslie, G. (1975). Specious reward: A behavioral theory of impulsiveness and impulse control",
+      "Ordóñez, L., & Benson, L. (1997). Decisions under time pressure: How time constraint affects risky decision making"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

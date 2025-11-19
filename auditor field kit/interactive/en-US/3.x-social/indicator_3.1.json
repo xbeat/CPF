@@ -1,0 +1,1045 @@
+{
+  "indicator": "3.1",
+  "title": "INDICATOR 3.1 FIELD KIT",
+  "subtitle": "Reciprocity Exploitation Susceptibility",
+  "category": "Social Engineering Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 3.x",
+  "description": {
+    "short": "Measures vulnerability to attackers who exploit reciprocal obligation through gifts, favors, or benefits to manipulate security compliance",
+    "context": "When employees receive unsolicited gifts, favors, or benefits, pre-cognitive reciprocity mechanisms activate within 300-500ms, creating obligation pressure that attackers exploit to bypass security controls through quid pro quo schemes, phishing with benefits, and social engineering gifts.",
+    "impact": "Organizations with high susceptibility experience successful USB drop attacks (45-60% pickup rate), vendor-based breaches, compromised IT support channels, and security policy exceptions following seemingly innocent favors. Reciprocity exploitation often precedes more sophisticated attack chains.",
+    "psychological_basis": "Cialdini's reciprocity principle (2007) - Universal human tendency to repay favors. Neurologically, receiving gifts activates ventral striatum and creates measurable obligation pressure. fMRI studies show pre-cognitive activation before conscious awareness, making this vulnerability particularly insidious."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Low Vulnerability - Resilient",
+        "description": "Formal gift and favor policies with mandatory 48-hour cooling-off periods. Employees trained to recognize reciprocity exploitation. Alternative channels exist for legitimate reciprocal business relationships. Systematic tracking of favors and gifts.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Moderate Vulnerability - Developing",
+        "description": "Basic gift policies exist but no systematic reciprocity management. Some awareness training but no specific reciprocity recognition. Inconsistent application of delay protocols. Limited tracking of vendor relationships.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "High Vulnerability - Critical",
+        "description": "No formal policies governing gifts and favors. Strong cultural expectation to reciprocate immediately. Gift-giving normalized in vendor relationships. No training on reciprocity exploitation. Security exceptions routinely granted after favors.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_gift_favor_policy": 0.2,
+      "q2_external_it_support": 0.15,
+      "q3_vendor_relationship": 0.14,
+      "q4_security_exception_favors": 0.13,
+      "q5_employee_training": 0.12,
+      "q6_reciprocal_practices": 0.11,
+      "q7_incident_tracking": 0.09,
+      "q8_delay_protocol": 0.06
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_3.1(t) = w1·R_3.1(t) + w2·A_3.1(t) + w3·B_3.1(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_3.1(t) = 1 if R_i(t) > τ_recip AND Request_Anomaly > σ, else 0",
+          "description": "Binary detection based on reciprocity imbalance threshold and anomalous request patterns",
+          "threshold": {
+            "tau_recip": 0.4,
+            "sigma_anomaly": 2.5
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_3.1(t) = WRI = Σw_ij·min(x_ij,x_ji)/max(x_ij,x_ji) / Σw_ij",
+          "description": "Weighted Reciprocity Index measuring network-level favor imbalances",
+          "variables": {
+            "w_ij": "relationship weight between entities i and j",
+            "x_ij": "favors from i to j",
+            "x_ji": "favors from j to i"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_3.1(t) = P_comply(R,T) = 1/(1 + e^(-β(R·α + T·γ - θ)))",
+          "factors": [
+            "reciprocity_imbalance",
+            "time_pressure_markers",
+            "gift_value",
+            "relationship_duration",
+            "request_anomaly_score"
+          ],
+          "priors": {
+            "P_legitimate": 0.7,
+            "P_exploitation": 0.3
+          },
+          "coefficients": {
+            "alpha_reciprocity": 2.3,
+            "gamma_temporal": 1.8,
+            "beta_sensitivity": 1.5,
+            "theta_threshold": 1.2
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.35,
+        "w2_anomaly": 0.35,
+        "w3_bayesian": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_3.1(t) = α·D_3.1(t) + (1-α)·T_3.1(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200,
+        "description": "Exponential smoothing with 2-hour time constant for favor-request correlation"
+      }
+    },
+    "reciprocity_imbalance": {
+      "formula": "R_i(t) = Σ[Favors_j→i - Favors_i→j] / [Favors_j→i + Favors_i→j + ε]",
+      "description": "Measures net favor imbalance normalized by total interaction volume",
+      "interpretation": "Values approaching +1 indicate receiving many favors without reciprocation, creating exploitation vulnerability",
+      "epsilon": 0.01
+    },
+    "compliance_pressure": {
+      "formula": "P_comply(R,T) = 1/(1 + e^(-β(R·α + T·γ - θ)))",
+      "components": {
+        "R_reciprocity_imbalance": "Net favor imbalance from reciprocity_imbalance formula",
+        "T_time_pressure": "Urgency markers in request (0-1 scale)",
+        "alpha_reciprocity_weight": 2.3,
+        "gamma_temporal_weight": 1.8,
+        "beta_sensitivity": 1.5,
+        "theta_threshold": 1.2
+      },
+      "sigmoid": "σ(x) = 1/(1+e^(-x))"
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "gift_and_favor_policy_review",
+        "vendor_relationship_documentation",
+        "incident_history_analysis",
+        "training_records"
+      ],
+      "evidence_required": [
+        "written_gift_acceptance_policy",
+        "vendor_gift_disclosure_logs",
+        "reciprocity_recognition_training_materials",
+        "security_exception_request_logs",
+        "delay_protocol_documentation"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "vendor_interaction_logs",
+          "fields": [
+            "vendor_id",
+            "interaction_type",
+            "gift_value",
+            "favor_type",
+            "timestamp"
+          ],
+          "retention": "365_days"
+        },
+        {
+          "source": "security_exception_logs",
+          "fields": [
+            "requester_id",
+            "exception_type",
+            "justification",
+            "prior_favors",
+            "timestamp"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "access_request_logs",
+          "fields": [
+            "user_id",
+            "resource_requested",
+            "relationship_context",
+            "approval_speed",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "gift_registry_system",
+          "fields": [
+            "recipient_id",
+            "gift_type",
+            "gift_value",
+            "donor_entity",
+            "disclosure_date"
+          ],
+          "retention": "730_days"
+        },
+        {
+          "source": "vendor_management_system",
+          "fields": [
+            "vendor_id",
+            "relationship_duration",
+            "favor_history",
+            "access_grants"
+          ],
+          "retention": "365_days"
+        },
+        {
+          "source": "physical_security_logs",
+          "fields": [
+            "item_found",
+            "location",
+            "pickup_action",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "R_i": {
+          "calculation": "Net favor imbalance per entity",
+          "query": "SELECT (SUM(favors_received) - SUM(favors_given)) / (SUM(favors_received) + SUM(favors_given) + 0.01) as R_i FROM vendor_interactions WHERE entity_id=? AND time_window='30d'"
+        },
+        "Request_Anomaly": {
+          "calculation": "Z-score of request compared to baseline",
+          "query": "SELECT (current_request_score - AVG(baseline_score)) / STDDEV(baseline_score) FROM request_patterns WHERE user_id=? AND time_window='90d'"
+        },
+        "compliance_rate": {
+          "calculation": "Exception grants following favors / Total exception requests",
+          "query": "SELECT (COUNT(granted=true AND prior_favor=true) / COUNT(*)) FROM exception_requests WHERE time_window='30d'"
+        }
+      }
+    },
+    "integration_apis": {
+      "vendor_management": "VMS API - Vendor relationships, gift disclosures, interaction history",
+      "expense_system": "Expense API - Gift receipts, entertainment logging",
+      "access_control": "IAM API - Exception grants, access request patterns",
+      "incident_response": "IR Platform API - Reciprocity-related incidents, quid pro quo attempts"
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "1.3",
+        "name": "Authority Figure Impersonation",
+        "probability": 0.75,
+        "factor": 1.6,
+        "description": "Authority figures bearing gifts create compound vulnerability through reciprocity + compliance",
+        "formula": "P(3.1|1.3) = 0.75",
+        "evidence": "Gift from apparent authority activates both obedience and reciprocity neural pathways"
+      },
+      {
+        "indicator": "1.1",
+        "name": "Unquestioning Compliance",
+        "probability": 0.65,
+        "factor": 1.4,
+        "description": "Compliance culture amplifies obligation to reciprocate favors",
+        "formula": "P(3.1|1.1) = 0.65"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.7,
+        "factor": 1.5,
+        "description": "Time pressure after receiving favor amplifies reciprocity compliance pressure",
+        "formula": "P(3.1|2.1) = 0.70",
+        "evidence": "Urgency prevents cooling-off period that would reduce obligation pressure"
+      },
+      {
+        "indicator": "2.2",
+        "name": "Deadline Pressure Exploitation",
+        "probability": 0.6,
+        "factor": 1.3,
+        "description": "Deadline environments normalize quid pro quo exchanges",
+        "formula": "P(3.1|2.2) = 0.60"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.55,
+        "factor": 1.35,
+        "description": "Stress increases guilt sensitivity and obligation pressure",
+        "formula": "P(3.1|7.1) = 0.55"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "3.2",
+        "name": "Social Proof Exploitation",
+        "probability": 0.6,
+        "factor": 1.3,
+        "description": "Reciprocity creates social proof for future compliance"
+      },
+      {
+        "indicator": "3.3",
+        "name": "Likability Manipulation",
+        "probability": 0.65,
+        "factor": 1.4,
+        "description": "Gift-giving establishes likability foundation for further exploitation"
+      },
+      {
+        "indicator": "3.4",
+        "name": "Commitment Escalation",
+        "probability": 0.7,
+        "factor": 1.5,
+        "description": "Initial reciprocation creates commitment baseline for escalation"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": [
+        "3.1",
+        "1.3",
+        "2.1"
+      ],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 3.8,
+      "description": "Perfect storm: Authority bearing gifts + Urgency + Reciprocity obligation = 380% increased exploitation probability",
+      "real_world_example": "CEO fraud campaigns combining gift delivery (USB drives) with urgent executive impersonation requests"
+    },
+    "bayesian_network": {
+      "parent_nodes": [
+        "1.3",
+        "1.1",
+        "2.1",
+        "2.2",
+        "7.1"
+      ],
+      "child_nodes": [
+        "3.2",
+        "3.3",
+        "3.4"
+      ],
+      "conditional_probability_table": {
+        "P_3.1_base": 0.25,
+        "P_3.1_given_authority": 0.55,
+        "P_3.1_given_urgency": 0.48,
+        "P_3.1_given_stress": 0.42,
+        "P_3.1_given_all": 0.85
+      }
+    }
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_gift_favor_policy",
+          "weight": 0.2,
+          "title": "Gift and Favor Acceptance Policy",
+          "question": "What formal policies govern employee acceptance of gifts, favors, or benefits from external parties (vendors, customers, partners)?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Written policy with monetary limits, disclosure requirements, approval workflows, and mandatory cooling-off periods before reciprocal actions"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Basic gift policy exists but no specific reciprocity management or cooling-off requirements"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No formal gift/favor policy or policy focuses only on bribery without addressing reciprocity exploitation"
+            }
+          ],
+          "evidence_required": "Written gift acceptance policy, disclosure logs, approval workflow documentation",
+          "soc_mapping": "gift_registry_system entries and compliance_rate"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_external_it_support",
+          "weight": 0.15,
+          "title": "External IT Support and Technical Assistance",
+          "question": "When external vendors or individuals offer unsolicited technical help, troubleshooting assistance, or 'free' IT support, what is your standard response procedure?",
+          "options": [
+            {
+              "value": "verified",
+              "score": 0,
+              "label": "All external technical assistance must be pre-authorized and verified through official vendor channels before acceptance"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "External help accepted if it seems legitimate but no formal verification process"
+            },
+            {
+              "value": "accepted",
+              "score": 1,
+              "label": "Unsolicited technical help welcomed as 'good vendor relationship building'"
+            }
+          ],
+          "evidence_required": "Vendor technical support policy, recent external assistance examples",
+          "soc_mapping": "vendor_interaction_logs for unsolicited assistance patterns"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_vendor_relationship",
+          "weight": 0.14,
+          "title": "Vendor Relationship and Reciprocity Tracking",
+          "question": "How does your organization track and manage reciprocal relationships with vendors, including gifts, entertainment, favors, and preferential treatment?",
+          "options": [
+            {
+              "value": "systematic",
+              "score": 0,
+              "label": "Systematic tracking of all vendor favors and gifts with reciprocity imbalance monitoring and automated alerts for unusual patterns"
+            },
+            {
+              "value": "manual",
+              "score": 0.5,
+              "label": "Manual gift disclosure process exists but no systematic reciprocity tracking"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No tracking of vendor relationships or reciprocal obligations"
+            }
+          ],
+          "evidence_required": "Vendor relationship database, gift tracking system, reciprocity imbalance reports",
+          "soc_mapping": "R_i calculation from vendor_interaction_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_security_exception_favors",
+          "weight": 0.13,
+          "title": "Security Exceptions Following Favors",
+          "question": "When employees receive gifts or favors from external parties, are there specific controls preventing immediate security policy exceptions or access grants?",
+          "options": [
+            {
+              "value": "controlled",
+              "score": 0,
+              "label": "Mandatory delay protocol prevents security exceptions within 48 hours of receiving gifts/favors, with independent approval required"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "General awareness that exceptions should be reviewed but no formal delay requirement"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No connection made between received favors and subsequent security decisions"
+            }
+          ],
+          "evidence_required": "Exception request logs, favor-to-exception correlation data, delay protocol documentation",
+          "soc_mapping": "compliance_rate from exception_requests correlated with gift_registry"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_employee_training",
+          "weight": 0.12,
+          "title": "Reciprocity Exploitation Training",
+          "question": "What specific training do employees receive on recognizing and managing reciprocity-based social engineering attacks?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Regular training covering reciprocity psychology, quid pro quo schemes, USB drop attacks, and gift-based social engineering with practical scenarios"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "General security awareness training mentions gifts/favors but no specific reciprocity exploitation coverage"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No training on reciprocity exploitation or how gifts create security vulnerabilities"
+            }
+          ],
+          "evidence_required": "Training curriculum, completion records, assessment results for reciprocity scenarios",
+          "soc_mapping": "Training completion tracking and simulation test results"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_reciprocal_practices",
+          "weight": 0.11,
+          "title": "Organizational Reciprocal Business Practices",
+          "question": "How does your organizational culture view reciprocal favors and gift exchanges in business relationships?",
+          "options": [
+            {
+              "value": "controlled",
+              "score": 0,
+              "label": "Reciprocity recognized as security risk; alternative channels exist for legitimate relationship building without creating obligation"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Reciprocity seen as normal business practice but some awareness of potential risks"
+            },
+            {
+              "value": "normalized",
+              "score": 1,
+              "label": "Gift exchange and favor reciprocation actively encouraged as 'relationship building' or 'how business is done'"
+            }
+          ],
+          "evidence_required": "Cultural assessment, employee survey data, relationship management guidelines",
+          "soc_mapping": "Vendor relationship patterns and gift exchange frequency"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_incident_tracking",
+          "weight": 0.09,
+          "title": "Reciprocity-Based Incident Tracking",
+          "question": "Does your organization track security incidents or policy exceptions that involved prior gifts, favors, or quid pro quo scenarios?",
+          "options": [
+            {
+              "value": "tracked",
+              "score": 0,
+              "label": "Systematic tracking of reciprocity-related incidents with pattern analysis and remediation feedback loops"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Some incident documentation but no specific reciprocity correlation analysis"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No tracking of reciprocity patterns in security incidents"
+            }
+          ],
+          "evidence_required": "Incident response database with reciprocity flags, pattern analysis reports",
+          "soc_mapping": "Request_Anomaly patterns from incident_response_tickets"
+        },
+        {
+          "type": "radio-list",
+          "number": 8,
+          "id": "q8_delay_protocol",
+          "weight": 0.06,
+          "title": "Cooling-Off Period Implementation",
+          "question": "When employees receive unexpected gifts or benefits, is there a mandatory waiting period before making security-sensitive decisions affecting that party?",
+          "options": [
+            {
+              "value": "enforced",
+              "score": 0,
+              "label": "Mandatory 48-hour cooling-off period enforced through technical controls before security decisions affecting gift-givers"
+            },
+            {
+              "value": "recommended",
+              "score": 0.5,
+              "label": "Cooling-off period recommended but not technically enforced"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No cooling-off period or delay protocol for favor-related decisions"
+            }
+          ],
+          "evidence_required": "Delay protocol documentation, technical control configuration, enforcement logs",
+          "soc_mapping": "Time delta between gift_registry entries and access_request_logs"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Gift and Favor Management",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "When vendors, customers, or partners send gifts or offer favors to your employees, what happens? Walk me through your standard process.",
+              "scoring_guidance": {
+                "green": "Detailed multi-step process with disclosure requirements, monetary limits, approval workflows, and documented examples of gifts declined or returned",
+                "yellow": "General policy exists but inconsistent enforcement or no recent examples of policy application",
+                "red": "No formal process or 'we trust employees to handle it appropriately' response"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Can you show me your gift disclosure logs from the past 6 months?",
+                  "evidence_type": "gift_registry_documentation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What happens if an employee accepts a gift above your monetary threshold?",
+                  "evidence_type": "enforcement_mechanism"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Tell me about the last time someone in your organization received an unsolicited gift or favor from an external party. What happened next?",
+              "scoring_guidance": {
+                "green": "Specific recent example with proper disclosure, cooling-off period observed, and documented handling",
+                "yellow": "Vague recollection with informal handling but no documentation",
+                "red": "Cannot recall any examples or 'we don't track that' response"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Did that employee make any security or access decisions affecting that party afterward? How long did they wait?",
+                  "evidence_type": "reciprocity_correlation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Was there any formal review of whether the gift created obligation or bias?",
+                  "evidence_type": "conflict_assessment"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Vendor Relationships and Reciprocity",
+          "weight": 0.3,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "How do you manage reciprocal relationships with vendors - situations where they do you favors, provide free services, or go 'above and beyond' their contract?",
+              "scoring_guidance": {
+                "green": "Systematic tracking of vendor favors with reciprocity imbalance monitoring, contractual boundaries, and alternative recognition methods that don't create security obligations",
+                "yellow": "General awareness of vendor relationships but no formal reciprocity management",
+                "red": "Vendor favors welcomed as 'good relationships' with expectation of reciprocation"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Can you show me how you track favors received from vendors versus value provided back to them?",
+                  "evidence_type": "reciprocity_tracking_system"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Has a vendor ever provided free/early access or special treatment - did that influence subsequent security decisions about them?",
+                  "evidence_type": "favor_to_decision_correlation"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "When external parties offer unsolicited technical help, troubleshooting, or IT support, what is your team's response?",
+              "scoring_guidance": {
+                "green": "All external technical assistance pre-authorized and verified, employees trained to decline unsolicited help, recent examples of proper verification",
+                "yellow": "General skepticism but no formal verification process for external technical help",
+                "red": "Unsolicited help welcomed or 'we assume vendors are trying to be helpful'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Describe the last time someone claiming to be a vendor technician offered help - exactly how was their identity verified?",
+                  "evidence_type": "verification_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "If a vendor sends a helpful how-to guide or free tool, what security review happens before employees use it?",
+                  "evidence_type": "technical_control"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Reciprocity Psychology and Training",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "What training do employees receive about how receiving gifts or favors can create security vulnerabilities through reciprocity pressure?",
+              "scoring_guidance": {
+                "green": "Comprehensive training covering reciprocity psychology, quid pro quo attacks, USB drop scenarios, practical recognition exercises, and recent training completion data",
+                "yellow": "Security awareness training mentions gifts generally but no reciprocity exploitation specifics",
+                "red": "No reciprocity-specific training or training focuses on 'maintaining good relationships'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "If I left a branded USB drive with a nice note in your parking lot, what would your employees do? How do you know?",
+                  "evidence_type": "scenario_response"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Have you ever tested employees with simulated quid pro quo scenarios?",
+                  "evidence_type": "simulation_testing"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "When someone receives a gift or favor, is there a mandatory waiting period before they can make security decisions affecting that party?",
+              "scoring_guidance": {
+                "green": "Documented 48-hour cooling-off protocol with technical enforcement, recent examples of delays, override requires independent approval",
+                "yellow": "Informal guidance to 'wait a bit' but no specific timeframe or enforcement",
+                "red": "No cooling-off period or concept not implemented"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show me your last security exception request that came within a week of receiving a vendor gift - was the connection flagged?",
+                  "evidence_type": "correlation_tracking"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do your systems prevent immediate reciprocation after receiving favors?",
+                  "evidence_type": "technical_control"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "How does your organizational culture view reciprocity in business relationships? Is reciprocating favors expected?",
+              "scoring_guidance": {
+                "green": "Culture recognizes reciprocity as cognitive bias risk, alternative relationship building channels exist, explicit policies against obligation-based decisions",
+                "yellow": "Mixed messages with some awareness but also cultural expectations to reciprocate",
+                "red": "Strong cultural norm that 'we take care of those who help us' or reciprocity actively encouraged"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What would happen if an employee declined to help someone who had previously done them a favor?",
+                  "evidence_type": "cultural_consequence"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Are there industry or cultural factors that make gift-giving especially prevalent in your business relationships?",
+                  "evidence_type": "cultural_context"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"If someone does us a favor, we help them back - that's just good business...\"",
+              "severity": "critical",
+              "score_impact": 0.17094017094017097,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"We treat our vendors like family - they give us gifts, we're flexible with them...\"",
+              "severity": "high",
+              "score_impact": 0.13675213675213677,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"It would be rude not to reciprocate when someone helps us out...\"",
+              "severity": "high",
+              "score_impact": 0.12820512820512822,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Customers send us gifts during holidays - we make sure to prioritize their requests...\"",
+              "severity": "high",
+              "score_impact": 0.11965811965811968,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"We encourage employees to accept vendor gifts to build stronger relationships...\"",
+              "severity": "critical",
+              "score_impact": 0.15384615384615385,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"If someone finds a USB drive in the parking lot, they usually plug it in to find the owner...\"",
+              "severity": "critical",
+              "score_impact": 0.18803418803418806,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"When vendors offer free tools or early access, we jump on it - why would we refuse?...\"",
+              "severity": "medium",
+              "score_impact": 0.10256410256410257,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject simulated quid pro quo scenarios and USB drop tests quarterly",
+      "correlation_analysis": "Compare manual audit scores with SOC reciprocity imbalance detection (target correlation > 0.80)",
+      "drift_detection": "Kolmogorov-Smirnov test on favor-to-exception correlations, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted reciprocity exploitation probability matches observed incident rates",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.70"
+    },
+    "success_metrics": [
+      {
+        "metric": "Gift Disclosure Compliance Rate",
+        "formula": "% of gifts/favors properly disclosed within 48 hours of receipt",
+        "baseline": "audit previous 180 days",
+        "target": "95% compliance within 90 days",
+        "measurement": "automated gift registry logging + quarterly audit"
+      },
+      {
+        "metric": "USB Drop Test Results",
+        "formula": "% of employees who pick up and plug in simulated USB drops",
+        "baseline": "initial physical security simulation",
+        "target": "reduce pickup rate from 45-60% to <15% within 90 days",
+        "measurement": "quarterly USB drop simulations in parking lots/common areas"
+      },
+      {
+        "metric": "Favor-to-Exception Correlation",
+        "formula": "Security exceptions granted within 48 hours of receiving vendor favors",
+        "baseline": "previous 6 months average",
+        "target": "reduce correlation by 80% within 90 days (implement mandatory delay)",
+        "measurement": "automated correlation analysis between gift_registry and exception_logs"
+      },
+      {
+        "metric": "Reciprocity Imbalance Detection",
+        "formula": "Average R_i score across vendor relationships",
+        "baseline": "current vendor relationship audit",
+        "target": "maintain R_i < 0.3 for all critical vendors",
+        "measurement": "monthly reciprocity imbalance analysis"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Reciprocity Recognition Training",
+        "description": "Comprehensive training program on reciprocity psychology, pre-cognitive obligation activation, and recognition of quid pro quo social engineering tactics",
+        "implementation": "Quarterly training modules covering Cialdini's reciprocity principle, neurological basis (ventral striatum activation), quid pro quo attack vectors, USB drop awareness, vendor gift scenarios. Include practical exercises and simulations.",
+        "technical_controls": "Learning management system tracking, competency assessments, quarterly USB drop simulations, quid pro quo phishing tests",
+        "roi": "380% average within 12 months",
+        "effort": "medium",
+        "timeline": "30 days initial rollout, ongoing quarterly"
+      },
+      {
+        "id": "sol_2",
+        "title": "Mandatory Delay Protocol (48-Hour Cooling-Off)",
+        "description": "Technical enforcement of mandatory 48-hour waiting period between receiving gifts/favors and making security decisions affecting that party",
+        "implementation": "Automated correlation system linking gift registry to access request/exception approval systems. Technical lockout prevents approval within 48 hours unless independent override authority approves. Alerts generated for favor-to-decision patterns.",
+        "technical_controls": "Integrated gift registry system, access control API hooks, correlation engine, automated delay enforcement, override workflow",
+        "roi": "450% average within 18 months",
+        "effort": "high",
+        "timeline": "60-90 days implementation"
+      },
+      {
+        "id": "sol_3",
+        "title": "Gift and Favor Management System",
+        "description": "Centralized system for tracking, disclosing, and managing all gifts, favors, entertainment, and vendor benefits",
+        "implementation": "Deploy gift registry platform with mobile app for immediate disclosure, monetary value tracking, approval workflows for above-threshold items, reciprocity imbalance calculations (R_i formula), automated alerts for unusual patterns.",
+        "technical_controls": "Gift registry database, disclosure mobile app, reciprocity analytics engine, pattern detection algorithms, executive dashboards",
+        "roi": "320% average within 24 months",
+        "effort": "high",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Technical Controls for Quid Pro Quo Prevention",
+        "description": "Implement technical safeguards against common quid pro quo attack vectors including USB drop attacks and unsolicited technical assistance",
+        "implementation": "USB port controls with whitelist-only policies, endpoint detection for unauthorized USB devices, email filtering for quid pro quo language patterns, vendor contact verification database, technical support request validation system.",
+        "technical_controls": "USB device control (whitelist enforcement), EDR with USB monitoring, email content analysis for reciprocity markers, vendor authentication database",
+        "roi": "410% average within 12 months",
+        "effort": "medium",
+        "timeline": "30-45 days"
+      },
+      {
+        "id": "sol_5",
+        "title": "Alternative Reciprocity Channels",
+        "description": "Establish legitimate channels for building vendor relationships without creating security-compromising obligations",
+        "implementation": "Formal vendor recognition programs, annual awards, public acknowledgment systems, contractual relationship management, professional reciprocity alternatives that don't involve individual obligation or security decisions.",
+        "technical_controls": "Vendor relationship management platform, recognition program tracking, contract performance metrics",
+        "roi": "240% average within 18 months",
+        "effort": "low",
+        "timeline": "30 days initial, ongoing program"
+      },
+      {
+        "id": "sol_6",
+        "title": "Escalation and Reporting Framework",
+        "description": "Clear procedures for employees to report and escalate reciprocity-based social engineering attempts or uncomfortable obligation scenarios",
+        "implementation": "Anonymous reporting portal for quid pro quo attempts, clear escalation procedures for reciprocity pressure, protection policies for employees who decline favors or report incidents, incident tracking with reciprocity correlation flags.",
+        "technical_controls": "Anonymous reporting system, incident tracking with reciprocity taxonomy, pattern analysis dashboard, employee protection policy enforcement",
+        "roi": "290% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": [
+        "sol_1",
+        "sol_4"
+      ],
+      "high_value": [
+        "sol_2",
+        "sol_3"
+      ],
+      "cultural_foundation": [
+        "sol_5",
+        "sol_6"
+      ],
+      "technical_enforcement": [
+        "sol_2",
+        "sol_4"
+      ]
+    }
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Quid Pro Quo Phishing with Benefits",
+      "description": "Attackers offer valuable benefits (free software, exclusive access, gift cards, technical support) in exchange for credentials, system access, or sensitive information",
+      "attack_vector": "Email or phone offering free premium service upgrade, exclusive beta access, or compensation in exchange for 'verification' or 'feedback' requiring credential entry",
+      "psychological_mechanism": "Pre-cognitive reciprocity activation (300-500ms) creates obligation before conscious evaluation of legitimacy",
+      "historical_example": "2019 campaign offering free premium subscriptions to Office 365 users in exchange for 'account verification' - 37% compliance rate due to reciprocity pressure",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": [
+        "R_i > 0.4",
+        "benefit_offered_in_request",
+        "credential_request",
+        "urgency_markers",
+        "unverified_sender"
+      ]
+    },
+    {
+      "id": "scenario_2",
+      "title": "USB Drop Attack (Physical Reciprocity)",
+      "description": "Attackers leave malware-infected USB drives in parking lots, reception areas, or mail them as 'free gifts' or 'promotional materials' exploiting reciprocity and curiosity",
+      "attack_vector": "Branded USB drives with helpful labels ('Executive Salary Data', 'Confidential', 'Photos', 'Free Software') placed where employees will find them",
+      "psychological_mechanism": "Combination of reciprocity (gift-finding creates return-to-owner obligation) and curiosity drives 45-60% pickup and plugin rate",
+      "historical_example": "2016 study: 48% of dropped USB drives were plugged in within 6 hours; branded USBs with 'gift' implication had 60% pickup rate",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": [
+        "unauthorized_usb_device",
+        "endpoint_autorun_activity",
+        "physical_security_logs",
+        "employee_report"
+      ]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Vendor Favor Exploitation",
+      "description": "Malicious actors pose as vendors providing unsolicited favors (free consulting, early access, troubleshooting help) to create reciprocal obligation for future security exceptions or access grants",
+      "attack_vector": "Extended relationship building through multiple small favors over time, establishing reciprocity imbalance before making high-value security requests",
+      "psychological_mechanism": "Gradual escalation with cumulative obligation building; R_i increases over time until compliance pressure exceeds resistance threshold",
+      "historical_example": "APT campaigns establishing fake vendor relationships over 6-12 months, providing legitimate-seeming assistance before requesting network access 'for optimization'",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": [
+        "R_i > 0.5",
+        "favor_frequency_increasing",
+        "access_request_after_favor_sequence",
+        "unverified_vendor"
+      ]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Gift-Based Social Engineering (Authority + Reciprocity)",
+      "description": "Combination attack where apparent authority figures deliver gifts followed by immediate urgent requests, exploiting both authority compliance and reciprocity obligation",
+      "attack_vector": "Executive impersonation email announcing gift delivery or bonus, followed by urgent request for wire transfer, credential reset, or security exception",
+      "psychological_mechanism": "Convergent vulnerability: Authority gradient (1.3) + Reciprocity obligation (3.1) + Urgency pressure (2.1) = 380% increased exploitation probability",
+      "historical_example": "CEO fraud campaigns where attackers send flowers or gift baskets to finance teams before impersonating CEO with urgent wire transfer requests",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": [
+        "authority_impersonation",
+        "gift_delivery_followed_by_request",
+        "urgency_markers",
+        "P_comply > 0.7"
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Cialdini, R. (2007). Influence: The Psychology of Persuasion - Reciprocity Principle",
+      "Evolutionary Psychology of Reciprocal Altruism (Trivers, 1971)",
+      "fMRI Evidence of Ventral Striatum Activation during Gift Receipt (Moll et al., 2006)",
+      "USB Drop Attack Studies (University of Illinois, 2016) - 45-60% pickup rate",
+      "Quid Pro Quo Social Engineering Effectiveness Research (Workman, 2008)",
+      "Pre-cognitive Reciprocity Activation Timing Studies (300-500ms response)",
+      "Gift-Giving Cultural Anthropology (Mauss, 1925) - Obligation to Reciprocate"
+    ],
+    "validation_status": "peer_reviewed",
+    "deployment_status": "production_ready"
+  }
+}

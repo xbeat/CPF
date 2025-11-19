@@ -1,0 +1,650 @@
+{
+  "indicator": "7.10",
+  "title": "KIT SUL CAMPO INDICATORE 7.10",
+  "subtitle": "Vulnerabilità del Periodo di Recupero",
+  "category": "Vulnerabilità da Risposta allo Stress",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 7.x",
+  "description": {
+    "short": "Misura la vulnerabilità organizzativa durante le 24-72 ore successive alla risoluzione della crisi quando la vigilanza ridotta e l'eccessiva sicurezza creano finestre per attacchi secondari",
+    "context": "Le vulnerabilità del periodo di recupero emergono dal complesso seguito psicofisiologico delle risposte allo stress acuto quando gli individui e le organizzazioni passano dalla modalità di crisi alle operazioni normali. Questo opera attraverso il ritardo nella clearance del cortisolo in cui gli ormoni dello stress elevati persistono 24-72 ore compromettendo la funzione esecutiva, l'esaurimento delle risorse cognitive dalla risposta alla crisi creando una capacità mentale temporaneamente ridotta, e l'affaticamento da ipervigilanza causando un effetto di rimbalzo con attenzione temporaneamente compromessa e rilevamento delle minacce. La vulnerabilità sfrutta la realtà neurobiologica che il recupero non è semplicemente assenza di stress ma un processo attivo che richiede risorse cognitive ed emotive.",
+    "impact": "Le organizzazioni mostrano costantemente tassi di errore aumentati e lacune di sicurezza nelle 48-72 ore successive alla risoluzione della crisi. Gli attacchi secondari post-violazione mostrano un tasso di successo del 40% superiore quando lanciati durante le finestre di recupero. Le istituzioni finanziarie sperimentano aumenti di frodi secondarie dopo una difesa riuscita contro attacchi informatici iniziali. I sistemi sanitari subiscono violazioni di dati durante il recupero da incidenti ransomware che hanno contenuto con successo. Più organizzazioni che si sono difese con successo contro importanti attacchi DDoS successivamente cadono vittime di semplici campagne di phishing durante il recupero.",
+    "psychological_basis": "La Sindrome di Adattamento Generale di Selye (1956) identifica la fase di esaurimento che segue l'allarme e la resistenza dove la capacità adattiva dell'organismo è temporaneamente compromessa. La ricerca sull'asse HPA mostra che il cortisolo rimane elevato 24-72 ore dopo il fattore di stress anche dopo che la minaccia percepita passa. Gli studi sull'esaurimento dell'ego di Baumeister dimostrano che il controllo di sé e la qualità del processo decisionale sono compromessi dopo uno sforzo cognitivo intensivo. La Teoria del Ripristino dell'Attenzione di Kaplan mostra che la capacità di attenzione focalizzata richiede tempo di recupero durante il quale la vigilanza è naturalmente ridotta."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Protocollo di recupero strutturato di 72+ ore con checkpoint di sicurezza definiti. Personale di sicurezza nuovo dedicato monitora durante i periodi di recupero. Nessun rilassamento dei controlli di sicurezza o dei processi di approvazione durante il recupero. Validazione di sicurezza esterna richiesta prima di dichiarare 'tutto chiaro'.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Un certo processo di recupero formale ma gap nella supervisione della sicurezza. Approccio misto al mantenimento dei controlli di sicurezza durante il recupero. Rotazione limitata del personale o gestione della fatica durante il recupero. Timeline di recupero basata in parte sulla pressione aziendale piuttosto che sui criteri di sicurezza.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Nessun periodo di recupero formale - ritorno immediato alle operazioni normali. Lo stesso team di risposta agli incidenti continua il monitoraggio durante il recupero. Eccezioni di sicurezza o controlli rilassati permessi durante il recupero. Dichiarazioni di recupero guidate principalmente da considerazioni aziendali/PR.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_recovery_timeline": 0.19,
+      "q2_monitoring_continuation": 0.18,
+      "q3_approval_processes": 0.16,
+      "q4_staff_rotation": 0.15,
+      "q5_communication_celebration": 0.12,
+      "q6_security_validation": 0.14,
+      "q7_external_revisione": 0.06
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_7.10(t) = w1·RVI(t) + w2·R(t) + w3·VW(t)",
+      "components": {
+        "recovery_function": {
+          "formula": "R(t) = A·e^(-t/τ_fast) + B·e^(-t/τ_slow)",
+          "description": "Bi-exponential recovery with fast and slow time constants",
+          "parameters": {
+            "tau_fast": 3600,
+            "tau_slow": 25920,
+            "A": 0.6,
+            "B": 0.4
+          }
+        },
+        "cognitive_performance_restoration": {
+          "formula": "CPR(t) = 1 - ((P_baseline - P(t)) / (P_baseline - P_minimum))",
+          "description": "Normalized cognitive performance recovery"
+        },
+        "vigilance_level_recovery": {
+          "formula": "VLR(t) = (V(t) - V_minimum) / (V_baseline - V_minimum)",
+          "description": "Vigilance restoration from minimum to baseline"
+        },
+        "recovery_vulnerability_index": {
+          "formula": "RVI(t) = (1 - R(t))·(1 / (1 + e^(α·(CPR(t) - 0.5))))",
+          "description": "Composite vulnerability during recovery phase"
+        },
+        "vulnerability_window": {
+          "formula": "VW(t) = 1 if RVI(t) > 0.3 AND t_post_stress < 3·τ_slow else 0",
+          "description": "Binary indicator of active vulnerability window"
+        }
+      },
+      "default_weights": {
+        "w1_rvi": 0.5,
+        "w2_recovery": 0.3,
+        "w3_window": 0.2
+      },
+      "temporal_decay": {
+        "formula": "T_7.10(t) = α·D_7.10(t) + (1-α)·T_7.10(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200
+      }
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "recovery_procedure_documentazione",
+        "post_incident_timelines",
+        "security_validation_records",
+        "external_revisione_reports"
+      ],
+      "evidence_required": [
+        "72_hour_recovery_protocols",
+        "fresh_team_assignment_records",
+        "security_checkpoint_completion_log",
+        "external_validation_certificates"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "incident_management",
+          "fields": [
+            "incident_id",
+            "resolution_time",
+            "all_clear_declaration",
+            "security_validation_status",
+            "recovery_phase_flag"
+          ],
+          "retention": "365_days"
+        },
+        {
+          "source": "security_monitoring",
+          "fields": [
+            "alert_sensitivity",
+            "investigation_thoroughness",
+            "recovery_period_flag",
+            "secondary_incident_correlation"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "access_control",
+          "fields": [
+            "exception_requests",
+            "approval_speed",
+            "recovery_period_correlation",
+            "control_relaxation_indicators"
+          ],
+          "retention": "180_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "recovery_incident_rate": {
+          "calculation": "Security incidents during 72-hour post-resolution windows vs normal periods"
+        },
+        "control_relaxation": {
+          "calculation": "Exception grant rate during recovery periods vs baseline"
+        }
+      }
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Impairment",
+        "probability": 0.7,
+        "factor": 1.45,
+        "description": "Severity of acute stress determines recovery duration and vulnerability",
+        "formula": "P(7.10|7.1) = 0.70"
+      },
+      {
+        "indicator": "7.2",
+        "name": "Chronic Stress Burnout",
+        "probability": 0.9,
+        "factor": 1.85,
+        "description": "Chronic stress dramatically extends recovery periods and deepens vulnerability",
+        "formula": "P(7.10|7.2) = 0.90"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "Cognitive depletion compounds recovery period vulnerability"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "7.2",
+        "name": "Chronic Stress Burnout",
+        "probability": 0.8,
+        "factor": 1.6,
+        "description": "Failed recovery accelerates transition to chronic burnout"
+      },
+      {
+        "indicator": "7.8",
+        "name": "Cortisol-Impaired Memory",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "Persistent cortisol elevation during recovery impairs memory"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": [
+        "7.10",
+        "7.2",
+        "7.1"
+      ],
+      "convergence_formula": "CI = ∏(1 + v_i)",
+      "convergence_multiplier": 3.6,
+      "threshold_critical": 5.2,
+      "description": "Perfect storm: Recovery vulnerability + Chronic burnout + Acute stress = 460% increased risk during post-incident windows"
+    }
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_recovery_timeline",
+          "weight": 0.19,
+          "title": "Gestione della Tempistica di Recupero",
+          "question": "Quanto tempo attende tipicamente la vostra organizzazione prima di dichiarare 'tutto a posto' dopo aver risolto un incidente di sicurezza o una crisi?",
+          "options": [
+            {
+              "value": "structured",
+              "score": 0,
+              "label": "Fase di recupero strutturata di 72+ ore con checkpoint definiti"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Periodo di recupero informale di 24-48 ore"
+            },
+            {
+              "value": "immediate",
+              "score": 1,
+              "label": "Dichiarazione immediata di 'tutto a posto' alla risoluzione tecnica"
+            }
+          ],
+          "evidence_required": "Documentazione della timeline di recupero da incidenti recenti"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_monitoring_continuation",
+          "weight": 0.18,
+          "title": "Monitoraggio di Sicurezza Durante il Recupero",
+          "question": "Cosa happens to il vostro security monitoring and alert sensitivity during the 48-72 hours dopo resolving a major incident?",
+          "options": [
+            {
+              "value": "increased",
+              "score": 0,
+              "label": "Monitoraggio mantenuto o aumentato con personale nuovo dedicato"
+            },
+            {
+              "value": "same",
+              "score": 0.5,
+              "label": "Lo stesso team continua il monitoraggio con sensibilità normale"
+            },
+            {
+              "value": "reduced",
+              "score": 1,
+              "label": "Monitoraggio ridotto mentre il team si concentra su recupero e documentazione"
+            }
+          ],
+          "evidence_required": "Registro di monitoraggio che mostra la copertura durante i periodi di recupero"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_approval_processes",
+          "weight": 0.16,
+          "title": "Cambiamenti nell'Autorità Decisionale",
+          "question": "I processi di approvazione, le eccezioni di sicurezza o le procedure di accesso di emergenza cambiano durante i periodi di recupero?",
+          "options": [
+            {
+              "value": "maintained",
+              "score": 0,
+              "label": "Tutti i controlli mantenuti senza rilassamento durante il recupero"
+            },
+            {
+              "value": "expedited",
+              "score": 0.5,
+              "label": "Alcune approvazioni accelerate ma documentate e revisionate"
+            },
+            {
+              "value": "relaxed",
+              "score": 1,
+              "label": "Controlli di sicurezza rilassati per facilitare il recupero rapido"
+            }
+          ],
+          "evidence_required": "Registro delle eccezioni durante i periodi di recupero"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_staff_rotation",
+          "weight": 0.15,
+          "title": "Rotazione e Copertura del Personale",
+          "question": "Come gestite la fatica del personale e la copertura per i ruoli critici di sicurezza durante e immediatamente dopo la risposta agli incidenti?",
+          "options": [
+            {
+              "value": "fresh_team",
+              "score": 0,
+              "label": "Team nuovo assegnato per il monitoraggio del recupero con rotazione obbligatoria"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Approccio misto con una certa rotazione ma lacune nella copertura"
+            },
+            {
+              "value": "same_team",
+              "score": 1,
+              "label": "Lo stesso team di risposta agli incidenti continua durante il periodo di recupero"
+            }
+          ],
+          "evidence_required": "Orari del personale durante i periodi di recupero"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_communication_celebration",
+          "weight": 0.12,
+          "title": "Comunicazione e Celebrazione",
+          "question": "Come comunica la vostra organizzazione la risoluzione riuscita degli incidenti agli stakeholder?",
+          "options": [
+            {
+              "value": "validated",
+              "score": 0,
+              "label": "Comunicazione ritardata fino al completamento della validazione di sicurezza, nessuna celebrazione prematura"
+            },
+            {
+              "value": "qualified",
+              "score": 0.5,
+              "label": "Comunicazione qualificata che riconosce il monitoraggio del recupero in corso"
+            },
+            {
+              "value": "immediate",
+              "score": 1,
+              "label": "Messaggio immediato di 'tutto a posto' e celebrazione della risoluzione riuscita"
+            }
+          ],
+          "evidence_required": "Timeline e contenuto delle comunicazioni sugli incidenti"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_security_validation",
+          "weight": 0.14,
+          "title": "Revisioni di Sicurezza della Fase di Recupero",
+          "question": "Cosa security verification steps are required before fully returning to normal operations dopo an incident?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Validazione di sicurezza completa ai checkpoint di 24, 48 e 72 ore"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Revisione di sicurezza di base prima di riprendere le operazioni normali"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna validazione formale - le operazioni riprendono quando il problema tecnico è risolto"
+            }
+          ],
+          "evidence_required": "Checklist di validazione della sicurezza da recuperi recenti"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_external_revisione",
+          "weight": 0.06,
+          "title": "Requisito di Validazione Esterna",
+          "question": "È external security consultant or partner validation required before declaring incidents fully resolved?",
+          "options": [
+            {
+              "value": "required",
+              "score": 0,
+              "label": "Validazione esterna richiesta per tutti gli incidenti critici"
+            },
+            {
+              "value": "optional",
+              "score": 0.5,
+              "label": "Validazione esterna raccomandata ma non obbligatoria"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun requisito di validazione esterna"
+            }
+          ],
+          "evidence_required": "Report di validazione esterna da incidenti recenti"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezionare UNA opzione per ciascuna domanda. Le evidenze dovrebbero essere documentate.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Domande di Apertura",
+          "weight": 0.4,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Descriva il vostro most recent incident recovery - what was the timeline from technical resolution to declaring 'all clear'? What security checks happened during that period?",
+              "scoring_guidance": {
+                "green": "Structured multi-day recovery with documented checkpoints",
+                "yellow": "Some recovery period but informal process",
+                "red": "Immediate all clear upon technical fix"
+              }
+            }
+          ]
+        },
+        {
+          "title": "Monitoraggio e Personale",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "During il vostro last major incident recovery, who was monitoring alert di sicurezza in the successivi 72 hours and how were they gestisced differently than normal?",
+              "scoring_guidance": {
+                "green": "Fresh dedicated team with maintained or increased vigilance",
+                "yellow": "Same team with reduced capacity",
+                "red": "Monitoring reduced or suspended during recovery"
+              }
+            }
+          ]
+        },
+        {
+          "title": "Controlli e Validazione",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Descriva any security shortcuts or exceptions granted during il vostro most recent recovery period.",
+              "scoring_guidance": {
+                "green": "No exceptions granted, all controls maintained",
+                "yellow": "Some expedited approvals but documented",
+                "red": "Multiple exceptions and control relaxations"
+              }
+            }
+          ]
+        },
+        {
+          "title": "Ricerca di Segnali di Allarme",
+          "weight": 0,
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Dichiariamo tutto a posto non appena il problema tecnico è risolto...\"",
+              "severity": "critical",
+              "score_impact": 0.2,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Lo stesso team di risposta agli incidenti monitora durante il recupero - non abbiamo personale di backup...\"",
+              "severity": "high",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Dobbiamo tornare alle operazioni normali rapidamente per motivi aziendali...\"",
+              "severity": "high",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Riduciamo la sensibilità degli allarmi dopo gli incidenti per dare una pausa al team...\"",
+              "severity": "critical",
+              "score_impact": 0.19,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Celebrazioni e annunci avvengono subito dopo aver contenuto l'incidente...\"",
+              "severity": "medium",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"La validazione esterna rallenterebbe troppo il nostro recupero...\"",
+              "severity": "medium",
+              "score_impact": 0.12,
+              "subitems": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "continuous_validation": {
+      "synthetic_testing": "Monitor recovery period security metrics after controlled incidents",
+      "correlation_analysis": "Compare recovery period incident rates vs normal periods"
+    },
+    "success_metrics": [
+      {
+        "metric": "Recovery Period Security Incidents",
+        "formula": "Security incidents during 72-hour post-resolution windows",
+        "target": "50% reduction within 6 months"
+      },
+      {
+        "metric": "Recovery Phase Compliance Score",
+        "formula": "% of security controls maintained at normal levels during recovery",
+        "target": "95% compliance maintenance"
+      },
+      {
+        "metric": "Recovery Timeline Accuracy",
+        "formula": "% of incidents with validation-based vs pressure-based all clear declarations",
+        "target": "100% validation-based within 90 days"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Structured Recovery Protocol",
+        "description": "Implement mandatory 72-hour structured recovery phase with defined security checkpoints at 24, 48, and 72 hours post-incident",
+        "implementation": "Create formal recovery phases with specific criteria at each checkpoint. Include security system validation, staff assessment, external verification before progression. Prohibit premature all clear declarations.",
+        "technical_controls": "Recovery workflow automation, checkpoint validation tracking, escalation for premature declarations",
+        "roi": "420% average within 18 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Fresh Eyes Security Monitoring",
+        "description": "Deploy dedicated security personnel not involved in initial incident response to monitor during recovery period",
+        "implementation": "Rotate incident response teams after 48 hours, bring in fresh security analysts for recovery monitoring. Maintain or increase alert sensitivity during 72-hour recovery window.",
+        "technical_controls": "Automated team rotation scheduling, fresh analyst assignment system, alert sensitivity maintenance",
+        "roi": "390% average within 12 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Recovery Period Access Controls",
+        "description": "Prohibit security exceptions and maintain all normal approval processes during recovery periods",
+        "implementation": "Automated controls prevent security relaxation during designated recovery periods. Additional approval authority required for any emergency access during 72 hours following incident resolution.",
+        "technical_controls": "Recovery period flag in access systems, automated exception blocking, enhanced approval workflows",
+        "roi": "340% average within 12 months",
+        "effort": "high",
+        "timeline": "60 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "External Recovery Validation",
+        "description": "Require external security consultant or partner organization to validate security status before declaring incidents fully resolved",
+        "implementation": "Contract with external security partners for recovery validation. Require third-party security monitoring during recovery periods. Mandate external penetration testing or vulnerability scanning before all clear declaration.",
+        "technical_controls": "External partner integration, validation tracking system, automated external notification",
+        "roi": "380% average within 18 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      }
+    ]
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Post-Incident Secondary Attack",
+      "description": "After successfully defending against DDoS attack, security teams reduce alert sensitivity and approve emergency access requests more quickly. Attackers exploit this 48-hour window to launch credential-stuffing attacks that succeed due to reduced monitoring.",
+      "likelihood": "high",
+      "impact": "critical"
+    },
+    {
+      "id": "scenario_2",
+      "title": "Recovery Period Social Engineering",
+      "description": "Following publicized ransomware defense, attackers pose as security consultants offering post-incident assessments. During organizational relief phase, executives approve vendor access leading to insider threat establishment.",
+      "likelihood": "medium",
+      "impact": "high"
+    },
+    {
+      "id": "scenario_3",
+      "title": "Celebration Timing Attack",
+      "description": "While organization celebrates successful breach containment, attackers launch targeted phishing against exhausted IT staff who are less vigilant during recovery period.",
+      "likelihood": "high",
+      "impact": "high"
+    },
+    {
+      "id": "scenario_4",
+      "title": "Infrastructure Recovery Exploitation",
+      "description": "After restoring systems from ransomware containment, organization rushes to resume operations. During 72-hour recovery window, attackers exploit incomplete security hardening and relaxed change management.",
+      "likelihood": "medium",
+      "impact": "critical"
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "research_basis": [
+      "Selye, H. (1956). General Adaptation Syndrome",
+      "Baumeister, R. (2007). Ego Depletion Studies",
+      "Kaplan, S. (1995). Attention Restoration Theory",
+      "McEwen, B. (2007). Allostatic Load",
+      "Sapolsky, R. (2004). Stress Physiology"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready",
+    "translation_date": "2025-11-14"
+  }
+}

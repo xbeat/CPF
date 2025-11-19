@@ -1,0 +1,1195 @@
+{
+  "indicator": "5.7",
+  "title": "FIELD KIT INDICATORE 5.7",
+  "subtitle": "Overflow della Memoria di Lavoro (Working Memory)",
+  "category": "Vulnerabilità da Sovraccarico Cognitivo",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 5.x",
+  "description": {
+    "short": "Misura la vulnerabilità quando i compiti di sicurezza richiedono di tenere simultane amente più informazioni in memoria di lavoro di quanto la capacità cognitiva permetta",
+    "context": "L'overflow della memoria di lavoro si verifica quando i compiti di sicurezza richiedono di tenere simultaneamente più elementi informativi in memoria attiva di quanto la capacità cognitiva umana permetta (tipicamente 7±2 chunk). Gli analisti che devono tracciare múltiple IOC, correlare eventi attraverso múltiple sistemi, e mantenere dettagli complessi di timeline di attacco mentre investigano superano regolarmente la capacità della memoria di lavoro. Quando si verifica l'overflow, le informazioni critiche vengono perdute, i dettagli vengono confusi tra incidenti, e la qualità dell'analisi si deteriora significativamente.",
+    "impact": "Le organizzazioni con frequente overflow della memoria di lavoro sperimentano indagini incomplete dove i dettagli critici vengono persi, confusione tra incidenti múltipli simultanei, aumento di errori di configurazione quando i requisiti superano la capacità di memoria, e necessità di rifare frequentemente il lavoro perché i dettagli non sono stati mantenuti. I team di risposta agli incidenti che gestiscono violazioni complesse senza documentazione strutturata per offload cognitivo sperimentano tassi di errore sostanzialmente più alti. Gli attaccanti possono sfruttare questo creando scenari volutamente complessi che superano la capacità della memoria di lavoro dei difensori.",
+    "psychological_basis": "Il principio del Numero Magico di Miller (1956) stabilisce i limiti fondamentali della memoria di lavoro a 7±2 chunk informativi. Il modello della Memoria di Lavoro di Baddeley (1992) descrive come il loop fonologico e lo sketchpad visuospaziale abbiano capacità strettamente limitate. La ricerca di Cowan (2001) suggerisce che sotto carico cognitivo, la capacità effettiva della memoria di lavoro può ridursi a soli 4 elementi. Gli studi neuroscientifici mostrano che il sovraccarico della memoria di lavoro porta a errori aumentati, tempi di risposta più lenti, e ripiego su euristiche di Sistema 1 meno accurate. La ricerca di Sweller sulla Teoria del Carico Cognitivo dimostra che compiti che superano la capacità della memoria di lavoro portano a degrado sostanziale delle prestazioni."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Gli analisti gestiscono massimo 3-4 elementi concorrenti durante periodi di picco. Strumenti a pannello unico minimizzano il cambio. Protocolli di interruzione chiari con personale di triage designato. Documentazione automatizzata riduce requisiti manuali. Procedure strutturate di passaggio consegne turno limitano la complessità del trasferimento informazioni.",
+        "risk_level": "basso",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Gli analisti gestiscono regolarmente 5-7 elementi concorrenti durante periodi intensi. Qualche integrazione strumenti ma richiede ancora 4-6 interfacce diverse per incidente. Gestione interruzioni informale con qualche protezione per analisi complesse. Documentazione mista manuale/automatizzata con complessità moderata. Procedure base di passaggio consegne ma la complessità varia.",
+        "risk_level": "medio",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Gli analisti gestiscono routinariamente 8+ elementi concorrenti durante operazioni normali. Richiede 7+ strumenti/interfacce diverse per indagine incidente tipica. Nessuna gestione formale interruzioni - tutti gli allarmi trattati come ugualmente urgenti. Documentazione manuale estesa richiesta durante risposta incidente attiva. Procedure di passaggio consegne ad-hoc senza limite sulla complessità delle informazioni.",
+        "risk_level": "alto",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_concurrent_alerts": 0.15,
+      "q2_tool_interfaces": 0.14,
+      "q3_interruption_protocol": 0.13,
+      "q4_documentazione_load": 0.12,
+      "q5_shift_handoff": 0.11,
+      "q6_peak_periods": 0.1,
+      "q7_error_tracking": 0.09,
+      "q8_cognitive_load_monitoring": 0.08,
+      "q9_information_chunking": 0.04,
+      "q10_external_memory_aids": 0.04
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_5.7(t) = w1·I_5.7(t) + w2·W_5.7(t) + w3·E_5.7(t)",
+      "components": {
+        "information_load": {
+          "formula": "I_5.7(t) = WM_load(t) / WM_capacity",
+          "description": "Carico memoria lavoro come proporzione della capacità",
+          "working_memory_load": "WM_load(t) = Σ(w_i · C_i(t) · e^(-λt_i))",
+          "variables": {
+            "w_i": "importance weight of item i",
+            "C_i(t)": "complexity of item i at time t",
+            "t_i": "time item i has been in memory",
+            "λ": "temporal decay parameter"
+          }
+        },
+        "workload_metric": {
+          "formula": "W_5.7(t) = N_concurrent(t) / N_optimal",
+          "description": "Rapporto compiti concorrenti relativo a carico cognitivo ottimale",
+          "variables": {
+            "N_concurrent(t)": "number of concurrent security tasks at time t",
+            "N_optimal": "optimal concurrent task threshold (typically 3-4)"
+          }
+        },
+        "error_rate": {
+          "formula": "E_5.7(t) = P_error(t) / P_baseline",
+          "description": "Rapporto probabilità errore relativo a baseline",
+          "error_probability": "P_error(t) = P_base · (1 + δ · O_overflow(t)^2)",
+          "overflow_detection": "O_overflow(t) = max(0, (WM_load(t) - WM_capacity) / WM_capacity)",
+          "variables": {
+            "P_base": "baseline error probability",
+            "δ": "error amplification coefficient",
+            "O_overflow": "overflow proportion (quadratic scaling for rapid degradation)"
+          }
+        },
+        "millers_rule": {
+          "formula": "WM_capacity = 7 ± 2·σ_individual",
+          "description": "Implementazione regola 7±2 di Miller con variazione individuale",
+          "variables": {
+            "σ_individual": "individual variation coefficient"
+          }
+        }
+      },
+      "default_weights": {
+        "w1_information": 0.4,
+        "w2_workload": 0.35,
+        "w3_error": 0.25
+      },
+      "temporal_decay": {
+        "formula": "T_5.7(t) = α·D_5.7(t) + (1-α)·T_5.7(t-1)·e^(-λΔt)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 1800,
+        "lambda": "cognitive recovery rate",
+        "description": "Levigatura esponenziale con decadimento cognitivo (costante tempo 30 minuti)"
+      },
+      "detection_threshold": {
+        "formula": "R_5.7(t) = 1 if O_overflow(t) > 0.2, else 0",
+        "threshold": 0.2,
+        "description": "Rilevamento binario quando overflow supera 20% della capacità"
+      }
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "analyst_workload_interviews",
+        "soc_operational_procedures",
+        "incident_response_documentazione",
+        "error_rate_analysis",
+        "shift_handoff_log"
+      ],
+      "evidence_required": [
+        "concurrent_task_tracking_records",
+        "tool_interface_inventory",
+        "interruption_management_procedures",
+        "documentazione_requirements_during_incidents",
+        "cognitive_load_assessment_results"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "siem_alert_log",
+          "fields": [
+            "alert_id",
+            "analyst_id",
+            "timestamp",
+            "priority",
+            "status",
+            "investigation_duration"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "analyst_activity_log",
+          "fields": [
+            "analyst_id",
+            "concurrent_tasks",
+            "tool_switches",
+            "timestamp",
+            "task_type"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "incident_response_log",
+          "fields": [
+            "incident_id",
+            "analyst_assignments",
+            "documentazione_events",
+            "handoff_complexity",
+            "timestamp"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "error_tracking_system",
+          "fields": [
+            "error_type",
+            "analyst_id",
+            "concurrent_load",
+            "timestamp",
+            "correction_required"
+          ],
+          "retention": "180_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "tool_usage_analytics",
+          "fields": [
+            "analyst_id",
+            "tool_id",
+            "session_duration",
+            "interface_switches",
+            "timestamp"
+          ],
+          "retention": "60_days"
+        },
+        {
+          "source": "cognitive_load_monitoring",
+          "fields": [
+            "analyst_id",
+            "estimated_load",
+            "capacity_utilization",
+            "timestamp"
+          ],
+          "retention": "30_days"
+        },
+        {
+          "source": "performance_metrics",
+          "fields": [
+            "analyst_id",
+            "detection_accuracy",
+            "response_time",
+            "workload_level",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "WM_load": {
+          "calculation": "Sum of weighted concurrent task complexity with temporal decay",
+          "query": "SELECT SUM(task_weight * task_complexity * EXP(-decay_rate * time_in_memory)) FROM active_tasks WHERE analyst_id = ? AND timestamp >= NOW() - INTERVAL '1 hour'"
+        },
+        "N_concurrent": {
+          "calculation": "Count of simultaneous active tasks per analyst",
+          "query": "SELECT COUNT(DISTINCT task_id) FROM active_tasks WHERE analyst_id = ? AND status = 'active' AND timestamp >= NOW() - INTERVAL '10 minutes'"
+        },
+        "error_rate": {
+          "calculation": "Errors per unit time relative to baseline",
+          "query": "SELECT (COUNT(*) / time_period) / baseline_error_rate FROM errors WHERE analyst_id = ? AND timestamp >= NOW() - INTERVAL '24 hours'"
+        },
+        "tool_switches": {
+          "calculation": "Interface changes per investigation",
+          "query": "SELECT AVG(interface_switch_count) FROM investigations WHERE completion_timestamp >= NOW() - INTERVAL '7 days'"
+        }
+      }
+    },
+    "integration_apis": {
+      "siem": "Splunk/Sentinel API - Alert volume, analyst assignments, investigation metrics",
+      "soar": "SOAR Platform API - Workflow complexity, automation rates, task tracking",
+      "ticketing": "ServiceNow/Jira API - Concurrent ticket assignments, handoff events",
+      "monitoring": "Prometheus/Grafana API - Real-time cognitive load dashboards"
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue Desensitization",
+        "probability": 0.7,
+        "factor": 1.35,
+        "description": "L'alto volume allarmi riempie capacità memoria lavoro, riducendo risorse cognitive disponibili",
+        "formula": "P(5.7|5.1) = 0.7"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue Errors",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "L'esaurimento cognitivo da fatica decisionale riduce capacità memoria lavoro",
+        "formula": "P(5.7|5.2) = 0.65"
+      },
+      {
+        "indicator": "5.4",
+        "name": "Multitasking Degradation",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "La gestione compiti simultanei consuma direttamente risorse memoria lavoro",
+        "formula": "P(5.7|5.4) = 0.75",
+        "evidence": "Correlazione forte nella matrice interdipendenze (carico compiti concorrenti alto)"
+      },
+      {
+        "indicator": "5.5",
+        "name": "Context Switching Vulnerabilities",
+        "probability": 0.6,
+        "factor": 1.25,
+        "description": "I cambi contesto richiedono mantenimento modelli mentali multipli in memoria lavoro",
+        "formula": "P(5.7|5.5) = 0.6"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "La pressione temporale riduce risorse cognitive disponibili per compiti memoria lavoro",
+        "formula": "P(5.7|2.1) = 0.65"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "Gli ormoni stress compromettono funzione corteccia prefrontale, riducendo capacità memoria lavoro",
+        "formula": "P(5.7|7.1) = 0.7",
+        "evidence": "Ricerca neurologica mostra che cortisolo riduce performance memoria lavoro"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "5.3",
+        "name": "Information Overload Paralysis",
+        "probability": 0.65,
+        "factor": 1.35,
+        "description": "L'overflow memoria lavoro contribuisce a paralisi decisionale da informazioni eccessive"
+      },
+      {
+        "indicator": "5.6",
+        "name": "Cognitive Tunneling",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "La saturazione memoria lavoro causa restringimento focus attenzione per gestire carico cognitivo"
+      },
+      {
+        "indicator": "5.9",
+        "name": "Complexity-Induced Errors",
+        "probability": 0.55,
+        "factor": 1.25,
+        "description": "Capacità memoria lavoro insufficiente aumenta errori su compiti sicurezza complessi"
+      },
+      {
+        "indicator": "7.2",
+        "name": "Chronic Stress Accumulation",
+        "probability": 0.5,
+        "factor": 1.2,
+        "description": "Sovraccarico memoria lavoro sostenuto crea condizioni stress cronico"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": [
+        "5.7",
+        "5.4",
+        "5.1"
+      ],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 4,
+      "description": "Tempesta perfetta: Overflow memoria lavoro + Multitasking + Fatica allarmi = 380% aumento probabilità errore",
+      "real_world_esempio": "Target 2013 - Allarmi concorrenti multipli hanno sovraccaricato memoria lavoro analista, prevenendo riconoscimento pattern attacco coordinato"
+    },
+    "bayesian_network": {
+      "parent_nodes": [
+        "5.1",
+        "5.2",
+        "5.4",
+        "5.5",
+        "2.1",
+        "7.1"
+      ],
+      "child_nodes": [
+        "5.3",
+        "5.6",
+        "5.9",
+        "7.2"
+      ],
+      "conditional_probability_table": {
+        "P_5.7_base": 0.25,
+        "P_5.7_given_multitask": 0.55,
+        "P_5.7_given_alerts": 0.48,
+        "P_5.7_given_stress": 0.52,
+        "P_5.7_given_all": 0.85
+      }
+    },
+    "correlation_matrix_row": {
+      "5.1": 0.7,
+      "5.2": 0.65,
+      "5.3": 0.55,
+      "5.4": 0.45,
+      "5.5": 0.4,
+      "5.6": 0.7,
+      "5.7": 1,
+      "5.8": 0.6,
+      "5.9": 0.55,
+      "5.10": 0.65
+    }
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_concurrent_alerts",
+          "weight": 0.15,
+          "title": "Gestione Volume Allarmi",
+          "question": "Durante i vostri periodi di sicurezza più intensi, quanti allarmi o incidenti simultanei gestisce tipicamente ciascun analista di sicurezza contemporaneamente?",
+          "options": [
+            {
+              "value": "low",
+              "score": 0,
+              "label": "1-3 elementi concorrenti - Gli analisti gestiscono massimo 3-4 elementi durante periodi di picco con prioritizzazione chiara"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "4-7 elementi concorrenti - Gli analisti gestiscono regolarmente 5-7 elementi durante periodi intensi"
+            },
+            {
+              "value": "high",
+              "score": 1,
+              "label": "8+ elementi concorrenti - Gli analisti gestiscono routinariamente 8 o più elementi concorrenti durante operazioni normali"
+            }
+          ],
+          "evidence_required": "Esempio specifico di giornata ad alto volume allarmi con conteggio elementi concorrenti, log allarmi SIEM che mostra distribuzione carico lavoro analisti",
+          "soc_mapping": "N_concurrent from detection_formula, analyst_activity_log"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_tool_interfaces",
+          "weight": 0.14,
+          "title": "Cambio Interfaccia Strumenti",
+          "question": "Quanti diversi strumenti di sicurezza deve accedere un analista tipico durante una singola indagine di un incidente?",
+          "options": [
+            {
+              "value": "integrated",
+              "score": 0,
+              "label": "1-3 strumenti - Single-pane-of-glass o interfacce altamente integrate minimizzano il cambio"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "4-6 strumenti - Qualche integrazione strumenti ma richiede ancora interfacce diverse multiple per incidente"
+            },
+            {
+              "value": "fragmented",
+              "score": 1,
+              "label": "7+ strumenti - Richiede 7 o più strumenti/interfacce diversi per indagine tipica"
+            }
+          ],
+          "evidence_required": "Percorso attraverso incidente recente elencando ogni sistema acceduto, analytics utilizzo strumenti che mostra frequenza cambio interfaccia",
+          "soc_mapping": "tool_switches metric, tool_usage_analytics"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_interruption_protocol",
+          "weight": 0.13,
+          "title": "Protocolli Interruzione",
+          "question": "Cosa succede quando il vostro team di sicurezza sta analizzando una minaccia complessa e arriva un allarme urgente?",
+          "options": [
+            {
+              "value": "protected",
+              "score": 0,
+              "label": "Esistono protocolli interruzione chiari - Personale triage designato protegge analisti durante analisi complesse"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Gestione informale - Qualche protezione per analisi complesse ma inconsistente"
+            },
+            {
+              "value": "unmanaged",
+              "score": 1,
+              "label": "Nessuna gestione formale interruzioni - Tutti gli allarmi trattati come ugualmente urgenti, cambio contesto costante"
+            }
+          ],
+          "evidence_required": "Documentazione procedure specifiche, esempio di come è andato durante indagine complessa recente",
+          "soc_mapping": "Context switch frequency from analyst_activity_log"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_documentazione_load",
+          "weight": 0.12,
+          "title": "Documentazione Durante Crisi",
+          "question": "Durante incidenti di sicurezza attivi, quali requisiti di documentazione mantengono i vostri analisti mentre rispondono?",
+          "options": [
+            {
+              "value": "automated",
+              "score": 0,
+              "label": "Altamente automatizzata - Documentazione automatizzata riduce requisiti manuali del 70%+ durante incidenti"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Approccio misto - Qualche automazione ma rimane complessità documentazione manuale moderata"
+            },
+            {
+              "value": "manual",
+              "score": 1,
+              "label": "Documentazione manuale estesa - Gli analisti devono mantenere record manuali dettagliati durante risposta attiva"
+            }
+          ],
+          "evidence_required": "Esempio incidente recente con documentazione/report richiesti simultaneamente, percentuale automazione SOAR",
+          "soc_mapping": "documentazione_events from incident_response_log"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_shift_handoff",
+          "weight": 0.11,
+          "title": "Complessità Passaggio Consegne Turno",
+          "question": "Quando le vostre operazioni di sicurezza transitano tra turni durante un incidente attivo, quanti problemi in corso diversi devono tipicamente essere comunicati?",
+          "options": [
+            {
+              "value": "structured",
+              "score": 0,
+              "label": "1-3 elementi - Procedure passaggio consegne strutturate limitano complessità trasferimento informazioni con template standardizzati"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "4-6 elementi - Procedure passaggio consegne base ma la complessità varia con ambito incidente"
+            },
+            {
+              "value": "complex",
+              "score": 1,
+              "label": "7+ elementi - Procedure passaggio consegne ad-hoc senza limite sulla complessità informazioni"
+            }
+          ],
+          "evidence_required": "Esempio passaggio consegne complesso più recente con conteggio elementi, documentazione passaggio consegne turno",
+          "soc_mapping": "handoff_complexity from incident_response_log"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_peak_periods",
+          "weight": 0.1,
+          "title": "Periodi Carico Picco",
+          "question": "Quali sono i periodi prevedibili di alto stress per la sicurezza della vostra organizzazione (lunedì mattina, dopo festività, aggiornamenti sistemi), e come organizzate il personale diversamente durante questi periodi?",
+          "options": [
+            {
+              "value": "planned",
+              "score": 0,
+              "label": "Staffing proattivo - Modello staffing predittivo con supporto cognitivo on-call durante periodi picco identificati"
+            },
+            {
+              "value": "reactive",
+              "score": 0.5,
+              "label": "Aggiustamenti reattivi - Qualche consapevolezza dei periodi picco ma aggiustamenti staffing limitati"
+            },
+            {
+              "value": "unplanned",
+              "score": 1,
+              "label": "Nessuno staffing differenziale - Stessi livelli staffing indipendentemente da pattern carico cognitivo prevedibili"
+            }
+          ],
+          "evidence_required": "Identificazione periodo picco specifico, programma staffing che mostra aggiustamenti, documentazione pianificazione capacità",
+          "soc_mapping": "Alert volume correlation with time periods, staffing level analytics"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_error_tracking",
+          "weight": 0.09,
+          "title": "Tracciamento Errori",
+          "question": "Come tracciate gli errori commessi durante periodi ad alto volume allarmi versus operazioni normali?",
+          "options": [
+            {
+              "value": "systematic",
+              "score": 0,
+              "label": "Tracciamento sistematico - Tracciamento errori formale correlato con metriche carico cognitivo, pattern analizzati"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Tracciamento base - Errori tracciati ma non sistematicamente correlati con condizioni carico lavoro"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun tracciamento correlazione - Nessun confronto sistematico di tassi errore attraverso diverse condizioni carico cognitivo"
+            }
+          ],
+          "evidence_required": "Report tracciamento errori che mostra pattern durante periodi intensi, analisi correlazione con metriche carico lavoro",
+          "soc_mapping": "error_rate from error_tracking_system correlated with concurrent_load"
+        },
+        {
+          "type": "radio-list",
+          "number": 8,
+          "id": "q8_cognitive_load_monitoring",
+          "weight": 0.08,
+          "title": "Monitoraggio Carico Cognitivo",
+          "question": "Avete visibilità in tempo reale sul carico lavoro analisti e utilizzo capacità cognitiva?",
+          "options": [
+            {
+              "value": "monitored",
+              "score": 0,
+              "label": "Monitoraggio tempo reale - Dashboard carico cognitivo con escalation automatica quando soglie superate"
+            },
+            {
+              "value": "manual",
+              "score": 0.5,
+              "label": "Consapevolezza manuale - Supervisori tracciano informalmente carico lavoro ma nessun monitoraggio automatizzato"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun monitoraggio - Nessun tracciamento sistematico di carico cognitivo analisti o utilizzo capacità"
+            }
+          ],
+          "evidence_required": "Screenshot interfaccia monitoraggio carico lavoro, log trigger escalation, report utilizzo capacità",
+          "soc_mapping": "cognitive_load_monitoring data source, capacity_utilization metric"
+        },
+        {
+          "type": "radio-list",
+          "number": 9,
+          "id": "q9_information_chunking",
+          "weight": 0.04,
+          "title": "Strategie Chunking Informazioni",
+          "question": "Gli analisti usano template indagine standardizzati o checklist che raggruppano informazioni complesse in unità cognitive gestibili?",
+          "options": [
+            {
+              "value": "yes",
+              "score": 0,
+              "label": "Template standardizzati e checklist digitali ottimizzano utilizzo memoria lavoro attraverso chunking informazioni"
+            },
+            {
+              "value": "no",
+              "score": 1,
+              "label": "Nessun aiuto cognitivo standardizzato - Gli analisti devono mantenere tutti i dettagli indagine in memoria lavoro"
+            }
+          ],
+          "evidence_required": "Esempi template indagine, statistiche utilizzo checklist, metriche efficacia offload cognitivo",
+          "soc_mapping": "Template usage rates from SOAR workflows"
+        },
+        {
+          "type": "radio-list",
+          "number": 10,
+          "id": "q10_external_memory_aids",
+          "weight": 0.04,
+          "title": "Aiuti Memoria Esterni",
+          "question": "Sono utilizzati strumenti workflow visivi o dashboard indagine per trasferire tracciamento cognitivo a sistemi esterni?",
+          "options": [
+            {
+              "value": "yes",
+              "score": 0,
+              "label": "Strumenti workflow visivi mostrano progresso indagine e azioni pendenti, riducendo carico memoria lavoro"
+            },
+            {
+              "value": "no",
+              "score": 1,
+              "label": "Nessun aiuto cognitivo esterno - Gli analisti devono tracciare mentalmente tutti gli stati indagine e azioni pendenti"
+            }
+          ],
+          "evidence_required": "Screenshot strumenti workflow, tassi adozione attraverso team, misurazioni efficacia",
+          "soc_mapping": "Visual tool usage from tool_usage_analytics"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezionare UNA opzione per ciascuna domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Valutazione Carico Lavoro",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Durante i vostri periodi di sicurezza più intensi, quanti allarmi o incidenti simultanei gestisce tipicamente ciascun analista di sicurezza contemporaneamente? Raccontateci un esempio specifico di una giornata ad alto volume allarmi e quanti elementi concorrenti il vostro team stava tracciando.",
+              "scoring_guidance": {
+                "green": "Massimo 3-4 elementi concorrenti con esempi specifici di gestione carico lavoro e prioritizzazione",
+                "yellow": "5-7 elementi concorrenti con qualche consapevolezza carico lavoro ma gestione inconsistente",
+                "red": "8+ elementi concorrenti normalizzati come pratica standard, nessun limite carico lavoro menzionato"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succede alla qualità indagine e ai tassi errore quando gli analisti stanno gestendo così tanti elementi concorrenti?",
+                  "evidence_type": "performance_degradation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "A che punto fate escalation o ridistribuite il carico lavoro per prevenire sovraccarico cognitivo?",
+                  "evidence_type": "capacity_management"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Quanti diversi strumenti di sicurezza deve accedere un analista tipico in una singola indagine incidente? Guidateci attraverso un incidente recente ed elencate ogni sistema che il vostro analista ha dovuto controllare.",
+              "scoring_guidance": {
+                "green": "2-3 strumenti integrati con workflow specifico che mostra cambio contesto minimale",
+                "yellow": "4-6 strumenti con qualche gap integrazione che richiede correlazione manuale",
+                "red": "7+ strumenti disparati che richiedono cambio interfaccia costante e cambi modello mentale"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quanto tempo impiegano gli analisti per cambiare contesto tra questi diversi strumenti durante un'indagine?",
+                  "evidence_type": "switching_cost"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Avete misurato l'impatto carico cognitivo dell'utilizzo di interfacce disparate multiple?",
+                  "evidence_type": "load_measurement"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Cosa succede quando il vostro team di sicurezza sta analizzando una minaccia complessa e arriva un allarme urgente? Descrivete la vostra procedura specifica e dateci un esempio di come è andato recentemente.",
+              "scoring_guidance": {
+                "green": "Protocolli triage chiari con personale designato, esempio specifico che mostra protezione di analisi complesse",
+                "yellow": "Gestione interruzioni informale con qualche discrezione analista",
+                "red": "Tutti gli allarmi interrompono indipendentemente dalla complessità compito corrente, nessun protocollo formale"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Come prevenite che dettagli importanti vadano persi quando gli analisti sono forzati a cambiare contesto a metà indagine?",
+                  "evidence_type": "information_preservation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Qual è il vostro numero medio di interruzioni per analista per turno?",
+                  "evidence_type": "interruption_frequency"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Documentazione e Complessità Passaggio Consegne",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Durante incidenti di sicurezza attivi, quali requisiti di documentazione mantengono i vostri analisti mentre rispondono? Raccontateci di un incidente recente e quale documentazione/report erano richiesti simultaneamente.",
+              "scoring_guidance": {
+                "green": "Documentazione altamente automatizzata con esempi workflow SOAR specifici, carico manuale minimo",
+                "yellow": "Mix manuale e automatizzato con complessità moderata durante incidenti",
+                "red": "Requisiti documentazione manuale estesi in competizione con compiti risposta attiva"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quale percentuale della capacità cognitiva analista durante incidenti è consumata dalla documentazione versus analisi minacce effettiva?",
+                  "evidence_type": "cognitive_allocation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Avete automatizzato alcuni processi documentazione per ridurre richieste memoria lavoro?",
+                  "evidence_type": "automation_implementation"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Quando le vostre operazioni di sicurezza transitano tra turni durante un incidente attivo, quanti problemi in corso diversi devono tipicamente essere comunicati? Dateci l'esempio più recente di passaggio consegne complesso.",
+              "scoring_guidance": {
+                "green": "Passaggio consegne strutturato limitato a 3-4 elementi critici con procedure standardizzate e documentazione",
+                "yellow": "Complessità variabile (4-6 elementi) con procedure base ma esecuzione inconsistente",
+                "red": "Passaggi consegne complessi (7+ elementi) senza limiti trasferimento informazioni o standard"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Come assicurate che informazioni critiche non vadano perse durante transizioni turno?",
+                  "evidence_type": "handoff_reliability"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Avete sperimentato incidenti dove informazioni sono state perse o fraintese durante passaggi consegne?",
+                  "evidence_type": "handoff_failures"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Gestione Carico Cognitivo",
+          "weight": 0.4,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Quali sono i periodi prevedibili di alto stress per la sicurezza della vostra organizzazione (lunedì mattina, dopo festività, aggiornamenti sistemi), e come organizzate il personale diversamente durante questi periodi? Descrivete il vostro approccio specifico.",
+              "scoring_guidance": {
+                "green": "Modello staffing predittivo basato su dati con esempi specifici di aggiustamenti capacità proattivi",
+                "yellow": "Consapevolezza dei pattern con alcuni aggiustamenti reattivi",
+                "red": "Nessuno staffing differenziale o considerazione carico cognitivo per periodi picco prevedibili"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Tracciate accuratezza rilevamento e tassi errore durante questi periodi picco versus operazioni normali?",
+                  "evidence_type": "performance_correlation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Qual è il vostro piano quando periodi picco coincidono con carenze personale?",
+                  "evidence_type": "contingency_planning"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Come tracciate gli errori commessi durante periodi ad alto volume allarmi versus operazioni normali? Raccontateci di qualsiasi pattern che avete notato negli errori di sicurezza durante periodi intensi.",
+              "scoring_guidance": {
+                "green": "Tracciamento errori sistematico correlato con metriche carico cognitivo, esempi pattern specifici e remediation",
+                "yellow": "Tracciamento errori base con consapevolezza informale di correlazione carico lavoro",
+                "red": "Nessun tracciamento errori sistematico o correlazione con condizioni carico cognitivo"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Potete mostrarci la vostra analisi errori che correla errori con livelli carico lavoro analista?",
+                  "evidence_type": "correlation_analysis"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quali interventi specifici avete implementato per ridurre errori durante periodi alto carico?",
+                  "evidence_type": "remediation_actions"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q8",
+              "text": "Avete strumenti o sistemi che forniscono visibilità tempo reale sul carico cognitivo analista o utilizzo capacità?",
+              "scoring_guidance": {
+                "green": "Dashboard carico cognitivo tempo reale con escalation automatica, esempi specifici di utilizzo",
+                "yellow": "Monitoraggio manuale da supervisori con consapevolezza capacità informale",
+                "red": "Nessuna visibilità sistematica su carico cognitivo analista o distribuzione carico lavoro"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Come determinate quando un analista ha raggiunto capacità cognitiva e necessita supporto?",
+                  "evidence_type": "capacity_detection"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quali metriche usate per valutare se strategie gestione carico cognitivo sono efficaci?",
+                  "evidence_type": "effectiveness_measurement"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Sondaggio per Segnali di Allarme",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle politiche dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"I nostri analisti possono gestire 10-15 allarmi concorrenti, sono molto esperti...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Diciamo semplicemente agli analisti di dare priorità e loro capiscono...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Tutti gli allarmi sono trattati come urgenti - non possiamo permetterci di perdere nulla...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"La documentazione può aspettare fino a dopo che l'incidente è risolto...\"",
+              "severity": "medium",
+              "score_impact": 0.09,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Tracciamo tempo risoluzione ticket ma non carico cognitivo o tassi errore...\"",
+              "severity": "medium",
+              "score_impact": 0.1,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"I passaggi consegne turno sono solo verbali - gli analisti comunicano ciò che è importante...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"I buoni analisti dovrebbero essere in grado di tenere tutto nella loro testa...\"",
+              "severity": "critical",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "\"Non abbiamo mai misurato quanti strumenti gli analisti devono usare per indagine...\"",
+              "severity": "medium",
+              "score_impact": 0.08,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "cognitive_load_testing": "Monitorare correlazione tasso errore con carico compiti concorrenti (correlazione target > 0.75)",
+      "correlation_analysis": "Confrontare punteggi audit manuali con metriche carico lavoro SOC (correlazione target > 0.80)",
+      "drift_detection": "Test Kolmogorov-Smirnov su distribuzione utilizzo capacità, ricalibrazione se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicurare che probabilità overflow previste corrispondano ad aumenti tasso errore osservati",
+      "baseline_period": "60_days",
+      "recalibration_trigger": "Drift rilevato o punteggio validazione < 0.70 o errore modello capacità > 15%"
+    },
+    "success_metrics": [
+      {
+        "metric": "Incidenti Sovraccarico Cognitivo",
+        "formula": "% di tempo compiti concorrenti analista superano soglia sicura (4+ elementi)",
+        "baseline": "Frequenza corrente di 6+ elementi concorrenti da audit",
+        "target": "Ridurre incidenti sovraccarico del 75% entro 90 giorni",
+        "measurement": "Campionamento settimanale carico lavoro analista durante periodi picco"
+      },
+      {
+        "metric": "Tasso Errore Indagine",
+        "formula": "Errori per indagine completata che richiedono rilavorazione",
+        "baseline": "Frequenza errore corrente durante indagini alta complessità",
+        "target": "Ridurre errori indagine del 60% entro 90 giorni",
+        "measurement": "Revisione mensile qualità indagine e requisiti rilavorazione"
+      },
+      {
+        "metric": "Tempo Medio Rilevamento (MTTD)",
+        "formula": "Tempo medio da presenza minaccia a rilevamento",
+        "baseline": "MTTD medio corrente da analytics SIEM",
+        "target": "Migliorare MTTD del 40% attraverso ridotta interferenza cognitiva",
+        "measurement": "Analytics SIEM bi-settimanali su metriche timeline rilevamento"
+      },
+      {
+        "metric": "Frequenza Cambio Interfaccia Strumenti",
+        "formula": "Numero medio cambi strumento per indagine",
+        "baseline": "Conteggio cambio interfaccia corrente da log utilizzo strumenti",
+        "target": "Ridurre cambi strumento del 50% attraverso integrazione",
+        "measurement": "Tracciamento automatizzato da analytics utilizzo strumenti"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Dashboard Carico Cognitivo",
+        "description": "Implementare monitoraggio tempo reale del carico lavoro analista con escalation automatica quando compiti concorrenti superano soglie sicure (4+ elementi)",
+        "implementation": "Distribuire sistema monitoraggio che traccia assegnazioni compiti concorrenti per analista. Includere indicatori visivi che mostrano carico cognitivo per analista e stato capacità team. Configurare allarmi automatici quando soglie superate. Creare dashboard supervisore per decisioni distribuzione carico lavoro.",
+        "technical_controls": "Integrazione SIEM per tracciamento compiti, dashboard visiva (Grafana/Kibana), allarmi escalation automatici, metriche utilizzo capacità, algoritmi bilanciamento carico lavoro",
+        "roi": "380% average within 12 months",
+        "effort": "medium",
+        "timeline": "45-60 days",
+        "validation": "Screenshot interfaccia monitoraggio carico lavoro, log allarmi che mostra trigger escalation automatici, feedback analisti su miglioramento consapevolezza carico"
+      },
+      {
+        "id": "sol_2",
+        "title": "Piattaforma Operazioni Sicurezza Integrata",
+        "description": "Distribuire soluzione SIEM/SOAR single-pane-of-glass che consolida strumenti sicurezza multipli in interfaccia unificata",
+        "implementation": "Valutare e implementare piattaforma sicurezza unificata (Splunk SOAR, Microsoft Sentinel, Chronicle). Migrare workflow da 7+ strumenti disparati a 2-3 viste integrate. Implementare single sign-on attraverso strumenti sicurezza. Creare workspace indagine unificati riducendo cambio contesto.",
+        "technical_controls": "Piattaforma SIEM/SOAR unificata, integrazioni API, implementazione SSO, correlazione cross-tool, dashboard indagine unificati",
+        "roi": "420% average within 18 months",
+        "effort": "high",
+        "timeline": "90-120 days",
+        "validation": "Contare strumenti acceduti durante indagine campione, temporizzare workflow indagine prima/dopo, record formazione analisti, verifica implementazione SSO"
+      },
+      {
+        "id": "sol_3",
+        "title": "Gestione Interruzioni Strutturata",
+        "description": "Stabilire sistema allarmi a livelli con ruolo triage dedicato durante analisi alta complessità",
+        "implementation": "Creare classificazione severità allarmi richiedendo approvazione triage per interruzione analista. Implementare protocolli 'non disturbare' per indagini complesse >30 minuti. Definire criteri escalation chiari per emergenze vere. Ruotare duty triage tra membri team. Documentare efficacia tempo analisi protetto.",
+        "technical_controls": "Regole routing allarmi, sistema coda triage, tracciamento tempo protetto, workflow escalation, logging interruzioni",
+        "roi": "290% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days",
+        "validation": "Procedure triage documentate, osservazione gestione interruzioni, log escalation per override emergenza, interviste analisti su efficacia tempo protetto"
+      },
+      {
+        "id": "sol_4",
+        "title": "Pipeline Documentazione Automatizzata",
+        "description": "Implementare workflow SOAR che generano automaticamente documentazione incidenti da azioni analista",
+        "implementation": "Configurare piattaforma SOAR per catturare azioni analista, comandi e risultati automaticamente. Generare timeline incidenti, sommari indagine e report compliance da dati catturati. Ridurre requisiti documentazione manuale del 70% durante periodi risposta attiva. Creare template pattern indagine comuni.",
+        "technical_controls": "Workflow automazione SOAR, logging cattura azioni, report auto-generati, automazione documentazione compliance, template indagine",
+        "roi": "340% average within 12 months",
+        "effort": "medium",
+        "timeline": "60 days",
+        "validation": "Confrontare tempo documentazione manuale vs automatizzata, revisionare metriche qualità per report auto-generati vs manuali, log workflow SOAR, verifica requisiti compliance"
+      },
+      {
+        "id": "sol_5",
+        "title": "Protocolli Staffing Periodi Picco",
+        "description": "Sviluppare modello staffing predittivo basato su pattern carico cognitivo storico",
+        "implementation": "Analizzare volume allarmi storico e pattern incidenti per identificare periodi picco prevedibili (lunedì 8-11am, primo giorno dopo festività, aggiornamenti sistemi maggiori). Creare programmi staffing con copertura aggiuntiva durante picchi identificati. Stabilire rotazione supporto cognitivo on-call. Implementare dashboard pianificazione capacità che mostra carico previsto vs effettivo.",
+        "technical_controls": "Analytics storici per rilevamento pattern, modello staffing predittivo, sistema rotazione on-call, dashboard pianificazione capacità, previsione carico",
+        "roi": "260% average within 12 months",
+        "effort": "low",
+        "timeline": "30-45 days",
+        "validation": "Programmi staffing durante periodi picco, metriche tempo risposta on-call, accuratezza modello pianificazione capacità, efficacia gestione carico lavoro durante picchi"
+      },
+      {
+        "id": "sol_6",
+        "title": "Aiuti Esterni Memoria Lavoro",
+        "description": "Distribuire template indagine standardizzati e checklist digitali che trasferiscono tracciamento cognitivo a sistemi esterni",
+        "implementation": "Creare template indagine per scenari minaccia comuni. Implementare checklist digitali che mostrano progresso e azioni pendenti. Distribuire strumenti workflow visivi che mostrano stato indagine. Fornire offload cognitivo attraverso rappresentazioni memoria esterne. Formare analisti su uso efficace aiuti cognitivi.",
+        "technical_controls": "Libreria template indagine, sistema checklist digitali, strumenti workflow visivi (integrazione Visio/Lucidchart), dashboard progresso indagine, tracciamento utilizzo aiuti cognitivi",
+        "roi": "310% average within 12 months",
+        "effort": "low",
+        "timeline": "45 days",
+        "validation": "Statistiche utilizzo template, tassi completamento checklist digitali, metriche adozione strumenti workflow, efficacia offload cognitivo attraverso confronto tasso errore"
+      }
+    ],
+    "prioritization": {
+      "critical_first": [
+        "sol_1",
+        "sol_3"
+      ],
+      "high_value": [
+        "sol_2",
+        "sol_4"
+      ],
+      "quick_wins": [
+        "sol_5",
+        "sol_6"
+      ],
+      "foundational": [
+        "sol_1",
+        "sol_6"
+      ]
+    }
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Attacco Sfruttamento Fatica Allarmi",
+      "description": "Gli attaccanti attivano falsi positivi multipli attraverso strumenti sicurezza diversi per saturare memoria lavoro analista, poi lanciano attacco effettivo durante sovraccarico cognitivo",
+      "attack_vector": "Attivazione coordinata di tipi allarme multipli (rete, endpoint, email) creando rumore che riempie capacità memoria lavoro",
+      "psychological_mechanism": "L'overflow memoria lavoro previene riconoscimento pattern di attacco coordinato mentre analisti lottano per processare allarmi individuali",
+      "historical_esempio": "Violazione Target 2013 - Allarmi concorrenti multipli hanno sovraccaricato capacità analista, prevenendo riconoscimento che allarmi legittimi facevano parte di pattern attacco coordinato",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": [
+        "N_concurrent > 8",
+        "WM_load > WM_capacity",
+        "alert_volume_spike",
+        "multiple_alert_sources",
+        "error_rate_increase"
+      ]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Attacco Complessità Decisionale",
+      "description": "Avversari sofisticati presentano scenari artificialmente complessi richiedendo analisi simultanea di vettori attacco multipli, sovraccaricando memoria lavoro per indurre paralisi analisi o decisioni povere",
+      "attack_vector": "Attacco multi-vettore che presenta minacce simultanee attraverso domini rete, applicazione e social engineering",
+      "psychological_mechanism": "Capacità cognitiva superata dal requisito di tracciare simultaneamente vettori minaccia multipli, portando ad analisi incompleta o risposta ritardata",
+      "historical_esempio": "Gruppi APT che usano attacchi multi-stage con indicatori iniziali deliberatamente complessi richiedendo memoria lavoro eccessiva per analisi completa",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": [
+        "investigation_complexity_high",
+        "multiple_concurrent_hypotheses",
+        "extended_investigation_time",
+        "analyst_requests_for_assistance"
+      ]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Cascata Cognitiva Durante Risposta Incidenti",
+      "description": "Attacchi multi-stage progettati per aumentare progressivamente carico cognitivo attraverso allarmi escalanti, pressione temporale e richieste coordinazione",
+      "attack_vector": "Attacco a fasi iniziando con allarmi minori, escalando a incidenti complessi, poi consegnando payload durante sovraccarico cognitivo picco",
+      "psychological_mechanism": "Saturazione progressiva memoria lavoro attraverso richieste cognitive cumulative, prevenendo risposta efficace a stage finale",
+      "historical_esempio": "Attacco supply chain SolarWinds - Ha mantenuto pressione cognitiva livello basso su periodi estesi, rendendo rilevamento estremamente difficile a causa saturazione memoria lavoro sostenuta",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": [
+        "escalating_alert_complexity",
+        "cumulative_workload_increase",
+        "sustained_high_cognitive_load",
+        "degrading_response_quality"
+      ]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Iniezione Informazioni Durante Periodi Picco",
+      "description": "Attacchi temporizzati per coincidere con periodi carico-cognitivo-alto prevedibili (lunedì mattina, dopo festività) quando memoria lavoro è già sotto stress",
+      "attack_vector": "Lanciare attacchi durante periodi picco noti quando analisti stanno già gestendo carico lavoro concorrente massimo",
+      "psychological_mechanism": "Sfruttare saturazione carico cognitivo pre-esistente per assicurare capacità memoria lavoro insufficiente per rilevamento minacce",
+      "historical_esempio": "Incidenti multipli di attacchi temporizzati per lunedì mattina o periodi post-festività quando team sicurezza sperimentano picchi carico cognitivo prevedibili",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": [
+        "peak_period_timing",
+        "WM_load_already_elevated",
+        "additional_alerts_during_peak",
+        "reduced_detection_accuracy"
+      ]
+    },
+    {
+      "id": "scenario_5",
+      "title": "Sfruttamento Frammentazione Strumenti",
+      "description": "Gli attaccanti diffondono indicatori malevoli attraverso strumenti sicurezza disparati multipli, richiedendo cambio interfaccia eccessivo che sovraccarica memoria lavoro",
+      "attack_vector": "Artefatti attacco distribuiti attraverso log rete, allarmi endpoint, gateway email e log applicazione richiedendo correlazione attraverso 7+ strumenti",
+      "psychological_mechanism": "Carico cognitivo da cambio strumenti e cambi modello mentale previene correlazione efficace di indicatori correlati",
+      "historical_esempio": "Equifax 2017 - Gestione vulnerabilità concorrente attraverso sistemi multipli ha contribuito a risposta vulnerabilità Apache Struts ritardata",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": [
+        "tool_switches > 7",
+        "cross_tool_correlation_required",
+        "investigation_fragmentation",
+        "correlation_delays"
+      ]
+    },
+    {
+      "id": "scenario_6",
+      "title": "Finestra Attacco Passaggio Consegne Turno",
+      "description": "Attaccanti sofisticati temporizzano fasi attacco critiche durante transizioni turno quando passaggio consegne memoria lavoro crea finestre vulnerabilità",
+      "attack_vector": "Lanciare payload attacco finale durante cambio turno quando contesto incidente complesso deve trasferire tra analisti",
+      "psychological_mechanism": "Perdita informazioni durante passaggio consegne e saturazione memoria lavoro analista ricevente da trasferimento contesto complesso",
+      "historical_esempio": "Incidenti multipli di attacchi escalanti durante transizioni turno quando contesto indagine complesso è stato perso o incompleto",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": [
+        "shift_transition_timing",
+        "complex_handoff_required",
+        "handoff_complexity > 6_items",
+        "context_loss_indicators"
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-14",
+    "translator": "Claude (Anthropic)",
+    "research_basis": [
+      "Miller, G. A. (1956). The magical number seven, plus or minus two: Some limits on our capacity for processing information. Psychological Review, 63(2), 81-97",
+      "Baddeley, A. & Hitch, G. (1974). Working memory model - central executive's limited capacity",
+      "Sweller, J. (1988). Cognitive Load Theory - excessive mental load impairs performance",
+      "Kahneman, D. (1973). Attention as a limited resource that can be depleted",
+      "Monsell, S. (2003). Task-switching costs che mostra performance degradation",
+      "Rubinstein et al. (2001). Executive control processes in task switching consume working memory capacity",
+      "Wickens, C. D. (2002). Multiple Resource Theory - cognitive resources compete",
+      "Endsley, M. R. (1995). Situation awareness degradation under high cognitive load",
+      "Klein, G. (1998). Recognition-primed decision making failure under information overload"
+    ],
+    "validation_status": "peer_revisioneed",
+    "deployment_status": "production_ready"
+  }
+}

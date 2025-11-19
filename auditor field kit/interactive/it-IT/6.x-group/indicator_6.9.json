@@ -1,0 +1,872 @@
+{
+  "indicator": "6.9",
+  "title": "FIELD KIT INDICATORE 6.9",
+  "subtitle": "Splitting Organizzativo",
+  "category": "Vulnerabilità di Dinamica di Gruppo",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Categoria 6.x",
+
+  "description": {
+    "short": "Misura la vulnerabilità creata quando le organizzazioni dividono inconsciamente le minacce alla sicurezza in categorie semplificate 'interno fidato' vs 'esterno pericoloso'",
+    "context": "Lo splitting organizzativo si verifica quando le organizzazioni dividono inconsciamente le minacce alla sicurezza in categorie semplificate 'interno fidato' vs 'esterno pericoloso'. Questo pensiero binario crea pericolosi punti ciechi attraverso l'over-trusting di insider e sistemi mentre si proietta tutto il rischio sugli attaccanti esterni. Le organizzazioni che sperimentano splitting mostrano fiducia estrema in certi attori (dipendenti di lungo corso, vendor, executive) mentre attribuiscono fallimenti sicurezza esclusivamente a minacce esterne sofisticate, rendendole vulnerabili ad attacchi insider e social engineering.",
+    "impact": "Le organizzazioni con elevata vulnerabilità da splitting subiscono furto dati da insider fidati che sfruttano status idealizzato, attacchi social engineering sfruttando meccanismi trasferimento fiducia, infiltrazione supply chain attraverso scrutinio vendor inadeguato, e exploitation movimento laterale attraverso assunzioni fiducia implicita. Incidenti storici includono il caso Edward Snowden dove fiducia estrema in personale cleared abilitò esfiltrazione dati massiva, violazione Target dove fiducia in credenziali vendor HVAC abilitò infiltrazione rete, e attacco SolarWinds sfruttante fiducia organizzativa nei processi aggiornamento software.",
+    "psychological_basis": "La Teoria delle Relazioni Oggettuali di Klein (1946) identifica lo splitting come meccanismo difensivo primitivo dove l'ego non può tollerare ambivalenza su oggetti che sono sia buoni che cattivi. In contesti organizzativi, questo si traduce in incapacità di tenere la realtà che provoca ansia che insider fidati possano porre rischi sicurezza. Bion (1961) dimostrò come i gruppi sotto ansia adottino assunzioni di base che distorcono la realtà. Le neuroscienze moderne supportano le osservazioni di Klein con attivazione amigdala che crea categorizzazione rapida di stimoli come minacciosi o sicuri, con lo stress che aumenta la tendenza del cervello verso categorizzazione binaria."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Assessment fiducia bilanciato con investigazione incidenti completa includente fattori interni, monitoraggio attivo di tutti gli utenti privilegiati indipendentemente da ruolo, policy sicurezza applicate uniformemente con eccezioni minime, allocazione budget sicurezza bilanciata con minimo 30% focalizzato su rilevamento minacce insider.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Indicatori splitting moderati con maggioranza incidenti investigati ma qualche attribuzione esterna automatica, monitoraggio utenti privilegiati esiste ma con gap per certe categorie fidate, eccezioni policy sicurezza concesse regolarmente con qualche supervisione, standard sicurezza differenti per tier personale diversi.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Alta vulnerabilità splitting con incidenti consistentemente attribuiti ad attaccanti esterni senza investigazione interna, monitoraggio minimale utenti privilegiati specialmente executive, eccezioni policy frequenti per personale fidato, standard sicurezza significativamente differenti basati su livelli fiducia percepiti.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_incident_attribution": 0.18,
+      "q2_insider_monitoring": 0.17,
+      "q3_policy_exceptions": 0.16,
+      "q4_access_controls": 0.15,
+      "q5_budget_balance": 0.13,
+      "q6_vendor_assessment": 0.12,
+      "q7_zero_trust": 0.09
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "SI(t) = (1/n) × Σ|SP(entity_i)|",
+      "components": {
+        "splitting_polarization": {
+          "formula": "SP(entity) = |Positive_Assessments(entity) - Negative_Assessments(entity)| / (Positive_Assessments(entity) + Negative_Assessments(entity))",
+          "description": "Misura grado pensiero polarizzato su entità specifiche (persone, sistemi, vendor)",
+          "threshold": {
+            "SP_critical": 0.8,
+            "SP_warning": 0.6
+          }
+        },
+        "splitting_index": {
+          "formula": "SI(t) = (1/n) × Σ|SP(entity_i)| where n = count of monitored entities",
+          "description": "Tendenza splitting organizzativa aggregata attraverso tutte le entità monitorate",
+          "variables": {
+            "n": "numero entità valutate (utenti, sistemi, vendor)",
+            "SP_entity": "punteggio polarizzazione splitting per ciascuna entità"
+          }
+        },
+        "trust_imbalance": {
+          "formula": "TI(t) = (External_Controls(t) / Internal_Controls(t)) × Exception_Rate(internal)",
+          "description": "Misura sbilanciamento tra focus minaccia esterna e assunzioni fiducia interna",
+          "interpretation": "Valori alti indicano fissazione minaccia esterna combinata con tasso eccezione interno"
+        }
+      },
+      "default_weights": {
+        "w1_polarization": 0.4,
+        "w2_aggregate_splitting": 0.35,
+        "w3_trust_imbalance": 0.25
+      },
+      "temporal_decay": {
+        "formula": "T_6.9(t) = α·SI(t) + (1-α)·T_6.9(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200,
+        "description": "Smoothing esponenziale con costante temporale 2 ore per rilevamento pattern splitting"
+      }
+    },
+    "attribution_bias_score": {
+      "formula": "ABS(t) = External_Attribution_Count(t) / Total_Incidents(t)",
+      "description": "Percentuale incidenti automaticamente attribuiti ad attaccanti esterni sofisticati",
+      "interpretation": "Valori oltre 0.7 indicano bias attribuzione guidato da splitting"
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "incident_investigation_reports",
+        "privileged_user_monitoring_logs",
+        "security_exception_requests",
+        "access_control_policies",
+        "vendor_security_assessments"
+      ],
+      "evidence_required": [
+        "12_months_incident_attribution_analysis",
+        "privileged_user_monitoring_coverage_documentation",
+        "security_exception_logs_by_requestor_category",
+        "access_control_matrices_by_role",
+        "vendor_security_reassessment_schedules"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "incident_response_system",
+          "fields": ["incident_id", "attribution", "internal_factors_analyzed", "external_factors_analyzed", "resolution"],
+          "retention": "730_days"
+        },
+        {
+          "source": "user_behavior_analytics",
+          "fields": ["user_id", "user_category", "privilege_level", "monitoring_enabled", "baseline_established"],
+          "retention": "365_days"
+        },
+        {
+          "source": "policy_exception_tracking",
+          "fields": ["exception_id", "requestor", "requestor_category", "justification", "approval_status"],
+          "retention": "730_days"
+        },
+        {
+          "source": "access_control_system",
+          "fields": ["user_id", "user_category", "access_level", "verification_requirements", "exception_status"],
+          "retention": "365_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "security_budget_tracking",
+          "fields": ["spending_category", "amount", "internal_vs_external_focus"],
+          "retention": "1095_days"
+        },
+        {
+          "source": "vendor_assessment_system",
+          "fields": ["vendor_id", "trust_level", "assessment_frequency", "last_assessment_date"],
+          "retention": "1095_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "SP": {
+          "calculation": "Polarizzazione splitting per ciascuna entità basata su assessment positivi vs negativi",
+          "query": "SELECT entity, ABS(SUM(CASE WHEN sentiment='positive' THEN 1 ELSE 0 END) - SUM(CASE WHEN sentiment='negative' THEN 1 ELSE 0 END)) / COUNT(*) as SP FROM entity_assessments WHERE timestamp > NOW() - INTERVAL '90 days' GROUP BY entity"
+        },
+        "SI": {
+          "calculation": "Indice splitting medio attraverso tutte le entità monitorate",
+          "query": "SELECT AVG(ABS(positive_count - negative_count) / (positive_count + negative_count)) FROM entity_polarization_summary WHERE assessment_date > NOW() - INTERVAL '30 days'"
+        },
+        "ABS": {
+          "calculation": "Percentuale incidenti attribuiti ad attori esterni",
+          "query": "SELECT (COUNT(attribution='external') / COUNT(*)) FROM incidents WHERE incident_date > NOW() - INTERVAL '6 months'"
+        }
+      }
+    },
+    "integration_apis": {
+      "incident_response": "ServiceNow/JIRA API - Pattern attribuzione incidenti, profondità investigazione",
+      "ueba_platform": "User behavior analytics API - Coverage monitoraggio utenti privilegiati",
+      "iam_system": "Identity and Access Management API - Controlli accesso e pattern eccezioni",
+      "vendor_management": "Procurement/GRC API - Livelli fiducia vendor e frequenza assessment"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "6.1",
+        "name": "Groupthink",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "Groupthink rinforza splitting collettivo sopprimendo visioni dissidenti su insider fidati",
+        "formula": "P(6.9|6.1) = 0.7"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Risposta da Stress Acuto",
+        "probability": 0.65,
+        "factor": 1.35,
+        "description": "Stress aumenta tendenza categorizzazione binaria, amplificando pattern splitting",
+        "formula": "P(6.9|7.1) = 0.65"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Bypass Indotto da Urgenza",
+        "probability": 0.6,
+        "factor": 1.3,
+        "description": "Pressione tempo attiva difese splitting primitive durante decisioni sicurezza",
+        "formula": "P(6.9|2.1) = 0.6"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "1.3",
+        "name": "Impersonazione Figure Autorità",
+        "probability": 0.75,
+        "factor": 1.45,
+        "description": "Splitting crea punti ciechi a minacce insider rendendo impersonazione autorità più efficace"
+      },
+      {
+        "indicator": "6.6",
+        "name": "Assunzioni di Gruppo da Dipendenza",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Fiducia in figure protettive idealizzate aumenta vulnerabilità a pattern dipendenza"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["6.9", "1.3", "6.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.5,
+      "threshold_critical": 3.4,
+      "description": "Tempesta perfetta: Splitting organizzativo + Impersonazione autorità + Groupthink = completo punto cieco a minacce insider e social engineering",
+      "real_world_example": "Caso Edward Snowden - fiducia estrema in personale cleared combinata con splitting organizzativo ha impedito rilevamento esfiltrazione dati sistematica"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["6.1", "7.1", "2.1"],
+      "child_nodes": ["1.3", "6.6"],
+      "conditional_probability_table": {
+        "P_6.9_base": 0.22,
+        "P_6.9_given_groupthink": 0.48,
+        "P_6.9_given_stress": 0.42,
+        "P_6.9_given_urgency": 0.38,
+        "P_6.9_given_all": 0.82
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_incident_attribution",
+          "weight": 0.18,
+          "title": "Processo Attribuzione Causa Radice Incidenti",
+          "question": "Quando la Sua organizzazione subisce un incidente o violazione sicurezza, qual è il Suo processo standard per determinare la causa radice? Ci racconti di un incidente recente specifico e come è conclusa l'investigazione.",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Tutti gli incidenti sicurezza subiscono investigazione completa includente sia fattori interni che vettori attacco esterni con analisi documentata"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Maggioranza incidenti investigati accuratamente ma qualche attribuzione automatica ad attaccanti esterni senza analisi interna profonda"
+            },
+            {
+              "value": "external_focus",
+              "score": 1,
+              "label": "Incidenti sicurezza consistentemente attribuiti ad attaccanti esterni sofisticati senza investigazione sistematica fattori contributivi interni"
+            }
+          ],
+          "evidence_required": "Report investigazione incidenti mostranti analisi attribuzione, documentazione causa radice",
+          "soc_mapping": "Metrica ABS (Attribution Bias Score) da detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_insider_monitoring",
+          "weight": 0.17,
+          "title": "Monitoraggio Attività Utenti Privilegiati",
+          "question": "Con quale frequenza la Sua organizzazione monitora attivamente le attività di utenti privilegiati (amministratori, executive, dipendenti lungo corso) per potenziali rischi sicurezza? Quali tool o processi specifici di monitoraggio sono in atto per personale interno?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Sistemi monitoraggio attivi tracciano tutte le attività utenti privilegiati indipendentemente da ruolo o tenure con analisi comportamento baseline"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Monitoraggio utenti privilegiati esiste ma con gap espliciti per certe categorie 'fidate' come executive o dipendenti lungo corso"
+            },
+            {
+              "value": "minimal",
+              "score": 1,
+              "label": "Monitoraggio minimale o assente di utenti privilegiati, specialmente per executive, dipendenti lungo corso o altre categorie 'fidate'"
+            }
+          ],
+          "evidence_required": "Documentazione coverage UEBA, policy monitoraggio utenti privilegiati, scope monitoraggio per categoria utente",
+          "soc_mapping": "Coverage monitoraggio utenti privilegiati da user_behavior_analytics"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_policy_exceptions",
+          "weight": 0.16,
+          "title": "Gestione Eccezioni Policy Sicurezza",
+          "question": "Qual è la Sua procedura quando executive senior, dipendenti lungo corso o vendor fidati richiedono eccezioni alle policy sicurezza standard? Ci dia un esempio recente di tale richiesta e come è stata gestita.",
+          "options": [
+            {
+              "value": "uniform",
+              "score": 0,
+              "label": "Policy sicurezza si applicano uniformemente con eccezioni documentate e limitate richiedenti approvazione formale indipendentemente da status richiedente"
+            },
+            {
+              "value": "tiered",
+              "score": 0.5,
+              "label": "Eccezioni policy sicurezza concesse regolarmente ma con qualche processo supervisione, standard differenti per ruoli diversi"
+            },
+            {
+              "value": "trust_based",
+              "score": 1,
+              "label": "Eccezioni policy sicurezza frequenti per personale 'fidato' con supervisione o documentazione minima"
+            }
+          ],
+          "evidence_required": "Log richieste eccezione per categoria richiedente, workflow approvazione, esempi recenti specifici",
+          "soc_mapping": "Analisi tasso eccezioni da policy_exception_tracking"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_access_controls",
+          "weight": 0.15,
+          "title": "Consistenza Controllo Accesso",
+          "question": "Come determina la Sua organizzazione i livelli accesso per categorie personale diverse (executive, staff IT, dipendenti regolari, contractor, vendor)? Ci racconti del Suo processo specifico e qualsiasi differenza in requisiti sicurezza tra questi gruppi.",
+          "options": [
+            {
+              "value": "uniform",
+              "score": 0,
+              "label": "Controlli accesso e requisiti verifica simili per tutte le categorie personale basati su funzione lavorativa piuttosto che livello fiducia"
+            },
+            {
+              "value": "tiered",
+              "score": 0.5,
+              "label": "Standard sicurezza differenti esistono per tier personale diversi con rationale documentato"
+            },
+            {
+              "value": "trust_based",
+              "score": 1,
+              "label": "Standard sicurezza significativamente differenti basati su livelli fiducia percepiti con verifica minimale per categorie 'fidate'"
+            }
+          ],
+          "evidence_required": "Matrici controllo accesso per categoria ruolo, documentazione requisiti verifica",
+          "soc_mapping": "Analisi varianza controllo accesso da access_control_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_budget_balance",
+          "weight": 0.13,
+          "title": "Bilanciamento Investimento Minacce Insider",
+          "question": "Quale percentuale del Suo budget sicurezza è allocata a rilevamento minacce esterne (firewall, sicurezza perimetrale) vs monitoraggio minacce interne (user behavior analytics, rilevamento minacce insider)? Fornisca breakdown budget specifici.",
+          "options": [
+            {
+              "value": "balanced",
+              "score": 0,
+              "label": "Allocazione budget sicurezza bilanciata con minimo 30% focalizzato su rilevamento minacce insider e monitoraggio interno"
+            },
+            {
+              "value": "moderate_imbalance",
+              "score": 0.5,
+              "label": "Allocazione budget mostra preferenza sicurezza perimetrale ma qualche investimento minacce insider (15-29%)"
+            },
+            {
+              "value": "external_focus",
+              "score": 1,
+              "label": "Budget sicurezza fortemente focalizzato su minacce esterne con meno del 15% allocato a rilevamento minacce insider"
+            }
+          ],
+          "evidence_required": "Breakdown budget sicurezza per categoria minaccia, documentazione finanziamento programma minacce insider",
+          "soc_mapping": "Allocazione budget da security_budget_tracking"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_vendor_assessment",
+          "weight": 0.12,
+          "title": "Reassessment Sicurezza Vendor Fidati",
+          "question": "Con quale frequenza la Sua organizzazione riassessa le pratiche sicurezza di vendor o partner lungo corso fidati? Ci dia un esempio di quando ha cambiato ultima volta requisiti sicurezza per una relazione vendor stabilita.",
+          "options": [
+            {
+              "value": "regular",
+              "score": 0,
+              "label": "Reassessment sicurezza regolari di tutti i vendor includenti partner lungo corso fidati con cicli revisione documentati"
+            },
+            {
+              "value": "occasional",
+              "score": 0.5,
+              "label": "Assessment vendor avvengono ma meno frequentemente per relazioni stabilite rispetto a vendor nuovi"
+            },
+            {
+              "value": "trust_based",
+              "score": 1,
+              "label": "Relazioni vendor stabilite raramente riassessate per sicurezza, status 'partner fidato' persiste senza validazione"
+            }
+          ],
+          "evidence_required": "Schedule assessment sicurezza vendor, frequenza reassessment per tenure vendor, cambiamenti requisiti recenti",
+          "soc_mapping": "Frequenza assessment vendor da vendor_assessment_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_zero_trust",
+          "weight": 0.09,
+          "title": "Coverage Implementazione Zero Trust",
+          "question": "In quale misura la Sua organizzazione ha implementato principi sicurezza zero trust (verifica ogni utente e device, indipendentemente da location o livello fiducia percepito)? Ci dica specificamente quali sistemi o personale sono esenti da requisiti verifica e perché.",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Implementazione zero trust completa con eccezioni minime e verifica continua per tutti utenti e sistemi"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Implementazione zero trust parziale con eccezioni per certi sistemi o ruoli basate su assunzioni fiducia"
+            },
+            {
+              "value": "trust_based",
+              "score": 1,
+              "label": "Principi zero trust rifiutati o implementati con eccezioni maggiori per entità 'fidate'"
+            }
+          ],
+          "evidence_required": "Documentazione architettura zero trust, liste eccezioni, coverage requisiti verifica",
+          "soc_mapping": "Analisi coverage zero trust da access_control_system"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UNA opzione per ciascuna domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze dovrebbero essere documentate per traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Attribuzione Incidenti e Profondità Investigazione",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Mi illustri come investiga gli incidenti sicurezza. Qual è il Suo processo per determinare se fattori interni hanno contribuito insieme ad attacchi esterni?",
+              "scoring_guidance": {
+                "green": "Investigazione sistematica sia vettori attacco esterni che vulnerabilità interne, analisi documentata fattori interni in tutti gli incidenti, esempi recenti mostranti attribuzione bilanciata",
+                "yellow": "Maggioranza incidenti investigati ma tendenza verso attribuzione esterna, fattori interni talvolta esaminati ma non sistematicamente",
+                "red": "Pattern consistente attribuzione esterna con linguaggio tipo 'attaccante sofisticato,' 'minaccia persistente avanzata' senza esaminare vulnerabilità interne o coinvolgimento insider"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri il report investigazione del Suo incidente sicurezza più recente.",
+                  "evidence_type": "documentazione_investigazione"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ha mai concluso che un incidente è stato causato primariamente da fattori interni piuttosto che attaccanti esterni?",
+                  "evidence_type": "bilanciamento_attribuzione"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Mi racconti del Suo monitoraggio utenti privilegiati. Monitora executive, amministratori IT e dipendenti lungo corso allo stesso modo di utenti regolari?",
+              "scoring_guidance": {
+                "green": "Monitoraggio completo tutti utenti privilegiati indipendentemente da ruolo, seniority o tenure con comportamenti baseline documentati e rilevamento anomalie",
+                "yellow": "Monitoraggio esiste ma con gap riconosciuti per certe categorie 'fidate', razionalizzato come sensibilità culturale o necessità business",
+                "red": "Standard monitoraggio differenti basati su livello fiducia, linguaggio tipo 'ci fidiamo dei nostri executive' o 'dipendenti lungo corso non necessitano monitoraggio'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri il Suo dashboard coverage UEBA e mi spieghi eventuali gap nel monitoraggio utenti privilegiati.",
+                  "evidence_type": "coverage_monitoraggio"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succederebbe se l'account del Suo CEO mostrasse comportamento anomalo?",
+                  "evidence_type": "consistenza_risposta"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Pattern Eccezioni Basate su Fiducia",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Quando executive senior o dipendenti lungo corso fidati richiedono eccezioni alle policy sicurezza, qual è il Suo processo risposta tipico?",
+              "scoring_guidance": {
+                "green": "Processo eccezione uniforme indipendentemente da richiedente con approvazione formale, risk assessment e revisione regolare",
+                "yellow": "Processo eccezione esiste ma standard differenti o approvazioni più veloci per certi richiedenti 'fidati'",
+                "red": "Approvazione automatica frequente di eccezioni per executive o personale fidato con documentazione o supervisione minima"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri i Suoi log eccezioni sicurezza degli ultimi 6 mesi suddivisi per categoria richiedente.",
+                  "evidence_type": "analisi_pattern_eccezioni"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ha mai negato una richiesta eccezione da un executive senior? Me ne parli.",
+                  "evidence_type": "enforcement_eccezioni"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Come differiscono i Suoi controlli accesso tra executive, dipendenti regolari e contractor? Mi illustri i requisiti verifica per ciascuna categoria.",
+              "scoring_guidance": {
+                "green": "Controlli accesso consistenti basati su funzione lavorativa piuttosto che status organizzativo, requisiti verifica simili tra categorie",
+                "yellow": "Qualche variazione requisiti con rationale documentato, generalmente consistente ma alcune differenze basate su fiducia",
+                "red": "Requisiti significativamente differenti basati su fiducia percepita, executive o dipendenti lungo corso esenti da verifica normale"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri le Sue matrici controllo accesso per categorie utente diverse.",
+                  "evidence_type": "documentazione_controllo_accesso"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Perché categorie diverse hanno requisiti sicurezza differenti?",
+                  "evidence_type": "rationale_policy"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Bilanciamento Investimenti e Fiducia Vendor",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Quale percentuale del Suo budget sicurezza va a rilevamento minacce insider vs protezione minacce esterne? Perché questa allocazione?",
+              "scoring_guidance": {
+                "green": "Almeno 30% allocato a minacce insider con risk assessment documentato giustificante approccio bilanciato",
+                "yellow": "Allocazione minacce insider 15-29% con consapevolezza sbilanciamento ma focus operazionale su minacce esterne",
+                "red": "Investimento minacce insider sotto 15% con giustificazioni tipo 'ci fidiamo della nostra gente' o 'minacce interne non sono nostra preoccupazione principale'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri il Suo breakdown budget sicurezza per categoria minaccia.",
+                  "evidence_type": "allocazione_budget"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa servirebbe per aumentare investimento minacce insider?",
+                  "evidence_type": "soglia_decisione"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Con quale frequenza riassessa la sicurezza dei Suoi vendor lungo corso fidati? Mi racconti della Sua revisione sicurezza vendor più recente per un partner stabilito.",
+              "scoring_guidance": {
+                "green": "Reassessment regolare tutti vendor indipendentemente da durata relazione con cicli revisione documentati e aggiornamenti requisiti sicurezza",
+                "yellow": "Assessment periodici ma meno frequenti per partner fidati, qualche riconoscimento che questo crea rischio",
+                "red": "Vendor fidati raramente riassessati con linguaggio tipo 'lavoriamo con loro da anni' o 'sono un partner fidato'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri il Suo schedule assessment sicurezza vendor e record completamento.",
+                  "evidence_type": "governance_vendor"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ha mai inasprito requisiti sicurezza per un vendor lungo corso? Perché?",
+                  "evidence_type": "sicurezza_adattiva"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Mi racconti della Sua implementazione zero trust. Ci sono utenti, sistemi o reti considerati 'fidati' ed esenti da verifica continua?",
+              "scoring_guidance": {
+                "green": "Zero trust completo con eccezioni minime, verifica continua indipendentemente da status utente o sistema",
+                "yellow": "Zero trust parziale con alcune eccezioni basate su assunzioni fiducia, lavorando verso implementazione più completa",
+                "red": "Eccezioni maggiori per entità 'fidate', resistenza a zero trust con preoccupazioni su 'non fidarsi della nostra gente'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri la Sua architettura zero trust e documenti le eccezioni.",
+                  "evidence_type": "coverage_zero_trust"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quali preoccupazioni o resistenze ha incontrato implementando zero trust?",
+                  "evidence_type": "barriere_culturali"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Sondaggio per Red Flag",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle policy dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Ci fidiamo della nostra gente, non sarebbero mai un rischio sicurezza...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"È stato un attaccante esterno sofisticato, nulla che potessimo fare...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Non monitoriamo gli executive, sarebbe irrispettoso...\"",
+              "severity": "critical",
+              "score_impact": 0.17,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Sono con noi da 20 anni, non dobbiamo sorvegliarli...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Il nostro vendor è un partner fidato, non dobbiamo auditarlo...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Zero trust? È per aziende che non si fidano dei loro dipendenti...\"",
+              "severity": "medium",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Gli insider non sono il nostro problema, sono gli hacker di cui preoccuparci...\"",
+              "severity": "medium",
+              "score_impact": 0.10,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inserimento trimestrale scenari simulati minacce insider",
+      "correlation_analysis": "Confronto punteggi audit manuali con pattern attribuzione e coverage monitoraggio (correlazione target > 0.84)",
+      "drift_detection": "Test Kolmogorov-Smirnov, ricalibrazione se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicura che punteggi splitting previsti corrispondano a pattern eccezione basata su fiducia e monitoraggio osservati",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift rilevato o punteggio validazione < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Tasso Rilevamento Minacce Insider",
+        "formula": "Percentuale incidenti sicurezza interni rilevati tramite monitoraggio proattivo vs scoperta reattiva",
+        "baseline": "Rapporto attuale rilevamento proattivo vs reattivo",
+        "target": "80% rilevamento proattivo entro 90 giorni",
+        "measurement": "Classificazione incidenti mensile con revisione team operazioni sicurezza"
+      },
+      {
+        "metric": "Frequenza Eccezioni Policy",
+        "formula": "Numero eccezioni policy sicurezza concesse mensilmente, categorizzate per tipo richiedente e giustificazione",
+        "baseline": "Tasso eccezioni attuale per categoria",
+        "target": "Riduzione 50% eccezioni basate su fiducia entro 90 giorni",
+        "measurement": "Tracking eccezioni settimanale con revisione team compliance"
+      },
+      {
+        "metric": "Bilanciamento Attribuzione Incidenti",
+        "formula": "Percentuale incidenti sicurezza con analisi completa fattori interni vs attribuzione solo-esterna",
+        "baseline": "Analisi pattern attribuzione attuale",
+        "target": "100% analisi completa entro 60 giorni",
+        "measurement": "Assessment per-incidente con responsabilità team risposta incidenti"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Implementazione Behavioral Analytics",
+        "description": "Deploy sistemi user and entity behavior analytics (UEBA) che monitorano tutte le attività personale indipendentemente da ruolo o tenure",
+        "implementation": "Implementa modeling comportamento baseline per utenti privilegiati, rilevamento anomalie automatico per pattern accesso inusuali, e scoring rischio per tutti attori interni. Stabilisce procedure escalation chiare per anomalie comportamentali indipendentemente da status utente. Include executive, amministratori e dipendenti lungo corso in scope monitoraggio completo.",
+        "technical_controls": "Deploy piattaforma UEBA, modeling comportamento baseline, algoritmi rilevamento anomalie, engine scoring rischio, automation workflow escalation",
+        "roi": "340% medio entro 12 mesi",
+        "effort": "high",
+        "timeline": "60-90 giorni"
+      },
+      {
+        "id": "sol_2",
+        "title": "Deploy Architettura Zero Trust",
+        "description": "Implementa principi zero trust completi richiedenti verifica per tutti utenti e device indipendentemente da livello fiducia percepito",
+        "implementation": "Deploy autenticazione multi-fattore per tutti accessi sistema, micro-segmentazione risorse rete, e autenticazione continua per operazioni sensibili. Elimina eccezioni policy sicurezza basate su ruolo o tenure. Implementa controlli accesso least privilege uniformemente attraverso tutte categorie utente.",
+        "technical_controls": "Architettura rete zero trust, sistema autenticazione continua, implementazione micro-segmentazione, enforcement MFA, automation least privilege",
+        "roi": "385% medio entro 18 mesi",
+        "effort": "high",
+        "timeline": "90-120 giorni"
+      },
+      {
+        "id": "sol_3",
+        "title": "Sviluppo Programma Minacce Insider",
+        "description": "Stabilisce programma formale minacce insider con personale e risorse dedicate",
+        "implementation": "Implementa valutazione psicologica per posizioni alto rischio, training awareness sicurezza regolare focalizzato su rischi insider, meccanismi reporting peer per comportamenti preoccupanti, e processi investigazione strutturati per incidenti interni. Crea gruppo lavoro minacce insider cross-funzionale.",
+        "technical_controls": "Piattaforma gestione minacce insider, sistema delivery training, portale reporting anonimo, automation workflow investigazione",
+        "roi": "295% medio entro 18 mesi",
+        "effort": "medium",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Enhancement Processo Risposta Incidenti",
+        "description": "Rivede procedure risposta incidenti per mandare investigazione completa di tutti eventi sicurezza includenti fattori interni",
+        "implementation": "Implementa analisi causa radice strutturata richiedente esame sia vettori attacco esterni che vulnerabilità interne. Stabilisce processi revisione incidenti indipendenti per prevenire bias attribuzione. Crea template investigazione incidenti assicuranti analisi bilanciata.",
+        "technical_controls": "Playbook risposta incidenti potenziati, template analisi causa radice, workflow revisione indipendente, metriche tracking attribuzione",
+        "roi": "275% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "30-45 giorni"
+      },
+      {
+        "id": "sol_5",
+        "title": "Standardizzazione Matrice Controllo Accesso",
+        "description": "Sviluppa matrici controllo accesso standardizzate applicanti requisiti sicurezza consistenti attraverso tutte categorie personale",
+        "implementation": "Implementa revisioni accesso regolari per tutti account privilegiati, processi provisioning e deprovisioning automatizzati, e requisiti giustificazione documentati per qualsiasi eccezione accesso. Stabilisce controlli accesso basati su ruolo con principio least privilege applicato uniformemente.",
+        "technical_controls": "Piattaforma governance accesso, workflow revisione accesso automatizzati, sistema tracking eccezioni, automation enforcement least privilege",
+        "roi": "320% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_6",
+        "title": "Programma Gestione Rischio Vendor",
+        "description": "Crea programma gestione rischio vendor completo con assessment sicurezza regolari di tutti partner indipendentemente da durata relazione",
+        "implementation": "Implementa monitoraggio continuo posture sicurezza vendor, requisiti sicurezza contrattuali per tutti vendor, e procedure coordinamento risposta incidenti. Stabilisce controlli accesso vendor con permessi time-limited e cicli reassessment regolari.",
+        "technical_controls": "Piattaforma gestione rischio vendor, sistema monitoraggio continuo, gestione contratti con clausole sicurezza, governance accesso vendor",
+        "roi": "265% medio entro 18 mesi",
+        "effort": "medium",
+        "timeline": "60 giorni"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_4"],
+      "high_value": ["sol_2", "sol_5"],
+      "program_development": ["sol_3", "sol_6"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Furto Dati Insider Fidato",
+      "description": "Dipendenti con status idealizzato (executive, staff lungo corso, personale IT privilegiato) sfruttano posizione fidata per esfilt dare dati sensibili per periodi estesi",
+      "attack_vector": "Escalation privilegi graduale e furto dati da insider fidati sfruttanti punti ciechi monitoraggio",
+      "psychological_mechanism": "Splitting organizzativo crea categoria 'fidati' esente da scrutinio sicurezza normale",
+      "historical_example": "Caso Edward Snowden - fiducia estrema in personale cleared abilitò esfiltrazione dati massiva senza rilevamento",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["SI > 0.7", "ABS > 0.8", "anomalie_utenti_privilegiati", "monitoraggio_interno_mancante"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Social Engineering via Trasferimento Fiducia",
+      "description": "Attaccanti sfruttano tendenza splitting organizzazione posizionandosi come 'fidati' attraverso impersonazione figure autorità, vendor stabiliti o personale interno",
+      "attack_vector": "Social engineering sfruttando assunzioni fiducia organizzative per bypassare scrutinio sicurezza normale",
+      "psychological_mechanism": "Una volta categorizzati come 'fidati,' attaccanti beneficiano di verifica sicurezza ridotta",
+      "historical_example": "Violazione Target - fiducia in credenziali vendor HVAC abilitò infiltrazione rete sfruttando splitting tra entità fidate e non fidate",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["TI > 2.0", "tasso_eccezioni_alto", "grant_accesso_basati_fiducia", "verifica_vendor_minimale"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Infiltrazione Supply Chain",
+      "description": "Organizzazioni con pattern splitting forti falliscono scrutinio adeguato relazioni vendor fidate, abilitando attacchi supply chain sofisticati",
+      "attack_vector": "Compromissione partner fidati o provider software sfruttando punto cieco 'partner fidato'",
+      "psychological_mechanism": "Splitting tra 'vendor fidati' e 'minacce esterne' previene scrutinio vendor adeguato",
+      "historical_example": "Attacco SolarWinds - fiducia organizzazioni in vendor software sicurezza abilitò attacco supply chain affliggente 18.000+ clienti",
+      "likelihood": "low",
+      "impact": "critical",
+      "detection_indicators": ["SP_vendor > 0.8", "reassessment_vendor_minimale", "accesso_vendor_basato_fiducia", "tasso_eccezione_vendor_alto"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Exploitation Movimento Laterale",
+      "description": "Una volta dentro perimetro rete, attaccanti sfruttano assunzioni fiducia implicita organizzazione per muoversi lateralmente tra sistemi",
+      "attack_vector": "Reconnaissance rete interna e movimento laterale sfruttante segmentazione rete interna debole",
+      "psychological_mechanism": "Splitting crea assunzione che traffico rete interno sia affidabile",
+      "historical_example": "Campagne APT multiple sfruttanti segmentazione interna debole dopo compromissione iniziale, assumendo perimetro esterno fosse solo confine sicurezza",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["TI > 2.5", "gap_zero_trust", "zone_fiducia_rete_interna", "monitoraggio_interno_minimale"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-09",
+    "translator": "Claude AI",
+    "research_basis": [
+      "Klein, M. (1946). Notes on Some Schizoid Mechanisms - Object Relations Theory",
+      "Bion, W. (1961). Experiences in Groups - Basic assumption groups under anxiety",
+      "LeDoux, J. (2000). The Emotional Brain - Amygdala rapid threat categorization",
+      "Menzies Lyth, I. (1960). Social Defence Systems - Institutional anxiety defenses"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

@@ -1,0 +1,965 @@
+{
+  "indicator": "3.1",
+  "title": "INDICATORE 3.1 FIELD KIT",
+  "subtitle": "Suscettibilità allo Sfruttamento della Reciprocità",
+  "category": "Vulnerabilità di Social Engineering",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Categoria 3.x",
+
+  "description": {
+    "short": "Misura la vulnerabilità agli attaccanti che sfruttano l'obbligo reciproco attraverso regali, favori o benefici per manipolare la conformità alla sicurezza",
+    "context": "Quando i dipendenti ricevono regali, favori o benefici non richiesti, i meccanismi di reciprocità pre-cognitivi si attivano entro 300-500ms, creando una pressione di obbligo che gli attaccanti sfruttano per aggirare i controlli di sicurezza attraverso schemi quid pro quo, phishing (messaggi fraudolenti) con benefici e regali di social engineering.",
+    "impact": "Le organizzazioni con elevata suscettibilità subiscono attacchi USB drop di successo (tasso di raccolta 45-60%), violazioni basate su fornitori, canali di supporto IT compromessi ed eccezioni alle policy di sicurezza a seguito di favori apparentemente innocenti. Lo sfruttamento della reciprocità spesso precede catene di attacco più sofisticate.",
+    "psychological_basis": "Principio di reciprocità di Cialdini (2007) - Tendenza umana universale a ricambiare i favori. Neurologicamente, ricevere regali attiva lo striatum ventrale e crea una pressione di obbligo misurabile. Gli studi fMRI mostrano un'attivazione pre-cognitiva prima della consapevolezza cosciente, rendendo questa vulnerabilità particolarmente insidiosa."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Policy formali su regali e favori con periodi di riflessione obbligatori di 48 ore. Dipendenti formati per riconoscere lo sfruttamento della reciprocità. Esistono canali alternativi per relazioni commerciali reciproche legittime. Tracciamento sistematico di favori e regali.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Esistono policy di base sui regali ma nessuna gestione sistematica della reciprocità. Formazione di sensibilizzazione ma nessun riconoscimento specifico della reciprocità. Applicazione incoerente dei protocolli di ritardo. Tracciamento limitato delle relazioni con i fornitori.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Nessuna policy formale che regola regali e favori. Forte aspettativa culturale di ricambiare immediatamente. Scambio di regali normalizzato nelle relazioni con i fornitori. Nessuna formazione sullo sfruttamento della reciprocità. Eccezioni di sicurezza routinariamente concesse dopo favori.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_gift_favor_policy": 0.20,
+      "q2_external_it_support": 0.15,
+      "q3_vendor_relationship": 0.14,
+      "q4_security_exception_favors": 0.13,
+      "q5_employee_training": 0.12,
+      "q6_reciprocal_practices": 0.11,
+      "q7_incident_tracking": 0.09,
+      "q8_delay_protocol": 0.06
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_3.1(t) = w1·R_3.1(t) + w2·A_3.1(t) + w3·B_3.1(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_3.1(t) = 1 if R_i(t) > τ_recip AND Request_Anomaly > σ, else 0",
+          "description": "Rilevamento binario basato sulla soglia di squilibrio della reciprocità e su pattern di richieste anomale",
+          "threshold": {
+            "tau_recip": 0.4,
+            "sigma_anomaly": 2.5
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_3.1(t) = WRI = Σw_ij·min(x_ij,x_ji)/max(x_ij,x_ji) / Σw_ij",
+          "description": "Indice di Reciprocità Ponderato che misura gli squilibri di favori a livello di rete",
+          "variables": {
+            "w_ij": "peso della relazione tra le entità i e j",
+            "x_ij": "favori da i a j",
+            "x_ji": "favori da j a i"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_3.1(t) = P_comply(R,T) = 1/(1 + e^(-β(R·α + T·γ - θ)))",
+          "factors": [
+            "reciprocity_imbalance",
+            "time_pressure_markers",
+            "gift_value",
+            "relationship_duration",
+            "request_anomaly_score"
+          ],
+          "priors": {
+            "P_legitimate": 0.70,
+            "P_exploitation": 0.30
+          },
+          "coefficients": {
+            "alpha_reciprocity": 2.3,
+            "gamma_temporal": 1.8,
+            "beta_sensitivity": 1.5,
+            "theta_threshold": 1.2
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.35,
+        "w2_anomaly": 0.35,
+        "w3_bayesian": 0.30
+      },
+      "temporal_decay": {
+        "formula": "T_3.1(t) = α·D_3.1(t) + (1-α)·T_3.1(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200,
+        "description": "Smoothing esponenziale con costante temporale di 2 ore per la correlazione favore-richiesta"
+      }
+    },
+    "reciprocity_imbalance": {
+      "formula": "R_i(t) = Σ[Favors_j→i - Favors_i→j] / [Favors_j→i + Favors_i→j + ε]",
+      "description": "Misura lo squilibrio netto dei favori normalizzato per il volume totale di interazione",
+      "interpretation": "Valori che si avvicinano a +1 indicano la ricezione di molti favori senza ricambiare, creando vulnerabilità di sfruttamento",
+      "epsilon": 0.01
+    },
+    "compliance_pressure": {
+      "formula": "P_comply(R,T) = 1/(1 + e^(-β(R·α + T·γ - θ)))",
+      "components": {
+        "R_reciprocity_imbalance": "Squilibrio netto dei favori dalla formula reciprocity_imbalance",
+        "T_time_pressure": "Marcatori di urgenza nella richiesta (scala 0-1)",
+        "alpha_reciprocity_weight": 2.3,
+        "gamma_temporal_weight": 1.8,
+        "beta_sensitivity": 1.5,
+        "theta_threshold": 1.2
+      },
+      "sigmoid": "σ(x) = 1/(1+e^(-x))"
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "gift_and_favor_policy_review",
+        "vendor_relationship_documentation",
+        "incident_history_analysis",
+        "training_records"
+      ],
+      "evidence_required": [
+        "written_gift_acceptance_policy",
+        "vendor_gift_disclosure_logs",
+        "reciprocity_recognition_training_materials",
+        "security_exception_request_logs",
+        "delay_protocol_documentation"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "vendor_interaction_logs",
+          "fields": ["vendor_id", "interaction_type", "gift_value", "favor_type", "timestamp"],
+          "retention": "365_days"
+        },
+        {
+          "source": "security_exception_logs",
+          "fields": ["requester_id", "exception_type", "justification", "prior_favors", "timestamp"],
+          "retention": "180_days"
+        },
+        {
+          "source": "access_request_logs",
+          "fields": ["user_id", "resource_requested", "relationship_context", "approval_speed", "timestamp"],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "gift_registry_system",
+          "fields": ["recipient_id", "gift_type", "gift_value", "donor_entity", "disclosure_date"],
+          "retention": "730_days"
+        },
+        {
+          "source": "vendor_management_system",
+          "fields": ["vendor_id", "relationship_duration", "favor_history", "access_grants"],
+          "retention": "365_days"
+        },
+        {
+          "source": "physical_security_logs",
+          "fields": ["item_found", "location", "pickup_action", "timestamp"],
+          "retention": "90_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "R_i": {
+          "calculation": "Squilibrio netto dei favori per entità",
+          "query": "SELECT (SUM(favors_received) - SUM(favors_given)) / (SUM(favors_received) + SUM(favors_given) + 0.01) as R_i FROM vendor_interactions WHERE entity_id=? AND time_window='30d'"
+        },
+        "Request_Anomaly": {
+          "calculation": "Z-score della richiesta rispetto alla baseline",
+          "query": "SELECT (current_request_score - AVG(baseline_score)) / STDDEV(baseline_score) FROM request_patterns WHERE user_id=? AND time_window='90d'"
+        },
+        "compliance_rate": {
+          "calculation": "Concessioni di eccezioni dopo favori / Richieste di eccezione totali",
+          "query": "SELECT (COUNT(granted=true AND prior_favor=true) / COUNT(*)) FROM exception_requests WHERE time_window='30d'"
+        }
+      }
+    },
+    "integration_apis": {
+      "vendor_management": "API VMS - Relazioni con fornitori, divulgazioni di regali, cronologia delle interazioni",
+      "expense_system": "API Spese - Ricevute di regali, registrazione di intrattenimento",
+      "access_control": "API IAM - Concessioni di eccezioni, pattern di richieste di accesso",
+      "incident_response": "API Piattaforma IR - Incidenti correlati alla reciprocità, tentativi quid pro quo"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "1.3",
+        "name": "Impersonificazione di Figure di Autorità",
+        "probability": 0.75,
+        "factor": 1.6,
+        "description": "Figure di autorità che portano regali creano vulnerabilità composta attraverso reciprocità + conformità",
+        "formula": "P(3.1|1.3) = 0.75",
+        "evidence": "Il regalo da un'apparente autorità attiva sia i percorsi neurali dell'obbedienza che quelli della reciprocità"
+      },
+      {
+        "indicator": "1.1",
+        "name": "Conformità Acritica",
+        "probability": 0.65,
+        "factor": 1.4,
+        "description": "La cultura della conformità amplifica l'obbligo di ricambiare i favori",
+        "formula": "P(3.1|1.1) = 0.65"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Bypass Indotto dall'Urgenza",
+        "probability": 0.70,
+        "factor": 1.5,
+        "description": "La pressione temporale dopo aver ricevuto un favore amplifica la pressione di conformità alla reciprocità",
+        "formula": "P(3.1|2.1) = 0.70",
+        "evidence": "L'urgenza impedisce il periodo di riflessione che ridurrebbe la pressione dell'obbligo"
+      },
+      {
+        "indicator": "2.2",
+        "name": "Sfruttamento della Pressione delle Scadenze",
+        "probability": 0.60,
+        "factor": 1.3,
+        "description": "Gli ambienti con scadenze normalizzano gli scambi quid pro quo",
+        "formula": "P(3.1|2.2) = 0.60"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Risposta allo Stress Acuto",
+        "probability": 0.55,
+        "factor": 1.35,
+        "description": "Lo stress aumenta la sensibilità al senso di colpa e la pressione dell'obbligo",
+        "formula": "P(3.1|7.1) = 0.55"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "3.2",
+        "name": "Sfruttamento della Prova Sociale",
+        "probability": 0.60,
+        "factor": 1.3,
+        "description": "La reciprocità crea prova sociale per la conformità futura"
+      },
+      {
+        "indicator": "3.3",
+        "name": "Manipolazione della Simpatia",
+        "probability": 0.65,
+        "factor": 1.4,
+        "description": "Lo scambio di regali stabilisce una base di simpatia per ulteriore sfruttamento"
+      },
+      {
+        "indicator": "3.4",
+        "name": "Escalation dell'Impegno",
+        "probability": 0.70,
+        "factor": 1.5,
+        "description": "La ricambiazione iniziale crea una baseline di impegno per l'escalation"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["3.1", "1.3", "2.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 3.8,
+      "description": "Tempesta perfetta: Autorità che porta regali + Urgenza + Obbligo di reciprocità = 380% di probabilità di sfruttamento aumentata",
+      "real_world_example": "Campagne di frode CEO che combinano consegna di regali (chiavette USB) con richieste urgenti di impersonificazione di dirigenti"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["1.3", "1.1", "2.1", "2.2", "7.1"],
+      "child_nodes": ["3.2", "3.3", "3.4"],
+      "conditional_probability_table": {
+        "P_3.1_base": 0.25,
+        "P_3.1_given_authority": 0.55,
+        "P_3.1_given_urgency": 0.48,
+        "P_3.1_given_stress": 0.42,
+        "P_3.1_given_all": 0.85
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_gift_favor_policy",
+          "weight": 0.20,
+          "title": "Policy di Accettazione di Regali e Favori",
+          "question": "Quali policy formali regolano l'accettazione da parte dei dipendenti di regali, favori o benefici da parti esterne (fornitori, clienti, partner)?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Policy scritta con limiti monetari, requisiti di divulgazione, flussi di lavoro di approvazione e periodi di riflessione obbligatori prima di azioni reciproche"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Esiste una policy di base sui regali ma nessuna gestione specifica della reciprocità o requisiti di riflessione"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna policy formale su regali/favori o la policy si concentra solo sulla corruzione senza affrontare lo sfruttamento della reciprocità"
+            }
+          ],
+          "evidence_required": "Policy scritta di accettazione regali, log di divulgazione, documentazione del flusso di lavoro di approvazione",
+          "soc_mapping": "voci del gift_registry_system e compliance_rate"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_external_it_support",
+          "weight": 0.15,
+          "title": "Supporto IT Esterno e Assistenza Tecnica",
+          "question": "Quando fornitori esterni o individui offrono assistenza tecnica non richiesta, aiuto nella risoluzione dei problemi o supporto IT 'gratuito', qual è la Sua procedura di risposta standard?",
+          "options": [
+            {
+              "value": "verified",
+              "score": 0,
+              "label": "Tutta l'assistenza tecnica esterna deve essere pre-autorizzata e verificata attraverso canali ufficiali dei fornitori prima dell'accettazione"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "L'aiuto esterno viene accettato se sembra legittimo ma non esiste un processo formale di verifica"
+            },
+            {
+              "value": "accepted",
+              "score": 1,
+              "label": "L'aiuto tecnico non richiesto è accolto come 'costruzione di buone relazioni con i fornitori'"
+            }
+          ],
+          "evidence_required": "Policy di supporto tecnico dei fornitori, esempi recenti di assistenza esterna",
+          "soc_mapping": "vendor_interaction_logs per pattern di assistenza non richiesta"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_vendor_relationship",
+          "weight": 0.14,
+          "title": "Relazioni con i Fornitori e Tracciamento della Reciprocità",
+          "question": "Come traccia e gestisce la Sua organizzazione le relazioni reciproche con i fornitori, inclusi regali, intrattenimento, favori e trattamento preferenziale?",
+          "options": [
+            {
+              "value": "systematic",
+              "score": 0,
+              "label": "Tracciamento sistematico di tutti i favori e regali dei fornitori con monitoraggio dello squilibrio della reciprocità e avvisi automatizzati per pattern inusuali"
+            },
+            {
+              "value": "manual",
+              "score": 0.5,
+              "label": "Esiste un processo manuale di divulgazione dei regali ma nessun tracciamento sistematico della reciprocità"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun tracciamento delle relazioni con i fornitori o degli obblighi reciproci"
+            }
+          ],
+          "evidence_required": "Database delle relazioni con i fornitori, sistema di tracciamento dei regali, report sullo squilibrio della reciprocità",
+          "soc_mapping": "Calcolo R_i da vendor_interaction_logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_security_exception_favors",
+          "weight": 0.13,
+          "title": "Eccezioni di Sicurezza a Seguito di Favori",
+          "question": "Quando i dipendenti ricevono regali o favori da parti esterne, esistono controlli specifici che impediscono eccezioni immediate alla policy di sicurezza o concessioni di accesso?",
+          "options": [
+            {
+              "value": "controlled",
+              "score": 0,
+              "label": "Il protocollo di ritardo obbligatorio impedisce eccezioni di sicurezza entro 48 ore dalla ricezione di regali/favori, con approvazione indipendente richiesta"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Consapevolezza generale che le eccezioni dovrebbero essere riviste ma nessun requisito formale di ritardo"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna connessione stabilita tra favori ricevuti e successive decisioni di sicurezza"
+            }
+          ],
+          "evidence_required": "Log delle richieste di eccezione, dati di correlazione favore-eccezione, documentazione del protocollo di ritardo",
+          "soc_mapping": "compliance_rate da exception_requests correlato con gift_registry"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_employee_training",
+          "weight": 0.12,
+          "title": "Formazione sullo Sfruttamento della Reciprocità",
+          "question": "Quale formazione specifica ricevono i dipendenti sul riconoscimento e la gestione degli attacchi di social engineering basati sulla reciprocità?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Formazione regolare che copre la psicologia della reciprocità, schemi quid pro quo, attacchi USB drop e social engineering basato su regali con scenari pratici"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "La formazione generale di sensibilizzazione alla sicurezza menziona regali/favori ma nessuna copertura specifica dello sfruttamento della reciprocità"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna formazione sullo sfruttamento della reciprocità o su come i regali creano vulnerabilità di sicurezza"
+            }
+          ],
+          "evidence_required": "Curriculum di formazione, record di completamento, risultati di valutazione per scenari di reciprocità",
+          "soc_mapping": "Tracciamento del completamento della formazione e risultati dei test di simulazione"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_reciprocal_practices",
+          "weight": 0.11,
+          "title": "Pratiche Commerciali Reciproche Organizzative",
+          "question": "Come vede la cultura della Sua organizzazione i favori reciproci e gli scambi di regali nelle relazioni commerciali?",
+          "options": [
+            {
+              "value": "controlled",
+              "score": 0,
+              "label": "La reciprocità è riconosciuta come rischio per la sicurezza; esistono canali alternativi per costruire relazioni legittime senza creare obblighi"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "La reciprocità è vista come pratica commerciale normale ma con una certa consapevolezza dei rischi potenziali"
+            },
+            {
+              "value": "normalized",
+              "score": 1,
+              "label": "Lo scambio di regali e la ricambiazione di favori sono attivamente incoraggiati come 'costruzione di relazioni' o 'così si fanno affari'"
+            }
+          ],
+          "evidence_required": "Valutazione culturale, dati di sondaggio dei dipendenti, linee guida per la gestione delle relazioni",
+          "soc_mapping": "Pattern di relazioni con i fornitori e frequenza degli scambi di regali"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_incident_tracking",
+          "weight": 0.09,
+          "title": "Tracciamento degli Incidenti Basati sulla Reciprocità",
+          "question": "La Sua organizzazione traccia gli incidenti di sicurezza o le eccezioni alle policy che hanno coinvolto regali, favori o scenari quid pro quo precedenti?",
+          "options": [
+            {
+              "value": "tracked",
+              "score": 0,
+              "label": "Tracciamento sistematico degli incidenti correlati alla reciprocità con analisi dei pattern e cicli di feedback per il rimedio"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Qualche documentazione degli incidenti ma nessuna analisi specifica di correlazione della reciprocità"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun tracciamento dei pattern di reciprocità negli incidenti di sicurezza"
+            }
+          ],
+          "evidence_required": "Database di risposta agli incidenti con flag di reciprocità, report di analisi dei pattern",
+          "soc_mapping": "Pattern Request_Anomaly da incident_response_tickets"
+        },
+        {
+          "type": "radio-list",
+          "number": 8,
+          "id": "q8_delay_protocol",
+          "weight": 0.06,
+          "title": "Implementazione del Periodo di Riflessione",
+          "question": "Quando i dipendenti ricevono regali o benefici inaspettati, esiste un periodo di attesa obbligatorio prima di prendere decisioni sensibili per la sicurezza che riguardano quella parte?",
+          "options": [
+            {
+              "value": "enforced",
+              "score": 0,
+              "label": "Periodo di riflessione obbligatorio di 48 ore applicato attraverso controlli tecnici prima di decisioni di sicurezza che riguardano i donatori di regali"
+            },
+            {
+              "value": "recommended",
+              "score": 0.5,
+              "label": "Periodo di riflessione raccomandato ma non tecnicamente applicato"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun periodo di riflessione o protocollo di ritardo per decisioni correlate a favori"
+            }
+          ],
+          "evidence_required": "Documentazione del protocollo di ritardo, configurazione del controllo tecnico, log di applicazione",
+          "soc_mapping": "Delta temporale tra voci gift_registry e access_request_logs"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UNA opzione per ogni domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le prove dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Gestione di Regali e Favori",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Quando fornitori, clienti o partner inviano regali o offrono favori ai Suoi dipendenti, cosa accade? Mi illustri il Suo processo standard.",
+              "scoring_guidance": {
+                "green": "Processo dettagliato in più fasi con requisiti di divulgazione, limiti monetari, flussi di lavoro di approvazione ed esempi documentati di regali rifiutati o restituiti",
+                "yellow": "Esiste una policy generale ma applicazione incoerente o nessun esempio recente di applicazione della policy",
+                "red": "Nessun processo formale o risposta del tipo 'ci fidiamo che i dipendenti lo gestiscano appropriatamente'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può mostrarmi i Suoi log di divulgazione dei regali degli ultimi 6 mesi?",
+                  "evidence_type": "gift_registry_documentation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succede se un dipendente accetta un regalo sopra la Sua soglia monetaria?",
+                  "evidence_type": "enforcement_mechanism"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Mi parli dell'ultima volta che qualcuno nella Sua organizzazione ha ricevuto un regalo o favore non richiesto da una parte esterna. Cosa è successo dopo?",
+              "scoring_guidance": {
+                "green": "Esempio recente specifico con corretta divulgazione, periodo di riflessione osservato e gestione documentata",
+                "yellow": "Ricordo vago con gestione informale ma nessuna documentazione",
+                "red": "Non riesce a ricordare esempi o risposta del tipo 'non tracciamo questo'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quel dipendente ha preso decisioni di sicurezza o accesso che riguardavano quella parte successivamente? Quanto tempo ha aspettato?",
+                  "evidence_type": "reciprocity_correlation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "C'è stata una revisione formale per verificare se il regalo ha creato obbligo o pregiudizio?",
+                  "evidence_type": "conflict_assessment"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Relazioni con i Fornitori e Reciprocità",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Come gestisce le relazioni reciproche con i fornitori - situazioni in cui Le fanno favori, forniscono servizi gratuiti o vanno 'oltre' il loro contratto?",
+              "scoring_guidance": {
+                "green": "Tracciamento sistematico dei favori dei fornitori con monitoraggio dello squilibrio della reciprocità, confini contrattuali e metodi di riconoscimento alternativi che non creano obblighi di sicurezza",
+                "yellow": "Consapevolezza generale delle relazioni con i fornitori ma nessuna gestione formale della reciprocità",
+                "red": "I favori dei fornitori sono accolti come 'buone relazioni' con aspettativa di ricambiare"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può mostrarmi come traccia i favori ricevuti dai fornitori rispetto al valore fornito loro?",
+                  "evidence_type": "reciprocity_tracking_system"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Un fornitore ha mai fornito accesso gratuito/anticipato o trattamento speciale - questo ha influenzato le successive decisioni di sicurezza su di loro?",
+                  "evidence_type": "favor_to_decision_correlation"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Quando parti esterne offrono assistenza tecnica, risoluzione dei problemi o supporto IT non richiesti, qual è la risposta del Suo team?",
+              "scoring_guidance": {
+                "green": "Tutta l'assistenza tecnica esterna pre-autorizzata e verificata, dipendenti formati per rifiutare aiuto non richiesto, esempi recenti di corretta verifica",
+                "yellow": "Scetticismo generale ma nessun processo formale di verifica per l'aiuto tecnico esterno",
+                "red": "L'aiuto non richiesto è accolto o 'assumiamo che i fornitori stiano cercando di essere utili'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Descriva l'ultima volta che qualcuno che affermava di essere un tecnico fornitore ha offerto aiuto - esattamente come è stata verificata la sua identità?",
+                  "evidence_type": "verification_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Se un fornitore invia una guida utile o uno strumento gratuito, quale revisione di sicurezza avviene prima che i dipendenti lo utilizzino?",
+                  "evidence_type": "technical_control"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Psicologia della Reciprocità e Formazione",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Quale formazione ricevono i dipendenti su come ricevere regali o favori possa creare vulnerabilità di sicurezza attraverso la pressione della reciprocità?",
+              "scoring_guidance": {
+                "green": "Formazione completa che copre la psicologia della reciprocità, attacchi quid pro quo, scenari USB drop, esercizi pratici di riconoscimento e dati recenti di completamento della formazione",
+                "yellow": "La formazione di sensibilizzazione alla sicurezza menziona i regali in generale ma nessuna specifica sullo sfruttamento della reciprocità",
+                "red": "Nessuna formazione specifica sulla reciprocità o la formazione si concentra sul 'mantenere buone relazioni'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Se lasciassi una chiavetta USB brandizzata con una nota gentile nel Suo parcheggio, cosa farebbero i Suoi dipendenti? Come lo sa?",
+                  "evidence_type": "scenario_response"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ha mai testato i dipendenti con scenari quid pro quo simulati?",
+                  "evidence_type": "simulation_testing"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Quando qualcuno riceve un regalo o favore, esiste un periodo di attesa obbligatorio prima che possa prendere decisioni di sicurezza che riguardano quella parte?",
+              "scoring_guidance": {
+                "green": "Protocollo di riflessione di 48 ore documentato con applicazione tecnica, esempi recenti di ritardi, l'override richiede approvazione indipendente",
+                "yellow": "Indicazione informale di 'aspettare un po'' ma nessun periodo specifico o applicazione",
+                "red": "Nessun periodo di riflessione o concetto non implementato"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri la Sua ultima richiesta di eccezione di sicurezza arrivata entro una settimana dalla ricezione di un regalo da un fornitore - la connessione è stata segnalata?",
+                  "evidence_type": "correlation_tracking"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come impediscono i Suoi sistemi la ricambiazione immediata dopo aver ricevuto favori?",
+                  "evidence_type": "technical_control"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Come vede la cultura della Sua organizzazione la reciprocità nelle relazioni commerciali? È previsto ricambiare i favori?",
+              "scoring_guidance": {
+                "green": "La cultura riconosce la reciprocità come rischio di bias cognitivo, esistono canali alternativi per la costruzione di relazioni, policy esplicite contro decisioni basate su obblighi",
+                "yellow": "Messaggi contrastanti con una certa consapevolezza ma anche aspettative culturali di ricambiare",
+                "red": "Forte norma culturale che 'ci prendiamo cura di chi ci aiuta' o reciprocità attivamente incoraggiata"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succederebbe se un dipendente rifiutasse di aiutare qualcuno che gli aveva fatto un favore in precedenza?",
+                  "evidence_type": "cultural_consequence"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ci sono fattori industriali o culturali che rendono lo scambio di regali particolarmente diffuso nelle Sue relazioni commerciali?",
+                  "evidence_type": "cultural_context"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Ricerca di Segnali d'Allarme",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle policy dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Se qualcuno ci fa un favore, lo ricambiamo - è semplicemente buon senso negli affari...\"",
+              "severity": "critical",
+              "score_impact": 0.20,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Trattiamo i nostri fornitori come famiglia - ci fanno regali, noi siamo flessibili con loro...\"",
+              "severity": "high",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Sarebbe scortese non ricambiare quando qualcuno ci aiuta...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"I clienti ci inviano regali durante le festività - ci assicuriamo di dare priorità alle loro richieste...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Incoraggiamo i dipendenti ad accettare regali dai fornitori per costruire relazioni più forti...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Se qualcuno trova una chiavetta USB nel parcheggio, di solito la inserisce per trovare il proprietario...\"",
+              "severity": "critical",
+              "score_impact": 0.22,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Quando i fornitori offrono strumenti gratuiti o accesso anticipato, ci buttiamo - perché dovremmo rifiutare?...\"",
+              "severity": "medium",
+              "score_impact": 0.12,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare scenari quid pro quo simulati e test USB drop trimestrali",
+      "correlation_analysis": "Confrontare i punteggi di audit manuale con il rilevamento dello squilibrio della reciprocità SOC (correlazione target > 0.80)",
+      "drift_detection": "Test Kolmogorov-Smirnov sulle correlazioni favore-eccezione, ricalibrazione se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Garantire che la probabilità prevista di sfruttamento della reciprocità corrisponda ai tassi di incidenti osservati",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Deriva rilevata o punteggio di validazione < 0.70"
+    },
+    "success_metrics": [
+      {
+        "metric": "Tasso di Conformità nella Divulgazione dei Regali",
+        "formula": "% di regali/favori correttamente divulgati entro 48 ore dalla ricezione",
+        "baseline": "audit dei 180 giorni precedenti",
+        "target": "95% di conformità entro 90 giorni",
+        "measurement": "registrazione automatizzata del registro regali + audit trimestrale"
+      },
+      {
+        "metric": "Risultati del Test USB Drop",
+        "formula": "% di dipendenti che raccolgono e inseriscono chiavette USB drop simulate",
+        "baseline": "simulazione di sicurezza fisica iniziale",
+        "target": "ridurre il tasso di raccolta dal 45-60% a <15% entro 90 giorni",
+        "measurement": "simulazioni USB drop trimestrali in parcheggi/aree comuni"
+      },
+      {
+        "metric": "Correlazione Favore-Eccezione",
+        "formula": "Eccezioni di sicurezza concesse entro 48 ore dalla ricezione di favori da fornitori",
+        "baseline": "media dei 6 mesi precedenti",
+        "target": "ridurre la correlazione dell'80% entro 90 giorni (implementare ritardo obbligatorio)",
+        "measurement": "analisi di correlazione automatizzata tra gift_registry e exception_logs"
+      },
+      {
+        "metric": "Rilevamento dello Squilibrio della Reciprocità",
+        "formula": "Punteggio R_i medio tra le relazioni con i fornitori",
+        "baseline": "audit corrente delle relazioni con i fornitori",
+        "target": "mantenere R_i < 0.3 per tutti i fornitori critici",
+        "measurement": "analisi mensile dello squilibrio della reciprocità"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Formazione sul Riconoscimento della Reciprocità",
+        "description": "Programma di formazione completo sulla psicologia della reciprocità, attivazione dell'obbligo pre-cognitivo e riconoscimento delle tattiche di social engineering quid pro quo",
+        "implementation": "Moduli di formazione trimestrali che coprono il principio di reciprocità di Cialdini, base neurologica (attivazione dello striatum ventrale), vettori di attacco quid pro quo, consapevolezza degli attacchi USB drop, scenari di regali dei fornitori. Include esercizi pratici e simulazioni.",
+        "technical_controls": "Tracciamento del sistema di gestione dell'apprendimento, valutazioni delle competenze, simulazioni USB drop trimestrali, test di phishing quid pro quo",
+        "roi": "380% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "30 giorni per il lancio iniziale, trimestrale continuo"
+      },
+      {
+        "id": "sol_2",
+        "title": "Protocollo di Ritardo Obbligatorio (Riflessione di 48 Ore)",
+        "description": "Applicazione tecnica del periodo di attesa obbligatorio di 48 ore tra la ricezione di regali/favori e le decisioni di sicurezza che riguardano quella parte",
+        "implementation": "Sistema di correlazione automatizzato che collega il registro regali ai sistemi di approvazione delle richieste di accesso/eccezioni. Il blocco tecnico impedisce l'approvazione entro 48 ore a meno che l'autorità di override indipendente non approvi. Avvisi generati per pattern favore-decisione.",
+        "technical_controls": "Sistema di registro regali integrato, hook API di controllo accessi, motore di correlazione, applicazione automatizzata del ritardo, flusso di lavoro di override",
+        "roi": "450% medio entro 18 mesi",
+        "effort": "high",
+        "timeline": "60-90 giorni di implementazione"
+      },
+      {
+        "id": "sol_3",
+        "title": "Sistema di Gestione di Regali e Favori",
+        "description": "Sistema centralizzato per tracciare, divulgare e gestire tutti i regali, favori, intrattenimento e benefici dei fornitori",
+        "implementation": "Implementare piattaforma di registro regali con app mobile per divulgazione immediata, tracciamento del valore monetario, flussi di lavoro di approvazione per articoli sopra la soglia, calcoli dello squilibrio della reciprocità (formula R_i), avvisi automatizzati per pattern inusuali.",
+        "technical_controls": "Database registro regali, app mobile di divulgazione, motore di analisi della reciprocità, algoritmi di rilevamento dei pattern, dashboard esecutive",
+        "roi": "320% medio entro 24 mesi",
+        "effort": "high",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Controlli Tecnici per la Prevenzione Quid Pro Quo",
+        "description": "Implementare salvaguardie tecniche contro i vettori di attacco quid pro quo comuni inclusi attacchi USB drop e assistenza tecnica non richiesta",
+        "implementation": "Controlli delle porte USB con policy di sola whitelist, rilevamento endpoint per dispositivi USB non autorizzati, filtraggio email per pattern di linguaggio quid pro quo, database di verifica dei contatti dei fornitori, sistema di validazione delle richieste di supporto tecnico.",
+        "technical_controls": "Controllo dispositivi USB (applicazione whitelist), EDR con monitoraggio USB, analisi del contenuto email per marcatori di reciprocità, database di autenticazione fornitori",
+        "roi": "410% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "30-45 giorni"
+      },
+      {
+        "id": "sol_5",
+        "title": "Canali Alternativi di Reciprocità",
+        "description": "Stabilire canali legittimi per costruire relazioni con i fornitori senza creare obblighi che compromettono la sicurezza",
+        "implementation": "Programmi formali di riconoscimento dei fornitori, premi annuali, sistemi di riconoscimento pubblico, gestione delle relazioni contrattuali, alternative di reciprocità professionale che non coinvolgono obblighi individuali o decisioni di sicurezza.",
+        "technical_controls": "Piattaforma di gestione delle relazioni con i fornitori, tracciamento del programma di riconoscimento, metriche delle prestazioni contrattuali",
+        "roi": "240% medio entro 18 mesi",
+        "effort": "low",
+        "timeline": "30 giorni iniziale, programma continuo"
+      },
+      {
+        "id": "sol_6",
+        "title": "Framework di Escalation e Segnalazione",
+        "description": "Procedure chiare per i dipendenti per segnalare ed escalare tentativi di social engineering basati sulla reciprocità o scenari di obbligo scomodi",
+        "implementation": "Portale di segnalazione anonimo per tentativi quid pro quo, procedure chiare di escalation per la pressione della reciprocità, policy di protezione per i dipendenti che rifiutano favori o segnalano incidenti, tracciamento degli incidenti con flag di correlazione della reciprocità.",
+        "technical_controls": "Sistema di segnalazione anonimo, tracciamento degli incidenti con tassonomia della reciprocità, dashboard di analisi dei pattern, applicazione della policy di protezione dei dipendenti",
+        "roi": "290% medio entro 12 mesi",
+        "effort": "low",
+        "timeline": "30 giorni"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_4"],
+      "high_value": ["sol_2", "sol_3"],
+      "cultural_foundation": ["sol_5", "sol_6"],
+      "technical_enforcement": ["sol_2", "sol_4"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Phishing Quid Pro Quo con Benefici",
+      "description": "Gli attaccanti offrono benefici di valore (software gratuito, accesso esclusivo, carte regalo, supporto tecnico) in cambio di credenziali, accesso al sistema o informazioni sensibili",
+      "attack_vector": "Email o telefono che offre aggiornamento gratuito del servizio premium, accesso beta esclusivo o compensazione in cambio di 'verifica' o 'feedback' richiedendo l'inserimento delle credenziali",
+      "psychological_mechanism": "L'attivazione della reciprocità pre-cognitiva (300-500ms) crea obbligo prima della valutazione cosciente della legittimità",
+      "historical_example": "Campagna del 2019 che offriva abbonamenti premium gratuiti a utenti Office 365 in cambio di 'verifica dell'account' - tasso di conformità del 37% dovuto alla pressione della reciprocità",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["R_i > 0.4", "benefit_offered_in_request", "credential_request", "urgency_markers", "unverified_sender"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Attacco USB Drop (Reciprocità Fisica)",
+      "description": "Gli attaccanti lasciano chiavette USB infette da malware in parcheggi, aree di ricezione o le inviano per posta come 'regali gratuiti' o 'materiali promozionali' sfruttando reciprocità e curiosità",
+      "attack_vector": "Chiavette USB brandizzate con etichette utili ('Dati Stipendi Dirigenti', 'Confidenziale', 'Foto', 'Software Gratuito') posizionate dove i dipendenti le troveranno",
+      "psychological_mechanism": "Combinazione di reciprocità (trovare un regalo crea obbligo di restituirlo al proprietario) e curiosità genera un tasso di raccolta e inserimento del 45-60%",
+      "historical_example": "Studio del 2016: il 48% delle chiavette USB lasciate è stato inserito entro 6 ore; le USB brandizzate con implicazione di 'regalo' avevano un tasso di raccolta del 60%",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["unauthorized_usb_device", "endpoint_autorun_activity", "physical_security_logs", "employee_report"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Sfruttamento dei Favori dei Fornitori",
+      "description": "Attori malintenzionati si spacciano per fornitori fornendo favori non richiesti (consulenza gratuita, accesso anticipato, aiuto nella risoluzione dei problemi) per creare obbligo reciproco per future eccezioni di sicurezza o concessioni di accesso",
+      "attack_vector": "Costruzione estesa della relazione attraverso molteplici piccoli favori nel tempo, stabilendo uno squilibrio di reciprocità prima di fare richieste di sicurezza di alto valore",
+      "psychological_mechanism": "Escalation graduale con accumulo di obbligo cumulativo; R_i aumenta nel tempo fino a quando la pressione di conformità supera la soglia di resistenza",
+      "historical_example": "Campagne APT che stabiliscono false relazioni con fornitori nell'arco di 6-12 mesi, fornendo assistenza apparentemente legittima prima di richiedere accesso alla rete 'per l'ottimizzazione'",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["R_i > 0.5", "favor_frequency_increasing", "access_request_after_favor_sequence", "unverified_vendor"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Social Engineering Basato su Regali (Autorità + Reciprocità)",
+      "description": "Attacco combinato in cui apparenti figure di autorità consegnano regali seguiti da richieste urgenti immediate, sfruttando sia la conformità all'autorità che l'obbligo di reciprocità",
+      "attack_vector": "Email di impersonificazione di dirigenti che annuncia consegna di regali o bonus, seguita da richiesta urgente per bonifico bancario, reset delle credenziali o eccezione di sicurezza",
+      "psychological_mechanism": "Vulnerabilità convergente: Gradiente di autorità (1.3) + Obbligo di reciprocità (3.1) + Pressione di urgenza (2.1) = 380% di probabilità di sfruttamento aumentata",
+      "historical_example": "Campagne di frode CEO in cui gli attaccanti inviano fiori o cesti regalo ai team finanziari prima di impersonare il CEO con richieste urgenti di bonifici bancari",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["authority_impersonation", "gift_delivery_followed_by_request", "urgency_markers", "P_comply > 0.7"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-10",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-10",
+    "translator": "Claude Code AI Assistant",
+    "research_basis": [
+      "Cialdini, R. (2007). Influence: The Psychology of Persuasion - Principio di Reciprocità",
+      "Psicologia Evolutiva dell'Altruismo Reciproco (Trivers, 1971)",
+      "Evidenza fMRI dell'Attivazione dello Striatum Ventrale durante la Ricezione di Regali (Moll et al., 2006)",
+      "Studi sugli Attacchi USB Drop (Università dell'Illinois, 2016) - tasso di raccolta 45-60%",
+      "Ricerca sull'Efficacia del Social Engineering Quid Pro Quo (Workman, 2008)",
+      "Studi sui Tempi di Attivazione della Reciprocità Pre-cognitiva (risposta 300-500ms)",
+      "Antropologia Culturale dello Scambio di Regali (Mauss, 1925) - Obbligo di Ricambiare"
+    ],
+    "validation_status": "peer_reviewed",
+    "deployment_status": "production_ready"
+  }
+}

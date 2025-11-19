@@ -1,0 +1,662 @@
+{
+  "indicator": "2.4",
+  "title": "INDICATOR 2.4 FIELD KIT",
+  "subtitle": "Finestre Transizione Temporale",
+  "category": "Vulnerabilità Temporali",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 2.x",
+  "description": {
+    "short": "Misura vulnerabilità durante transizioni temporali (cambio turno, handoff, passaggi consegne) quando continuità awareness sicurezza si interrompe",
+    "context": "Finestre transizione temporale rappresentano momenti vulnerabilità quando responsabilità sicurezza trasferite tra individui o team. Durante handoff—cambio turno, passaggi consegne, transizioni on-call—informazione sicurezza critica può perdersi, responsabilità assumere ambigue e vigilanza temporaneamente lassare. Attaccanti sfruttano queste finestre temporizzando attacchi durante transizioni quando nessuno ha ownership sicurezza completa.",
+    "impact": "Organizzazioni con processi transizione poveri sperimentano incidenti sicurezza clustering durante cambio turno, perdita continuità incident response durante handoff e sfruttamento finestre ownership ambigua. Analisi incidenti mostra 23-35% compromissioni SOC verificarsi durante finestre cambio turno. Handoff inefficaci creano gap awareness dove attività malevola progredisce non rilevata.",
+    "psychological_basis": "Ricerca Human Factors Engineering documenta handoff come punti failure ad alto rischio in sistemi complessi. Teoria Diffusione Responsabilità mostra quando ownership ambigua tra multiple parti, ogni parte assume altri gestiscano, risultante in nessuno assumendo responsabilità. Psicologia cognitiva dimostra transizioni richiedono ricostruzione mental model, creando finestra vulnerabilità temporale. Attention Blink research mostra periodi transizione producono detection degradata per stimoli critici."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Processi handoff strutturati con checklist standardizzate. Overlap periodo tra turni per passaggio consegne completo. Strumenti digitali catturano stato sicurezza attraverso transizioni. Responsabilità esplicitamente trasferite e confermate.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Handoff avvengono ma processi informali. Overlap minimo tra turni. Documentazione handoff inconsistente. Qualche ambiguità ownership durante transizioni. Continuità dipende da individui non processi.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Nessun processo handoff formale. Zero overlap tra turni. Handoff verbali ad-hoc se avvengono. Ownership sicurezza ambigua durante transizioni. Informazione critica abitualmente persa durante passaggi consegne. Gap coverage significativi.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_handoff_process": 0.22,
+      "q2_shift_overlap": 0.18,
+      "q3_documentation": 0.16,
+      "q4_responsibility_transfer": 0.15,
+      "q5_incident_correlation": 0.14,
+      "q6_tooling": 0.1,
+      "q7_training": 0.05
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_2.4(t) = TransitionFrequency(t) × InformationLoss(t) × IncidentRate_transition(t)",
+      "components": {
+        "transition_frequency": {
+          "formula": "TF(t) = N_handoffs(t) / TimeWindow",
+          "description": "Frequenza transizioni ownership sicurezza"
+        },
+        "information_loss": {
+          "formula": "IL = 1 - (I_received / I_critical)",
+          "description": "Frazione informazione critica persa durante handoff",
+          "threshold": {
+            "warning": 0.3,
+            "critical": 0.5
+          }
+        },
+        "incident_rate_transition": {
+          "formula": "IR_trans = (Incidents_during_transition / Duration_transition) / (Incidents_steady / Duration_steady)",
+          "description": "Ratio tassi incidente durante vs fuori transizioni"
+        }
+      }
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "shift_handoff_logs",
+        "incident_reports_with_timestamps",
+        "handoff_process_documentation",
+        "responsibility_assignment_matrices"
+      ],
+      "evidence_required": [
+        "24_month_incidents_vs_shift_changes",
+        "handoff_checklist_documentation",
+        "shift_overlap_schedules",
+        "communication_tool_logs"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "incident_management_siem",
+          "fields": [
+            "incident_id",
+            "detection_time",
+            "shift_change_proximity",
+            "handoff_in_progress",
+            "alert_acknowledgment_time",
+            "timestamp"
+          ],
+          "retention": "730_days"
+        }
+      ]
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "2.9",
+        "name": "Finestre Sfruttamento Cambio Turno",
+        "probability": 0.9,
+        "factor": 1.6,
+        "description": "Cambio turno rappresenta finestra transizione primaria"
+      },
+      {
+        "indicator": "5.3",
+        "name": "Erosione Vigilanza",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "Vigilanza erosa ulteriormente durante transizioni"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "6.3",
+        "name": "Diffusione Responsabilità",
+        "probability": 0.85,
+        "factor": 1.5,
+        "description": "Transizioni creano ownership ambigua amplificando diffusione responsabilità"
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_handoff_process",
+          "weight": 0.22,
+          "title": "Processi Handoff Strutturati",
+          "question": "Quanto strutturati sono processi handoff per passaggi consegne sicurezza tra turni/individui?",
+          "options": [
+            {
+              "value": "structured",
+              "score": 0,
+              "label": "Strutturati - Checklist standardizzate, formato documentato, verifiche completezza obbligatorie"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Informali - Handoff avvengono ma senza standardizzazione o format consistente"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuno - Nessun processo handoff formale, passaggi consegne ad-hoc o assenti"
+            }
+          ]
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_shift_overlap",
+          "weight": 0.18,
+          "title": "Overlap Periodo Turni",
+          "question": "Quanto overlap tempo esiste tra turni per permettere passaggio consegne completo?",
+          "options": [
+            {
+              "value": "substantial",
+              "score": 0,
+              "label": "Sostanziale - 15-30 minuti overlap dedicato esclusivamente handoff"
+            },
+            {
+              "value": "minimal",
+              "score": 0.5,
+              "label": "Minimo - 5-10 minuti overlap, spesso affrettato"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuno - Zero overlap, turni cambiano senza periodo transizione"
+            }
+          ]
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_documentation",
+          "weight": 0.16,
+          "title": "Documentazione Handoff",
+          "question": "Come viene documentato stato sicurezza e informazioni critiche durante handoff?",
+          "options": [
+            {
+              "value": "digital_structured",
+              "score": 0,
+              "label": "Digitale Strutturata - Sistema dedicato con campi strutturati, searchable, persistent"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Base - Email o chat non strutturati, difficile trovare informazione storica"
+            },
+            {
+              "value": "verbal_only",
+              "score": 1,
+              "label": "Solo Verbale - Handoff esclusivamente verbali senza documentazione persistente"
+            }
+          ]
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_responsibility_transfer",
+          "weight": 0.15,
+          "title": "Trasferimento Responsabilità Esplicito",
+          "question": "Come viene trasferita ed confermata responsabilità sicurezza durante handoff?",
+          "options": [
+            {
+              "value": "explicit_confirmed",
+              "score": 0,
+              "label": "Esplicita Confermata - Trasferimento formale con conferma ricevente, ownership chiara sempre"
+            },
+            {
+              "value": "implicit",
+              "score": 0.5,
+              "label": "Implicita - Ownership assume trasferita ma non esplicitamente confermata"
+            },
+            {
+              "value": "ambiguous",
+              "score": 1,
+              "label": "Ambigua - Ownership sicurezza spesso unclear durante e dopo transizioni"
+            }
+          ]
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_incident_correlation",
+          "weight": 0.14,
+          "title": "Correlazione Incidenti Transizioni",
+          "question": "Analisi incidenti mostra clustering durante finestre transizione (±30 min cambio turno)?",
+          "options": [
+            {
+              "value": "no_correlation",
+              "score": 0,
+              "label": "Nessuna Correlazione - Incidenti distribuiti uniformemente, no clustering transizioni"
+            },
+            {
+              "value": "some_correlation",
+              "score": 0.5,
+              "label": "Qualche Correlazione - Leggero aumento incidenti durante transizioni"
+            },
+            {
+              "value": "strong_correlation",
+              "score": 1,
+              "label": "Correlazione Forte - Spike significativo incidenti durante finestre cambio turno"
+            }
+          ]
+        }
+      ],
+      "subsections": [],
+      "scoring_method": "weighted_average",
+      "instructions": "Selezionare UNA opzione per ciascuna domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = SUM(question_score x question_weight) / SUM(question_weight)"
+    },
+    {
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "icon": "💬",
+      "type": "conversation",
+      "subsections": [
+        {
+          "title": "Domande Apertura - pregiudizio presente negli investimenti di sicurezza",
+          "weight": 0.3,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Come vengono prese le decisioni di allocazione del budget di sicurezza tra iniziative preventive e necessità operative immediate?",
+              "scoring_guidance": {
+                "green": "Processo strutturato con allocazione minima garantita per prevenzione indipendentemente da pressioni immediate",
+                "yellow": "Processo flessibile dove la prevenzione compete con necessità operative",
+                "red": "Budget di sicurezza dominato da spese reattive e necessità immediate"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quale percentuale del budget di sicurezza va a iniziative preventive vs reattive?",
+                  "evidence_type": "budget_breakdown"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come è cambiata questa allocazione negli ultimi 3 anni?",
+                  "evidence_type": "historical_trend"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Mi descriva l'ultima volta che è stato necessario scegliere tra un'iniziativa di sicurezza preventiva e una necessità operativa immediata.",
+              "scoring_guidance": {
+                "green": "Esempio dove sono state valutate conseguenze a lungo termine e la prevenzione è stata prioritizzata",
+                "yellow": "Esempio dove la necessità immediata ha vinto ma con piano per tornare alla prevenzione",
+                "red": "Esempio dove la necessità immediata ha automaticamente prevalso senza considerare impatti futuri"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Come vengono quantificati i benefici a lungo termine della prevenzione?",
+                  "evidence_type": "valuation_method"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Chi ha l'autorità di approvare investimenti preventivi significativi?",
+                  "evidence_type": "approval_authority"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Meccanismi Verifica",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Come monitora l'organizzazione il rapporto tra spesa preventiva e reattiva nel tempo?",
+              "scoring_guidance": {
+                "green": "Tracking sistematico con target definiti e review regolari delle tendenze",
+                "yellow": "Tracking di base senza target o analisi delle tendenze",
+                "red": "Nessun monitoraggio sistematico della composizione della spesa di sicurezza"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Esistono alert quando la spesa reattiva supera soglie predefinite?",
+                  "evidence_type": "monitoring_mechanism"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Fattori Culturali e Psicologici",
+          "weight": 0.3,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Come viene valutato il team di sicurezza rispetto a iniziative preventive che evitano incidenti futuri vs risoluzione di problemi immediati?",
+              "scoring_guidance": {
+                "green": "Sistema di valutazione che riconosce e premia esplicitamente prevenzione efficace",
+                "yellow": "Riconoscimento misto con enfasi maggiore su risposte visibili a incidenti",
+                "red": "Team valutato principalmente su 'spegnere incendi' e risolvere crisi immediate"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Come viene misurato il successo delle iniziative preventive?",
+                  "evidence_type": "success_metrics"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Che formazione riceve il leadership team su present bias e suoi impatti sulla sicurezza a lungo termine?",
+              "scoring_guidance": {
+                "green": "Formazione strutturata su bias decisionali con focus su investimenti di sicurezza a lungo termine",
+                "yellow": "Formazione generica su sicurezza che potrebbe menzionare bias temporali",
+                "red": "Nessuna formazione specifica su bias decisionali negli investimenti di sicurezza"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Il C-level è formato su come valutare ROI di sicurezza preventiva?",
+                  "evidence_type": "executive_training"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Sondaggio per Segnali d'Allarme",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle policy dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "Spesa reattiva/emergenza supera 40% del budget di sicurezza totale",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Non possiamo permetterci iniziative preventive ora, abbiamo troppe urgenze...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "Iniziative di sicurezza preventiva cronicamente rimandate o defunded",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "Nessun tracking del rapporto spesa preventiva/reattiva",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Investiremo in prevenzione dopo aver risolto i problemi attuali...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "Team di sicurezza valutato principalmente su risposta a incidenti",
+              "severity": "medium",
+              "score_impact": 0.1,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "Evidenza di incidenti costosi che erano prevenibili con investimenti precedenti",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "Nessuna formazione del leadership su bias negli investimenti di sicurezza",
+              "severity": "medium",
+              "score_impact": 0.09,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "success_metrics": [
+      {
+        "metric": "Correlazione Incidenti-Transizioni",
+        "formula": "Coefficiente correlazione tra incidenti e finestre cambio turno",
+        "target": "Ridurre correlazione a <0.15 entro 90 giorni"
+      },
+      {
+        "metric": "Completezza Handoff",
+        "formula": "Percentuale handoff completanti tutti items checklist obbligatoria",
+        "target": "Raggiungere 95% completezza entro 60 giorni"
+      },
+      {
+        "metric": "Tempo Overlap Turni",
+        "formula": "Minuti medi overlap dedicato tra turni",
+        "target": "Stabilire 15+ minuti overlap tutti turni"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Processi Handoff Strutturati Standardizzati",
+        "description": "Implementare processi handoff formali con checklist standardizzate e protocolli comunicazione strutturata",
+        "roi": "420% media entro 18 mesi",
+        "effort": "medium",
+        "timeline": "45-60 giorni",
+        "steps": [
+          "Sviluppare checklist handoff standardizzata copre stato sicurezza critico (incident attivi, alert aperti, vulnerability recenti, cambiamenti configurazione)",
+          "Implementare structured communication protocol (es. SBAR: Situation, Background, Assessment, Recommendation)",
+          "Creare handoff templates per scenari comuni (incident response handoff, SOC shift change, on-call rotation)",
+          "Mandare 15-30 min overlap periodo tra turni dedicato esclusivamente handoff",
+          "Implementare read-back verification per informazioni critiche",
+          "Audit quality handoff regolarmente con feedback loop"
+        ],
+        "kpis": [
+          "95% handoff completanti checklist completa",
+          "Riduzione 60% informazione persa durante transizioni",
+          "Riduzione 50% incidenti durante finestre handoff"
+        ],
+        "tools": [
+          "Handoff checklist tools",
+          "Structured communication training",
+          "Quality audit systems"
+        ],
+        "cost_estimate": "€20.000 - €50.000"
+      },
+      {
+        "id": "sol_2",
+        "title": "Strumenti Digitali Supporto Handoff",
+        "description": "Implementare strumenti tecnologici garantiscono continuità informazione sicurezza attraverso transizioni",
+        "roi": "380% media entro 24 mesi",
+        "effort": "medium",
+        "timeline": "60-90 giorni",
+        "steps": [
+          "Implementare shift briefing platform cattura stato sicurezza strutturato",
+          "Creare security status dashboard accessibile a tutti turni mostrante stato real-time",
+          "Configurare incident tracking system per automatic ownership transition workflows",
+          "Implementare alert context preservation attraverso cambio turno",
+          "Creare searchable knowledge base handoff storici per reference",
+          "Integrare handoff checklist in SOC workflow tools"
+        ],
+        "kpis": [
+          "100% handoff documentati digitalmente",
+          "Riduzione 80% tempo ricerca informazione turno precedente",
+          "Miglioramento 70% continuità incident response attraverso turni"
+        ],
+        "tools": [
+          "Shift briefing platforms",
+          "SOC workflow automation",
+          "Security dashboards",
+          "Knowledge management systems"
+        ],
+        "cost_estimate": "€40.000 - €100.000"
+      },
+      {
+        "id": "sol_3",
+        "title": "Training e Cultura Handoff Efficaci",
+        "description": "Sviluppare competenza organizzativa condurre handoff efficaci attraverso training e cultura focus",
+        "roi": "290% media entro 12 mesi",
+        "effort": "low",
+        "timeline": "30-45 giorni",
+        "steps": [
+          "Sviluppare training program specifico effective handoff practices",
+          "Includere case study reali incidenti causati/amplificati da handoff poveri",
+          "Condurre scenario-based exercises practicing handoff durante incident criticità",
+          "Implementare peer feedback mechanisms qualità handoff",
+          "Riconoscere pubblicamente examples handoff eccellenti",
+          "Incorporare handoff competency in performance evaluations",
+          "Leadership messaging enfatizzante handoff come critical security activity"
+        ],
+        "kpis": [
+          "100% personale completa handoff training entro 60 giorni",
+          "Miglioramento 50% peer ratings qualità handoff",
+          "Riduzione 65% handoff-related near-misses"
+        ],
+        "tools": [
+          "Training platform",
+          "Scenario simulation tools",
+          "Peer feedback systems"
+        ],
+        "cost_estimate": "€15.000 - €35.000"
+      }
+    ]
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Incident Response Degradata Durante Handoff SOC",
+      "description": "Incident attivo in corso quando cambio turno SOC avviene. Context critico perso durante handoff affrettato. Turno entrante ricostruisce situazione da zero permettendo attaccante 45 minuti movimento laterale non contestato.",
+      "likelihood": "high",
+      "impact": "high",
+      "financial_impact": "€75.000 - €1.200.000",
+      "attack_chain": [
+        "Attaccante initial compromise 30 minuti prima cambio turno SOC",
+        "Turno uscente rileva alert ma non completa investigation prima fine turno",
+        "Handoff affrettato omette dettagli critici context incident",
+        "Turno entrante riceve handoff incompleto, priorità incident unclear",
+        "Turno entrante inizia investigation da capo perdendo 45 minuti",
+        "Durante gap awareness attaccante completa movimento laterale",
+        "Exfiltration dati durante finestra handoff quando ownership ambigua"
+      ],
+      "indicators": [
+        "Incident detection timing vicino cambio turno",
+        "Gap timeline incident response durante transizioni",
+        "Ownership incident unclear in documentation",
+        "Context lost richiedente re-investigation"
+      ],
+      "cpe_mapping": [
+        "CPE:2.3:*:temporal_exploitation:handoff_window:*"
+      ],
+      "mitre_attack": [
+        "T1071 - Application Layer Protocol",
+        "T1570 - Lateral Tool Transfer",
+        "T1041 - Exfiltration Over C2 Channel"
+      ]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Social Engineering Durante Transizione On-Call",
+      "description": "Attaccante telefona durante rotation on-call targeting nuovo responder non ancora fully briefed. Sfrutta ownership ambigua per ottenere accesso privilegiato.",
+      "likelihood": "medium",
+      "impact": "high",
+      "financial_impact": "€50.000 - €600.000",
+      "attack_chain": [
+        "Attaccante reconnaissance identifica schedule rotation on-call",
+        "Timing attacco entro 2h nuova rotation on-call start",
+        "Vishing call impersonante manager claiming urgency",
+        "Sfrutta fatto nuovo on-call responder non completamente up-to-speed",
+        "Richiesta access o informazione che responder precedente avrebbe rifiutato",
+        "Nuovo responder insicuro ownership decisione, concede richiesta",
+        "Attaccante usa accesso per compromissione più ampia"
+      ],
+      "indicators": [
+        "Richieste access insolite timing vicino rotation on-call",
+        "Targeting individui newly on-call vs esperti",
+        "Pressione urgenza combinata con ownership uncertainty",
+        "Richieste durante prime ore nuova rotation"
+      ],
+      "cpe_mapping": [
+        "CPE:2.3:*:social_engineering:vishing_transition:*"
+      ],
+      "mitre_attack": [
+        "T1598.003 - Phishing for Information: Spearphishing via Service",
+        "T1078 - Valid Accounts"
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-09",
+    "translator": "Claude (Anthropic)",
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

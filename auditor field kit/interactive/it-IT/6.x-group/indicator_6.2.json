@@ -1,0 +1,937 @@
+{
+  "indicator": "6.2",
+  "title": "INDICATOR 6.2 FIELD KIT",
+  "subtitle": "Fenomeni di Spostamento Rischioso",
+  "category": "Vulnerabilità di Dinamiche di Gruppo",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 6.x",
+
+  "description": {
+    "short": "Misura la tendenza dei gruppi a prendere decisioni di sicurezza più rischiose di quelle che gli individui prenderebbero da soli, spinta dalla responsabilità diffusa e dalla pressione sociale ad apparire audaci",
+    "context": "Il fenomeno dello spostamento rischioso (risky shift) si verifica quando i gruppi prendono costantemente decisioni più rischiose di quelle che gli individui prenderebbero da soli, spinto dalla responsabilità diffusa e dalla pressione sociale ad apparire audaci o innovativi. Nei contesti di cybersecurity, ciò crea vulnerabilità quando i comitati di sicurezza, i team di risposta agli incidenti o i gruppi interfunzionali sottovalutano sistematicamente i rischi o approvano scorciatoie pericolose che i singoli membri del team rifiuterebbero. Le organizzazioni con processi decisionali basati su comitati mostrano tassi misurabilmente più alti di incidenti di sicurezza derivanti da accettazione eccessivamente aggressiva dei rischi.",
+    "impact": "Le organizzazioni con alta vulnerabilità allo spostamento rischioso sperimentano incidenti di sicurezza da decisioni di gruppo eccessivamente aggressive, fallimenti di implementazione da rischi sottostimati, bypass di emergenza che diventano vulnerabilità permanenti e selezioni di vendor/tecnologie con controlli di sicurezza inadeguati. I gruppi approvano scorciatoie rischiose che gli individui rifiuterebbero.",
+    "psychological_basis": "La scoperta originale di Stoner (1961) dimostra che i gruppi scelgono costantemente decisioni più rischiose degli individui. La meta-analisi di Myers & Lamm (1976) conferma l'effetto attraverso 316 studi con dimensione media dell'effetto d=0.7. Studi fMRI mostrano ridotta attivazione del cortex cingolato anteriore (monitoraggio del rischio) durante decisioni di gruppo con aumentata attivazione del striato ventrale (ricerca della ricompensa) quando i membri del gruppo esprimono tolleranza al rischio."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "La maggior parte delle decisioni di sicurezza prese individualmente o con chiara responsabilità individuale; valutazioni di rischio individuali costantemente raccolte prima delle decisioni di gruppo; le decisioni di gruppo raramente superano la tolleranza al rischio individuale iniziale; forte cultura di sollevamento di preoccupazioni di sicurezza nei gruppi.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Processo decisionale misto individuale/gruppo con alcune lacune di responsabilità; input individuale talvolta raccolto; istanze occasionali di gruppi che accettano rischi più alti di quanto inizialmente pianificato; preoccupazioni di sicurezza sollevate ma talvolta annullate dal consenso di gruppo.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Processo decisionale di sicurezza prevalentemente basato su comitati/gruppi; i gruppi discutono i rischi collettivamente senza input individuale; pattern regolare di gruppi che escalano verso posizioni più rischiose durante le riunioni; le dinamiche di gruppo scoraggiano il sollevamento di preoccupazioni di sicurezza.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_decision_structure": 0.14,
+      "q2_individual_risk_assessment": 0.16,
+      "q3_group_risk_escalation": 0.15,
+      "q4_dissent_handling": 0.13,
+      "q5_emergency_patterns": 0.14,
+      "q6_outcome_tracking": 0.12,
+      "q7_accountability": 0.16
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_6.2(t) = w1·R_6.2(t) + w2·A_6.2(t) + w3·B_6.2(t)",
+      "components": {
+        "risky_shift_index": {
+          "formula": "RSI(t) = [RT_group(t) - μ_individual] / σ_individual",
+          "description": "Differenza standardizzata tra tolleranza al rischio di gruppo e individuale",
+          "variables": {
+            "RT_group": "Tolleranza al rischio di gruppo osservata dall'analisi decisionale",
+            "μ_individual": "Tolleranza al rischio individuale media: (1/n)Σ RT_i",
+            "σ_individual": "Deviazione standard delle valutazioni di rischio individuali"
+          },
+          "interpretation": "RSI > 0.5 indica spostamento rischioso significativo; RSI > 1.0 indica polarizzazione di gruppo pericolosa"
+        },
+        "rule_based": {
+          "formula": "R_6.2(t) = 1 if RSI(t) > θ_shift AND n_group ≥ 4, else 0",
+          "description": "Rilevamento binario basato su spostamento rischioso che supera la soglia in contesti di gruppo",
+          "threshold": {
+            "RSI_shift": 0.5,
+            "n_group_minimum": 4
+          }
+        },
+        "polarization_measure": {
+          "formula": "P_polar(t) = (1/n)Σ ||a_i(t) - a_i(0)||₂",
+          "description": "Magnitudine media del cambiamento di attitudine da pre-discussione a post-discussione",
+          "interpretation": "Valori più alti indicano effetto di polarizzazione di gruppo più forte"
+        },
+        "group_risk_function": {
+          "formula": "RT_group(t) = f(discussion_duration, consensus_speed, polarization_markers)",
+          "components": {
+            "discussion_duration": "Durata della riunione in minuti",
+            "consensus_speed": "Velocità di convergenza delle opinioni",
+            "polarization_markers": "Indicatori linguistici di accettazione crescente del rischio"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "P(risky_shift|evidence) = [P(evidence|risky_shift) × P(risky_shift)] / P(evidence)",
+          "factors": [
+            "group_size_4_plus",
+            "no_individual_assessments",
+            "risk_escalation_during_meeting",
+            "diffused_accountability",
+            "competitive_dynamics_present"
+          ],
+          "priors": {
+            "P_risky_shift": 0.30,
+            "P_healthy_group": 0.70
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.30,
+        "w2_anomaly": 0.40,
+        "w3_bayesian": 0.30
+      },
+      "temporal_decay": {
+        "formula": "T_6.2(t) = α·D_6.2(t) + (1-α)·T_6.2(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 5400,
+        "description": "Smussamento esponenziale con costante temporale di 90 minuti per effetti di decisioni di gruppo"
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "decision_process_documentation",
+        "individual_risk_assessment_records",
+        "meeting_minutes_analysis",
+        "accountability_mapping_review"
+      ],
+      "evidence_required": [
+        "group_decision_examples_last_6_months",
+        "individual_risk_assessments_pre_meeting",
+        "outcome_tracking_data",
+        "emergency_decision_documentation"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "decision_tracking_system",
+          "fields": ["decision_id", "participants", "individual_risk_scores", "final_group_risk_score", "timestamp"],
+          "retention": "365_days"
+        },
+        {
+          "source": "meeting_analytics_platform",
+          "fields": ["meeting_id", "duration", "participants", "risk_discussion_segments", "consensus_timeline"],
+          "retention": "180_days"
+        },
+        {
+          "source": "implementation_tracking",
+          "fields": ["decision_id", "planned_outcomes", "actual_outcomes", "variance", "incident_correlation"],
+          "retention": "730_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "collaboration_platform_logs",
+          "fields": ["message_content", "risk_language_markers", "competitive_dynamics_indicators"],
+          "retention": "90_days"
+        },
+        {
+          "source": "incident_response_logs",
+          "fields": ["incident_id", "decision_origin", "group_vs_individual", "risk_assessment_quality"],
+          "retention": "730_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "RSI": {
+          "calculation": "Differenza tra tolleranza al rischio di gruppo e individuale, normalizzata",
+          "query": "SELECT (AVG(group_risk_score) - AVG(individual_risk_score)) / STDDEV(individual_risk_score) FROM decisions WHERE participants >= 4 AND time_window='30d'"
+        },
+        "P_polar": {
+          "calculation": "Magnitudine media del cambiamento di attitudine durante discussioni di gruppo",
+          "query": "SELECT AVG(SQRT(POW(post_risk - pre_risk, 2))) FROM participant_attitudes WHERE meeting_type='security_decision' AND time_window='30d'"
+        },
+        "group_size_correlation": {
+          "calculation": "Correlazione tra dimensione del gruppo e accettazione del rischio",
+          "query": "SELECT CORR(participant_count, risk_score) FROM decisions WHERE time_window='90d'"
+        }
+      }
+    },
+    "integration_apis": {
+      "decision_platforms": "Jira/Asana API - Decision Tracking, Individual Input",
+      "meeting_systems": "Zoom/Teams API - Meeting Analytics, Duration, Participation",
+      "project_management": "Monday/Confluence API - Implementation Tracking, Outcome Measurement",
+      "incident_management": "ServiceNow/PagerDuty API - Incident Attribution, Decision Analysis"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "6.1",
+        "name": "Groupthink Security Blind Spots",
+        "probability": 0.75,
+        "factor": 1.35,
+        "description": "Il pensiero di gruppo sopprime il dissenso abilitando lo spostamento rischioso a procedere senza sfide",
+        "formula": "P(6.2|6.1) = 0.75"
+      },
+      {
+        "indicator": "2.2",
+        "name": "Time Pressure Performance Degradation",
+        "probability": 0.70,
+        "factor": 1.40,
+        "description": "La pressione temporale accelera l'accettazione del rischio di gruppo attraverso il bias dell'urgenza",
+        "formula": "P(6.2|2.2) = 0.70"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.65,
+        "factor": 1.25,
+        "description": "Lo stress amplifica la polarizzazione di gruppo e le dinamiche competitive di assunzione di rischi",
+        "formula": "P(6.2|7.1) = 0.65"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.60,
+        "factor": 1.20,
+        "description": "L'esaurimento cognitivo riduce la capacità individuale di resistere all'escalation del rischio di gruppo",
+        "formula": "P(6.2|5.2) = 0.60"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "6.3",
+        "name": "Diffusion of Responsibility",
+        "probability": 0.80,
+        "factor": 1.50,
+        "description": "Lo spostamento rischioso combinato con la responsabilità diffusa crea accettazione estrema del rischio"
+      },
+      {
+        "indicator": "2.3",
+        "name": "Deadline-Driven Risk Acceptance",
+        "probability": 0.65,
+        "factor": 1.30,
+        "description": "L'escalation del rischio di gruppo rende più probabili le decisioni di bypass guidate dalle scadenze"
+      },
+      {
+        "indicator": "6.4",
+        "name": "Social Loafing in Security Tasks",
+        "probability": 0.55,
+        "factor": 1.15,
+        "description": "Lo spostamento rischioso riduce l'investimento di sforzo individuale nella valutazione del rischio"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["6.2", "6.1", "2.2"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.6,
+      "threshold_critical": 3.4,
+      "description": "Tempesta perfetta: Spostamento rischioso + Pensiero di gruppo + Pressione temporale = decisioni di sicurezza pericolosamente aggressive senza dissenso o analisi adeguati",
+      "real_world_example": "Comitati consultivi di cambiamento durante la risposta agli incidenti che approvano bypass di emergenza che diventano vulnerabilità permanenti"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["6.1", "2.2", "7.1", "5.2"],
+      "child_nodes": ["6.3", "2.3", "6.4"],
+      "conditional_probability_table": {
+        "P_6.2_base": 0.30,
+        "P_6.2_given_groupthink": 0.62,
+        "P_6.2_given_time_pressure": 0.58,
+        "P_6.2_given_stress": 0.52,
+        "P_6.2_given_all": 0.85
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_decision_structure",
+          "weight": 0.14,
+          "title": "Struttura Primaria del Processo Decisionale di Sicurezza",
+          "question": "Come vengono tipicamente prese le Sue principali decisioni di cybersecurity?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "I professionisti della sicurezza individuali prendono la maggior parte delle decisioni con chiara responsabilità personale"
+            },
+            {
+              "value": "small_team",
+              "score": 0.3,
+              "label": "Discussioni in piccolo team (2-3 persone) con responsabilità individuale mantenuta"
+            },
+            {
+              "value": "mixed",
+              "score": 0.6,
+              "label": "Approccio misto con alcune decisioni di comitato e alcune decisioni individuali"
+            },
+            {
+              "value": "committee",
+              "score": 1,
+              "label": "Consenso di comitato o gruppo (4+ persone) per la maggior parte delle decisioni di sicurezza"
+            }
+          ],
+          "evidence_required": "Esempi di decisioni di sicurezza significative recenti con documentazione dei partecipanti",
+          "soc_mapping": "group_size from decision tracking system"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_individual_risk_assessment",
+          "weight": 0.16,
+          "title": "Raccolta di Valutazioni di Rischio Individuali Prima delle Riunioni",
+          "question": "Quando la Sua organizzazione prende decisioni di sicurezza di gruppo, con quale frequenza raccoglie valutazioni di rischio individuali prima che il gruppo si riunisca?",
+          "options": [
+            {
+              "value": "always",
+              "score": 0,
+              "label": "Sempre - le valutazioni individuali sono documentate prima della discussione di gruppo per tutte le decisioni importanti"
+            },
+            {
+              "value": "usually",
+              "score": 0.4,
+              "label": "Solitamente - la maggior parte delle decisioni di gruppo include input individuale documentato prima"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.7,
+              "label": "Talvolta - solo per le decisioni più critiche"
+            },
+            {
+              "value": "rarely",
+              "score": 1,
+              "label": "Raramente o mai - i gruppi discutono i rischi insieme dall'inizio senza documentazione individuale"
+            }
+          ],
+          "evidence_required": "Documentazione di valutazione di rischio individuale, registri di sottomissione pre-riunione",
+          "soc_mapping": "individual_assessment_rate from decision platform"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_group_risk_escalation",
+          "weight": 0.15,
+          "title": "Frequenza di Escalation del Rischio di Gruppo",
+          "question": "Con quale frequenza i Suoi team di sicurezza finiscono per approvare approcci più rischiosi durante le riunioni di gruppo rispetto a quanto originariamente pianificato?",
+          "options": [
+            {
+              "value": "never",
+              "score": 0,
+              "label": "Mai - le decisioni finali si allineano con le posizioni conservative iniziali"
+            },
+            {
+              "value": "rarely",
+              "score": 0.4,
+              "label": "Raramente - occasionalmente il gruppo accetta di correre un rischio leggermente maggiore"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.7,
+              "label": "Talvolta - i gruppi spesso diventano più a loro agio con il rischio durante la discussione"
+            },
+            {
+              "value": "frequently",
+              "score": 1,
+              "label": "Frequentemente - le riunioni risultano regolarmente in decisioni molto più rischiose di quanto inizialmente considerato"
+            }
+          ],
+          "evidence_required": "Verbali delle riunioni che mostrano escalation del rischio, esempi di decisioni che diventano più rischiose",
+          "soc_mapping": "RSI (Risky Shift Index) from meeting analytics"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_dissent_handling",
+          "weight": 0.13,
+          "title": "Gestione delle Preoccupazioni di Sicurezza nelle Riunioni di Gruppo",
+          "question": "Cosa succede quando qualcuno solleva preoccupazioni di sicurezza durante le riunioni decisionali di gruppo?",
+          "options": [
+            {
+              "value": "thoroughly_addressed",
+              "score": 0,
+              "label": "Le preoccupazioni sono approfonditamente documentate e affrontate prima di procedere con la decisione"
+            },
+            {
+              "value": "discussed_overruled",
+              "score": 0.5,
+              "label": "Le preoccupazioni sono discusse ma spesso annullate dal consenso di gruppo"
+            },
+            {
+              "value": "hesitation",
+              "score": 0.8,
+              "label": "Le persone esitano a sollevare preoccupazioni che potrebbero rallentare il gruppo"
+            },
+            {
+              "value": "discouraged",
+              "score": 1,
+              "label": "Le preoccupazioni sono raramente sollevate perché la dinamica di gruppo le scoraggia"
+            }
+          ],
+          "evidence_required": "Esempi di preoccupazioni sollevate nelle riunioni, verbali delle riunioni che mostrano la gestione del dissenso",
+          "soc_mapping": "dissent_suppression_rate from meeting analysis"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_emergency_patterns",
+          "weight": 0.14,
+          "title": "Pattern di Rischio nel Processo Decisionale di Emergenza",
+          "question": "Durante incidenti o crisi di sicurezza, come cambia il Suo processo decisionale di gruppo?",
+          "options": [
+            {
+              "value": "more_conservative",
+              "score": 0,
+              "label": "I gruppi diventano più conservativi e sistematici durante le emergenze"
+            },
+            {
+              "value": "unchanged",
+              "score": 0.3,
+              "label": "I processi decisionali rimangono gli stessi indipendentemente dalla pressione"
+            },
+            {
+              "value": "more_risky",
+              "score": 0.7,
+              "label": "I gruppi diventano più disposti a correre rischi per risolvere i problemi rapidamente"
+            },
+            {
+              "value": "bypass_controls",
+              "score": 1,
+              "label": "Le situazioni di emergenza portano al bypass dei normali controlli di sicurezza"
+            }
+          ],
+          "evidence_required": "Documentazione recente di risposta agli incidenti, esempi di decisioni di emergenza",
+          "soc_mapping": "emergency_risk_escalation from incident logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_outcome_tracking",
+          "weight": 0.12,
+          "title": "Tracciamento dei Risultati delle Decisioni di Gruppo",
+          "question": "Come traccia se le decisioni di sicurezza di gruppo si rivelano come previsto?",
+          "options": [
+            {
+              "value": "systematic",
+              "score": 0,
+              "label": "Follow-up sistematico su tutte le decisioni di gruppo con risultati documentati e analisi delle varianze"
+            },
+            {
+              "value": "regular_major",
+              "score": 0.4,
+              "label": "Revisioni regolari delle principali decisioni di gruppo e dei loro risultati"
+            },
+            {
+              "value": "informal",
+              "score": 0.7,
+              "label": "Tracciamento informale quando sorgono problemi"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun tracciamento sistematico dei risultati delle decisioni di gruppo"
+            }
+          ],
+          "evidence_required": "Sistema di tracciamento dei risultati delle decisioni, documentazione di revisione trimestrale",
+          "soc_mapping": "outcome_tracking_completeness from project management"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_accountability",
+          "weight": 0.16,
+          "title": "Responsabilità Individuale nelle Decisioni di Gruppo",
+          "question": "Quando le decisioni di sicurezza di gruppo portano a problemi, come viene tipicamente gestita la responsabilità?",
+          "options": [
+            {
+              "value": "clear_individual",
+              "score": 0,
+              "label": "Chiara responsabilità individuale nelle decisioni di gruppo con assegnazioni di ruolo specifiche"
+            },
+            {
+              "value": "shared_specific",
+              "score": 0.4,
+              "label": "Responsabilità condivisa con assegnazioni di ruolo specifiche documentate"
+            },
+            {
+              "value": "general_group",
+              "score": 0.7,
+              "label": "Responsabilità di gruppo generale senza attribuzione individuale"
+            },
+            {
+              "value": "diffused",
+              "score": 1,
+              "label": "Responsabilità diffusa che rende poco chiaro chi è responsabile dei risultati"
+            }
+          ],
+          "evidence_required": "Esempi di documentazione della responsabilità, assegnazione di responsabilità post-incidente",
+          "soc_mapping": "accountability_clarity_score from decision tracking"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UNA opzione per ogni domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze devono essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Domande di Apertura",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Mi illustri come ha preso la Sua ultima decisione importante di sicurezza. Chi era coinvolto e come si è confrontata la decisione finale del gruppo con ciò che gli individui pensavano inizialmente?",
+              "scoring_guidance": {
+                "green": "Valutazioni di rischio individuali raccolte prima della riunione; decisione finale entro il range delle preferenze individuali; documentazione chiara",
+                "yellow": "Qualche input individuale ma informale; decisione finale un po' più rischiosa delle posizioni iniziali",
+                "red": "Nessuna baseline individuale; la discussione di gruppo ha portato a un risultato significativamente più rischioso del previsto; responsabilità diffusa"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può mostrarmi le valutazioni di rischio individuali che sono state sottomesse prima della riunione di gruppo?",
+                  "evidence_type": "documentation_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Qualcuno nel gruppo ha espresso preoccupazioni che la decisione finale fosse più rischiosa di quanto si sentisse a suo agio?",
+                  "evidence_type": "dissent_expression"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Mi parli di un momento in cui il Suo team di sicurezza ha avuto una discussione di gruppo sui rischi e il gruppo è finito per essere più a suo agio con il rischio di quanto lo fossero gli individui all'inizio.",
+              "scoring_guidance": {
+                "green": "Non è possibile identificare esempi; le decisioni di gruppo rimangono entro la tolleranza al rischio individuale",
+                "yellow": "Esempi occasionali con escalation del rischio moderata; qualche consapevolezza del fenomeno",
+                "red": "Pattern regolare di escalation del rischio durante le riunioni; visto come dinamica di gruppo normale; nessuna mitigazione"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa è successo durante la discussione che ha reso il gruppo più a suo agio con il rischio?",
+                  "evidence_type": "risk_escalation_mechanism"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come si è rivelata quella decisione rispetto a ciò che il gruppo si aspettava?",
+                  "evidence_type": "outcome_comparison"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Durante il Suo ultimo incidente o crisi di sicurezza, descriva come il Suo team ha preso decisioni sotto pressione. Ha bypassato qualche controllo di sicurezza normale?",
+              "scoring_guidance": {
+                "green": "Mantenuta valutazione sistematica del rischio nonostante la pressione temporale; utilizzati playbook di emergenza pre-approvati",
+                "yellow": "Alcune decisioni accelerate ma documentate; bypass temporanei con follow-up",
+                "red": "Bypass significativi approvati dal gruppo; decisioni molto più rischiose del normale; molti bypass diventati permanenti"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quanti di quei bypass di emergenza sono stati adeguatamente invertiti?",
+                  "evidence_type": "bypass_remediation_status"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "La disponibilità del gruppo ad accettare rischi è aumentata man mano che l'incidente progrediva?",
+                  "evidence_type": "temporal_risk_escalation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Responsabilità e Tracciamento",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Come traccia se le decisioni di sicurezza di gruppo si rivelano come previsto? Mi mostri un esempio di confronto tra risultati previsti e reali.",
+              "scoring_guidance": {
+                "green": "Tracciamento sistematico con revisioni trimestrali; dashboard che mostra l'accuratezza; ciclo di feedback per migliorare le decisioni",
+                "yellow": "Tracciamento informale delle decisioni importanti; qualche confronto dei risultati ma non sistematico",
+                "red": "Nessun tracciamento sistematico; i risultati vengono rivisti solo quando si verificano problemi; nessun ciclo di apprendimento"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può mostrarmi il Suo sistema o i report di tracciamento dei risultati delle decisioni?",
+                  "evidence_type": "tracking_system_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quale percentuale di decisioni di sicurezza di gruppo raggiunge i risultati previsti?",
+                  "evidence_type": "success_rate_metric"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Descriva una decisione di sicurezza di gruppo che non ha funzionato come pianificato. Come è stata gestita la responsabilità?",
+              "scoring_guidance": {
+                "green": "Chiara responsabilità individuale nonostante la decisione di gruppo; assegnazioni di responsabilità specifiche; revisione di apprendimento",
+                "yellow": "Responsabilità condivisa con qualche chiarezza; responsabilità di team generale",
+                "red": "Responsabilità diffusa; poco chiaro chi era responsabile; nessuna conseguenza individuale; incolpati fattori esterni"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Qualche individuo è stato ritenuto responsabile del risultato, o è stato trattato come 'il gruppo ha deciso'?",
+                  "evidence_type": "accountability_attribution"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri la documentazione di mappatura della responsabilità per quella decisione.",
+                  "evidence_type": "accountability_documentation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Dinamiche di Gruppo e Fattori Culturali",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Con quale frequenza le persone nelle Sue riunioni di gruppo di sicurezza competono per apparire audaci, innovative o meno avverse al rischio degli altri?",
+              "scoring_guidance": {
+                "green": "Nessuna dinamica competitiva intorno all'assunzione di rischi; prospettive bilanciate valorizzate",
+                "yellow": "Dinamiche competitive occasionali ma moderate; qualche consapevolezza dell'effetto",
+                "red": "Chiare dinamiche competitive; posizioni conservative viste come timide; pressione sociale verso l'accettazione del rischio"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succede a qualcuno che prende una posizione conservativa quando gli altri stanno sostenendo approcci più rischiosi?",
+                  "evidence_type": "conservative_position_consequence"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Mi dia un esempio di qualcuno che è stato lodato o riconosciuto per aver preso rischi audaci.",
+                  "evidence_type": "risk_taking_reward"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Quando qualcuno solleva preoccupazioni di sicurezza in una riunione di gruppo, cosa succede tipicamente a quelle preoccupazioni?",
+              "scoring_guidance": {
+                "green": "Preoccupazioni approfonditamente documentate e affrontate prima di procedere; processo di risposta formale",
+                "yellow": "Preoccupazioni discusse ma talvolta annullate; qualche documentazione",
+                "red": "Preoccupazioni raramente sollevate o rapidamente respinte; la pressione di gruppo scoraggia il dissenso; nessun tracciamento formale"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri i verbali delle riunioni che documentano come le preoccupazioni sono state affrontate prima di una decisione rischiosa.",
+                  "evidence_type": "concern_documentation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Qualcuno è stato criticato o emarginato per aver rallentato una decisione di gruppo sollevando preoccupazioni?",
+                  "evidence_type": "dissenter_treatment"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Indagine per Segnali di Allerta",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle policy dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Prendiamo decisioni migliori come gruppo - siamo più disposti a correre rischi calcolati insieme...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Nelle emergenze, il gruppo decide di fare qualsiasi cosa serva per risolvere il problema...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Non tracciamo le posizioni individuali prima delle riunioni - ci rallenterebbe...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Nessuno è individualmente responsabile - siamo un team e tutti abbiamo concordato...\"",
+              "severity": "critical",
+              "score_impact": 0.17,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Le persone che sollevano troppe preoccupazioni non sono giocatori di squadra...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Il nostro comitato approva soluzioni innovative - non siamo avversi al rischio come gli architetti individuali...\"",
+              "severity": "medium",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Non tracciamo se le decisioni di gruppo funzionano - ci fidiamo del nostro processo collaborativo...\"",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Condurre esperimenti decisionali di gruppo vs. individuale controllati trimestralmente",
+      "correlation_analysis": "Confrontare i punteggi RSI con i risultati reali degli incidenti (correlazione target > 0.75)",
+      "drift_detection": "Monitorare lo spostamento della baseline nella tolleranza al rischio di gruppo usando il test di Kolmogorov-Smirnov"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicurare che la magnitudine prevista dello spostamento rischioso corrisponda alla varianza osservata dei risultati decisionali",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift rilevato o punteggio di validazione < 0.70"
+    },
+    "success_metrics": [
+      {
+        "metric": "Risk Calibration Accuracy",
+        "formula": "Allineamento tra valutazioni di rischio individuali iniziali e decisioni finali di gruppo",
+        "baseline": "misurare la divergenza attuale",
+        "target": "90% delle decisioni di gruppo entro il range di tolleranza al rischio individuale entro 90 giorni",
+        "measurement": "tracciamento decisionale mensile con trend trimestrali"
+      },
+      {
+        "metric": "Implementation Success Rate",
+        "formula": "Tasso di successo delle iniziative di sicurezza approvate dal gruppo vs. approvate individualmente",
+        "baseline": "analizzare ultimi 12 mesi",
+        "target": "eliminare la penalità dello spostamento rischioso - raggiungere la parità entro 180 giorni",
+        "measurement": "analisi trimestrale dei risultati dei progetti"
+      },
+      {
+        "metric": "Incident Attribution Reduction",
+        "formula": "Incidenti di sicurezza attribuibili a fallimenti del processo decisionale di gruppo",
+        "baseline": "tasso attuale di incidenti da decisioni di gruppo",
+        "target": "ridurre del 60% entro 12 mesi",
+        "measurement": "analisi mensile delle cause radice degli incidenti"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Documentazione di Rischio Individuale Pre-Riunione",
+        "description": "Implementare completamento obbligatorio di valutazione di rischio individuale prima delle riunioni decisionali di sicurezza di gruppo",
+        "implementation": "Ogni partecipante documenta valutazione di rischio, preoccupazioni e raccomandazioni 24 ore prima della riunione. I facilitatori delle riunioni esaminano le valutazioni individuali e assicurano che tutte le preoccupazioni siano affrontate durante la discussione. Creare template per documentazione standardizzata del rischio individuale.",
+        "technical_controls": "Piattaforma di tracciamento decisionale con requisiti di sottomissione pre-riunione, promemoria automatizzati, dashboard di conformità",
+        "roi": "340% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "45 giorni"
+      },
+      {
+        "id": "sol_2",
+        "title": "Processo Strutturato dell'Avvocato del Diavolo",
+        "description": "Assegnare ruoli rotativi di difensore del rischio per presentare scenari peggiori e sfidare il consenso di gruppo",
+        "implementation": "Creare protocolli formali che proteggono i difensori del rischio dalla pressione di gruppo. Ruotare il ruolo trimestralmente. Richiedere risposte documentate a tutte le preoccupazioni di rischio prima di finalizzare le decisioni. Fornire formazione su tecniche efficaci di difesa del rischio.",
+        "technical_controls": "Tracciamento della rotazione dei ruoli, sistema di documentazione delle preoccupazioni di rischio, applicazione dei requisiti di risposta",
+        "roi": "290% medio entro 18 mesi",
+        "effort": "low",
+        "timeline": "30 giorni"
+      },
+      {
+        "id": "sol_3",
+        "title": "Periodi di Riflessione per Decisioni di Rischio",
+        "description": "Rendere obbligatori periodi di riflessione di 48 ore per decisioni di gruppo ad alto rischio prima dell'implementazione",
+        "implementation": "Definire soglie di rischio che attivano ritardi obbligatori. Durante il periodo di riflessione, qualsiasi membro del team può richiedere revisione aggiuntiva. Creare processo di escalation per decisioni che superano le soglie di rischio richiedendo validazione esterna.",
+        "technical_controls": "Applicazione automatizzata del ritardo, tracciamento delle richieste di escalation, monitoraggio delle soglie di rischio",
+        "roi": "310% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "60 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Sistema di Tracciamento dei Risultati delle Decisioni di Gruppo",
+        "description": "Implementare tracciamento sistematico delle decisioni di sicurezza di gruppo con confronto dei risultati",
+        "implementation": "Creare database che traccia risultati previsti vs. reali per tutte le decisioni di gruppo. Generare revisioni trimestrali che confrontano l'accuratezza della valutazione del rischio. Implementare dashboard che mostrano pattern e tassi di successo. Utilizzare i dati per calibrare i futuri processi decisionali di gruppo.",
+        "technical_controls": "Database di tracciamento decisionale, monitoraggio automatizzato dei risultati, report di analisi delle varianze, dashboard dei trend",
+        "roi": "260% medio entro 18 mesi",
+        "effort": "high",
+        "timeline": "90 giorni"
+      },
+      {
+        "id": "sol_5",
+        "title": "Mappatura della Responsabilità Individuale",
+        "description": "Richiedere assegnazioni di responsabilità individuale specifica per ogni componente delle decisioni di gruppo",
+        "implementation": "Creare documentazione che mostra la responsabilità individuale per ogni aspetto dell'implementazione e componente di monitoraggio. Implementare metriche di prestazione che tracciano i contributi individuali ai risultati delle decisioni di gruppo. Assicurare che la responsabilità segua attraverso l'implementazione.",
+        "technical_controls": "Template di mappatura della responsabilità, sistema di tracciamento delle responsabilità, integrazione con metriche di prestazione",
+        "roi": "280% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "45 giorni"
+      },
+      {
+        "id": "sol_6",
+        "title": "Protocolli di Rischio per Decisioni di Emergenza",
+        "description": "Stabilire protocolli decisionali di emergenza a livelli che mantengano il rigore della valutazione del rischio sotto pressione",
+        "implementation": "Creare playbook di risposta alle emergenze pre-approvati che prevengono l'accettazione di rischio ad hoc. Definire protocolli a livelli basati sulla gravità dell'incidente. Implementare revisione obbligatoria post-incidente di tutte le decisioni di gruppo di emergenza con valutazione formale del rischio delle azioni intraprese.",
+        "technical_controls": "Sistema di playbook di emergenza, applicazione di protocolli a livelli, automazione della revisione post-incidente",
+        "roi": "320% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "60 giorni"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_3"],
+      "high_value": ["sol_2", "sol_6"],
+      "governance": ["sol_4", "sol_5"],
+      "cultural_foundation": ["sol_2"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Escalation della Risposta alla Crisi",
+      "description": "Durante un incidente di sicurezza importante, il team di risposta all'emergenza bypassa progressivamente i controlli di sicurezza attraverso il consenso di gruppo. Ogni bypass sembra ragionevole nella discussione, ma collettivamente creano vulnerabilità massive che gli attaccanti sfruttano successivamente.",
+      "attack_vector": "Sfruttamento delle debolezze create dall'emergenza dopo l'incidente quando i bypass non sono stati invertiti",
+      "psychological_mechanism": "Spostamento rischioso amplificato dalla pressione temporale e dallo stress; responsabilità diffusa abilita bypass progressivi dei controlli",
+      "historical_example": "Incidenti multipli dove team di risposta all'emergenza hanno approvato bypass pericolosi che sono diventati vulnerabilità permanenti",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["RSI > 1.0", "emergency_decision_flag", "bypass_accumulation", "no_individual_assessment"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Compromissione del Comitato di Selezione Vendor",
+      "description": "Il comitato di selezione tecnologica accetta gradualmente proposizioni di vendor sempre più rischiose perché i membri vogliono apparire innovativi. Il gruppo approva servizio cloud con controlli di sicurezza insufficienti che gli individui avrebbero rifiutato.",
+      "attack_vector": "Attacco mirato su organizzazioni che utilizzano vendor insicuro noto per selezione tramite dinamiche di spostamento rischioso",
+      "psychological_mechanism": "Dinamiche competitive dove le posizioni conservative appaiono timide; il confronto sociale guida l'escalation del rischio",
+      "historical_example": "Violazioni di dati da selezioni di vendor dove comitati hanno approvato controlli di sicurezza insufficienti",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["committee_decision", "competitive_dynamics_present", "no_individual_baseline", "vendor_risk_underestimate"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Normalizzazione della Gestione del Cambiamento",
+      "description": "Il comitato consultivo sui cambiamenti approva modifiche di emergenza più frequentemente man mano che il gruppo si desensibilizza attraverso l'esposizione ripetuta. I controlli normali bypassati così spesso diventano privi di significato, abilitando lo sfruttamento da parte di insider malevoli.",
+      "attack_vector": "Insider malevolo sfrutta processo di cambiamento degradato per implementare modifiche non autorizzate creando backdoor",
+      "psychological_mechanism": "La familiarizzazione con il rischio riduce l'impatto psicologico attraverso l'abituazione; responsabilità diffusa abilita escalation",
+      "historical_example": "Minacce persistenti avanzate stabilite attraverso processi di gestione del cambiamento degradati",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["emergency_change_frequency_increasing", "P_polar > 0.6", "control_bypass_normalization"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Bias dell'Innovazione nel Comitato di Architettura",
+      "description": "Il comitato di revisione dell'architettura di sicurezza approva design di sistema innovativo ma rischioso perché nessun individuo vuole apparire conservativo. L'approccio sperimentale ha limitazioni note che il gruppo minimizza.",
+      "attack_vector": "Sfruttamento di vulnerabilità di design fondamentali da decisioni architetturali eccessivamente aggressive",
+      "psychological_mechanism": "Pressione sociale ad apparire audaci e innovativi; paura di sembrare timidi sopprime preoccupazioni individuali",
+      "historical_example": "Deployment di ransomware che sfruttano vulnerabilità architetturali fondamentali da design sperimentali approvati da comitati",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["architecture_committee_decision", "innovation_bias_markers", "risk_minimization_patterns", "RSI > 0.8"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-09",
+    "translator": "Claude AI",
+    "research_basis": [
+      "Stoner, J. A. F. (1961). A comparison of individual and group decisions involving risk",
+      "Wallach, M. A., Kogan, N., & Bem, D. J. (1962). Group influence on individual risk taking",
+      "Myers, D. G., & Lamm, H. (1976). The group polarization phenomenon",
+      "Janis, I. L. (1972). Victims of groupthink",
+      "Sunstein, C. R. (2002). Risk and Reason: Safety, Law, and the Environment",
+      "Bazerman, M. H., & Moore, D. A. (2008). Judgment in Managerial Decision Making"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

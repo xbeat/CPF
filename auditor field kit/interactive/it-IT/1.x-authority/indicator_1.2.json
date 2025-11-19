@@ -1,0 +1,916 @@
+{
+  "indicator": "1.2",
+  "title": "FIELD KIT INDICATORE 1.2",
+  "subtitle": "Diffusione della Responsabilità nelle Strutture Gerarchiche",
+  "category": "Vulnerabilità Basate sull'Autorità",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Categoria 1.x",
+
+  "description": {
+    "short": "Misura la vulnerabilità ai gap di responsabilità sulla sicurezza quando gli individui presumono che qualcun altro nella gerarchia organizzativa stia gestendo la supervisione, creando pericolosi punti ciechi dove decisioni critiche cadono tra i livelli di management",
+    "context": "La diffusione della responsabilità si verifica quando gli individui presumono che qualcun altro nella loro organizzazione stia gestendo la supervisione della sicurezza, creando gap pericolosi dove decisioni critiche cadono tra i livelli di management. Questo pattern psicologico porta a ritardi nella risposta agli incidenti, vulnerabilità non patchate e attacchi di social engineering riusciti perché nessuno assume responsabilità personale per le azioni di sicurezza. Le organizzazioni con gerarchie complesse sono particolarmente vulnerabili poiché i dipendenti deferiscono le decisioni di sicurezza verso l'alto mentre il management presume che i team operativi stiano monitorando le minacce.",
+    "impact": "Le organizzazioni con elevata diffusione sperimentano gap nel monitoraggio della sicurezza, ritardi nella risposta agli incidenti, vulnerabilità non patchate e social engineering riuscito attraverso le fessure gerarchiche. Gli incidenti storici includono la violazione di Target Corporation (2013) dove la diffusione di responsabilità tra team IT e sicurezza ha creato punti ciechi di monitoraggio, Equifax (2017) dove patch critiche sono cadute tra infrastruttura, sicurezza e business unit, e SolarWinds (2020) dove la diffusione tra sviluppo, sicurezza e organizzazioni clienti ha consentito la compromissione della supply chain.",
+    "psychological_basis": "Gli studi di Milgram sull'autorità (1974) hanno dimostrato che le strutture gerarchiche alterano fondamentalmente il ragionamento morale individuale e la responsabilità personale, con i partecipanti che mostrano diminuita responsabilità quando agiscono all'interno di strutture di comando. La ricerca di Latané & Darley sull'effetto spettatore (1970) ha stabilito che la diffusione di responsabilità aumenta con il numero di potenziali attori - nei contesti organizzativi, questo si traduce nella responsabilità di sicurezza diluita attraverso i livelli gerarchici. Neurologicamente, studi fMRI (Beyer et al., 2015) mostrano che i contesti gerarchici riducono l'attivazione della corteccia cingolata anteriore, la regione cerebrale responsabile dell'agency personale e del monitoraggio dei conflitti, alterando letteralmente come gli individui processano la responsabilità personale."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Individui nominati hanno chiara autorità per prendere decisioni di sicurezza entro tempi definiti (sotto 30 minuti per questioni critiche). Responsabilità di sicurezza documentate con assegnazioni a persone specifiche, non assegnazioni a dipartimenti. Il coordinamento inter-dipartimentale avviene mensilmente o più frequentemente con risultati documentati.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Le decisioni di sicurezza richiedono approvazioni multiple creando ritardi da 30 minuti a 4 ore per questioni critiche. Alcune responsabilità di sicurezza sono specifiche per persona mentre altre assegnate a dipartimenti. Il coordinamento inter-dipartimentale è ad-hoc o trimestrale.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Le decisioni di sicurezza richiedono approvazione gerarchica estensiva creando ritardi superiori a 4 ore per questioni critiche. Le responsabilità di sicurezza sono principalmente assegnate a dipartimenti o ruoli piuttosto che a individui nominati. Non esiste coordinamento inter-dipartimentale regolare sulla sicurezza.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_decision_authority": 0.18,
+      "q2_incident_ownership": 0.16,
+      "q3_cross_department": 0.15,
+      "q4_patch_accountability": 0.14,
+      "q5_exception_handling": 0.13,
+      "q6_new_employee": 0.12,
+      "q7_audit_resolution": 0.12
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_1.2(t) = w1·R_1.2(t) + w2·A_1.2(t) + w3·T_1.2(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_1.2(t) = 1 if N_transfers > 3 AND RD_i > 0.7, else 0",
+          "description": "Rilevazione binaria basata su trasferimenti di proprietà e indice di diffusione della responsabilità che supera le soglie",
+          "threshold": {
+            "N_transfers": 3,
+            "RD_i": 0.7
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_1.2(t) = max(0, (N_transfers(t) - μ_transfers) / σ_transfers)",
+          "description": "Deviazione normalizzata dai pattern baseline di trasferimento di proprietà durante il ciclo di vita dell'incidente",
+          "variables": {
+            "N_transfers": "Conteggio dei trasferimenti di proprietà/responsabilità all'interno del ciclo di vita dell'incidente",
+            "μ_transfers": "Media storica dei trasferimenti per incidente (baseline)",
+            "σ_transfers": "Deviazione standard dei conteggi di trasferimento"
+          }
+        },
+        "temporal_index": {
+          "formula": "T_1.2(t) = Σ(T_ownership_j) / (n · T_total)",
+          "description": "Indice di diffusione della responsabilità che misura la frammentazione della responsabilità nel tempo",
+          "variables": {
+            "T_ownership_j": "Durata temporale in cui l'individuo j ha detenuto la responsabilità",
+            "n": "Numero di individui coinvolti nella catena di proprietà",
+            "T_total": "Durata totale dell'incidente dal rilevamento alla risoluzione"
+          },
+          "interpretation": "Valori che si avvicinano a 1.0 indicano proprietà concentrata; valori < 0.3 indicano diffusione severa"
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.35,
+        "w2_anomaly": 0.40,
+        "w3_temporal": 0.25
+      },
+      "temporal_decay": {
+        "formula": "D_1.2_smoothed(t) = α·D_1.2(t) + (1-α)·D_1.2_smoothed(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200,
+        "description": "Smoothing esponenziale con costante temporale di 2 ore per ridurre i falsi positivi da passaggi di consegne legittime"
+      }
+    },
+    "responsibility_diffusion_index": {
+      "formula": "RD_i(t) = Σ(T_ownership_j) / (n · T_total)",
+      "description": "Modello matematico centrale che misura la frammentazione della responsabilità basata sul tempo attraverso i livelli gerarchici",
+      "interpretation": "RD_i > 0.7 indica proprietà concentrata sana; RD_i < 0.3 indica diffusione critica che richiede intervento"
+    },
+    "decision_delay_metric": {
+      "formula": "DD(t) = T_decision - T_detection",
+      "description": "Tempo dal rilevamento della questione di sicurezza all'azione di risposta autorizzata",
+      "thresholds": {
+        "green": "< 30 minuti",
+        "yellow": "30 minuti - 4 ore",
+        "red": "> 4 ore"
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews_hierarchy",
+        "security_decision_authority_matrix",
+        "incident_response_logs",
+        "cross_department_meeting_records"
+      ],
+      "evidence_required": [
+        "security_authority_matrix_with_named_individuals",
+        "recent_incident_decision_timestamps",
+        "cross_department_coordination_meeting_notes",
+        "patch_management_accountability_documentation",
+        "audit_finding_resolution_ownership_records"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "incident_response_ticketing",
+          "fields": ["ticket_id", "assigned_to", "reassigned_to", "reassignment_timestamp", "status_changes", "decision_timestamp", "resolution_time"],
+          "retention": "180_days"
+        },
+        {
+          "source": "security_decision_logs",
+          "fields": ["decision_id", "issue_detected", "decision_made", "time_delta", "approvals_required", "approval_chain", "escalations"],
+          "retention": "180_days"
+        },
+        {
+          "source": "patch_management_system",
+          "fields": ["patch_id", "severity", "release_date", "deployment_date", "responsible_party", "approval_status", "delay_reason"],
+          "retention": "365_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "meeting_calendar_systems",
+          "fields": ["meeting_id", "attendees", "meeting_type", "security_coordination_flag", "action_items", "ownership_assignments"],
+          "retention": "90_days"
+        },
+        {
+          "source": "exception_request_tracking",
+          "fields": ["exception_id", "requestor", "approver", "business_justification", "security_impact", "approval_time"],
+          "retention": "365_days"
+        },
+        {
+          "source": "organizational_hierarchy_data",
+          "fields": ["employee_id", "manager", "department", "reports_to", "matrix_managers", "security_role"],
+          "retention": "current_state"
+        }
+      ],
+      "telemetry_mapping": {
+        "N_transfers": {
+          "calculation": "Conteggio delle riassegnazioni di ticket durante il ciclo di vita dell'incidente",
+          "query": "SELECT COUNT(reassignments) FROM incidents WHERE status='closed' AND incident_id=? GROUP BY incident_id"
+        },
+        "RD_i": {
+          "calculation": "Somma delle durate di proprietà divisa per (numero_proprietari × durata_totale)",
+          "query": "SELECT (SUM(ownership_duration) / (COUNT(DISTINCT assigned_to) * total_incident_duration)) as RD_i FROM incident_ownership WHERE incident_id=?"
+        },
+        "decision_delay": {
+          "calculation": "Delta temporale tra rilevamento e azione autorizzata",
+          "query": "SELECT (decision_timestamp - detection_timestamp) as delay FROM security_decisions WHERE decision_id=?"
+        },
+        "cross_dept_coordination": {
+          "calculation": "Conteggio delle riunioni di coordinamento sulla sicurezza per mese",
+          "query": "SELECT COUNT(*) FROM meetings WHERE security_coordination_flag=true AND timestamp > NOW() - INTERVAL '30 days'"
+        }
+      }
+    },
+    "integration_apis": {
+      "jira_servicenow": "REST API - Ticket di incidente, trasferimenti di proprietà, timestamp",
+      "active_directory": "LDAP - Gerarchia organizzativa, struttura di reporting, relazioni matriciali",
+      "patch_management": "API - Tracciamento deployment patch, assegnazioni di responsabilità",
+      "calendar_systems": "Graph API / CalDAV - Calendari riunioni, partecipanti, elementi d'azione"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "1.1",
+        "name": "Conformità Acritica",
+        "probability": 0.7,
+        "factor": 1.35,
+        "description": "I pattern di conformità all'autorità abilitano la diffusione di responsabilità scoraggiando le domande inter-livello",
+        "formula": "P(1.2|1.1) = 0.7",
+        "evidence": "Quando i dipendenti si conformano automaticamente all'autorità, sono meno propensi a verificare chi è effettivamente responsabile"
+      },
+      {
+        "indicator": "6.1",
+        "name": "Pensiero di Gruppo",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Le dinamiche di consenso di gruppo mascherano la responsabilità individuale, amplificando la diffusione tra i team",
+        "formula": "P(1.2|6.1) = 0.65"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Affaticamento Decisionale",
+        "probability": 0.6,
+        "factor": 1.25,
+        "description": "L'esaurimento cognitivo aumenta la tendenza a scaricare la responsabilità sulle strutture gerarchiche",
+        "formula": "P(1.2|5.2) = 0.6"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Risposta Acuta allo Stress",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "Lo stress amplifica la dipendenza dalle strutture gerarchiche per l'autorità decisionale",
+        "formula": "P(1.2|7.1) = 0.55"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "2.1",
+        "name": "Bypass Indotto dall'Urgenza",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "La responsabilità poco chiara crea ritardi che gli attaccanti sfruttano attraverso la pressione dell'urgenza"
+      },
+      {
+        "indicator": "1.3",
+        "name": "Suscettibilità all'Impersonazione di Autorità",
+        "probability": 0.6,
+        "factor": 1.25,
+        "description": "La responsabilità diffusa rende poco chiara la verifica, abilitando attacchi di impersonazione di autorità"
+      },
+      {
+        "indicator": "6.2",
+        "name": "Diffusione della Responsabilità nei Gruppi",
+        "probability": 0.7,
+        "factor": 1.35,
+        "description": "La diffusione gerarchica amplifica la diluizione della responsabilità a livello di gruppo"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["1.2", "2.1", "6.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 3.5,
+      "description": "Tempesta perfetta: Diffusione di responsabilità + Urgenza temporale + Pensiero di gruppo = 280% di aumento della probabilità di violazione attraverso il fallimento del coordinamento",
+      "real_world_example": "Violazione Target 2013 - diffusione di responsabilità tra team IT/sicurezza + pressione scadenze festive + presunzione di gruppo che altri stessero monitorando = violazione da €188M"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["1.1", "6.1", "5.2", "7.1"],
+      "child_nodes": ["2.1", "1.3", "6.2"],
+      "conditional_probability_table": {
+        "P_1.2_base": 0.20,
+        "P_1.2_given_compliance": 0.48,
+        "P_1.2_given_groupthink": 0.45,
+        "P_1.2_given_fatigue": 0.42,
+        "P_1.2_given_all": 0.75
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_decision_authority",
+          "weight": 0.18,
+          "title": "Tempi di Autorità Decisionale sulla Sicurezza",
+          "question": "Quando viene rilevato un potenziale incidente di sicurezza, quanto tempo occorre tipicamente per ottenere l'autorizzazione per intraprendere azioni protettive (come bloccare traffico sospetto o disabilitare account compromessi)?",
+          "options": [
+            {
+              "value": "under_30min",
+              "score": 0,
+              "label": "Sotto 30 minuti - Individui nominati hanno chiara autorità per agire immediatamente per questioni di sicurezza critiche"
+            },
+            {
+              "value": "30min_4hours",
+              "score": 0.5,
+              "label": "Da 30 minuti a 4 ore - Richiede approvazioni multiple creando ritardi moderati"
+            },
+            {
+              "value": "over_4hours",
+              "score": 1,
+              "label": "Oltre 4 ore - Il processo di approvazione gerarchica estensivo crea ritardi significativi per questioni critiche"
+            }
+          ],
+          "evidence_required": "Log recenti di risposta agli incidenti con timestamp, documento della matrice di autorità sulla sicurezza, esempio specifico dell'ultima decisione di sicurezza",
+          "soc_mapping": "metrica decision_delay da detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_incident_ownership",
+          "weight": 0.16,
+          "title": "Proprietà della Risposta agli Incidenti Fuori Orario",
+          "question": "Chi è personalmente responsabile per prendere la decisione finale durante un incidente di sicurezza quando terminano le normali ore lavorative e il senior management non è disponibile?",
+          "options": [
+            {
+              "value": "named_person",
+              "score": 0,
+              "label": "Individuo(i) specifico nominato con autorità documentata e informazioni di contatto per decisioni fuori orario"
+            },
+            {
+              "value": "on_call_unclear",
+              "score": 0.5,
+              "label": "Esiste rotazione di reperibilità ma l'autorità decisionale è poco chiara o richiede escalation"
+            },
+            {
+              "value": "no_clear_owner",
+              "score": 1,
+              "label": "Nessuna responsabilità personale chiara definita - sarebbe necessario raggiungere il senior management o attendere le ore lavorative"
+            }
+          ],
+          "evidence_required": "Piano di risposta agli incidenti fuori orario, roster di reperibilità con livelli di autorità, esempio recente di incidente fuori orario",
+          "soc_mapping": "N_transfers durante incidenti fuori orario"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_cross_department",
+          "weight": 0.15,
+          "title": "Frequenza Coordinamento Sicurezza Inter-Dipartimentale",
+          "question": "Quanto spesso i diversi dipartimenti (IT, Sicurezza, Operazioni, HR) si incontrano specificamente per chiarire chi gestisce le responsabilità di sicurezza per sistemi e processi condivisi?",
+          "options": [
+            {
+              "value": "monthly_or_more",
+              "score": 0,
+              "label": "Mensilmente o più frequentemente con risultati documentati e assegnazioni di responsabilità"
+            },
+            {
+              "value": "quarterly_adhoc",
+              "score": 0.5,
+              "label": "Riunioni trimestrali o ad-hoc senza documentazione coerente"
+            },
+            {
+              "value": "rarely_never",
+              "score": 1,
+              "label": "Raramente o mai - i dipartimenti presumono che altri stiano gestendo le responsabilità di sicurezza condivise"
+            }
+          ],
+          "evidence_required": "Note delle riunioni degli ultimi 6 mesi, chiarimenti di responsabilità documentati, calendario di coordinamento inter-dipartimentale",
+          "soc_mapping": "metrica di frequenza cross_dept_coordination"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_patch_accountability",
+          "weight": 0.14,
+          "title": "Responsabilità Personale nella Gestione delle Patch",
+          "question": "Quando vengono rilasciate patch di sicurezza critiche, qual è il Suo processo per garantire che vengano applicate, e chi è personalmente responsabile se non vengono installate entro il periodo target?",
+          "options": [
+            {
+              "value": "named_accountability",
+              "score": 0,
+              "label": "Individui specifici nominati responsabili per ogni categoria di sistema con escalation documentata se le patch vengono mancate"
+            },
+            {
+              "value": "team_responsibility",
+              "score": 0.5,
+              "label": "I team sono responsabili ma la responsabilità individuale non è chiara"
+            },
+            {
+              "value": "unclear_process",
+              "score": 1,
+              "label": "Nessun processo chiaro o responsabilità personale - le patch vengono applicate quando 'qualcuno ci arriva'"
+            }
+          ],
+          "evidence_required": "Documento del processo di gestione patch, assegnazioni di responsabilità, esempio recente di deployment patch critica con proprietario",
+          "soc_mapping": "Ritardi deployment patch e tracciamento responsible_party"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_exception_handling",
+          "weight": 0.13,
+          "title": "Autorità per Eccezioni alla Policy di Sicurezza",
+          "question": "Cosa succede quando qualcuno deve deviare dalle policy di sicurezza stabilite per soddisfare esigenze aziendali, e chi ha l'autorità di approvare queste eccezioni?",
+          "options": [
+            {
+              "value": "formal_process",
+              "score": 0,
+              "label": "Processo formale di eccezione con approvatori nominati, giustificazione documentata e audit regolare"
+            },
+            {
+              "value": "informal_approval",
+              "score": 0.5,
+              "label": "Processo di approvazione informale con confini di autorità poco chiari"
+            },
+            {
+              "value": "no_process",
+              "score": 1,
+              "label": "Nessun processo definito - le eccezioni avvengono ad-hoc con autorità di approvazione poco chiara"
+            }
+          ],
+          "evidence_required": "Policy di richiesta eccezione, record recenti di approvazione eccezioni, approvatori di eccezioni nominati",
+          "soc_mapping": "Catena di approvazione richieste eccezione e metriche di ritardo"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_new_employee",
+          "weight": 0.12,
+          "title": "Assegnazione Responsabilità Sicurezza Nuovi Dipendenti",
+          "question": "Quando i nuovi dipendenti si uniscono a dipartimenti che gestiscono dati sensibili, chi è specificamente responsabile per garantire che comprendano i loro obblighi di sicurezza personali (non solo la formazione generale)?",
+          "options": [
+            {
+              "value": "named_mentor",
+              "score": 0,
+              "label": "Individuo nominato (manager o mentor di sicurezza) personalmente responsabile per l'onboarding di sicurezza specifico del ruolo"
+            },
+            {
+              "value": "hr_generic",
+              "score": 0.5,
+              "label": "HR fornisce formazione generica ma la responsabilità di sicurezza specifica del ruolo non è chiara"
+            },
+            {
+              "value": "assumed_osmosis",
+              "score": 1,
+              "label": "Nessuna proprietà specifica - ci si aspetta che i nuovi dipendenti apprendano le responsabilità di sicurezza per osmosi"
+            }
+          ],
+          "evidence_required": "Processo di onboarding per ruoli sensibili, mentor nominati o assegnazioni di responsabilità, esempio recente di assunzione",
+          "soc_mapping": "Tassi di incidenti di sicurezza per dipendenti < 90 giorni di anzianità"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_audit_resolution",
+          "weight": 0.12,
+          "title": "Proprietà Personale dei Rilievi di Audit",
+          "question": "Quando gli audit di sicurezza identificano rischi o violazioni, qual è il Suo processo per garantire che qualcuno assuma la proprietà personale delle correzioni piuttosto che creare semplicemente elementi d'azione per comitati?",
+          "options": [
+            {
+              "value": "named_owner",
+              "score": 0,
+              "label": "Ogni rilievo assegnato a individuo nominato con tracciamento del completamento ed escalation per ritardi"
+            },
+            {
+              "value": "team_assigned",
+              "score": 0.5,
+              "label": "Rilievi assegnati a team o dipartimenti con responsabilità individuale poco chiara"
+            },
+            {
+              "value": "committee_action",
+              "score": 1,
+              "label": "I rilievi diventano elementi d'azione per comitati con responsabilità diffusa tra più parti"
+            }
+          ],
+          "evidence_required": "Rilievi di audit recenti con assegnazioni di proprietà, sistema di tracciamento risoluzione, metriche di completamento",
+          "soc_mapping": "Tempo di risoluzione rilievi audit e conteggi di trasferimento proprietà"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UNA opzione per ogni domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le opzioni verdi (punteggio 0) indicano bassa vulnerabilità con chiara responsabilità personale. Le opzioni gialle (punteggio 0.5) indicano vulnerabilità moderata con qualche diffusione. Le opzioni rosse (punteggio 1) indicano alta vulnerabilità con severa diffusione di responsabilità.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Autorità Decisionale e Proprietà",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Quando viene rilevato un potenziale incidente di sicurezza, mi illustri esattamente cosa succede - chi prende la decisione di intraprendere azioni protettive, quanto tempo occorre tipicamente, e quali approvazioni sono richieste?",
+              "scoring_guidance": {
+                "green": "Timeline decisionale specifica descritta con individui nominati, esempio recente sotto 30 minuti, autorità chiara documentata",
+                "yellow": "Processo generale descritto ma con ritardi di approvazione o confini di autorità poco chiari, esempi inconsistenti",
+                "red": "Multipli livelli di approvazione richiesti, nessun esempio recente o ritardi significativi, risposte 'dipende'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi racconti dell'ultima volta che il Suo team ha rilevato una potenziale questione di sicurezza - chi l'ha rilevata, chi ha preso la decisione di agire, e quanto tempo ha richiesto?",
+                  "evidence_type": "specific_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succede se la persona che dovrebbe prendere la decisione non è disponibile - chi ha autorità di backup?",
+                  "evidence_type": "continuity_planning"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Durante le ore fuori ufficio o i weekend, chi è personalmente responsabile per le decisioni di sicurezza quando il senior management non è disponibile? Come sanno di avere l'autorità per agire?",
+              "scoring_guidance": {
+                "green": "Individui nominati con autorità documentata, incidente fuori orario recente gestito con successo, chiaro percorso di escalation",
+                "yellow": "Esiste reperibilità ma autorità poco chiara, esitazione sull'ambito decisionale, nessun esempio recente",
+                "red": "Nessuna proprietà chiara, si attenderebbe il senior management, aspettativa culturale di non agire senza approvazione"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "C'è stata una situazione di sicurezza fuori orario negli ultimi 6 mesi? Chi l'ha gestita e cosa ha fatto?",
+                  "evidence_type": "after_hours_incident"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ha un documento scritto che dice 'La Persona X ha autorità per prendere decisioni Y durante le ore fuori ufficio'?",
+                  "evidence_type": "authority_documentation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Coordinamento Inter-Gerarchico",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Come si coordinano i diversi dipartimenti (IT, Sicurezza, Operazioni, HR) sulle responsabilità di sicurezza per sistemi e processi che attraversano i confini dipartimentali?",
+              "scoring_guidance": {
+                "green": "Riunioni di coordinamento regolari con assegnazioni di responsabilità documentate, esempio recente di chiarimento proprietà, coordinamento proattivo",
+                "yellow": "Coordinamento ad-hoc quando sorgono problemi, comprensioni informali, alcune documentate ma inconsistenti",
+                "red": "I dipartimenti lavorano in silos, coordinamento solo durante incidenti, frequenti risposte 'non è il mio dipartimento'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quando ha avuto l'ultima riunione specificamente per chiarire chi gestisce la sicurezza per sistemi condivisi? Cosa è stato deciso?",
+                  "evidence_type": "coordination_meeting"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Mi fornisca un esempio di un sistema o processo dove IT, Sicurezza e una business unit hanno tutti qualche responsabilità - chi è responsabile di cosa?",
+                  "evidence_type": "shared_accountability_example"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Quando vengono rilasciate patch di sicurezza critiche, mi illustri il processo da 'patch rilasciata' a 'patch distribuita' - chi fa cosa, e chi è responsabile se non avviene?",
+              "scoring_guidance": {
+                "green": "Processo chiaro con proprietari nominati per ogni categoria di sistema, esempio recente con timeline, responsabilità per i ritardi",
+                "yellow": "Esiste processo generale ma proprietà poco chiara, ritardi comuni, nessuna responsabilità personale",
+                "red": "Le patch 'cadono tra le fessure', nessuna proprietà chiara, responsabilità presunta essere dell'IT ma poco chiaro quale team"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi racconti dell'ultima patch critica distribuita dalla Sua organizzazione - chi era responsabile per garantire che venisse completata?",
+                  "evidence_type": "patch_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "C'è mai stata una situazione in cui una patch critica non è stata applicata in tempo? Cosa è successo e chi è stato ritenuto responsabile?",
+                  "evidence_type": "accountability_example"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cultura di Responsabilità Organizzativa",
+          "weight": 0.40,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Come gestisce la Sua organizzazione le eccezioni alle policy di sicurezza quando le esigenze aziendali entrano in conflitto con i requisiti di sicurezza? Chi può approvarle e come vengono tracciate?",
+              "scoring_guidance": {
+                "green": "Processo formale di eccezione con approvatori nominati, giustificazione documentata richiesta, audit regolare delle eccezioni, esempio recente",
+                "yellow": "Processo informale, le eccezioni avvengono ma il tracciamento è inconsistente, autorità di approvazione poco chiara",
+                "red": "Eccezioni comuni e non documentate, l'approvazione avviene ad-hoc, le 'esigenze aziendali' regolarmente scavalcano la sicurezza senza responsabilità"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri l'eccezione di sicurezza più recente che è stata approvata - chi l'ha richiesta, chi l'ha approvata, e qual era la giustificazione?",
+                  "evidence_type": "exception_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come traccia e rivede queste eccezioni per garantire che non diventino workaround permanenti?",
+                  "evidence_type": "exception_governance"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Quando gli audit o le valutazioni di sicurezza identificano rilievi, come garantisce che qualcuno assuma la proprietà personale della correzione piuttosto che creare semplicemente elementi d'azione che rimangono nei comitati?",
+              "scoring_guidance": {
+                "green": "Ogni rilievo assegnato a individuo nominato, sistema di tracciamento mostra proprietà e scadenze, escalation per ritardi, metriche di completamento",
+                "yellow": "Rilievi assegnati a team, esiste tracciamento ma proprietà poco chiara, alcuni rilievi languiscono",
+                "red": "I rilievi diventano 'elementi per comitati', nessuna responsabilità personale, i rilievi rimangono aperti per periodi estesi"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Guardi il Suo ultimo audit di sicurezza - scelga un rilievo e mi dica chi era responsabile per correggerlo e se è stato completato.",
+                  "evidence_type": "finding_ownership"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succede se i rilievi di audit non vengono risolti in tempo? Chi viene ritenuto responsabile?",
+                  "evidence_type": "accountability_enforcement"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Quando i nuovi dipendenti si uniscono a team che gestiscono dati sensibili o sistemi critici, chi garantisce che comprendano le loro responsabilità di sicurezza specifiche oltre alla formazione generica?",
+              "scoring_guidance": {
+                "green": "Manager o mentor nominato responsabile per l'onboarding di sicurezza specifico del ruolo, checklist con verifica, esempio recente di assunzione",
+                "yellow": "Formazione di sicurezza generica fornita ma responsabilità specifiche del ruolo poco chiare, si presume che impareranno",
+                "red": "Nessuna proprietà specifica per l'onboarding di sicurezza, i nuovi dipendenti 'lo raccolgono man mano', violazioni di sicurezza da nuovi dipendenti"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi illustri la Sua assunzione più recente che ha ottenuto accesso a sistemi sensibili - chi si è assicurato che comprendesse le sue responsabilità di sicurezza?",
+                  "evidence_type": "onboarding_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come verifica che i nuovi dipendenti comprendano effettivamente le loro responsabilità di sicurezza, non solo che abbiano partecipato alla formazione?",
+                  "evidence_type": "verification_process"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Ricerca di Segnali di Allarme",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle policy dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"La sicurezza è responsabilità dell'IT, non mia...\"",
+              "severity": "critical",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Dovrei verificare con [altro dipartimento] a riguardo...\" (risposta frequente a domande sulla sicurezza)",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"È sopra il mio livello di stipendio...\" o \"È una decisione del management...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Abbiamo un processo per quello ma non sono sicuro chi effettivamente lo possiede...\"",
+              "severity": "high",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"È caduto tra le fessure durante la nostra riorganizzazione...\" (ristrutturazione organizzativa citata frequentemente come motivo per gap di sicurezza)",
+              "severity": "medium",
+              "score_impact": 0.09,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Ho presunto che [altro team] stesse monitorando quello...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "Le policy di sicurezza assegnano responsabilità a dipartimenti o ruoli piuttosto che a individui nominati",
+              "severity": "critical",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "I post-mortem degli incidenti attribuiscono i fallimenti a 'gap di processo' o 'problemi di comunicazione' piuttosto che a responsabilità specifica",
+              "severity": "high",
+              "score_impact": 0.11,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare incidenti simulati con pattern di trasferimento proprietà per testare l'accuratezza del rilevamento",
+      "correlation_analysis": "Confrontare i punteggi di audit manuale con calcoli automatizzati RD_i (correlazione target > 0.80)",
+      "drift_detection": "Test di Kolmogorov-Smirnov sulle distribuzioni di ritardo decisionale, ricalibrare se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Garantire che i punteggi di diffusione di responsabilità predetti corrispondano ai fallimenti di coordinamento degli incidenti osservati",
+      "baseline_period": "60_days",
+      "recalibration_trigger": "Drift rilevato o punteggio di validazione < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Tempo di Risposta Decisioni di Sicurezza",
+        "formula": "Tempo medio dal rilevamento della questione di sicurezza all'azione di risposta autorizzata",
+        "baseline": "audit ultimi 90 giorni",
+        "target": "50% di riduzione nel tempo medio di risposta entro 90 giorni",
+        "measurement": "rapporti settimanali del tempo di risposta agli incidenti con analisi delle tendenze"
+      },
+      {
+        "metric": "Tasso di Coinvolgimento Individuale sulla Sicurezza",
+        "formula": "Percentuale di dipendenti che segnalano proattivamente preoccupazioni di sicurezza o intraprendono azioni preventive mensilmente",
+        "baseline": "tasso mensile corrente di segnalazione",
+        "target": "40% di aumento nei comportamenti di sicurezza proattivi entro 90 giorni",
+        "measurement": "tracciamento mensile delle metriche di coinvolgimento sulla sicurezza"
+      },
+      {
+        "metric": "Frequenza Coordinamento Sicurezza Inter-Gerarchico",
+        "formula": "Numero di chiarimenti di responsabilità di sicurezza documentati e collaborazioni inter-dipartimentali per mese",
+        "baseline": "attività mensili correnti di coordinamento",
+        "target": "200% di aumento nelle attività formali di coordinamento entro 90 giorni",
+        "measurement": "rapporti mensili delle attività di coordinamento"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Matrice di Autorità di Sicurezza con Persone Nominate",
+        "description": "Creare un documento che elenca scenari di sicurezza specifici con individui nominati autorizzati a prendere decisioni entro tempi definiti",
+        "implementation": "Il team di sicurezza redige una matrice che elenca scenari (richieste di reset password, anomalie di rete, accesso fornitori, ecc.) con individui nominati e decisori di backup. Includere tempi massimi di risposta per ogni scenario. Distribuire a tutto il personale e aggiornare trimestralmente.",
+        "technical_controls": "Matrice di autorità pubblicata nel wiki di sicurezza, integrata nei playbook di risposta agli incidenti, escalation automatizzata quando i tempi vengono superati",
+        "roi": "Riduce il tempo di risposta agli incidenti del 60-80%, previene l'escalation di problemi minori in incidenti maggiori",
+        "effort": "medium",
+        "timeline": "30-45 giorni"
+      },
+      {
+        "id": "sol_2",
+        "title": "Limiti Temporali per Decisioni di Sicurezza",
+        "description": "Stabilire tempi massimi di risposta per diverse categorie di decisioni di sicurezza con escalation automatica",
+        "implementation": "Aggiornamento policy che definisce categorie decisionali (immediato/30min/4ore/24ore) con enforcement automatizzato del sistema di ticketing. Qualsiasi decisione che supera il limite temporale scala automaticamente al livello successivo con piena autorità per agire. Formazione manager sui trigger di escalation.",
+        "technical_controls": "Automazione workflow sistema di ticketing, alert di escalation, dashboard di tracciamento tempo decisionale",
+        "roi": "Previene la paralisi da analisi, riduce la finestra di violazione del 70%, migliora i tempi di risposta alla compliance",
+        "effort": "medium",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_3",
+        "title": "Rete di Security Champions Inter-Livello",
+        "description": "Assegnare security champions a ogni livello organizzativo che si incontrano mensilmente per chiarire i confini di responsabilità",
+        "implementation": "Selezionare champions da ogni livello/dipartimento, fornire formazione di sicurezza base, stabilire calendario regolare di riunioni con risultati documentati. I champions hanno autorità esplicita per coordinare risposte di sicurezza che attraversano confini gerarchici.",
+        "technical_controls": "Lista contatti champions, piattaforma di collaborazione, repository documentazione riunioni, hotline di escalation",
+        "roi": "Riduce i ritardi di comunicazione del 65%, aumenta il rilevamento precoce delle minacce, migliora la cultura della sicurezza",
+        "effort": "medium",
+        "timeline": "30-60 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Scorecard di Responsabilità di Sicurezza Individuali",
+        "description": "Creare metriche di sicurezza personali per ogni dipendente che non possono essere diffuse ad altri",
+        "implementation": "Definire metriche individuali: tassi di applicazione patch per sistemi controllati, completamento formazione, partecipazione alla segnalazione incidenti, conformità policy di sicurezza. Integrazione sistema HR per valutazioni delle performance, riunioni di revisione trimestrali con manager.",
+        "technical_controls": "Integrazione sistema HR, generazione automatizzata scorecard, dashboard performance, programma di riconoscimento",
+        "roi": "Aumenta il coinvolgimento personale sulla sicurezza del 75%, riduce gli atteggiamenti 'non è il mio lavoro', migliora le metriche complessive di sicurezza",
+        "effort": "high",
+        "timeline": "60-90 giorni"
+      },
+      {
+        "id": "sol_5",
+        "title": "Workflow Decisionali di Sicurezza Automatizzati",
+        "description": "Implementare soluzioni tecnologiche che gestiscono automaticamente decisioni di sicurezza di routine senza consultazione gerarchica",
+        "implementation": "Deployment piattaforma SOAR per risposte automatizzate a minacce di routine (blocchi temporanei account, approvazioni di accesso base, eccezioni policy standard). Definire logica workflow, integrare con strumenti di sicurezza esistenti, riservare decisioni umane per situazioni genuinamente complesse.",
+        "technical_controls": "Piattaforma SOAR, playbook automatizzati, API di integrazione, sistema di logging decisioni",
+        "roi": "Riduce i colli di bottiglia decisionali del 70%, libera personale di sicurezza per questioni complesse, migliora la coerenza delle risposte",
+        "effort": "high",
+        "timeline": "60-90 giorni"
+      },
+      {
+        "id": "sol_6",
+        "title": "Struttura di Comando degli Incidenti di Sicurezza",
+        "description": "Stabilire chiara struttura di comando degli incidenti che bypassa temporaneamente la normale autorità gerarchica durante eventi di sicurezza",
+        "implementation": "Aggiornamento piano di risposta agli incidenti che definisce il ruolo di comandante dell'incidente con piena autorità per dirigere risorse senza approvazione gerarchica. Formazione autorità di comando, esercizi tabletop, canali di comunicazione verificati (fuori banda).",
+        "technical_controls": "Protocollo di attivazione comando incidenti, sistema di comunicazione (separato dal primario), logging decisioni comando, processo di revisione post-incidente",
+        "roi": "Riduce la durata degli incidenti del 55%, previene compromissioni secondarie, migliora la conformità regolamentare",
+        "effort": "medium",
+        "timeline": "45 giorni"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_2"],
+      "high_value": ["sol_3", "sol_6"],
+      "technical_foundation": ["sol_5"],
+      "cultural_change": ["sol_4"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Social Engineering Attraverso le Fessure Gerarchiche",
+      "description": "Gli attaccanti impersonano figure di autorità verso il personale di livello inferiore mentre simultaneamente si rappresentano come personale autorizzato verso i dirigenti, sfruttando i gap di responsabilità tra i livelli organizzativi",
+      "attack_vector": "Social engineering multi-livello che sfrutta il presupposto che la verifica sia responsabilità di qualcun altro",
+      "psychological_mechanism": "La diffusione di responsabilità crea gap di verifica dove ogni livello presume che l'altro abbia validato la richiesta",
+      "historical_example": "Target Corporation 2013 - La diffusione di responsabilità tra i team di operazioni IT e sicurezza ha creato un punto cieco di monitoraggio sfruttato per mesi, risultando in una violazione da €188M che ha colpito 41 milioni di clienti",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["N_transfers > 3", "verification_attempts = 0", "cross_department_request", "urgency_markers"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Paralisi della Risposta alle Crisi",
+      "description": "Durante incidenti di sicurezza attivi, il processo decisionale si blocca poiché ogni livello gerarchico attende l'autorizzazione dagli altri, concedendo agli attaccanti tempo aggiuntivo per diffondersi attraverso le reti",
+      "attack_vector": "Gli attaccanti creano deliberatamente condizioni di crisi che sovraccaricano i processi decisionali gerarchici",
+      "psychological_mechanism": "La diffusione di responsabilità gerarchica crea ritardi di risposta e fallimenti di coordinamento durante incidenti ad alto stress",
+      "historical_example": "Multipli attacchi ransomware riescono specificamente perché la risposta agli incidenti è ritardata dai requisiti di consultazione gerarchica, consentendo il movimento laterale",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["RD_i < 0.3", "decision_delay > 4_hours", "incident_active", "multiple_approval_chain"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Escalation di Privilegi Attraverso Gap di Supervisione",
+      "description": "Insider malevoli sfruttano la diffusione di responsabilità accumulando gradualmente accessi non autorizzati, temporizzando le richieste di privilegi per coincidere con transizioni di management o periodi di responsabilità poco chiara",
+      "attack_vector": "L'insider opera nei gap tra la supervisione gerarchica, sfruttando confini di responsabilità poco chiari",
+      "psychological_mechanism": "Ogni livello gerarchico presume che un altro livello stia fornendo adeguata supervisione dei privilegi",
+      "historical_example": "Equifax 2017 - Patch critiche non applicate a causa della diffusione di responsabilità tra team infrastruttura, team sicurezza e business unit, risultando in 147 milioni di record compromessi",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["privilege_accumulation_rate_anomaly", "approval_during_transition_period", "cross_department_access"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Compromissione Supply Chain via Gap Gestione Fornitori",
+      "description": "Gli attaccanti prendono di mira il gap di responsabilità tra IT (accesso tecnico fornitori), Procurement (relazioni fornitori) e Sicurezza (valutazione rischio fornitori)",
+      "attack_vector": "Fornitori malevoli ottengono accesso eccessivo ai sistemi sfruttando responsabilità poco chiare di supervisione fornitori tra dipartimenti",
+      "psychological_mechanism": "Ogni dipartimento presume che altri stiano fornendo adeguata supervisione di sicurezza dei fornitori, creando pericolosi punti ciechi",
+      "historical_example": "SolarWinds 2020 - L'attacco alla supply chain è riuscito in parte a causa della diffusione di responsabilità tra team di sviluppo, team di sicurezza e organizzazioni clienti riguardo alla sicurezza del processo di build",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["vendor_access_cross_department", "no_unified_vendor_tracking", "RD_i < 0.4_vendor_oversight"]
+    }
+  ],
+
+  "metadata": {
+    "created_date": "2025-11-09",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_modified": "2025-11-09",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-09",
+    "translator": "Claude (Anthropic)",
+    "research_basis": [
+      "Milgram, S. (1974). Obedience to Authority: An Experimental View",
+      "Latané, B. & Darley, J.M. (1970). The Unresponsive Bystander: Why Doesn't He Help?",
+      "Kelman, H.C. & Hamilton, V.L. (1989). Crimes of Obedience",
+      "Beyer, F. et al. (2015). Neural mechanisms of social influence in consumer decisions",
+      "Organizational Psychology Research on hierarchical responsibility patterns"
+    ],
+    "validation_status": "peer_reviewed",
+    "deployment_status": "production_ready"
+  }
+}

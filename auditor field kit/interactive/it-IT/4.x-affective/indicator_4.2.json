@@ -1,0 +1,903 @@
+{
+  "indicator": "4.2",
+  "title": "FIELD KIT INDICATORE 4.2",
+  "subtitle": "Assunzione di Rischi Indotta dalla Rabbia",
+  "category": "Vulnerabilità Affettive",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Categoria 4.x",
+
+  "description": {
+    "short": "Misura la vulnerabilità a comportamenti di assunzione di rischi aumentati guidati da rabbia e frustrazione con strumenti, politiche o procedure di sicurezza",
+    "context": "L'assunzione di rischi indotta dalla rabbia si verifica quando la frustrazione sul posto di lavoro verso strumenti, politiche o procedure di sicurezza porta i dipendenti a bypassare i controlli di sicurezza o a prendere decisioni rischiose. Quando le persone sono arrabbiate o frustrate, danno priorità al raggiungimento immediato degli obiettivi rispetto alle considerazioni di sicurezza, creando vulnerabilità che gli aggressori possono sfruttare. Questo si manifesta come condivisione di password durante interruzioni di sistema, clic su link sospetti quando si è disperati per trovare soluzioni, o adozione di strumenti non autorizzati per aggirare ostacoli percepiti.",
+    "impact": "Le organizzazioni con punteggi di rabbia dei dipendenti elevati mostrano tassi più alti del 340% di incidenti interni, tassi di successo del phishing più alti del 220% durante periodi di stress organizzativo e violazioni delle politiche di sicurezza che si concentrano attorno a cambiamenti di sistema e nuove implementazioni di sicurezza. Gli schemi storici includono la violazione dei dati di Target del 2013 dove il furto delle credenziali dell'appaltatore HVAC è stato facilitato dalla frustrazione con requisiti di autenticazione complessi, Anthem 2015 dove l'ingegneria sociale ha avuto successo in parte perché i dipendenti erano frustrati dalle nuove procedure di sicurezza, ed Equifax 2017 dove i fallimenti nella gestione delle patch sono stati esacerbati da conflitti nel team IT e resistenza ai mandati di sicurezza.",
+    "psychological_basis": "L'assunzione di rischi indotta dalla rabbia rappresenta una vulnerabilità fondamentale in cui l'eccitazione emotiva compromette sistematicamente la valutazione cognitiva del rischio. Il sistema limbico (in particolare l'amigdala) si iperattiva mentre il controllo esecutivo della corteccia prefrontale viene soppresso. Questa risposta neurobiologica crea uno stato in cui lo scarico emotivo immediato ha la precedenza sulla valutazione attenta delle conseguenze. La rabbia innesca il rilascio di norepinefrina e dopamina, creando un'eccitazione elevata che restringe l'attenzione e riduce la flessibilità cognitiva. La corteccia cingolata anteriore mostra una diminuita attivazione durante gli stati di rabbia, compromettendo la capacità di riconoscere i rischi per la sicurezza. La teoria del doppio processo di Kahneman spiega come l'eccitazione emotiva sposti il processo decisionale dall'attenta analisi del Sistema 2 alle risposte impulsive del Sistema 1. La teoria del prospetto dimostra che la rabbia aumenta la preferenza per guadagni rischiosi e riduce l'avversione alle perdite. Il concetto di scissione (splitting) di Klein spiega come la rabbia crei attribuzioni 'tutto negativo' verso le misure di sicurezza, percepite come puramente ostacolanti piuttosto che protettive."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Punteggio_Finale = (w1 × Valutazione_Rapida + w2 × Profondità_Conversazione + w3 × Segnali_Di_Allarme) × Moltiplicatore_Interdipendenza",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Meno del 5% dei ticket dell'help desk mostra linguaggio di frustrazione; eccezioni di sicurezza rare (<1/mese); i dipendenti hanno alternative autorizzate chiare durante le interruzioni; nessuno schema osservabile tra periodi di stress e violazioni della sicurezza.",
+        "risk_level": "basso",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Il 5-15% dei ticket dell'help desk mostra frustrazione; richieste di eccezione di sicurezza mensili; scoperti alcuni workaround non autorizzati; correlazione occasionale tra stress organizzativo e violazioni delle politiche.",
+        "risk_level": "medio",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Più del 15% dei ticket dell'help desk mostra rabbia/frustrazione; richieste di eccezione di sicurezza settimanali o giornaliere; uso diffuso di Shadow IT; chiari schemi di violazioni aumentate durante i periodi di stress; i dipendenti si lamentano apertamente della sicurezza durante le riunioni.",
+        "risk_level": "alto",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_exception_frequency": 0.18,
+      "q2_help_desk_anger": 0.16,
+      "q3_outage_response": 0.15,
+      "q4_performance_conflicts": 0.14,
+      "q5_violation_clustering": 0.13,
+      "q6_shadow_it": 0.12,
+      "q7_authority_anger": 0.12
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_4.2(t) = w1·R_4.2(t) + w2·A_4.2(t) + w3·E_4.2(t) + w4·T_4.2(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_4.2(t) = 1 se P_risk > 0.6 e I > I_threshold, altrimenti 0",
+          "description": "Rilevamento binario basato sulla probabilità di assunzione di rischi e sulla soglia di impulsività",
+          "threshold": {
+            "P_risk": 0.6,
+            "I_threshold": "impulsività baseline + 2σ"
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_4.2(t) = sqrt((x(t) - μ)ᵀ Σ⁻¹ (x(t) - μ))",
+          "description": "Distanza di Mahalanobis per schemi comportamentali multivariati guidati dalla rabbia",
+          "variables": {
+            "x(t)": "vettore di osservazione [richieste_eccezione, rabbia_help_desk, violazioni_politiche]",
+            "μ": "media baseline da schemi storici",
+            "Σ": "matrice di covarianza (media mobile esponenziale ponderata)"
+          }
+        },
+        "emotional_state": {
+          "formula": "E_4.2(t) = α·Emozione_4.2(t) + β·E_4.2(t-1) + γ·Σ_j Contagio_Emotivo_j,4.2(t)",
+          "description": "Fattore di stato emotivo che incorpora l'intensità della rabbia e lo slancio emotivo",
+          "factors": [
+            "marcatori_frustrazione_linguistici",
+            "frequenza_lamentele_comportamentali",
+            "schemi_comunicazione_urgenza",
+            "correlazione_interruzione_sistema"
+          ]
+        },
+        "temporal_emotional": {
+          "formula": "T_4.2(t) = I_0·(1 + γ·A)·e^(-δ·T)",
+          "description": "Potenziamento dell'impulsività basato sull'intensità della rabbia e sul tempo di riflessione disponibile",
+          "variables": {
+            "I_0": "impulsività baseline",
+            "A": "intensità della rabbia al tempo t",
+            "T": "tempo di riflessione disponibile"
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.25,
+        "w2_anomaly": 0.35,
+        "w3_emotional": 0.25,
+        "w4_temporal": 0.15
+      },
+      "anger_risk_model": {
+        "formula": "R_percepito(A) = R_oggettivo·(1 - α·A) + β·A·R_focus_ricompensa",
+        "description": "Valutazione del rischio modulata dalla rabbia in cui la rabbia riduce il rischio percepito e amplifica l'attenzione sulla ricompensa",
+        "interpretation": "Una rabbia più alta riduce la percezione del rischio oggettivo mentre aumenta l'attenzione verso potenziali ricompense"
+      },
+      "impulsivity_enhancement": {
+        "formula": "I(A,T) = I_0·(1 + γ·A)·e^(-δ·T)",
+        "description": "L'impulsività aumenta con la rabbia e diminuisce con il tempo di riflessione",
+        "components": {
+          "I_0": "impulsività baseline",
+          "A": "intensità della rabbia",
+          "T": "tempo di riflessione",
+          "γ": "fattore di amplificazione della rabbia",
+          "δ": "fattore di decadimento temporale"
+        }
+      },
+      "regulatory_depletion": {
+        "formula": "RD(t) = RD_0·e^(-λ·∫_0^t Rabbia(τ) dτ)",
+        "description": "La capacità di autoregolazione diminuisce esponenzialmente con l'esposizione prolungata alla rabbia",
+        "interpretation": "La rabbia prolungata esaurisce la capacità di mantenere l'autocontrollo sui comportamenti di assunzione di rischi"
+      },
+      "risk_taking_probability": {
+        "formula": "P_risk(A,RD) = [A^μ·(1-RD)^ν] / [1 + A^μ·(1-RD)^ν]",
+        "description": "Probabilità combinata di assunzione di rischi basata sull'intensità della rabbia e sul livello di esaurimento della regolazione",
+        "components": {
+          "A": "intensità della rabbia",
+          "RD": "livello di esaurimento della regolazione",
+          "μ": "parametro di sensibilità alla rabbia",
+          "ν": "parametro di sensibilità all'esaurimento"
+        }
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "analisi_sentimentale_ticket_help_desk",
+        "log_richieste_eccezione_sicurezza",
+        "report_scoperta_shadow_it",
+        "monitoraggio_schemi_violazione_politiche"
+      ],
+      "evidence_required": [
+        "recente_richiesta_eccezione_sicurezza_con_giustificazione",
+        "esempi_ticket_help_desk_che_mostrano_frustrazione",
+        "documentazione_risposta_interruzione_sistema",
+        "record_scoperta_strumenti_non_autorizzati",
+        "feedback_dipendenti_su_politiche_sicurezza"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "help_desk_ticketing",
+          "fields": ["ticket_id", "category", "description_text", "sentiment_score", "resolution_time", "security_related"],
+          "retention": "180_giorni"
+        },
+        {
+          "source": "security_exception_tracking",
+          "fields": ["request_id", "requester", "exception_type", "justification", "approval_status", "timestamp"],
+          "retention": "365_giorni"
+        },
+        {
+          "source": "policy_violation_logs",
+          "fields": ["violation_id", "user_id", "violation_type", "timestamp", "system_change_correlation"],
+          "retention": "365_giorni"
+        }
+      ],
+      "optional": [
+        {
+          "source": "cloud_access_security_broker",
+          "fields": ["unauthorized_app_id", "user_id", "app_name", "discovery_date", "usage_frequency"],
+          "retention": "365_giorni"
+        },
+        {
+          "source": "employee_surveys",
+          "fields": ["survey_id", "security_tool_satisfaction", "frustration_indicators", "timestamp"],
+          "retention": "365_giorni"
+        },
+        {
+          "source": "communication_platforms",
+          "fields": ["message_id", "security_sentiment", "complaint_keywords", "channel", "timestamp"],
+          "retention": "90_giorni"
+        }
+      ],
+      "telemetry_mapping": {
+        "frustration_rate": {
+          "calculation": "Percentuale di ticket di help desk relativi alla sicurezza contenenti linguaggio di frustrazione",
+          "query": "SELECT (COUNT(sentiment='negative' AND security_related=true) / COUNT(security_related=true)) FROM help_desk WHERE time_window='30d'"
+        },
+        "exception_frequency": {
+          "calculation": "Conteggio richieste di eccezione di sicurezza per periodo di tempo",
+          "query": "SELECT COUNT(*) FROM exception_requests WHERE approval_status IN ('approved','pending') AND timestamp > NOW() - INTERVAL '30 days'"
+        },
+        "shadow_it_discovery": {
+          "calculation": "Tasso di scoperte di applicazioni non autorizzate",
+          "query": "SELECT COUNT(DISTINCT unauthorized_app_id) FROM casb_logs WHERE discovery_date > NOW() - INTERVAL '90 days'"
+        }
+      }
+    },
+    "integration_apis": {
+      "help_desk": "API ServiceNow/Zendesk - Sentiment ticket, Categorizzazione sicurezza",
+      "casb": "API Cloud Access Security Broker - Scoperta Shadow IT, Utilizzo applicazioni",
+      "dlp": "API Data Loss Prevention - Violazioni politiche, Trasferimenti non autorizzati",
+      "siem": "API Splunk/Sentinel - Eventi di correlazione, Anomalie comportamentali"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "7.1",
+        "name": "Risposta allo Stress Acuto",
+        "probability": 0.70,
+        "factor": 1.4,
+        "description": "Lo stress acuto amplifica le risposte di rabbia e riduce il controllo cognitivo sull'assunzione di rischi impulsivi",
+        "formula": "P(4.2|7.1) = 0.70"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Fatica Decisionale",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "La fatica decisionale esaurisce le risorse di autoregolazione necessarie per controllare gli impulsi guidati dalla rabbia",
+        "formula": "P(4.2|5.2) = 0.65"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Bypass Indotto dall'Urgenza",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "La pressione temporale combinata con la rabbia crea la tempesta perfetta per il bypass dei controlli di sicurezza",
+        "formula": "P(4.2|2.1) = 0.75"
+      },
+      {
+        "indicator": "1.1",
+        "name": "Conformità Incondizionata",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "La conformità guidata dall'autorità può innescare reattanza e rabbia quando percepita come arbitraria",
+        "formula": "P(4.2|1.1) = 0.55"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "3.7",
+        "name": "Adozione Shadow IT",
+        "probability": 0.80,
+        "factor": 1.6,
+        "description": "La rabbia verso le restrizioni di sicurezza guida direttamente l'adozione di strumenti e servizi non autorizzati"
+      },
+      {
+        "indicator": "4.5",
+        "name": "Nascondimento della Sicurezza Basato sulla Vergogna",
+        "probability": 0.60,
+        "factor": 1.3,
+        "description": "Le violazioni delle politiche indotte dalla rabbia creano le condizioni per comportamenti di occultamento basati sulla vergogna"
+      },
+      {
+        "indicator": "9.4",
+        "name": "Indicatori di Minaccia Interna",
+        "probability": 0.70,
+        "factor": 1.4,
+        "description": "La rabbia fornisce la giustificazione psicologica per comportamenti di minaccia interna e furto di dati"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["4.2", "2.1", "7.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) dove v_i = punteggio di vulnerabilità normalizzato",
+      "convergence_multiplier": 2.6,
+      "threshold_critical": 3.3,
+      "description": "Tempesta perfetta: Assunzione di rischi indotta dalla rabbia + Urgenza temporale + Stress acuto = Probabilità di bypass della sicurezza aumentata del 260%",
+      "real_world_example": "Multipli incidenti BEC e di minaccia interna dove dipendenti frustrati sotto pressione di scadenze hanno bypassato i controlli di sicurezza portando a violazioni maggiori"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["7.1", "5.2", "2.1", "1.1"],
+      "child_nodes": ["3.7", "4.5", "9.4"],
+      "conditional_probability_table": {
+        "P_4.2_base": 0.20,
+        "P_4.2_given_stress": 0.50,
+        "P_4.2_given_fatigue": 0.45,
+        "P_4.2_given_urgency": 0.55,
+        "P_4.2_given_all": 0.88
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_exception_frequency",
+          "weight": 0.18,
+          "title": "Frequenza Richieste di Eccezione alla Sicurezza",
+          "question": "Con quale frequenza i dipendenti richiedono eccezioni alle politiche o procedure di sicurezza? Includere richieste per bypassare VPN, condividere credenziali, utilizzare dispositivi personali o saltare passaggi di autenticazione.",
+          "options": [
+            {
+              "value": "rare",
+              "score": 0,
+              "label": "Rara - Meno di 1 richiesta di eccezione al mese"
+            },
+            {
+              "value": "monthly",
+              "score": 0.5,
+              "label": "Mensile - Da 1 a 4 richieste di eccezione al mese"
+            },
+            {
+              "value": "frequent",
+              "score": 1,
+              "label": "Frequente - Richieste di eccezione di sicurezza settimanali o giornaliere"
+            }
+          ],
+          "evidence_required": "Log richieste eccezione degli ultimi 6 mesi, esempio recente specifico con giustificazione",
+          "soc_mapping": "exception_frequency dal sistema di tracciamento eccezioni"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_help_desk_anger",
+          "weight": 0.16,
+          "title": "Schemi di Linguaggio di Frustrazione nell'Help Desk",
+          "question": "Quale percentuale dei Suoi ticket di help desk relativi alla sicurezza contiene linguaggio che indica frustrazione, urgenza o lamentele sugli strumenti di sicurezza definiti 'rotti' o 'troppo lenti'?",
+          "options": [
+            {
+              "value": "low",
+              "score": 0,
+              "label": "Bassa - Meno del 5% dei ticket di help desk relativi alla sicurezza mostra linguaggio di frustrazione"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Moderata - Dal 5% al 15% dei ticket di help desk relativi alla sicurezza mostra linguaggio di frustrazione"
+            },
+            {
+              "value": "high",
+              "score": 1,
+              "label": "Alta - Più del 15% dei ticket di help desk relativi alla sicurezza mostra linguaggio di rabbia o frustrazione"
+            }
+          ],
+          "evidence_required": "Analisi del sentiment dei ticket di help desk, esempi recenti di ticket frustrati",
+          "soc_mapping": "frustration_rate dall'analisi del sentiment dell'help desk"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_outage_response",
+          "weight": 0.15,
+          "title": "Schemi di Risposta alle Interruzioni dei Sistemi di Sicurezza",
+          "question": "Cosa succede quando i Suoi strumenti di sicurezza primari (VPN, autenticazione, sicurezza email) subiscono interruzioni o rallentamenti? I dipendenti hanno alternative autorizzate, o trovano le proprie soluzioni alternative?",
+          "options": [
+            {
+              "value": "authorized",
+              "score": 0,
+              "label": "Esistono alternative autorizzate chiare e i dipendenti seguono le procedure documentate durante le interruzioni"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Alcune alternative autorizzate ma i dipendenti creano anche workaround informali"
+            },
+            {
+              "value": "uncontrolled",
+              "score": 1,
+              "label": "Nessuna alternativa autorizzata; i dipendenti trovano regolarmente workaround non autorizzati durante le interruzioni"
+            }
+          ],
+          "evidence_required": "Procedure di interruzione del sistema, documentazione recente della risposta all'interruzione, esempi di workaround",
+          "soc_mapping": "Correlazione interruzioni con picchi di violazioni politiche"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_performance_conflicts",
+          "weight": 0.14,
+          "title": "Frequenza Conflitti Prestazioni vs Sicurezza",
+          "question": "Con quale frequenza i dipendenti segnalano che i requisiti di sicurezza impediscono loro di rispettare le scadenze o gli obiettivi di performance? Includere lamentele su autenticazione lenta, siti web bloccati o software limitati.",
+          "options": [
+            {
+              "value": "rare",
+              "score": 0,
+              "label": "Rara - Meno di segnalazioni mensili di sicurezza che impedisce le prestazioni lavorative"
+            },
+            {
+              "value": "occasional",
+              "score": 0.5,
+              "label": "Occasionale - Segnalazioni mensili di conflitti sicurezza-prestazioni"
+            },
+            {
+              "value": "frequent",
+              "score": 1,
+              "label": "Frequente - Lamentele settimanali o giornaliere su sicurezza che impedisce il completamento del lavoro"
+            }
+          ],
+          "evidence_required": "Log lamentele dipendenti, esempi di conflitti prestazioni, dati di sondaggi",
+          "soc_mapping": "Frequenza lamentele prestazioni da dati di ticketing e sondaggi"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_violation_clustering",
+          "weight": 0.13,
+          "title": "Raggruppamento Schemi di Violazione delle Politiche",
+          "question": "Nota aumenti nelle violazioni delle politiche di sicurezza in seguito a cambiamenti di sistema, nuove implementazioni di sicurezza o periodi di alto stress (fine trimestre, progetti importanti, licenziamenti)?",
+          "options": [
+            {
+              "value": "no_pattern",
+              "score": 0,
+              "label": "Nessuno schema osservabile tra periodi di stress e tassi di violazione della sicurezza"
+            },
+            {
+              "value": "occasional",
+              "score": 0.5,
+              "label": "Correlazione occasionale tra stress organizzativo e aumenti delle violazioni delle politiche"
+            },
+            {
+              "value": "clear_pattern",
+              "score": 1,
+              "label": "Chiari schemi di violazioni aumentate durante periodi di stress o dopo cambiamenti di sistema"
+            }
+          ],
+          "evidence_required": "Log violazioni con analisi temporale, dati di correlazione cambiamenti sistema",
+          "soc_mapping": "system_change_correlation dai log violazioni politiche"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_shadow_it",
+          "weight": 0.12,
+          "title": "Tasso di Adozione Shadow IT",
+          "question": "Quali strumenti, app o servizi non autorizzati i dipendenti utilizzano per aggirare le restrizioni di sicurezza? Includere archiviazione cloud personale, app di messaggistica o installazioni di software.",
+          "options": [
+            {
+              "value": "minimal",
+              "score": 0,
+              "label": "Minimo - Rare scoperte di Shadow IT (<5 app non autorizzate per trimestre)"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Moderato - Qualche Shadow IT scoperto (5-15 app non autorizzate per trimestre)"
+            },
+            {
+              "value": "widespread",
+              "score": 1,
+              "label": "Diffuso - Uso estensivo di Shadow IT (>15 app non autorizzate per trimestre)"
+            }
+          ],
+          "evidence_required": "Report di scoperta CASB, inventario applicazioni non autorizzate, giustificazioni utente",
+          "soc_mapping": "shadow_it_discovery dai log CASB"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_authority_anger",
+          "weight": 0.12,
+          "title": "Lamentele sulla Sicurezza Dirette all'Autorità",
+          "question": "Come esprimono i dipendenti la frustrazione riguardo alle politiche di sicurezza durante riunioni, email o conversazioni informali? Includere lamentele sul dipartimento IT, il team di sicurezza o i mandati del management.",
+          "options": [
+            {
+              "value": "constructive",
+              "score": 0,
+              "label": "Feedback costruttivo attraverso canali appropriati con minima espressione di rabbia"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Misto - Qualche sentimento negativo ma generalmente lamentele rispettose"
+            },
+            {
+              "value": "hostile",
+              "score": 1,
+              "label": "Ostile - I dipendenti si lamentano apertamente della sicurezza durante le riunioni con rabbia diretta verso i team IT/sicurezza"
+            }
+          ],
+          "evidence_required": "Appunti riunioni, analisi del sentiment email, risposte a sondaggi dipendenti",
+          "soc_mapping": "Tasso di sentimento negativo dall'analisi delle piattaforme di comunicazione"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UN'opzione per ogni domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le prove devono essere documentate per il tracciamento di audit.",
+      "calculation": "Punteggio_Rapido = Σ(punteggio_domanda × peso_domanda) / Σ(peso_domanda)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Richieste di Eccezione e Frustrazione del Sistema",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Mi parli della più recente richiesta di eccezione alla sicurezza nella Sua organizzazione. Cosa è stato richiesto, perché e come è stata gestita?",
+              "scoring_guidance": {
+                "green": "Eccezione rara con giustificazione aziendale documentata, soluzioni alternative esplorate, processo di approvazione corretto",
+                "yellow": "Eccezioni occasionali con qualche giustificazione ma processo inconsistente o alternative non esplorate",
+                "red": "Eccezioni frequenti guidate da frustrazione, giustificazione minima o approvazione automatica per evitare conflitti"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Qual era lo stato emotivo del dipendente quando richiedeva l'eccezione? Ha espresso frustrazione o rabbia?",
+                  "evidence_type": "contesto_emotivo"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Con quale frequenza si verificano queste richieste di eccezione? C'è uno schema su quando accadono?",
+                  "evidence_type": "schema_frequenza"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Descriva cosa è successo durante l'ultima grave interruzione del sistema di sicurezza - guasto VPN, problemi di autenticazione o problemi di sicurezza email. Come hanno risposto i dipendenti?",
+              "scoring_guidance": {
+                "green": "I dipendenti hanno seguito procedure alternative documentate, interruzione minima, nessun workaround non autorizzato",
+                "yellow": "Alcune procedure autorizzate seguite ma anche workaround informali creati",
+                "red": "Workaround non autorizzati diffusi, condivisione password, account personali utilizzati per affari"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Ha scoperto workaround non autorizzati creati dai dipendenti durante o dopo l'interruzione?",
+                  "evidence_type": "scoperta_workaround"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Qual era il tono dei ticket di help desk durante l'interruzione? I dipendenti erano frustrati o arrabbiati?",
+                  "evidence_type": "sentiment_interruzione"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Conflitti di Prestazione e Shadow IT",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Mi fornisca un esempio specifico di quando un dipendente ha affermato che la sicurezza gli impediva di svolgere il proprio lavoro o rispettare una scadenza. Cosa è accaduto esattamente?",
+              "scoring_guidance": {
+                "green": "Incidente isolato con risoluzione collaborativa dei problemi e accomodamento legittimo della sicurezza",
+                "yellow": "Conflitti occasionali con risoluzione inconsistente, qualche frustrazione residua",
+                "red": "Conflitti frequenti con dipendenti che incolpano routinariamente la sicurezza per problemi di performance"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Come ha risposto l'organizzazione? C'era un modo per soddisfare sia le esigenze di sicurezza che quelle di performance?",
+                  "evidence_type": "risoluzione_conflitto"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Il dipendente ha rispettato i requisiti di sicurezza o ha trovato un modo per aggirarli?",
+                  "evidence_type": "comportamento_conformità"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Quali strumenti o applicazioni non autorizzati ha scoperto che i dipendenti utilizzano? Mi parli della scoperta più recente e del motivo per cui il dipendente ha affermato di averne bisogno.",
+              "scoring_guidance": {
+                "green": "Shadow IT minimo, strumenti scoperti affrontati tramite alternative approvate, utenti ricettivi",
+                "yellow": "Shadow IT moderato, risposte miste quando scoperto, qualche resistenza alle alternative approvate",
+                "red": "Shadow IT estensivo, dipendenti difensivi sugli strumenti non autorizzati, giustificati da frustrazione con le opzioni approvate"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Qual è stata la reazione del dipendente quando lo strumento non autorizzato è stato scoperto? Era sulla difensiva o si è scusato?",
+                  "evidence_type": "reazione_scoperta"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come gestisce tipicamente le scoperte di Shadow IT - bloccando e punendo, o comprendendo e fornendo alternative?",
+                  "evidence_type": "approccio_rimediazione"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Stress Organizzativo e Schemi di Violazione",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Descriva un recente periodo di alto stress organizzativo - fine trimestre, scadenza importante, cambiamento di sistema o ristrutturazione. Cosa è successo alla conformità della sicurezza durante quel periodo?",
+              "scoring_guidance": {
+                "green": "Conformità della sicurezza mantenuta durante i periodi di stress, nessuna correlazione tra stress e violazioni",
+                "yellow": "Qualche aumento delle violazioni durante lo stress ma gestibile e affrontato",
+                "red": "Chiari schemi di violazioni, eccezioni e scorciatoie aumentate durante i periodi di stress"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Ha notato violazioni specifiche delle politiche di sicurezza o comportamenti rischiosi che si sono concentrati attorno a quel periodo stressante?",
+                  "evidence_type": "correlazione_stress"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come ha risposto il management alla sicurezza durante la crisi - è stata prioritaria o de-enfatizzata?",
+                  "evidence_type": "priorità_leadership"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Come esprimono tipicamente i dipendenti la frustrazione riguardo alle politiche di sicurezza? Mi fornisca esempi di cosa dicono durante riunioni, email o conversazioni informali.",
+              "scoring_guidance": {
+                "green": "Feedback costruttivo attraverso canali appropriati, rabbia minima, tono collaborativo",
+                "yellow": "Qualche sentimento negativo ma generalmente rispettoso, frustrazione occasionale espressa",
+                "red": "Ostilità aperta verso le politiche di sicurezza, dipartimento IT incolpato, rabbia espressa durante le riunioni"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Verso chi dirigono i dipendenti la loro frustrazione - il team di sicurezza, il dipartimento IT, il management, o le politiche stesse?",
+                  "evidence_type": "bersaglio_rabbia"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Qualcuno ha mai espresso di ritenere che le politiche di sicurezza siano deliberatamente ostacolanti o arbitrarie?",
+                  "evidence_type": "schema_attribuzione"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Indagine per Segnali di Allarme",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle politiche dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Il nostro help desk riceve molti ticket arrabbiati sugli strumenti di sicurezza che sono troppo lenti o rotti...\"",
+              "severity": "alto",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Concediamo molte eccezioni di sicurezza perché i dipendenti si frustrano e non possono lavorare altrimenti...\"",
+              "severity": "critico",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"I dipendenti si lamentano che la sicurezza impedisce loro di raggiungere i loro obiettivi di performance...\"",
+              "severity": "alto",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Vediamo picchi di violazioni delle politiche dopo aver implementato nuove misure di sicurezza o cambiamenti di sistema...\"",
+              "severity": "alto",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Continuiamo a scoprire app e strumenti non autorizzati perché i dipendenti sono frustrati con le nostre opzioni approvate...\"",
+              "severity": "alto",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"I dipendenti si lamentano apertamente dei team IT e di sicurezza durante riunioni o email...\"",
+              "severity": "medio",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Durante le interruzioni di VPN o autenticazione, i dipendenti usano semplicemente i loro dispositivi personali o account...\"",
+              "severity": "critico",
+              "score_impact": 0.14,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Punteggio_Conversazione = Media_Ponderata(punteggi_sottosezioni) + Σ(impatto_segnali_allarme)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Monitorare mensilmente la correlazione tra indicatori di frustrazione e incidenti di sicurezza",
+      "correlation_analysis": "Confrontare i punteggi di valutazione manuale con il sentiment dell'help desk e la frequenza delle eccezioni (correlazione target > 0.80)",
+      "drift_detection": "Test di Kolmogorov-Smirnov sulle distribuzioni di frustrazione e violazione, ricalibrare se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Garantire che la relazione rabbia-rischio prevista corrisponda agli schemi di violazione osservati",
+      "baseline_period": "90_giorni",
+      "recalibration_trigger": "Rilevato drift o punteggio di validazione < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Riduzione Help Desk Correlato alla Frustrazione",
+        "formula": "Percentuale di ticket di help desk relativi alla sicurezza contenenti linguaggio di frustrazione",
+        "baseline": "percentuale attuale di ticket di frustrazione",
+        "target": "Riduzione del 50% dei ticket di sicurezza correlati alla frustrazione entro 90 giorni",
+        "measurement": "analisi del sentiment mensile utilizzando ricerche per parole chiave per indicatori di frustrazione"
+      },
+      {
+        "metric": "Frequenza Richieste di Eccezione alla Sicurezza",
+        "formula": "Numero di richieste di eccezione di sicurezza al mese",
+        "baseline": "conteggio attuale mensile di richieste di eccezione",
+        "target": "Riduzione del 75% delle richieste di eccezione di sicurezza entro 90 giorni",
+        "measurement": "monitoraggio mensile delle richieste di bypass formali e informali con relative ragioni"
+      },
+      {
+        "metric": "Tasso di Scoperta Shadow IT",
+        "formula": "Numero di applicazioni/servizi non autorizzati scoperti per trimestre",
+        "baseline": "conteggio attuale trimestrale di scoperte Shadow IT",
+        "target": "Riduzione del 60% delle nuove scoperte Shadow IT entro 90 giorni",
+        "measurement": "report CASB trimestrali e dati di monitoraggio della rete"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Help Desk Reattivo alla Frustrazione",
+        "description": "Implementare un'analisi dei ticket di help desk che segnali il linguaggio di frustrazione e dia priorità a queste richieste per una risposta immediata",
+        "implementation": "Implementare l'analisi del sentiment sui ticket di help desk relativi alla sicurezza per identificare automaticamente gli indicatori di frustrazione. Formare il personale dell'help desk a riconoscere la frustrazione dell'utente con empatia, spiegare la logica di sicurezza in termini aziendali e fornire tempistiche specifiche per la risoluzione. Creare percorsi di escalation per le lamentele relative alla sicurezza che raggiungano la risoluzione entro 24 ore. Tracciare l'efficacia della risoluzione della frustrazione e adeguare i processi in base al feedback.",
+        "technical_controls": "Strumenti di analisi del sentiment per help desk, segnalazione automatica frustrazione, instradamento prioritario, dashboard tracciamento risoluzione",
+        "roi": "340% medio entro 18 mesi",
+        "effort": "medio",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_2",
+        "title": "Comunicazione della Sicurezza Trasparente",
+        "description": "Sviluppare spiegazioni chiare, senza gergo, del motivo per cui esiste ogni misura di sicurezza, inclusi esempi reali di minacce che previene",
+        "implementation": "Creare una knowledge base di 'logica di sicurezza' che il personale dell'help desk possa consultare quando spiega le restrizioni. Inviare comunicazioni proactive prima di implementare nuove misure di sicurezza, spiegando la giustificazione aziendale e il panorama delle minacce. Fornire esempi concreti di attacchi prevenuti da ogni controllo di sicurezza. Evitare il gergo tecnico a favore di spiegazioni focalizzate sul business che dimostrino il valore della sicurezza piuttosto che solo il costo.",
+        "technical_controls": "Knowledge base logica sicurezza, modelli di comunicazione, sistema di notifica proattiva",
+        "roi": "280% medio entro 12 mesi",
+        "effort": "basso",
+        "timeline": "30-45 giorni"
+      },
+      {
+        "id": "sol_3",
+        "title": "Procedure di Accesso Alternative",
+        "description": "Stabilire procedure di emergenza pre-approvate per i guasti comuni degli strumenti di sicurezza",
+        "implementation": "Documentare metodi alternativi autorizzati per interruzioni VPN (connessioni di backup sicure), problemi di autenticazione (procedure di accesso temporaneo) e problemi di sicurezza email (workaround approvati). Comunicare chiaramente queste alternative prima che siano necessarie. Garantire che le alternative mantengano la sicurezza mentre consentono alla produttività di continuare. Testare regolarmente le procedure di emergenza e aggiornarle in base alle esperienze effettive di interruzione.",
+        "technical_controls": "Documentazione procedure accesso di emergenza, metodi di autenticazione di backup, strumenti alternativi approvati",
+        "roi": "360% medio entro 12 mesi",
+        "effort": "medio",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Audit Usabilità Strumenti di Sicurezza",
+        "description": "Condurre valutazioni regolari dell'usabilità degli strumenti di sicurezza, misurando tempi di accesso, tassi di errore e soddisfazione dell'utente",
+        "implementation": "Misurare l'esperienza utente effettiva con gli strumenti di sicurezza inclusi ritardi di autenticazione, tempi di connessione VPN e frequenza di reimpostazione password. Dare priorità ai miglioramenti di usabilità per i processi di sicurezza più frustranti in base ai dati dell'help desk e al feedback degli utenti. Implementare l'accesso single sign-on (SSO) dove possibile per ridurre l'attrito di autenticazione. Distribuire password manager per ridurre la frustrazione correlata alle password. Monitorare e ottimizzare continuamente le prestazioni degli strumenti di sicurezza.",
+        "technical_controls": "Strumenti di monitoraggio esperienza utente, dashboard prestazioni, implementazione SSO, distribuzione password manager",
+        "roi": "420% medio entro 18 mesi",
+        "effort": "alto",
+        "timeline": "60-90 giorni"
+      },
+      {
+        "id": "sol_5",
+        "title": "Monitoraggio della Sicurezza durante Periodi di Stress",
+        "description": "Aumentare il monitoraggio della sicurezza e il supporto durante periodi prevedibili di alto stress organizzativo",
+        "implementation": "Identificare periodi prevedibili di stress organizzativo (fine trimestre, lanci importanti, cambiamenti di sistema). Aumentare il monitoraggio della sicurezza e il supporto proattivo durante questi periodi. Contattare i dipartimenti sotto pressione per offrire supporto alla sicurezza e prevenire violazioni delle politiche. Considerare di rilassare temporaneamente le restrizioni di sicurezza non critiche durante i periodi di crisi mantenendo le protezioni essenziali. Documentare i protocolli di risposta ai periodi di stress e perfezionarli in base all'efficacia.",
+        "technical_controls": "Calendario periodi stress, regole di monitoraggio potenziate, sistema di outreach proattivo, motore politiche flessibile",
+        "roi": "310% medio entro 12 mesi",
+        "effort": "medio",
+        "timeline": "45 giorni"
+      },
+      {
+        "id": "sol_6",
+        "title": "Scoperta e Integrazione Shadow IT",
+        "description": "Scansionare regolarmente servizi cloud e applicazioni non autorizzati, quindi coinvolgere gli utenti per comprenderne le esigenze",
+        "implementation": "Implementare un cloud access security broker (CASB) o il monitoraggio della rete per scoprire l'uso di Shadow IT. Quando vengono scoperti strumenti non autorizzati, coinvolgere gli utenti in modo non punitivo per comprendere l'esigenza aziendale che guida l'adozione. Fornire alternative approvate con funzionalità simili o lavorare per integrare in modo sicuro lo strumento non autorizzato piuttosto che semplicemente bloccarlo. Creare un ciclo di feedback in cui le richieste di strumenti degli utenti informino il portafoglio applicativo approvato.",
+        "technical_controls": "Implementazione CASB, analisi traffico di rete, flusso di lavoro approvazione applicazioni, processo integrazione sicura",
+        "roi": "390% medio entro 18 mesi",
+        "effort": "alto",
+        "timeline": "60-90 giorni"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_4", "sol_3"],
+      "high_value": ["sol_1", "sol_6"],
+      "cultural_foundation": ["sol_2"],
+      "stress_management": ["sol_5"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Phishing Innescato dalla Frustrazione",
+      "description": "Gli aggressori monitorano i social media e le comunicazioni aziendali per individuare segni di frustrazione dei dipendenti con i sistemi IT. Inviano quindi email di phishing mirate che offrono 'soluzioni rapide' o 'aggiornamenti di sistema' che bypassano lo strumento di sicurezza problematico. I dipendenti arrabbiati, cercando un sollievo immediato, cliccano su link dannosi o forniscono credenziali a siti di supporto falsi, portando alla compromissione dell'account e al movimento laterale nella rete.",
+      "attack_vector": "Email di phishing temporizzate per coincidere con la frustrazione per lo strumento di sicurezza, offrendo soluzioni non autorizzate",
+      "psychological_mechanism": "La rabbia restringe l'attenzione e aumenta l'impulsività, riducendo lo scrutinio delle soluzioni rapide",
+      "historical_example": "Multiple campagne di phishing mirate che sfruttano la frustrazione dei dipendenti per problemi VPN e di autenticazione",
+      "likelihood": "alto",
+      "impact": "alto",
+      "detection_indicators": ["picco_frustrazione_help_desk", "phishing_che_offre_workaround", "tentativi_raccolta_credenziali", "promesse_bypass_autenticazione"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Escalation Condivisione Credenziali",
+      "description": "Durante interruzioni VPN o problemi di autenticazione, i dipendenti frustrati iniziano a condividere password o utilizzare account personali per compiti aziendali. Gli aggressori sfruttano questo compromettendo account personali (spesso meno sicuri) o intercettando credenziali condivise attraverso l'ingegneria sociale, ottenendo l'accesso ai sistemi aziendali attraverso account legittimi ma utilizzati impropriamente.",
+      "attack_vector": "Sfruttamento della condivisione di credenziali e dell'uso di account personali durante interruzioni degli strumenti di sicurezza",
+      "psychological_mechanism": "La rabbia per gli ostacoli alla sicurezza sovrascrive la formazione sulla sicurezza e aumenta la tolleranza al rischio",
+      "historical_example": "Violazione dei dati di Target 2013 facilitata dalla frustrazione per la condivisione di credenziali con autenticazione complessa",
+      "likelihood": "alto",
+      "impact": "critico",
+      "detection_indicators": ["interruzione_autenticazione", "condivisione_credenziali_rilevata", "uso_account_personale_affari", "schemi_autenticazione_insoliti"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Esposizione Dati Shadow IT",
+      "description": "I dipendenti frustrati con gli strumenti aziendali lenti o restrittivi adottano servizi cloud non autorizzati, piattaforme di condivisione file o app di comunicazione. Queste soluzioni Shadow IT spesso mancano di controlli di sicurezza enterprise, creando rischi di esposizione dei dati quando informazioni sensibili vengono archiviate o condivise attraverso canali non monitorati che gli aggressori possono compromettere più facilmente.",
+      "attack_vector": "Esposizione dei dati attraverso servizi cloud non autorizzati privi di controlli di sicurezza",
+      "psychological_mechanism": "La frustrazione con gli strumenti approvati guida l'adozione di alternative convenienti ma insicure",
+      "historical_example": "Numerose violazioni di dati che coinvolgono dati sensibili archiviati in Dropbox personale, Google Drive o piattaforme di messaggistica",
+      "likelihood": "alto",
+      "impact": "alto",
+      "detection_indicators": ["picco_scoperta_shadow_it", "trasferimento_dati_piattaforme_non_autorizzate", "archiviazione_cloud_personale_dati_aziendali", "strumenti_collaborazione_non_approvati"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Amplificazione Minaccia Interna",
+      "description": "I dipendenti arrabbiati per le politiche di sicurezza o la reattività del dipartimento IT diventano più suscettibili al reclutamento da parte di attori malevoli, o possono razionalizzare il proprio furto di dati come un giustificato 'ripagamento'. La loro frustrazione esistente fornisce la giustificazione psicologica per violare le politiche di sicurezza, trasformando lamentele minori in incidenti maggiori di minaccia interna.",
+      "attack_vector": "Furto di dati interno o sabotaggio giustificato dalla rabbia verso le restrizioni di sicurezza",
+      "psychological_mechanism": "La rabbia fornisce la giustificazione morale per le violazioni delle politiche e riduce il senso di colpa per le violazioni della sicurezza",
+      "historical_example": "Multipli casi di minaccia interna in cui la rabbia del dipendente per le restrizioni IT ha preceduto il furto di dati o il sabotaggio",
+      "likelihood": "medio",
+      "impact": "critico",
+      "detection_indicators": ["lamentele_sicurezza_dipendenti", "escalation_violazione_politiche", "accesso_dati_insolito", "sentimento_negativo_verso_it"]
+    }
+  ],
+
+  "metadata": {
+    "created": "08/11/2025",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "08/11/2025",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "08/11/2025",
+    "translator": "AI Translator",
+    "research_basis": [
+      "LeDoux, J. (2000). Emotion circuits in the brain. Annual Review of Neuroscience, 23, 155-184",
+      "Damasio, A. R. (1994). Descartes' Error: Emotion, Reason, and the Human Brain",
+      "Kahneman, D. (2011). Thinking, Fast and Slow - Dual-process theory",
+      "Kahneman, D., & Tversky, A. (1979). Prospect theory: Anger and loss aversion",
+      "Klein, M. (1946). Notes on some schizoid mechanisms - Splitting concept",
+      "Winnicott, D. W. (1971). Playing and Reality - Transitional space concept"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

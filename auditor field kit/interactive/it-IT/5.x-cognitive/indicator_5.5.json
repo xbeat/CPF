@@ -1,0 +1,1027 @@
+{
+  "indicator": "5.5",
+  "title": "FIELD KIT INDICATORE 5.5",
+  "subtitle": "Vulnerabilità da Cambio di Contesto (Context Switching)",
+  "category": "Vulnerabilità da Sovraccarico Cognitivo",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 5.x",
+  "description": {
+    "short": "Misura la vulnerabilità derivante dal passaggio frequente tra domini di sicurezza diversi, strumenti e modelli mentali, creando errori di transizione e perdita di contesto",
+    "context": "Le vulnerabilità da cambio di contesto si verificano quando i professionisti della sicurezza devono passare frequentemente tra domini tecnologici diversi (sicurezza di rete vs sicurezza endpoint), piattaforme di strumenti e modelli mentali di minacce. Ogni cambio di contesto richiede tempo cognitivo per \"caricare\" il nuovo framework mentale, creando periodi di vulnerabilità durante le transizioni. Gli analisti SOC che passano dalla risposta agli incidenti di malware all'analisi del traffico di rete alla gestione delle identità sperimentano queste penalità di cambio di contesto múltiple volte al giorno.",
+    "impact": "Le organizzazioni con frequenti cambi di contesto sperimentano configurazioni errate durante le transizioni, applicazione errata di procedure da un dominio a un altro, incremento dei tempi di risposta a causa dei ritardi di cambio di contesto, e vulnerabilità durante il periodo immediatamente dopo il cambio quando i modelli mentali sono incompletamente caricati. Gli incidenti storici mostrano tassi di errore elevati negli immediati 15-20 minuti dopo cambio di contesto significativo. Gli attaccanti sofisticati mappano le operazioni dei difensori e temporizzano gli attacchi durante i cambi di contesto noti.",
+    "psychological_basis": "La ricerca di Monsell (2003) sul task switching quantifica i \"costi di cambio\" - degradazione misurabile delle prestazioni quando si passa tra compiti o contesti diversi. La ricerca di Altmann e Trafton (2002) sulla Teoria degli Obiettivi di Memoria mostra come gli obiettivi precedenti interferiscano con i nuovi compiti creando ritardi di interferenza proattiva. Gli studi neurocognitivi dimostrano che cambiare contesto richiede la soppressione attiva degli schemi precedenti e l'attivazione di nuove rappresentazioni, processo che richiede significative risorse della corteccia prefrontale. La ricerca di Rubinstein (2001) mostra che più i compiti sono complessi e non familiari, maggiori sono i costi del cambio di contesto."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "3 o meno strumenti di sicurezza primari per turno analista. Dashboard a pannello unico consolidano la maggior parte dei dati di sicurezza. Procedure di passaggio consegne automatizzate con documentazione integrata. Gli incidenti multi-dominio vengono gestiti tramite piattaforma di risposta unificata. L'escalation segue un flusso di lavoro unico con comunicazione integrata.",
+        "risk_level": "basso",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "4-6 strumenti di sicurezza che richiedono cambio di contesto regolare. Qualche integrazione di dashboard ma gli analisti devono correlare tra 2-3 sistemi. Procedure di passaggio consegne manuali con documentazione standardizzata. Gli incidenti multi-dominio richiedono 2-3 cambi di strumento ma seguono procedure documentate. L'escalation richiede il passaggio tra 2-3 sistemi/processi.",
+        "risk_level": "medio",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "7+ strumenti di sicurezza che richiedono cambio di contesto costante. Dashboard multiple separate senza integrazione. Procedure di passaggio consegne ad-hoc che richiedono briefing verbali estesi. Gli incidenti multi-dominio richiedono 4+ cambi di strumento/sistema con procedure poco chiare. L'escalation coinvolge 4+ sistemi separati, canali di comunicazione o processi di approvazione.",
+        "risk_level": "alto",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_tool_usage": 0.18,
+      "q2_alert_management": 0.16,
+      "q3_shift_handoff": 0.15,
+      "q4_multi_domain": 0.14,
+      "q5_dashboard_integration": 0.13,
+      "q6_compliance_reporting": 0.12,
+      "q7_escalation": 0.12
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_5.5(t) = w1·R_5.5(t) + w2·W_5.5(t) + w3·E_5.5(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_5.5(t) = 1 if N_switches(t) > N_threshold AND P_error > 2·P_baseline, else 0",
+          "description": "Binary detection based on context switch frequency exceeding threshold with elevated error rates",
+          "threshold": {
+            "N_switches_hourly": 12,
+            "P_error_multiplier": 2
+          }
+        },
+        "workload_metric": {
+          "formula": "W_5.5(t) = (N_tools_active(t) / N_optimal) × (N_switches(t) / N_baseline)",
+          "description": "Workload measure based on active tool count and switching frequency",
+          "variables": {
+            "N_tools_active": "Number of security tools actively used in time window",
+            "N_optimal": "Optimal tool count (typically 3)",
+            "N_switches": "Context switches per hour",
+            "N_baseline": "Baseline switching frequency from historical data"
+          }
+        },
+        "error_rate": {
+          "formula": "E_5.5(t) = P_error(t) / P_baseline = (1 + β·V_window(t))",
+          "description": "Error rate elevation during vulnerability windows following context switches",
+          "variables": {
+            "P_error": "Current error rate",
+            "P_baseline": "Baseline error rate",
+            "β": "Error amplification factor",
+            "V_window": "Vulnerability window function"
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.3,
+        "w2_workload": 0.4,
+        "w3_error": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_5.5(t) = α·D_5.5(t) + (1-α)·T_5.5(t-1)·e^(-λΔt)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 1800,
+        "lambda": 0.0003,
+        "description": "Exponential smoothing with 30-minute time constant and cognitive recovery decay"
+      }
+    },
+    "context_switching_cost": {
+      "formula": "C_switch(t) = c0·Σ[I_context(i,t)·e^(-λt_i)]",
+      "description": "Cumulative context switching cost with temporal decay",
+      "components": {
+        "c0": "Base switching cost (300-500ms + cognitive overhead)",
+        "I_context": "Context change indicator (1 if context switched, 0 otherwise)",
+        "t_i": "Time since switch i",
+        "lambda": "Decay rate (0.0003 for cognitive recovery)"
+      }
+    },
+    "vulnerability_window": {
+      "formula": "V_window(t) = V_max·e^(-αt)·sin²(πt/T_cycle)",
+      "description": "Elevated vulnerability immediately following context switches",
+      "parameters": {
+        "V_max": "Maximum vulnerability (1.0)",
+        "alpha": "Recovery rate (0.002)",
+        "T_cycle": "Typical task cycle time (1800s)"
+      },
+      "interpretation": "Vulnerability peaks immediately after switch and decays exponentially while oscillating with task rhythm"
+    },
+    "detection_threshold": {
+      "formula": "Alert if N_switches(t) > 12/hour AND Error_rate > 2×Baseline",
+      "critical_threshold": "N_switches > 20/hour OR Error_rate > 3×Baseline",
+      "baseline_calculation": "30-day moving average of switches and error rates by shift and analyst role"
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "analyst_workstation_observation",
+        "tool_inventory_revisione",
+        "shift_handoff_documentazione",
+        "incident_response_procedures",
+        "training_records"
+      ],
+      "evidence_required": [
+        "list_of_security_tools_by_analyst_role",
+        "screenshots_of_analyst_workstations",
+        "shift_handoff_templates_and_recent_esempios",
+        "incident_response_workflows",
+        "multi_domain_incident_esempios"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "security_tool_usage_log",
+          "fields": [
+            "user_id",
+            "tool_name",
+            "session_start",
+            "session_end",
+            "context_switches",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "alert_investigation_log",
+          "fields": [
+            "alert_id",
+            "analyst_id",
+            "investigation_start",
+            "tools_accessed",
+            "resolution_time",
+            "quality_score"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "incident_response_log",
+          "fields": [
+            "incident_id",
+            "responders",
+            "tools_used",
+            "tool_transitions",
+            "handoff_events",
+            "timestamp"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "error_tracking_system",
+          "fields": [
+            "error_type",
+            "analyst_id",
+            "context_at_error",
+            "tools_active",
+            "recent_switches",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "shift_handoff_system",
+          "fields": [
+            "shift_id",
+            "outgoing_analyst",
+            "incoming_analyst",
+            "active_incidents",
+            "context_transfer_completeness"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "workstation_telemetry",
+          "fields": [
+            "user_id",
+            "active_windows",
+            "window_switches",
+            "application_focus_duration",
+            "timestamp"
+          ],
+          "retention": "30_days"
+        },
+        {
+          "source": "siem_correlation_engine",
+          "fields": [
+            "correlation_id",
+            "source_tools",
+            "analyst_correlation_time",
+            "missed_correlations"
+          ],
+          "retention": "180_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "N_switches": {
+          "calculation": "Conteggio delle transizioni di strumento/contesto per finestra temporale",
+          "query": "SELECT COUNT(DISTINCT tool_transition) FROM usage_log WHERE user_id = analyst AND timestamp > NOW() - INTERVAL '1 hour' GROUP BY user_id"
+        },
+        "N_tools_active": {
+          "calculation": "Numero di strumenti di sicurezza distinti acceduti nella finestra temporale",
+          "query": "SELECT COUNT(DISTINCT tool_name) FROM usage_log WHERE user_id = analyst AND timestamp > NOW() - INTERVAL '8 hours'"
+        },
+        "P_error": {
+          "calculation": "Tasso di errore durante periodi di alto cambio di contesto",
+          "query": "SELECT (COUNT(errors) / COUNT(tasks)) FROM incident_log WHERE context_switches > threshold AND time_window = '1h'"
+        },
+        "context_loss_incidents": {
+          "calculation": "Incidenti che richiedono re-indagine a causa di contesto perso",
+          "query": "SELECT COUNT(*) FROM incidents WHERE resolution_notes LIKE '%context%lost%' OR '%re-investigate%' AND timestamp > baseline_period"
+        }
+      }
+    },
+    "integration_apis": {
+      "siem": "Splunk/Sentinel API - Analisi utilizzo strumenti, eventi di correlazione, flussi di lavoro analisti",
+      "soar": "SOAR Platform API - Log esecuzione playbook, metriche di preservazione contesto",
+      "incident_management": "ServiceNow/JIRA API - Passaggi consegne incidenti, trasferimenti proprietà, documentazione contesto",
+      "endpoint_monitoring": "Workstation telemetry - Cambio applicazioni, durata focus, pattern multi-tasking"
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "5.4",
+        "name": "Multitasking Degradation",
+        "probability": 0.85,
+        "factor": 1.6,
+        "description": "Il multitasking aumenta direttamente la frequenza di cambio di contesto e il carico cognitivo",
+        "formula": "P(5.5|5.4) = 0.85",
+        "evidence": "Forte correlazione (0.85) nella matrice di interdipendenza - il multitasking necessita cambi di contesto"
+      },
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue Desensitization",
+        "probability": 0.5,
+        "factor": 1.3,
+        "description": "L'alto volume di allarmi forza rapidi cambi di contesto tra tipi di allarmi e strumenti di indagine",
+        "formula": "P(5.5|5.1) = 0.5"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.65,
+        "factor": 1.4,
+        "description": "Lo stress riduce la flessibilità cognitiva e aumenta i costi di cambio di contesto",
+        "formula": "P(5.5|7.1) = 0.65",
+        "evidence": "Lo stress amplifica il carico cognitivo durante le transizioni, riducendo la capacità di recupero"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.6,
+        "factor": 1.35,
+        "description": "La pressione temporale forza cambi di contesto prematuri prima di completare i compiti di sicurezza correnti",
+        "formula": "P(5.5|2.1) = 0.6"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue Errors",
+        "probability": 0.55,
+        "factor": 1.3,
+        "description": "La fatica decisionale riduce la capacità cognitiva per gestire efficacemente i cambi di contesto",
+        "formula": "P(5.5|5.2) = 0.55"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "5.8",
+        "name": "Attention Residue Effects",
+        "probability": 0.8,
+        "factor": 1.5,
+        "description": "Il cambio di contesto è il meccanismo primario che crea residuo di attenzione",
+        "formula": "P(5.8|5.5) = 0.8",
+        "evidence": "Alta correlazione (0.80) - ogni cambio di contesto lascia residuo cognitivo"
+      },
+      {
+        "indicator": "5.7",
+        "name": "Working Memory Overflow",
+        "probability": 0.4,
+        "factor": 1.2,
+        "description": "I requisiti di contesti multipli sovraccaricano la capacità di memoria di lavoro",
+        "formula": "P(5.7|5.5) = 0.4"
+      },
+      {
+        "indicator": "5.9",
+        "name": "Complexity-Induced Errors",
+        "probability": 0.3,
+        "factor": 1.15,
+        "description": "Il cambio di contesto aumenta la complessità percepita del compito e i tassi di errore",
+        "formula": "P(5.9|5.5) = 0.3"
+      },
+      {
+        "indicator": "5.6",
+        "name": "Cognitive Tunneling",
+        "probability": 0.25,
+        "factor": 1.1,
+        "description": "Il rapido cambio di contesto può innescare tunneling difensivo sul compito primario",
+        "formula": "P(5.6|5.5) = 0.25"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": [
+        "5.5",
+        "5.4",
+        "5.8",
+        "7.1"
+      ],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 3.5,
+      "description": "Tempesta perfetta: Cambio di contesto + Multitasking + Residuo di attenzione + Stress acuto = 380% di aumento della probabilità di fallimento nel rilevamento durante incidenti di sicurezza complessi multi-dominio",
+      "real_world_esempio": "Violazione Target 2013 - analisti che gestivano flussi di allarmi concorrenti multipli con cambio di contesto tra monitoraggio POS, IDS di rete e analisi malware hanno contribuito al ritardo nel riconoscimento dell'attacco"
+    },
+    "bayesian_network": {
+      "parent_nodes": [
+        "5.4",
+        "5.1",
+        "7.1",
+        "2.1",
+        "5.2"
+      ],
+      "child_nodes": [
+        "5.8",
+        "5.7",
+        "5.9",
+        "5.6"
+      ],
+      "conditional_probability_table": {
+        "P_5.5_base": 0.2,
+        "P_5.5_given_multitasking": 0.55,
+        "P_5.5_given_stress": 0.45,
+        "P_5.5_given_urgency": 0.42,
+        "P_5.5_given_multitasking_and_stress": 0.75,
+        "P_5.5_given_all": 0.88
+      }
+    }
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_tool_usage",
+          "weight": 0.18,
+          "title": "Security Tool Count per Shift",
+          "question": "Quanti strumenti di sicurezza, dashboard o sistemi differenti deve monitorare o utilizzare attivamente un tipico analista di sicurezza durante un turno di 8 ore?",
+          "options": [
+            {
+              "value": "low",
+              "score": 0,
+              "label": "3 o meno strumenti di sicurezza primari con dashboard consolidate"
+            },
+            {
+              "value": "medium",
+              "score": 0.5,
+              "label": "4-6 strumenti di sicurezza che richiedono cambio di contesto regolare"
+            },
+            {
+              "value": "high",
+              "score": 1,
+              "label": "7 o più strumenti di sicurezza che richiedono cambio di contesto costante"
+            }
+          ],
+          "evidence_required": "Elenco degli strumenti per ruolo di analista, screenshot delle postazioni di lavoro che mostrano le dashboard attive",
+          "soc_mapping": "N_tools_active metric from detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_alert_management",
+          "weight": 0.16,
+          "title": "Alert Investigation Tool Switching",
+          "question": "Quando arriva un allarme di sicurezza, quanto spesso i vostri analisti devono passare tra diversi strumenti o sistemi per indagare e risolverlo?",
+          "options": [
+            {
+              "value": "integrated",
+              "score": 0,
+              "label": "Piattaforma integrata unica fornisce la maggior parte delle capacità di indagine con cambio di strumento minimo"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Gli analisti passano tra 2-3 strumenti per l'indagine tipica degli allarmi"
+            },
+            {
+              "value": "fragmented",
+              "score": 1,
+              "label": "Gli analisti devono passare tra 4+ strumenti diversi per indagare completamente gli allarmi"
+            }
+          ],
+          "evidence_required": "Dimostrazione pratica di recente indagine su incidente che mostra la sequenza di strumenti utilizzati",
+          "soc_mapping": "N_switches metric during alert investigation workflows"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_shift_handoff",
+          "weight": 0.15,
+          "title": "Shift Handoff Context Management",
+          "question": "Qual è il vostro processo quando cambiano i turni di sicurezza e gli incidenti in corso o le attività di monitoraggio devono essere trasferiti tra i membri del team?",
+          "options": [
+            {
+              "value": "automated",
+              "score": 0,
+              "label": "Sistema di passaggio consegne automatizzato mantiene il contesto su tutti gli strumenti di sicurezza con documentazione digitale"
+            },
+            {
+              "value": "manual_structured",
+              "score": 0.5,
+              "label": "Procedure di passaggio consegne manuali con template di documentazione standardizzati"
+            },
+            {
+              "value": "adhoc",
+              "score": 1,
+              "label": "Procedure di passaggio consegne ad-hoc che richiedono briefing verbali estesi per trasferire il contesto"
+            }
+          ],
+          "evidence_required": "Template di passaggio consegne turno, documentazione di recenti passaggi consegne per 3+ attività concorrenti",
+          "soc_mapping": "Context transfer completeness and handoff event log"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_multi_domain",
+          "weight": 0.14,
+          "title": "Multi-Domain Incident Response",
+          "question": "Come il vostro team gestisce gli incidenti di sicurezza che coprono múltipli domini (rete, email, endpoint, cloud) richiedendo diverse competenze e strumenti?",
+          "options": [
+            {
+              "value": "unified",
+              "score": 0,
+              "label": "Piattaforma di risposta unificata coordina incidenti multi-dominio con flussi di lavoro integrati"
+            },
+            {
+              "value": "documented",
+              "score": 0.5,
+              "label": "Procedure documentate coordinano 2-3 cambi di strumento per incidenti multi-dominio"
+            },
+            {
+              "value": "unclear",
+              "score": 1,
+              "label": "Nessuna procedura chiara - gli incidenti richiedono 4+ cambi di strumento/sistema con coordinamento poco chiaro"
+            }
+          ],
+          "evidence_required": "Esempio di recente incidente multi-dominio che mostra gli strumenti utilizzati e l'approccio di coordinamento",
+          "soc_mapping": "Tool transitions during multi-domain incident response"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_dashboard_integration",
+          "weight": 0.13,
+          "title": "Dashboard Consolidation Level",
+          "question": "Per ottenere un quadro completo della vostra postura di sicurezza, quanti schermi, dashboard o interfacce separate devono visualizzare i vostri analisti?",
+          "options": [
+            {
+              "value": "consolidated",
+              "score": 0,
+              "label": "Dashboard a pannello unico consolida la maggior parte dei dati di sicurezza da strumenti multipli"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Qualche integrazione ma gli analisti devono correlare tra 2-3 dashboard separate"
+            },
+            {
+              "value": "fragmented",
+              "score": 1,
+              "label": "Dashboard multiple separate senza integrazione che richiedono cambio costante"
+            }
+          ],
+          "evidence_required": "Configurazione postazione di lavoro analista che mostra le configurazioni dei monitor e le dashboard visualizzate",
+          "soc_mapping": "Active windows and dashboard count from workstation telemetry"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_compliance_reporting",
+          "weight": 0.12,
+          "title": "Operational-Compliance Context Switching",
+          "question": "Quando il personale di sicurezza deve generare report di compliance o rispondere a richieste di audit, quanto spesso deve passare tra strumenti di sicurezza operativi e sistemi di compliance/reporting?",
+          "options": [
+            {
+              "value": "integrated",
+              "score": 0,
+              "label": "Il reporting integrato estrae automaticamente i dati operativi con cambio di contesto minimo"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Il personale passa tra 2-3 sistemi per raccogliere dati operativi per il reporting di compliance"
+            },
+            {
+              "value": "extensive",
+              "score": 1,
+              "label": "Cambio esteso tra 4+ sistemi richiesto per compilare informazioni di compliance"
+            }
+          ],
+          "evidence_required": "Esempio di recente preparazione audit che mostra i sistemi acceduti e il processo di compilazione dati",
+          "soc_mapping": "Context switches during compliance reporting activities"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_escalation",
+          "weight": 0.12,
+          "title": "Escalation Workflow Complexity",
+          "question": "Cosa accade quando un analista di sicurezza deve escalare un incidente - quanti diversi canali di comunicazione, sistemi di documentazione o processi di approvazione sono coinvolti?",
+          "options": [
+            {
+              "value": "unified",
+              "score": 0,
+              "label": "Flusso di lavoro unificato unico gestisce l'escalation con comunicazione e documentazione integrate"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "L'escalation richiede il passaggio tra 2-3 sistemi/canali con procedure documentate"
+            },
+            {
+              "value": "complex",
+              "score": 1,
+              "label": "L'escalation coinvolge 4+ sistemi separati, canali di comunicazione o processi di approvazione"
+            }
+          ],
+          "evidence_required": "Tracciamento dell'ultima escalation di incidente importante dal rilevamento alla notifica al management",
+          "soc_mapping": "System transitions during escalation events"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezionare UNA opzione per ciascuna domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze dovrebbero essere documentate per la traccia di audit. Concentrarsi sui flussi di lavoro effettivi degli analisti piuttosto che sulle capacità teoriche degli strumenti di sicurezza.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Tool Landscape and Integration",
+          "weight": 0.3,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Mi descriva una tipica postazione di lavoro dell'analista durante il suo turno - quali strumenti sta monitorando attivamente e quanto spesso passa tra di essi?",
+              "scoring_guidance": {
+                "green": "3 o meno strumenti con dashboard integrate, metriche specifiche sui cambi di contesto (es., '2-3 cambi per ora'), evidenza di ottimizzazione del flusso di lavoro",
+                "yellow": "4-6 strumenti con necessità di correlazione manuale, pattern di cambio vaghi, riconoscimento di inefficienze",
+                "red": "7+ strumenti con cambi costanti, frustrazione dell'analista menzionata, nessuno sforzo di integrazione"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Potete mostrarmi degli screenshot o descrivere la configurazione fisica - quanti monitor, cosa viene visualizzato su ciascuno e come gli analisti navigano tra gli strumenti?",
+                  "evidence_type": "technical_control"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quanto tempo richiede tipicamente ad un analista per orientarsi completamente quando passa da uno strumento di sicurezza ad un altro?",
+                  "evidence_type": "performance_metric"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Descriva l'ultimo allarme di sicurezza che il vostro team ha indagato - quale specifica sequenza di strumenti ha utilizzato l'analista dal rilevamento iniziale alla risoluzione?",
+              "scoring_guidance": {
+                "green": "Flusso di lavoro integrato chiaro con 1-2 transizioni di strumento, preservazione automatica del contesto, esempio specifico con timeline",
+                "yellow": "3-4 cambi di strumento con correlazione manuale, qualche documentazione, timeline poco chiara",
+                "red": "5+ cambi di strumento, l'analista ha dovuto ricostruire il contesto múltiple volte, ritardi significativi"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Durante quell'indagine, l'analista ha mai perso traccia di dove si trovava nel processo o ha dovuto re-indagare qualcosa perché il contesto era stato perso?",
+                  "evidence_type": "specific_esempio"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come fa il vostro SIEM o la piattaforma di sicurezza primaria ad aiutare a mantenere il contesto dell'indagine quando gli analisti devono passare a strumenti specializzati?",
+                  "evidence_type": "technical_control"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Shift Handoffs and Multi-Domain Incidents",
+          "weight": 0.3,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Parlatemi del vostro processo di passaggio consegne turno - quando i turni cambiano e ci sono 3-4 attività di sicurezza in corso, come avviene il trasferimento del contesto?",
+              "scoring_guidance": {
+                "green": "Sistema di passaggio consegne automatizzato con documentazione integrata su tutti gli strumenti, esempio recente di passaggio consegne fluido durante incidente complesso",
+                "yellow": "Template standardizzati utilizzati ma processo manuale, qualche perdita di contesto riconosciuta, briefing verbali integrano la documentazione",
+                "red": "Passaggi consegne principalmente verbali, l'analista entrante deve riscoprire il contesto su strumenti multipli, frequenti fallimenti nei passaggi consegne"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Qual è stato l'ultimo incidente o indagine in corso che ha dovuto essere passato a metà? Come è andata?",
+                  "evidence_type": "specific_incident"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Tracciate metriche sugli incidenti che richiedono re-indagine a causa di contesto perso durante i passaggi consegne?",
+                  "evidence_type": "performance_metric"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Descriva un recente incidente di sicurezza che ha coinvolto múltipli domini - come un'intrusione di rete che ha coinvolto anche phishing email e compromissione endpoint. Come ha coordinato il vostro team attraverso questi diversi contesti?",
+              "scoring_guidance": {
+                "green": "Piattaforma di risposta agli incidenti unificata ha mantenuto il contesto tra i domini, flusso di lavoro di coordinamento chiaro, cambio di strumento minimo",
+                "yellow": "Coordinamento manuale con procedure documentate, gli analisti sono passati tra 2-3 domini/strumenti, qualche ritardo ma gestito",
+                "red": "Ogni dominio indagato separatamente, sfide di coordinamento significative, contesto perso tra team/strumenti di sicurezza"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Durante quell'incidente multi-dominio, ci sono stati momenti 'aha' in cui collegare informazioni attraverso strumenti diversi ha rivelato qualcosa che non era visibile in nessun sistema singolo?",
+                  "evidence_type": "specific_esempio"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quanto tempo è trascorso dal rilevamento iniziale al riconoscimento che si trattava di un attacco multi-dominio che richiedeva una risposta coordinata?",
+                  "evidence_type": "performance_metric"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cognitive Load and Error Patterns",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Quando i vostri analisti riferiscono di sentirsi più sopraffatti cognitivamente - quali situazioni creano il carico mentale più elevato?",
+              "scoring_guidance": {
+                "green": "Consapevolezza specifica dei pattern di carico cognitivo, gestione proattiva del carico di lavoro, strumenti progettati per ridurre il sovraccarico da cambio",
+                "yellow": "Consapevolezza generale dei periodi di sovraccarico (cambi turno, incidenti multipli), alcune strategie di coping, nessun approccio sistematico",
+                "red": "Sovraccarico costante normalizzato, nessuna consapevolezza dei costi di cambio, mentalità 'lavora solo più duramente'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Avete notato pattern di errori che correlano con periodi di alto cambio di contesto - come durante i cambi turno o quando si gestiscono allarmi concorrenti multipli?",
+                  "evidence_type": "performance_metric"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quali strategie usano i vostri analisti per tenere traccia di dove si trovano attraverso strumenti e indagini multiple?",
+                  "evidence_type": "coping_mechanism"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Come impattano le attività di reporting di compliance o preparazione audit sul monitoraggio della sicurezza operativa del vostro team?",
+              "scoring_guidance": {
+                "green": "Sistemi integrati permettono reporting di compliance senza interrompere le operazioni, raccolta dati automatizzata",
+                "yellow": "Qualche impatto operativo durante gli audit, cambio di contesto manuale tra strumenti operativi e di compliance, gestito con pianificazione",
+                "red": "Interruzione operativa importante durante gli audit, cambio di contesto esteso, monitoraggio della sicurezza degradato"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Durante la vostra ultima preparazione audit, quanto tempo hanno trascorso gli analisti passando tra strumenti operativi e sistemi di compliance/reporting?",
+                  "evidence_type": "specific_esempio"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Sondaggio per Segnali di Allarme",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle politiche dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"I nostri analisti devono solo abituarsi a gestire strumenti multipli - fa parte del lavoro...\"",
+              "severity": "critical",
+              "score_impact": 0.17,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Non possiamo consolidare gli strumenti perché ogni fornitore di sicurezza ha la propria dashboard...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"I passaggi consegne turno sono principalmente verbali - gli analisti si informano a vicenda su cosa sta succedendo...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Abbiamo avuto incidenti in cui gli analisti entranti hanno dovuto re-indagare perché il contesto è stato perso durante il passaggio consegne...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Durante incidenti complessi, gli analisti spesso perdono traccia di quale strumento mostra quale parte dell'attacco...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"I nostri analisti usano note personali e checklist per tenere traccia attraverso tutti i diversi strumenti...\"",
+              "severity": "medium",
+              "score_impact": 0.1,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Non misuriamo realmente come la frammentazione degli strumenti influisce sul tempo di rilevamento o sulla qualità dell'indagine...\"",
+              "severity": "medium",
+              "score_impact": 0.09,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "\"Il reporting di compliance crea interruzioni significative perché gli analisti devono cambiare contesto allontanandosi dal monitoraggio...\"",
+              "severity": "medium",
+              "score_impact": 0.08,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Monitorare frequenza cambio contesto contro tassi di errore e metriche tempo di rilevamento",
+      "correlation_analysis": "Confrontare punteggi valutazione manuale con telemetria automatica (correlazione target > 0.85)",
+      "drift_detection": "Test Kolmogorov-Smirnov sui pattern di cambio, ricalibrazione se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicurare che l'impatto previsto del cambio di contesto corrisponda al degrado delle prestazioni osservato",
+      "baseline_period": "30_days",
+      "recalibration_trigger": "Drift rilevato o punteggio di validazione < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Riduzione Frequenza Cambio Contesto",
+        "formula": "Cambi medi di strumento/sistema per analista per ora durante monitoraggio di routine",
+        "baseline": "Misurare frequenza di cambio corrente su 30 giorni",
+        "target": "Riduzione 40-60% nei cambi di strumento entro 60 giorni",
+        "measurement": "Campionamento settimanale dei flussi di lavoro degli analisti con periodi di osservazione di 15 minuti"
+      },
+      {
+        "metric": "Preservazione Contesto Risposta Incidenti",
+        "formula": "Percentuale di incidenti che richiedono re-indagine a causa di contesto perso durante cambi strumento o passaggi consegne",
+        "baseline": "Revisione post-mortem incidenti degli ultimi 90 giorni",
+        "target": "Riduzione 75% negli incidenti di perdita contesto entro 90 giorni",
+        "measurement": "Revisione mensile dei post-mortem incidenti tracciando specificamente ritardi o errori correlati al contesto"
+      },
+      {
+        "metric": "Valutazione Carico Cognitivo Analista",
+        "formula": "Punteggi fatica cognitiva post-turno (scala 1-10) e tassi di errore durante ultima ora dei turni",
+        "baseline": "Survey iniziale e analisi tasso di errore",
+        "target": "Riduzione 30% nella fatica cognitiva riportata e riduzione 50% nei tassi di errore fine turno",
+        "measurement": "Survey anonime settimanali e analisi trimestrale dei pattern di errore nel log di sicurezza"
+      },
+      {
+        "metric": "Tempo Medio di Rilevamento Durante Alto Carico",
+        "formula": "Tempo di rilevamento durante periodi di alto cambio contesto vs. periodi baseline",
+        "baseline": "Confrontare MTTD durante periodi alto cambio (>12 cambi/ora) con periodi basso cambio",
+        "target": "Eliminare degrado MTTD durante periodi di alto cambio contesto",
+        "measurement": "Tracciamento automatico del tempo di rilevamento correlato con frequenza di cambio"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Consolidamento Security Information and Event Management (SIEM)",
+        "description": "Distribuire o aggiornare la piattaforma SIEM per aggregare allarmi e dati da tutti gli strumenti di sicurezza in un'interfaccia unica",
+        "implementation": "Configurare dashboard personalizzate che presentano dati di sicurezza correlati senza richiedere cambi di contesto tra strumenti. Implementare correlazione automatica degli allarmi per ridurre falsi positivi che innescano cambi di contesto non necessari. Integrare strumenti di sicurezza esistenti tramite API e inoltro log. Progettare viste basate su ruoli che consolidano informazioni rilevanti per funzioni di analista specifiche.",
+        "technical_controls": "Piattaforma SIEM con capacità di integrazione completa, builder di dashboard personalizzate, motore di correlazione allarmi, ricerca unificata su tutte le fonti dati, preservazione del contesto durante indagini drill-down",
+        "roi": "380% in media entro 18 mesi attraverso MTTD ridotto e guadagni di efficienza degli analisti",
+        "effort": "high",
+        "timeline": "30-60 giorni per il deployment iniziale, 60-90 giorni per integrazione completa"
+      },
+      {
+        "id": "sol_2",
+        "title": "Implementazione Security Orchestration, Automation, and Response (SOAR)",
+        "description": "Distribuire piattaforma SOAR per automatizzare compiti di routine di cambio contesto e creare flussi di lavoro unificati di risposta agli incidenti",
+        "implementation": "Configurare playbook automatizzati che eliminano la necessità per gli analisti di cambiare manualmente tra strumenti durante tipi di incidenti comuni. Implementare sistema di gestione casi che mantiene il contesto attraverso i confini degli strumenti e le fasi di indagine. Automatizzare la raccolta dati da strumenti di sicurezza multipli in un workspace di indagine unificato. Creare automazione del flusso di lavoro per escalation, documentazione e correlazione tra strumenti.",
+        "technical_controls": "Piattaforma SOAR con automazione playbook, gestione casi, orchestrazione multi-strumento, raccolta automatica evidenze, motore di workflow context-aware",
+        "roi": "420% in media entro 12 mesi attraverso automazione di flussi di lavoro ad alto contesto",
+        "effort": "high",
+        "timeline": "60-90 giorni inclusi progettazione workflow e integrazione"
+      },
+      {
+        "id": "sol_3",
+        "title": "Progettazione Dashboard di Sicurezza Unificata",
+        "description": "Creare dashboard di sicurezza basate su ruoli che consolidano informazioni da strumenti multipli in schermate singole ottimizzate per funzioni di analista specifiche",
+        "implementation": "Progettare dashboard che aggregano dati da tutti gli strumenti di sicurezza in viste unificate. Implementare progettazione interfaccia che preserva il contesto mantenendo consapevolezza situazionale quando si passa tra compiti correlati. Distribuire monitor secondari con informazioni contestuali persistenti per ridurre il sovraccarico cognitivo da cambio. Creare layout standardizzati che riducono il carico cognitivo quando gli analisti devono passare tra diversi tipi di indagine.",
+        "technical_controls": "Piattaforma dashboard con integrazione multi-sorgente, configurazione vista basata su ruoli, display di contesto persistente, ottimizzazione multi-monitor, linguaggio di design visuale standardizzato",
+        "roi": "290% in media entro 12 mesi attraverso efficienza migliorata degli analisti",
+        "effort": "medium",
+        "timeline": "30-45 giorni inclusi progettazione dashboard e acquisizione hardware display"
+      },
+      {
+        "id": "sol_4",
+        "title": "Standardizzazione Protocollo Passaggio Consegne Turno",
+        "description": "Sviluppare template di documentazione di passaggio consegne strutturati che catturano il contesto da tutti gli strumenti di sicurezza attivi e incidenti",
+        "implementation": "Implementare sistema digitale di passaggio consegne che popola automaticamente lo stato corrente dagli strumenti di sicurezza integrati. Creare periodi di sovrapposizione di 15 minuti tra turni con briefing obbligatori di trasferimento contesto usando checklist standardizzate. Progettare template di passaggio consegne che catturano: indagini attive con stati strumenti, priorità di monitoraggio in corso, escalation pendenti, cambiamenti di pattern recenti e osservazioni degli analisti. Includere pull di stato automatici da SIEM, sistema ticketing e strumenti di monitoraggio.",
+        "technical_controls": "Piattaforma digitale di passaggio consegne con aggregazione automatica stato, template strutturati, enforcement checklist, schedulazione sovrapposizione turni, archivio storico passaggi consegne",
+        "roi": "340% in media entro 6 mesi attraverso incidenti di perdita contesto ridotti",
+        "effort": "low",
+        "timeline": "15-30 giorni per documentazione procedure e breve programma di formazione"
+      },
+      {
+        "id": "sol_5",
+        "title": "Programma di Formazione Incrociata e Rotazione Contesto",
+        "description": "Implementare programma di formazione incrociata strutturato che costruisce competenza degli analisti attraverso domini di sicurezza multipli per ridurre il carico cognitivo da cambio di contesto",
+        "implementation": "Creare ruoli di 'specialista di contesto' dove gli analisti sviluppano competenza profonda nei punti di integrazione degli strumenti e correlazione cross-dominio. Stabilire schemi di rotazione che minimizzano il numero di cambi di contesto che i singoli analisti sperimentano durante turni singoli. Assegnare analisti ad aree di focus (sicurezza rete, endpoint, email) con percorsi di escalation documentati quando è necessaria competenza cross-dominio. Fornire formazione avanzata nella gestione del carico cognitivo e tecniche efficienti di cambio contesto.",
+        "technical_controls": "Sistema inventario competenze, piattaforma di schedulazione rotazione, documentazione workflow di escalation, curriculum formazione, valutazioni di competenza",
+        "roi": "250% in media entro 12 mesi attraverso capacità migliorata degli analisti ed errori ridotti",
+        "effort": "medium",
+        "timeline": "45-60 giorni per sviluppo programma formazione e sistema di schedulazione"
+      },
+      {
+        "id": "sol_6",
+        "title": "Sistema di Gestione Contesto Risposta Incidenti",
+        "description": "Distribuire piattaforma di gestione incidenti che mantiene automaticamente il contesto attraverso tutti gli strumenti di sicurezza e stakeholder durante la risposta agli incidenti",
+        "implementation": "Implementare sistema automatico di documentazione che cattura le azioni intraprese attraverso strumenti multipli senza cambio contesto manuale. Creare flussi di lavoro di escalation che preservano il contesto tecnico quando gli incidenti si muovono tra livelli organizzativi. Integrare la piattaforma incidenti con tutti gli strumenti di sicurezza per fornire vista unificata dello stato dell'indagine, evidenze raccolte, azioni intraprese e stato corrente. Implementare generazione automatica di timeline che correla eventi attraverso strumenti multipli.",
+        "technical_controls": "Piattaforma di risposta incidenti con integrazione multi-strumento, documentazione automatica, escalation context-aware, correlazione timeline, gestione evidenze, comunicazione stakeholder con contesto tecnico preservato",
+        "roi": "360% in media entro 12 mesi attraverso qualità migliorata della risposta agli incidenti",
+        "effort": "high",
+        "timeline": "45-75 giorni inclusi deployment piattaforma e integrazione workflow"
+      }
+    ],
+    "prioritization": {
+      "critical_first": [
+        "sol_1",
+        "sol_4"
+      ],
+      "high_value": [
+        "sol_2",
+        "sol_6"
+      ],
+      "efficiency_gains": [
+        "sol_3"
+      ],
+      "capability_building": [
+        "sol_5"
+      ]
+    }
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Sfruttamento Fatica da Allarmi Durante Frammentazione Strumenti",
+      "description": "Gli attaccanti generano deliberatamente allarmi ad alto volume e bassa priorità attraverso strumenti di sicurezza multipli per sopraffare gli analisti con cambi di contesto. Mentre gli analisti sono cognitivamente sovraccarichi passando tra dashboard di allarmi, monitor di rete e sistemi di sicurezza email, l'attacco reale si lancia attraverso un quarto vettore che riceve attenzione ridotta durante il periodo di sovraccarico cognitivo.",
+      "attack_vector": "Inondazione di allarmi multi-strumento combinata con attacco mirato durante finestra di vulnerabilità cognitiva dell'analista",
+      "psychological_mechanism": "Il sovraccarico cognitivo da cambio di contesto riduce la capacità mentale disponibile per il rilevamento delle minacce",
+      "historical_esempio": "Attacco ransomware Norsk Hydro 2019 - gli attaccanti hanno inondato gli analisti SOC con falsi positivi attraverso strumenti multipli mentre il malware reale si diffondeva attraverso un sistema di backup meno monitorato",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": [
+        "N_switches > 15/hour",
+        "alert_volume_spike_across_multiple_tools",
+        "detection_time_degradation",
+        "analyst_error_rate_increase"
+      ]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Temporizzazione Attacco Durante Cambio Turno",
+      "description": "I gruppi Advanced Persistent Threat (APT) studiano i pattern organizzativi e temporizzano i loro attacchi primari durante i cambi turno quando le vulnerabilità da cambio di contesto raggiungono il picco. Durante i passaggi consegne, il contesto critico di sicurezza viene perso tra analisti uscenti ed entranti, creando una finestra di 15-30 minuti di capacità di rilevamento ridotta dove gli attaccanti possono stabilire persistenza o esfiltrazione dati.",
+      "attack_vector": "Ricognizione dei pattern di turno seguita da attacco temporizzato durante finestra di vulnerabilità cognitiva",
+      "psychological_mechanism": "Residuo di attenzione e trasferimento di contesto incompleto durante passaggi consegne turno crea punti ciechi nel rilevamento",
+      "historical_esempio": "Violazione SolarWinds 2020 - gli investigatori hanno trovato evidenza che gli attaccanti hanno temporizzato specificamente certe attività durante cambi turno SOC noti per sfruttare la capacità di rilevamento ridotta",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": [
+        "attack_activity_during_shift_changes",
+        "handoff_period_correlation",
+        "context_loss_in_handoff_documentazione",
+        "detection_delay_patterns"
+      ]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Confusione Campagna Multi-Vettore",
+      "description": "Attaccanti sofisticati lanciano attacchi simultanei attraverso vettori email, rete e applicazioni, forzando i team di sicurezza in rapidi cambi di contesto che degradano la qualità della risposta su tutti i fronti. Mentre gli analisti lottano per mantenere consapevolezza situazionale attraverso set di strumenti multipli e domini di sicurezza, gli attaccanti raggiungono persistenza in un vettore mentre il team è distratto a gestire gli altri.",
+      "attack_vector": "Attacco multi-dominio coordinato progettato per sopraffare la capacità cognitiva del team di sicurezza",
+      "psychological_mechanism": "Overflow della memoria di lavoro e residuo di attenzione prevengono la correlazione di attacchi correlati attraverso domini",
+      "historical_esempio": "Violazioni settore healthcare 2021 - gli attaccanti hanno mantenuto persistenza email mentre i team IT si concentravano sul contenimento delle intrusioni di rete, con il cambio di contesto che ha impedito ai team di riconoscere la natura coordinata dell'attacco",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": [
+        "simultaneous_alerts_across_domains",
+        "N_switches > 20/hour",
+        "failed_cross_domain_correlation",
+        "multi_tool_investigation_delays"
+      ]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Escalation Privilegi Confusione Strumenti",
+      "description": "Gli attaccanti sfruttano la conoscenza del toolset di sicurezza frammentato di un'organizzazione per creare attacchi che richiedono contesti di strumenti multipli per il rilevamento corretto. Un attacco potrebbe apparire come normale attività email nello strumento di sicurezza email, traffico di rete di routine nel monitor di rete e comportamento applicativo accettabile nel sistema di protezione endpoint - diventando visibile come malevolo solo quando visualizzato attraverso tutti e tre i contesti simultaneamente. Il sovraccarico cognitivo di mantenere questa consapevolezza tri-contesto crea fallimenti di rilevamento sistematici.",
+      "attack_vector": "Attacco multi-stage progettato per sfruttare la frammentazione degli strumenti e i costi di cambio contesto",
+      "psychological_mechanism": "Il carico cognitivo dal cambio di contesto previene la valutazione olistica delle minacce attraverso il panorama frammentato degli strumenti",
+      "historical_esempio": "Violazione Target 2013 - l'attacco appariva benigno nei singoli strumenti di sicurezza (sistema POS, monitoraggio rete, rilevamento malware) ma era chiaramente malevolo quando visualizzato olisticamente, il che richiedeva un cambio di contesto esteso che gli analisti lottavano per eseguire",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": [
+        "attack_spans_multiple_tool_contexts",
+        "correlation_failure_across_tools",
+        "context_switching_during_investigation",
+        "delayed_holistic_threat_recognition"
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-14",
+    "translator": "Claude (Anthropic)",
+    "research_basis": [
+      "Miller, G. A. (1956). The magical number seven, plus or minus two: Some limits on our capacity for processing information",
+      "Leroy, S. (2009). Why is it so hard to do my work? The challenge of attention residue when switching between work tasks",
+      "Rubinstein, J. S., Meyer, D. E., & Evans, J. E. (2001). Executive control of cognitive processes in task switching",
+      "Sweller, J. (1988). Cognitive load during problem solving: Effects on learning",
+      "Ophir, E., Nass, C., & Wagner, A. D. (2009). Cognitive control in media multitaskers"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

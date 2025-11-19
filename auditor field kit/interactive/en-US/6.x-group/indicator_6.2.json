@@ -1,0 +1,937 @@
+{
+  "indicator": "6.2",
+  "title": "INDICATOR 6.2 FIELD KIT",
+  "subtitle": "Risky Shift Phenomena",
+  "category": "Group Dynamic Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 6.x",
+
+  "description": {
+    "short": "Measures tendency for groups to make riskier security decisions than individuals would make alone, driven by diffused responsibility and social pressure to appear bold",
+    "context": "Risky shift phenomena occurs when groups consistently make riskier decisions than individuals would make alone, driven by diffused responsibility and social pressure to appear bold or innovative. In cybersecurity contexts, this creates vulnerability when security committees, incident response teams, or cross-functional groups systematically underestimate risks or approve dangerous shortcuts that individual team members would reject. Organizations with heavy committee-based decision making show measurably higher rates of security incidents stemming from overly aggressive risk acceptance.",
+    "impact": "Organizations with high risky shift vulnerability experience security incidents from overly aggressive group decisions, implementation failures from underestimated risks, emergency bypasses that become permanent vulnerabilities, and vendor/technology selections with inadequate security controls. Groups approve risky shortcuts individuals would reject.",
+    "psychological_basis": "Stoner (1961) original discovery showing groups consistently chose riskier decisions than individuals. Myers & Lamm (1976) meta-analysis confirming effect across 316 studies with average effect size d=0.7. fMRI studies show reduced anterior cingulate cortex (risk monitoring) activation during group decisions with increased ventral striatum (reward seeking) activation when group members express risk tolerance."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Resilient",
+        "description": "Most security decisions made individually or with clear individual accountability; individual risk assessments consistently collected before group decisions; group decisions rarely exceed initial individual risk tolerance; strong culture of raising security concerns in groups.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Developing",
+        "description": "Mixed individual/group decision-making with some accountability gaps; individual input sometimes collected; occasional instances of groups accepting higher risk than initially planned; security concerns raised but sometimes overruled by group consensus.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Critical",
+        "description": "Predominantly committee/group-based security decision making; groups discuss risks collectively without individual input; regular pattern of groups escalating to riskier positions during meetings; group dynamics discourage raising security concerns.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_decision_structure": 0.14,
+      "q2_individual_risk_assessment": 0.16,
+      "q3_group_risk_escalation": 0.15,
+      "q4_dissent_handling": 0.13,
+      "q5_emergency_patterns": 0.14,
+      "q6_outcome_tracking": 0.12,
+      "q7_accountability": 0.16
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_6.2(t) = w1·R_6.2(t) + w2·A_6.2(t) + w3·B_6.2(t)",
+      "components": {
+        "risky_shift_index": {
+          "formula": "RSI(t) = [RT_group(t) - μ_individual] / σ_individual",
+          "description": "Standardized difference between group and individual risk tolerance",
+          "variables": {
+            "RT_group": "Observed group risk tolerance from decision analysis",
+            "μ_individual": "Mean individual risk tolerance: (1/n)Σ RT_i",
+            "σ_individual": "Standard deviation of individual risk assessments"
+          },
+          "interpretation": "RSI > 0.5 indicates significant risky shift; RSI > 1.0 indicates dangerous group polarization"
+        },
+        "rule_based": {
+          "formula": "R_6.2(t) = 1 if RSI(t) > θ_shift AND n_group ≥ 4, else 0",
+          "description": "Binary detection based on risky shift exceeding threshold in group settings",
+          "threshold": {
+            "RSI_shift": 0.5,
+            "n_group_minimum": 4
+          }
+        },
+        "polarization_measure": {
+          "formula": "P_polar(t) = (1/n)Σ ||a_i(t) - a_i(0)||₂",
+          "description": "Average magnitude of attitude change from pre-discussion to post-discussion",
+          "interpretation": "Higher values indicate stronger group polarization effect"
+        },
+        "group_risk_function": {
+          "formula": "RT_group(t) = f(discussion_duration, consensus_speed, polarization_markers)",
+          "components": {
+            "discussion_duration": "Meeting duration in minutes",
+            "consensus_speed": "Rate of opinion convergence",
+            "polarization_markers": "Linguistic indicators of escalating risk acceptance"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "P(risky_shift|evidence) = [P(evidence|risky_shift) × P(risky_shift)] / P(evidence)",
+          "factors": [
+            "group_size_4_plus",
+            "no_individual_assessments",
+            "risk_escalation_during_meeting",
+            "diffused_accountability",
+            "competitive_dynamics_present"
+          ],
+          "priors": {
+            "P_risky_shift": 0.30,
+            "P_healthy_group": 0.70
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.30,
+        "w2_anomaly": 0.40,
+        "w3_bayesian": 0.30
+      },
+      "temporal_decay": {
+        "formula": "T_6.2(t) = α·D_6.2(t) + (1-α)·T_6.2(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 5400,
+        "description": "Exponential smoothing with 90-minute time constant for group decision effects"
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "decision_process_documentation",
+        "individual_risk_assessment_records",
+        "meeting_minutes_analysis",
+        "accountability_mapping_review"
+      ],
+      "evidence_required": [
+        "group_decision_examples_last_6_months",
+        "individual_risk_assessments_pre_meeting",
+        "outcome_tracking_data",
+        "emergency_decision_documentation"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "decision_tracking_system",
+          "fields": ["decision_id", "participants", "individual_risk_scores", "final_group_risk_score", "timestamp"],
+          "retention": "365_days"
+        },
+        {
+          "source": "meeting_analytics_platform",
+          "fields": ["meeting_id", "duration", "participants", "risk_discussion_segments", "consensus_timeline"],
+          "retention": "180_days"
+        },
+        {
+          "source": "implementation_tracking",
+          "fields": ["decision_id", "planned_outcomes", "actual_outcomes", "variance", "incident_correlation"],
+          "retention": "730_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "collaboration_platform_logs",
+          "fields": ["message_content", "risk_language_markers", "competitive_dynamics_indicators"],
+          "retention": "90_days"
+        },
+        {
+          "source": "incident_response_logs",
+          "fields": ["incident_id", "decision_origin", "group_vs_individual", "risk_assessment_quality"],
+          "retention": "730_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "RSI": {
+          "calculation": "Difference between group and individual risk tolerance, normalized",
+          "query": "SELECT (AVG(group_risk_score) - AVG(individual_risk_score)) / STDDEV(individual_risk_score) FROM decisions WHERE participants >= 4 AND time_window='30d'"
+        },
+        "P_polar": {
+          "calculation": "Average attitude change magnitude during group discussions",
+          "query": "SELECT AVG(SQRT(POW(post_risk - pre_risk, 2))) FROM participant_attitudes WHERE meeting_type='security_decision' AND time_window='30d'"
+        },
+        "group_size_correlation": {
+          "calculation": "Correlation between group size and risk acceptance",
+          "query": "SELECT CORR(participant_count, risk_score) FROM decisions WHERE time_window='90d'"
+        }
+      }
+    },
+    "integration_apis": {
+      "decision_platforms": "Jira/Asana API - Decision Tracking, Individual Input",
+      "meeting_systems": "Zoom/Teams API - Meeting Analytics, Duration, Participation",
+      "project_management": "Monday/Confluence API - Implementation Tracking, Outcome Measurement",
+      "incident_management": "ServiceNow/PagerDuty API - Incident Attribution, Decision Analysis"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "6.1",
+        "name": "Groupthink Security Blind Spots",
+        "probability": 0.75,
+        "factor": 1.35,
+        "description": "Groupthink suppresses dissent enabling risky shift to proceed unchallenged",
+        "formula": "P(6.2|6.1) = 0.75"
+      },
+      {
+        "indicator": "2.2",
+        "name": "Time Pressure Performance Degradation",
+        "probability": 0.70,
+        "factor": 1.40,
+        "description": "Time pressure accelerates group risk acceptance through urgency bias",
+        "formula": "P(6.2|2.2) = 0.70"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.65,
+        "factor": 1.25,
+        "description": "Stress amplifies group polarization and competitive risk-taking dynamics",
+        "formula": "P(6.2|7.1) = 0.65"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.60,
+        "factor": 1.20,
+        "description": "Cognitive depletion reduces individual capacity to resist group risk escalation",
+        "formula": "P(6.2|5.2) = 0.60"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "6.3",
+        "name": "Diffusion of Responsibility",
+        "probability": 0.80,
+        "factor": 1.50,
+        "description": "Risky shift combined with diffused responsibility creates extreme risk acceptance"
+      },
+      {
+        "indicator": "2.3",
+        "name": "Deadline-Driven Risk Acceptance",
+        "probability": 0.65,
+        "factor": 1.30,
+        "description": "Group risk escalation makes deadline-driven bypass decisions more likely"
+      },
+      {
+        "indicator": "6.4",
+        "name": "Social Loafing in Security Tasks",
+        "probability": 0.55,
+        "factor": 1.15,
+        "description": "Risky shift reduces individual effort investment in risk assessment"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["6.2", "6.1", "2.2"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.6,
+      "threshold_critical": 3.4,
+      "description": "Perfect storm: Risky shift + Groupthink + Time pressure = dangerously aggressive security decisions without adequate dissent or analysis",
+      "real_world_example": "Change advisory boards during incident response approving emergency bypasses that become permanent vulnerabilities"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["6.1", "2.2", "7.1", "5.2"],
+      "child_nodes": ["6.3", "2.3", "6.4"],
+      "conditional_probability_table": {
+        "P_6.2_base": 0.30,
+        "P_6.2_given_groupthink": 0.62,
+        "P_6.2_given_time_pressure": 0.58,
+        "P_6.2_given_stress": 0.52,
+        "P_6.2_given_all": 0.85
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_decision_structure",
+          "weight": 0.14,
+          "title": "Primary Security Decision-Making Structure",
+          "question": "How are your major cybersecurity decisions typically made?",
+          "options": [
+            {
+              "value": "individual",
+              "score": 0,
+              "label": "Individual security professionals make most decisions with clear personal accountability"
+            },
+            {
+              "value": "small_team",
+              "score": 0.3,
+              "label": "Small team discussions (2-3 people) with maintained individual accountability"
+            },
+            {
+              "value": "mixed",
+              "score": 0.6,
+              "label": "Mixed approach with some committee decisions and some individual decisions"
+            },
+            {
+              "value": "committee",
+              "score": 1,
+              "label": "Committee or group consensus (4+ people) for most security decisions"
+            }
+          ],
+          "evidence_required": "Recent significant security decision examples with participant documentation",
+          "soc_mapping": "group_size from decision tracking system"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_individual_risk_assessment",
+          "weight": 0.16,
+          "title": "Pre-Meeting Individual Risk Assessment Collection",
+          "question": "When your organization makes group security decisions, how often do you collect individual risk assessments before the group meets?",
+          "options": [
+            {
+              "value": "always",
+              "score": 0,
+              "label": "Always - individual assessments are documented before group discussion for all major decisions"
+            },
+            {
+              "value": "usually",
+              "score": 0.4,
+              "label": "Usually - most group decisions include documented individual input first"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.7,
+              "label": "Sometimes - only for the most critical decisions"
+            },
+            {
+              "value": "rarely",
+              "score": 1,
+              "label": "Rarely or never - groups discuss risks together from the start without individual documentation"
+            }
+          ],
+          "evidence_required": "Individual risk assessment documentation, pre-meeting submission records",
+          "soc_mapping": "individual_assessment_rate from decision platform"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_group_risk_escalation",
+          "weight": 0.15,
+          "title": "Frequency of Group Risk Escalation",
+          "question": "How often do your security teams end up approving riskier approaches during group meetings than originally planned?",
+          "options": [
+            {
+              "value": "never",
+              "score": 0,
+              "label": "Never - final decisions align with initial conservative positions"
+            },
+            {
+              "value": "rarely",
+              "score": 0.4,
+              "label": "Rarely - occasionally the group agrees to slightly more risk"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.7,
+              "label": "Sometimes - groups often become more comfortable with risk during discussion"
+            },
+            {
+              "value": "frequently",
+              "score": 1,
+              "label": "Frequently - meetings regularly result in much riskier decisions than initially considered"
+            }
+          ],
+          "evidence_required": "Meeting minutes showing risk escalation, examples of decisions becoming riskier",
+          "soc_mapping": "RSI (Risky Shift Index) from meeting analytics"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_dissent_handling",
+          "weight": 0.13,
+          "title": "Handling of Security Concerns in Group Meetings",
+          "question": "What happens when someone raises security concerns during group decision-making meetings?",
+          "options": [
+            {
+              "value": "thoroughly_addressed",
+              "score": 0,
+              "label": "Concerns are thoroughly documented and addressed before proceeding with decision"
+            },
+            {
+              "value": "discussed_overruled",
+              "score": 0.5,
+              "label": "Concerns are discussed but often overruled by group consensus"
+            },
+            {
+              "value": "hesitation",
+              "score": 0.8,
+              "label": "People hesitate to raise concerns that might slow down the group"
+            },
+            {
+              "value": "discouraged",
+              "score": 1,
+              "label": "Concerns are rarely raised because the group dynamic discourages them"
+            }
+          ],
+          "evidence_required": "Examples of concerns raised in meetings, meeting minutes showing dissent handling",
+          "soc_mapping": "dissent_suppression_rate from meeting analysis"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_emergency_patterns",
+          "weight": 0.14,
+          "title": "Emergency Decision-Making Risk Patterns",
+          "question": "During security incidents or crises, how does your group decision-making change?",
+          "options": [
+            {
+              "value": "more_conservative",
+              "score": 0,
+              "label": "Groups become more conservative and systematic during emergencies"
+            },
+            {
+              "value": "unchanged",
+              "score": 0.3,
+              "label": "Decision processes remain the same regardless of pressure"
+            },
+            {
+              "value": "more_risky",
+              "score": 0.7,
+              "label": "Groups become more willing to take risks to resolve issues quickly"
+            },
+            {
+              "value": "bypass_controls",
+              "score": 1,
+              "label": "Emergency situations lead to bypassing normal security controls"
+            }
+          ],
+          "evidence_required": "Recent incident response documentation, emergency decision examples",
+          "soc_mapping": "emergency_risk_escalation from incident logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_outcome_tracking",
+          "weight": 0.12,
+          "title": "Group Decision Outcome Tracking",
+          "question": "How do you track whether group security decisions turn out as expected?",
+          "options": [
+            {
+              "value": "systematic",
+              "score": 0,
+              "label": "Systematic follow-up on all group decisions with documented outcomes and variance analysis"
+            },
+            {
+              "value": "regular_major",
+              "score": 0.4,
+              "label": "Regular reviews of major group decisions and their results"
+            },
+            {
+              "value": "informal",
+              "score": 0.7,
+              "label": "Informal tracking when problems arise"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No systematic tracking of group decision outcomes"
+            }
+          ],
+          "evidence_required": "Decision outcome tracking system, quarterly review documentation",
+          "soc_mapping": "outcome_tracking_completeness from project management"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_accountability",
+          "weight": 0.16,
+          "title": "Individual Accountability Within Group Decisions",
+          "question": "When group security decisions lead to problems, how is accountability typically handled?",
+          "options": [
+            {
+              "value": "clear_individual",
+              "score": 0,
+              "label": "Clear individual accountability within group decisions with specific role assignments"
+            },
+            {
+              "value": "shared_specific",
+              "score": 0.4,
+              "label": "Shared responsibility with specific role assignments documented"
+            },
+            {
+              "value": "general_group",
+              "score": 0.7,
+              "label": "General group accountability without individual attribution"
+            },
+            {
+              "value": "diffused",
+              "score": 1,
+              "label": "Diffused responsibility makes it unclear who is accountable for outcomes"
+            }
+          ],
+          "evidence_required": "Accountability documentation examples, post-incident responsibility assignment",
+          "soc_mapping": "accountability_clarity_score from decision tracking"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Opening Questions",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Walk me through how you made your last major security decision. Who was involved, and how did the group's final decision compare to what individuals initially thought?",
+              "scoring_guidance": {
+                "green": "Individual risk assessments collected before meeting; final decision within range of individual preferences; clear documentation",
+                "yellow": "Some individual input but informal; final decision somewhat riskier than initial positions",
+                "red": "No individual baseline; group discussion led to significantly riskier outcome than expected; diffused accountability"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Can you show me the individual risk assessments that were submitted before the group meeting?",
+                  "evidence_type": "documentation_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Did anyone in the group express concerns that the final decision was riskier than they were comfortable with?",
+                  "evidence_type": "dissent_expression"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Tell me about a time when your security team had a group discussion about risks and the group ended up more comfortable with risk than individuals were at the start.",
+              "scoring_guidance": {
+                "green": "Cannot identify examples; group decisions stay within individual risk tolerance",
+                "yellow": "Occasional examples with moderate risk escalation; some awareness of phenomenon",
+                "red": "Regular pattern of risk escalation during meetings; seen as normal group dynamic; no mitigation"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What happened during the discussion that made the group more comfortable with risk?",
+                  "evidence_type": "risk_escalation_mechanism"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How did that decision turn out compared to what the group expected?",
+                  "evidence_type": "outcome_comparison"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "During your last security incident or crisis, describe how your team made decisions under pressure. Did you bypass any normal security controls?",
+              "scoring_guidance": {
+                "green": "Maintained systematic risk assessment despite time pressure; pre-approved emergency playbooks used",
+                "yellow": "Some accelerated decisions but documented; temporary bypasses with follow-up",
+                "red": "Significant bypasses approved by group; decisions much riskier than normal; many bypasses became permanent"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "How many of those emergency bypasses have been properly reversed?",
+                  "evidence_type": "bypass_remediation_status"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Did the group's willingness to accept risk increase as the incident progressed?",
+                  "evidence_type": "temporal_risk_escalation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Accountability and Tracking",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "How do you track whether group security decisions turn out as expected? Show me an example of comparing predicted vs. actual outcomes.",
+              "scoring_guidance": {
+                "green": "Systematic tracking with quarterly reviews; dashboard showing accuracy; feedback loop to improve decisions",
+                "yellow": "Informal tracking of major decisions; some outcome comparison but not systematic",
+                "red": "No systematic tracking; outcomes only reviewed when problems occur; no learning loop"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Can you show me your decision outcome tracking system or reports?",
+                  "evidence_type": "tracking_system_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What percentage of group security decisions achieve their expected outcomes?",
+                  "evidence_type": "success_rate_metric"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Describe a group security decision that didn't work out as planned. How was accountability handled?",
+              "scoring_guidance": {
+                "green": "Clear individual accountability despite group decision; specific responsibility assignments; learning review",
+                "yellow": "Shared accountability with some clarity; general team responsibility",
+                "red": "Diffused responsibility; unclear who was accountable; no individual consequences; blamed external factors"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Was any individual held accountable for the outcome, or was it treated as 'the group decided'?",
+                  "evidence_type": "accountability_attribution"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Show me the accountability mapping documentation for that decision.",
+                  "evidence_type": "accountability_documentation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Group Dynamics and Cultural Factors",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "How often do people in your security group meetings compete to appear bold, innovative, or less risk-averse than others?",
+              "scoring_guidance": {
+                "green": "No competitive dynamics around risk-taking; balanced perspectives valued",
+                "yellow": "Occasional competitive dynamics but moderated; some awareness of effect",
+                "red": "Clear competitive dynamics; conservative positions seen as timid; social pressure toward risk acceptance"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What happens to someone who takes a conservative position when others are advocating for riskier approaches?",
+                  "evidence_type": "conservative_position_consequence"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Give me an example of someone being praised or recognized for taking bold risks.",
+                  "evidence_type": "risk_taking_reward"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "When someone raises security concerns in a group meeting, what typically happens to those concerns?",
+              "scoring_guidance": {
+                "green": "Concerns thoroughly documented and addressed before proceeding; formal response process",
+                "yellow": "Concerns discussed but sometimes overruled; some documentation",
+                "red": "Concerns rarely raised or quickly dismissed; group pressure discourages dissent; no formal tracking"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show me meeting minutes documenting how concerns were addressed before a risky decision.",
+                  "evidence_type": "concern_documentation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Has anyone been criticized or marginalized for slowing down a group decision by raising concerns?",
+                  "evidence_type": "dissenter_treatment"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"We make better decisions as a group - we're more willing to take calculated risks together...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"In emergencies, the group decides to do whatever it takes to fix the problem...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"We don't track individual positions before meetings - that would slow us down...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Nobody is individually accountable - we're a team and we all agreed...\"",
+              "severity": "critical",
+              "score_impact": 0.17,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"People who raise too many concerns aren't being team players...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Our committee approves innovative solutions - we're not risk-averse like individual architects...\"",
+              "severity": "medium",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"We don't track whether group decisions work out - we trust our collaborative process...\"",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Conduct controlled group vs. individual decision experiments quarterly",
+      "correlation_analysis": "Compare RSI scores with actual incident outcomes (target correlation > 0.75)",
+      "drift_detection": "Monitor baseline shift in group risk tolerance using Kolmogorov-Smirnov test"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted risky shift magnitude matches observed decision outcome variance",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.70"
+    },
+    "success_metrics": [
+      {
+        "metric": "Risk Calibration Accuracy",
+        "formula": "Alignment between initial individual risk assessments and final group decisions",
+        "baseline": "measure current divergence",
+        "target": "90% of group decisions within individual risk tolerance range within 90 days",
+        "measurement": "monthly decision tracking with quarterly trends"
+      },
+      {
+        "metric": "Implementation Success Rate",
+        "formula": "Success rate of group-approved vs. individual-approved security initiatives",
+        "baseline": "analyze last 12 months",
+        "target": "eliminate risky shift penalty - achieve parity within 180 days",
+        "measurement": "quarterly project outcome analysis"
+      },
+      {
+        "metric": "Incident Attribution Reduction",
+        "formula": "Security incidents attributable to group decision-making failures",
+        "baseline": "current group decision incident rate",
+        "target": "reduce by 60% within 12 months",
+        "measurement": "monthly incident root cause analysis"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Pre-Meeting Individual Risk Documentation",
+        "description": "Implement mandatory individual risk assessment completion before group security decision meetings",
+        "implementation": "Each participant documents risk assessment, concerns, and recommendations 24 hours before meeting. Meeting facilitators review individual assessments and ensure all concerns are addressed during discussion. Create template for standardized individual risk documentation.",
+        "technical_controls": "Decision tracking platform with pre-meeting submission requirements, automated reminders, compliance dashboard",
+        "roi": "340% average within 12 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Structured Devil's Advocate Process",
+        "description": "Assign rotating risk advocate roles to present worst-case scenarios and challenge group consensus",
+        "implementation": "Create formal protocols protecting risk advocates from group pressure. Rotate role quarterly. Require documented responses to all risk concerns before finalizing decisions. Provide training on effective risk advocacy techniques.",
+        "technical_controls": "Role rotation tracking, risk concern documentation system, response requirement enforcement",
+        "roi": "290% average within 18 months",
+        "effort": "low",
+        "timeline": "30 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Risk Decision Cooling-Off Periods",
+        "description": "Mandate 48-hour cooling-off periods for high-risk group decisions before implementation",
+        "implementation": "Define risk thresholds triggering mandatory delays. During cooling-off period, any team member can request additional review. Create escalation process for decisions exceeding risk thresholds requiring external validation.",
+        "technical_controls": "Automated delay enforcement, escalation request tracking, risk threshold monitoring",
+        "roi": "310% average within 12 months",
+        "effort": "medium",
+        "timeline": "60 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Group Decision Outcome Tracking System",
+        "description": "Deploy systematic tracking of group security decisions with outcome comparison",
+        "implementation": "Create database tracking predicted vs. actual outcomes for all group decisions. Generate quarterly reviews comparing risk assessment accuracy. Implement dashboards showing patterns and success rates. Use data to calibrate future group decision processes.",
+        "technical_controls": "Decision tracking database, automated outcome monitoring, variance analysis reports, trend dashboards",
+        "roi": "260% average within 18 months",
+        "effort": "high",
+        "timeline": "90 days"
+      },
+      {
+        "id": "sol_5",
+        "title": "Individual Accountability Mapping",
+        "description": "Require specific individual accountability assignments for each component of group decisions",
+        "implementation": "Create documentation showing individual responsibility for each implementation aspect and monitoring component. Implement performance metrics tracking individual contributions to group decision outcomes. Ensure accountability follows through implementation.",
+        "technical_controls": "Accountability mapping templates, responsibility tracking system, performance metric integration",
+        "roi": "280% average within 12 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Emergency Decision Risk Protocols",
+        "description": "Establish tiered emergency decision protocols maintaining risk assessment rigor under pressure",
+        "implementation": "Create pre-approved emergency response playbooks preventing ad-hoc risk acceptance. Define tiered protocols based on incident severity. Implement mandatory post-incident review of all emergency group decisions with formal risk assessment of actions taken.",
+        "technical_controls": "Emergency playbook system, tiered protocol enforcement, post-incident review automation",
+        "roi": "320% average within 12 months",
+        "effort": "medium",
+        "timeline": "60 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_3"],
+      "high_value": ["sol_2", "sol_6"],
+      "governance": ["sol_4", "sol_5"],
+      "cultural_foundation": ["sol_2"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Crisis Response Escalation",
+      "description": "During major security incident, emergency response team progressively bypasses security controls through group consensus. Each bypass seems reasonable in discussion, but collectively they create massive vulnerabilities that attackers exploit later.",
+      "attack_vector": "Exploitation of emergency-created weaknesses after incident when bypasses haven't been reversed",
+      "psychological_mechanism": "Risky shift amplified by time pressure and stress; diffused responsibility enables progressive control bypasses",
+      "historical_example": "Multiple incidents where emergency response teams approved dangerous bypasses that became permanent vulnerabilities",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["RSI > 1.0", "emergency_decision_flag", "bypass_accumulation", "no_individual_assessment"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Vendor Selection Committee Compromise",
+      "description": "Technology selection committee gradually accepts increasingly risky vendor propositions because members want to appear innovative. Group approves cloud service with insufficient security controls that individuals would have rejected.",
+      "attack_vector": "Targeted attack on organizations using insecure vendor known for selection via risky shift dynamics",
+      "psychological_mechanism": "Competitive dynamics where conservative positions appear timid; social comparison drives risk escalation",
+      "historical_example": "Data breaches from vendor selections where committees approved insufficient security controls",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["committee_decision", "competitive_dynamics_present", "no_individual_baseline", "vendor_risk_underestimate"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Change Management Normalization",
+      "description": "Change advisory board approves emergency changes more frequently as group becomes desensitized through repeated exposure. Normal controls bypassed so often they become meaningless, enabling malicious insider exploitation.",
+      "attack_vector": "Malicious insider exploits degraded change process to implement unauthorized changes creating backdoors",
+      "psychological_mechanism": "Risk familiarization reduces psychological impact through habituation; diffused accountability enables escalation",
+      "historical_example": "Advanced persistent threats established through degraded change management processes",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["emergency_change_frequency_increasing", "P_polar > 0.6", "control_bypass_normalization"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Architecture Committee Innovation Bias",
+      "description": "Security architecture review committee approves innovative but risky system design because no individual wants to appear conservative. Experimental approach has known limitations the group minimizes.",
+      "attack_vector": "Exploitation of fundamental design vulnerabilities from overly aggressive architectural decisions",
+      "psychological_mechanism": "Social pressure to appear bold and innovative; fear of seeming timid suppresses individual concerns",
+      "historical_example": "Ransomware deployments exploiting fundamental architecture vulnerabilities from committee-approved experimental designs",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["architecture_committee_decision", "innovation_bias_markers", "risk_minimization_patterns", "RSI > 0.8"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Stoner, J. A. F. (1961). A comparison of individual and group decisions involving risk",
+      "Wallach, M. A., Kogan, N., & Bem, D. J. (1962). Group influence on individual risk taking",
+      "Myers, D. G., & Lamm, H. (1976). The group polarization phenomenon",
+      "Janis, I. L. (1972). Victims of groupthink",
+      "Sunstein, C. R. (2002). Risk and Reason: Safety, Law, and the Environment",
+      "Bazerman, M. H., & Moore, D. A. (2008). Judgment in Managerial Decision Making"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

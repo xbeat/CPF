@@ -1,0 +1,1050 @@
+{
+  "indicator": "5.8",
+  "title": "FIELD KIT INDICATORE 5.8",
+  "subtitle": "Effetti di Residuo Attentivo (Attention Residue)",
+  "category": "Vulnerabilità da Sovraccarico Cognitivo",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 5.x",
+  "description": {
+    "short": "Misura la vulnerabilità all'interferenza cognitiva persistente da compiti precedenti che influenza i giudizi di sicurezza correnti e crea punti ciechi sistematici nel rilevamento delle minacce",
+    "context": "Gli effetti di residuo attentivo si verificano quando gli analisti di sicurezza passano tra compiti senza completare la loro elaborazione mentale, lasciando risorse cognitive \"bloccate\" sul compito precedente. Questo crea punti ciechi sistematici dove gli analisti perdono minacce genuine immediatamente dopo aver gestito indagini complesse, cambi di strumento o interruzioni. Le organizzazioni con frequenti cambi di compito, múltiple strumenti di sicurezza o flussi di lavoro ricchi di interruzioni affrontano rischio elevato di perdere incidenti di sicurezza critici a causa di prestazioni cognitive degradate degli analisti.",
+    "impact": "Le organizzazioni con alto residuo attentivo sperimentano aumento di falsi negativi nel rilevamento delle minacce, ritardi nella risposta agli incidenti e vulnerabilità sistematiche durante periodi di alto alert. L'accuratezza del rilevamento degli analisti di sicurezza diminuisce significativamente nei 15-30 minuti successivi a compiti ad alto carico cognitivo. Gli incidenti storici incluso la violazione di Target Corporation (2013) e la violazione Equifax mostrano evidenze del residuo attentivo che contribuisce al riconoscimento ritardato delle minacce critiche.",
+    "psychological_basis": "La ricerca seminale di Sophie Leroy (2009) sul residuo attentivo ha dimostrato degrado misurabile delle prestazioni quando i compiti vengono cambiati senza completamento. I limiti della memoria di lavoro di Miller (1956) forniscono la base teorica - la capacità cognitiva è strettamente limitata. Gli studi fMRI dimostrano che i compiti incompleti mantengono l'attivazione nella corteccia prefrontale anche durante attività successive (Monk et al., 2008), creando interferenza persistente con l'elaborazione di nuovi compiti."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "L'organizzazione ha procedure documentate che limitano i cambi di compito degli analisti a <5 per ora, protocolli di transizione obbligatori di 3 minuti tra domini di sicurezza diversi, blocchi di focus protetti per analisi complesse e tassi di completamento >80% per indagini iniziate.",
+        "risk_level": "basso",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Alcuni controlli di cambio compito esistono ma gli analisti passano regolarmente tra 5-10 attività diverse per ora, procedure base di passaggio consegne documentate, ma tassi di completamento indagine 60-79% con abbandoni frequenti basati su interruzioni.",
+        "risk_level": "medio",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Nessun controllo di cambio compito, gli analisti passano tra >10 attività diverse per ora, nessun protocollo di transizione tra domini di sicurezza, tassi di completamento indagine <60% e nessuna protezione da interruzioni durante analisi complesse.",
+        "risk_level": "alto",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_task_switching_frequency": 0.15,
+      "q2_interruption_management": 0.14,
+      "q3_investigation_completion": 0.13,
+      "q4_tool_context_switching": 0.12,
+      "q5_handoff_procedures": 0.11,
+      "q6_focus_protection": 0.1,
+      "q7_recovery_protocols": 0.09,
+      "q8_transition_time": 0.08,
+      "q9_cognitive_load_monitoring": 0.05,
+      "q10_shift_change_management": 0.03
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_5.8(t) = w1·R_5.8(t) + w2·A_5.8(t) + w3·I_5.8(t)",
+      "components": {
+        "residue_based": {
+          "formula": "R_residue(t) = R_0 · e^(-μt) + Σ_i A_i · e^(-μ(t - t_i))",
+          "description": "Attention residue decay function where R_0 is initial residue, μ is decay rate, and A_i represents residue from task i",
+          "threshold": {
+            "R_0": 1,
+            "μ": 0.05,
+            "decay_half_life": "13.86 minutes"
+          }
+        },
+        "interference_measure": {
+          "formula": "I_interference(t) = ∫_{-∞}^t R_residue(τ) · S_similarity(current, past(τ)) · dτ",
+          "description": "Cognitive interference from residual attention where S_similarity measures semantic similarity between current and past tasks",
+          "variables": {
+            "R_residue": "residual attention from previous tasks",
+            "S_similarity": "task similarity coefficient [0,1]",
+            "τ": "time of previous task"
+          }
+        },
+        "performance_impact": {
+          "formula": "P_impact(t) = I_interference(t) / I_baseline - 1",
+          "description": "Performance degradation relative to baseline cognitive state",
+          "threshold": {
+            "critical": 0.25,
+            "moderate": 0.15,
+            "low": 0.05
+          }
+        }
+      },
+      "default_weights": {
+        "w1_residue": 0.35,
+        "w2_anomaly": 0.4,
+        "w3_interference": 0.25
+      },
+      "temporal_decay": {
+        "formula": "T_5.8(t) = α·D_5.8(t) + (1-α)·T_5.8(t-1)·e^(-λΔt)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 1800,
+        "lambda": 0.03,
+        "description": "Exponential smoothing with cognitive decay - 30-minute time constant"
+      }
+    },
+    "detection_function": {
+      "formula": "D_5.8(t) = max(0, P_impact(t)) · N_transitions(t) / N_normal",
+      "description": "Final detection score combining performance impact with task transition frequency",
+      "interpretation": "Higher values indicate elevated attention residue affecting current security judgments"
+    },
+    "task_switching_model": {
+      "formula": "TS_cost(t) = c_0 · Σ_i I_context(i,t) · e^(-λt_i)",
+      "description": "Task switching cognitive cost where c_0 is base cost and I_context indicates context change events",
+      "switching_threshold": 5
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "analyst_workflow_observation",
+        "task_switching_pattern_analysis",
+        "investigation_completion_records",
+        "shift_handoff_documentazione"
+      ],
+      "evidence_required": [
+        "transition_protocol_documentazione",
+        "focus_protection_policies",
+        "recent_handoff_esempios",
+        "investigation_completion_metrics"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "siem_user_activity_log",
+          "fields": [
+            "analyst_id",
+            "application_switched",
+            "timestamp",
+            "session_duration",
+            "investigation_id"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "security_tool_telemetry",
+          "fields": [
+            "tool_name",
+            "user_id",
+            "task_type",
+            "completion_status",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "incident_management_system",
+          "fields": [
+            "incident_id",
+            "assigned_analyst",
+            "status_changes",
+            "handoff_events",
+            "completion_time"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "alert_handling_log",
+          "fields": [
+            "alert_id",
+            "analyst_id",
+            "investigation_start",
+            "investigation_end",
+            "interruption_events"
+          ],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "cognitive_load_sensors",
+          "fields": [
+            "analyst_id",
+            "pupillometry_data",
+            "response_time",
+            "error_rate",
+            "timestamp"
+          ],
+          "retention": "30_days"
+        },
+        {
+          "source": "shift_management_system",
+          "fields": [
+            "shift_change_time",
+            "active_investigations",
+            "handoff_duration",
+            "transfer_quality"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "communication_interruptions",
+          "fields": [
+            "analyst_id",
+            "interruption_source",
+            "interruption_duration",
+            "current_task_context"
+          ],
+          "retention": "60_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "N_transitions": {
+          "calculation": "Count of application/tool switches per time window",
+          "query": "SELECT COUNT(DISTINCT application_switched) FROM user_activity WHERE analyst_id=? AND timestamp > NOW() - INTERVAL '1 hour'"
+        },
+        "completion_rate": {
+          "calculation": "Percentage of investigations completed by original analyst",
+          "query": "SELECT (COUNT(completion_status='completed' AND handoff_count=0) / COUNT(*)) FROM incidents WHERE created_date > NOW() - INTERVAL '30 days'"
+        },
+        "residue_indicator": {
+          "calculation": "Error rate in 30 minutes following task switches",
+          "query": "SELECT AVG(error_detected) FROM alerts WHERE timestamp BETWEEN task_switch_time AND task_switch_time + INTERVAL '30 minutes'"
+        }
+      }
+    },
+    "integration_apis": {
+      "soc_platform": "SOAR API - Task assignment, completion status, handoff tracking",
+      "incident_management": "ServiceNow/Jira API - Investigation lifecycle, analyst assignments",
+      "security_tools": "SIEM/EDR/NDR APIs - Tool usage patterns, session analytics",
+      "workforce_management": "Shift scheduling API - Handoff timing, analyst workload"
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "5.4",
+        "name": "Multitasking Degradation",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "Concurrent task management crea additional attention residue through constant context switching",
+        "formula": "P(5.8|5.4) = 0.75",
+        "evidence": "Strong correlation (0.75) from interdependency matrix - multitasking directly increases residual attention"
+      },
+      {
+        "indicator": "5.5",
+        "name": "Context Switching Vulnerabilities",
+        "probability": 0.8,
+        "factor": 1.5,
+        "description": "Frequent context switches amplify attention residue by preventing cognitive closure",
+        "formula": "P(5.8|5.5) = 0.80",
+        "evidence": "High correlation (0.80) from interdependency matrix - context switching creates residue accumulation"
+      },
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue Desensitization",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Alert fatigue increases task interruptions creating chronic attention residue",
+        "formula": "P(5.8|5.1) = 0.65"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.6,
+        "factor": 1.35,
+        "description": "Stress impairs cognitive disengagement from previous tasks, amplifying residue effects",
+        "formula": "P(5.8|7.1) = 0.60"
+      },
+      {
+        "indicator": "5.7",
+        "name": "Working Memory Overflow",
+        "probability": 0.6,
+        "factor": 1.25,
+        "description": "Working memory overload prevents proper cognitive closure, maintaining residual attention",
+        "formula": "P(5.8|5.7) = 0.60"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue Errors",
+        "probability": 0.5,
+        "factor": 1.2,
+        "description": "Attention residue consumes cognitive resources, accelerating decision fatigue",
+        "formula": "P(5.2|5.8) = 0.50"
+      },
+      {
+        "indicator": "5.6",
+        "name": "Cognitive Tunneling",
+        "probability": 0.35,
+        "factor": 1.15,
+        "description": "Residual attention narrows focus to previous task context, creating tunnel vision",
+        "formula": "P(5.6|5.8) = 0.35"
+      },
+      {
+        "indicator": "5.10",
+        "name": "Mental Model Confusion",
+        "probability": 0.5,
+        "factor": 1.2,
+        "description": "Residual mental models from previous tasks interfere with current task interpretation",
+        "formula": "P(5.10|5.8) = 0.50"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": [
+        "5.8",
+        "5.5",
+        "5.4"
+      ],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 3.5,
+      "description": "Perfect storm: Attention residue + Context switching + Multitasking = 380% increased threat detection failure probability",
+      "real_world_esempio": "Target Corporation 2013 - Analysts managing multiple investigations missed APT infiltration alerts due to attention residue from fraud investigations"
+    },
+    "bayesian_network": {
+      "parent_nodes": [
+        "5.4",
+        "5.5",
+        "5.1",
+        "7.1",
+        "5.7"
+      ],
+      "child_nodes": [
+        "5.2",
+        "5.6",
+        "5.10"
+      ],
+      "conditional_probability_table": {
+        "P_5.8_base": 0.2,
+        "P_5.8_given_multitasking": 0.52,
+        "P_5.8_given_context_switching": 0.58,
+        "P_5.8_given_alert_fatigue": 0.48,
+        "P_5.8_given_all": 0.85
+      }
+    }
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_task_switching_frequency",
+          "weight": 0.15,
+          "title": "Frequenza Cambio Compito Analista",
+          "question": "In un turno tipico di 8 ore, quante volte un analista di sicurezza cambia tra strumenti diversi, tipi allarme o compiti indagine?",
+          "options": [
+            {
+              "value": "low",
+              "score": 0,
+              "label": "Bassa frequenza - Gli analisti cambiano tra attività sicurezza diverse meno di 5 volte all'ora con protocolli transizione documentati"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Frequenza moderata - Gli analisti cambiano tra 5-10 attività diverse all'ora con qualche pratica transizione informale"
+            },
+            {
+              "value": "high",
+              "score": 1,
+              "label": "Alta frequenza - Gli analisti cambiano tra più di 10 attività diverse all'ora senza protocolli transizione"
+            }
+          ],
+          "evidence_required": "Analisi workflow da turno recente, esempio specifico del workflow analista di ieri",
+          "soc_mapping": "N_transitions metric from detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_interruption_management",
+          "weight": 0.14,
+          "title": "Gestione Interruzioni Durante Analisi Complessa",
+          "question": "Qual è la vostra procedura quando arrivano allarmi di sicurezza urgenti mentre un analista sta indagando un incidente complesso?",
+          "options": [
+            {
+              "value": "protected",
+              "score": 0,
+              "label": "Analisi protetta - Solo incidenti Severità 1 possono interrompere analisi complessa, con procedure passaggio consegne obbligatorie e documentazione transizione"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Protezione parziale - Esistono alcune linee guida ma frequentemente superate per richieste urgenti"
+            },
+            {
+              "value": "unprotected",
+              "score": 1,
+              "label": "Non protetta - Gli analisti devono cambiare immediatamente a qualsiasi allarme urgente, abbandonando indagine corrente"
+            }
+          ],
+          "evidence_required": "Politica gestione interruzioni, esempio recente di come è stato gestito",
+          "soc_mapping": "interruption_events from alert_handling_log"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_investigation_completion",
+          "weight": 0.13,
+          "title": "Tasso Completamento Indagine",
+          "question": "Quale percentuale delle indagini di sicurezza avviate nell'ultimo mese è stata completata dall'analista originale senza trasferimento?",
+          "options": [
+            {
+              "value": "high",
+              "score": 0,
+              "label": "Completamento alto - Più dell'80% delle indagini completate da analista originale"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Completamento moderato - 60-79% delle indagini completate da analista originale"
+            },
+            {
+              "value": "low",
+              "score": 1,
+              "label": "Completamento basso - Meno del 60% delle indagini completate da analista originale a causa interruzioni o cambi turno"
+            }
+          ],
+          "evidence_required": "Metriche completamento indagine da sistema gestione casi, esempi abbandono recenti",
+          "soc_mapping": "completion_rate from telemetry_mapping"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_tool_context_switching",
+          "weight": 0.12,
+          "title": "Cambio Contesto Strumenti Sicurezza",
+          "question": "Quanti diversi strumenti di sicurezza usa tipicamente un analista in una singola ora durante periodi picco allarmi?",
+          "options": [
+            {
+              "value": "unified",
+              "score": 0,
+              "label": "Piattaforma unificata - Gli analisti lavorano principalmente in 1-2 piattaforme sicurezza integrate con interfacce consistenti"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Diversità moderata - Gli analisti cambiano tra 3-5 strumenti sicurezza diversi all'ora"
+            },
+            {
+              "value": "fragmented",
+              "score": 1,
+              "label": "Altamente frammentato - Gli analisti cambiano tra 6 o più strumenti sicurezza diversi all'ora con interfacce variabili"
+            }
+          ],
+          "evidence_required": "Log utilizzo strumenti da ultimo periodo alto allarmi, esempio workflow specifico",
+          "soc_mapping": "application_switched count from siem_user_activity_log"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_handoff_procedures",
+          "weight": 0.11,
+          "title": "Qualità Documentazione Passaggio Consegne Indagine",
+          "question": "Qual è il vostro processo documentato per trasferire indagini incomplete tra analisti durante cambi turno?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Passaggio consegne completo - Documentazione strutturata di contesto mentale, risultati chiave, prossimi passi, più briefing verbale obbligatorio 5 minuti"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Passaggio consegne base - Note scritte brevi fornite ma nessun briefing verbale o trasferimento contesto mentale"
+            },
+            {
+              "value": "minimal",
+              "score": 1,
+              "label": "Passaggio consegne minimale - Procedure passaggio consegne informali o assenti, analisti in arrivo devono ricostruire contesto indagine indipendentemente"
+            }
+          ],
+          "evidence_required": "Documentazione procedura passaggio consegne, esempio passaggio consegne specifico dalla scorsa settimana",
+          "soc_mapping": "handoff_events and transfer_quality from shift_management_system"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_focus_protection",
+          "weight": 0.1,
+          "title": "Politiche Tempo Focus Protetto",
+          "question": "Quali politiche esistono per proteggere analisti da interruzioni durante analisi sicurezza complessa?",
+          "options": [
+            {
+              "value": "enforced",
+              "score": 0,
+              "label": "Protezione applicata - Politiche documentate che stabiliscono periodi 'focus profondo' con applicazione supervisore e logging eccezioni"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Pratiche informali - Gli analisti provano a proteggere tempo focus ma nessuna politica formale o applicazione"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna protezione - Gli analisti devono essere immediatamente responsivi a tutte le richieste indipendentemente dallo stato cognitivo corrente"
+            }
+          ],
+          "evidence_required": "Documento politica protezione focus, esempio applicazione recente",
+          "soc_mapping": "interruption_source and interruption_duration from communication_interruptions"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_recovery_protocols",
+          "weight": 0.09,
+          "title": "Procedure Recupero Cognitivo",
+          "question": "Quali procedure seguono gli analisti quando ritornano a indagini interrotte?",
+          "options": [
+            {
+              "value": "structured",
+              "score": 0,
+              "label": "Recupero strutturato - Protocollo 'reset mentale' documentato 2-3 minuti includendo revisione contesto, esercizi focus attenzione e valutazione stato"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Recupero informale - Gli analisti revisionano brevemente note prima di riprendere ma nessuna procedura standardizzata"
+            },
+            {
+              "value": "immediate",
+              "score": 1,
+              "label": "Ripresa immediata - Gli analisti devono riprendere immediatamente lavoro interrotto senza tempo transizione cognitiva"
+            }
+          ],
+          "evidence_required": "Documentazione protocollo recupero, esempio specifico di gestione indagine ripresa",
+          "soc_mapping": "session_duration patterns from security_tool_telemetry"
+        },
+        {
+          "type": "radio-list",
+          "number": 8,
+          "id": "q8_transition_time",
+          "weight": 0.08,
+          "title": "Tempo Transizione Minimo Tra Domini Sicurezza",
+          "question": "Quale tempo minimo è allocato perché analisti transitino mentalmente tra domini analisi sicurezza diversi (es. sicurezza rete a sicurezza endpoint)?",
+          "options": [
+            {
+              "value": "sufficient",
+              "score": 0,
+              "label": "Transizione sufficiente - Periodo transizione obbligatorio 3-5 minuti tra domini sicurezza diversi con applicazione workflow automatizzata"
+            },
+            {
+              "value": "minimal",
+              "score": 0.5,
+              "label": "Transizione minimale - Pausa breve incoraggiata ma non applicata"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun tempo transizione - Cambio immediato tra domini sicurezza atteso"
+            }
+          ],
+          "evidence_required": "Politica tempo transizione, configurazione sistema workflow che mostra ritardi applicati",
+          "soc_mapping": "task_type transition patterns from security_tool_telemetry"
+        },
+        {
+          "type": "radio-list",
+          "number": 9,
+          "id": "q9_cognitive_load_monitoring",
+          "weight": 0.05,
+          "title": "Monitoraggio Carico Cognitivo Tempo Reale",
+          "question": "La vostra organizzazione monitora carico cognitivo analisti e pattern cambio compito per identificare rischio residuo attentivo?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Monitoraggio completo - Tracciamento automatizzato di frequenza cambio compito, tassi completamento e allarmi supervisore quando soglie superate"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Tracciamento base - Revisione manuale di metriche carico lavoro durante meeting settimanali"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun monitoraggio - Carico cognitivo analisti e cambio compito non tracciati o gestiti"
+            }
+          ],
+          "evidence_required": "Dashboard monitoraggio carico cognitivo, esempio allarme soglia recente",
+          "soc_mapping": "analyst workload analytics from workforce_management API"
+        },
+        {
+          "type": "radio-list",
+          "number": 10,
+          "id": "q10_shift_change_management",
+          "weight": 0.03,
+          "title": "Temporizzazione Cambio Turno e Gestione Indagini Attive",
+          "question": "Come sono gestiti i cambi turno quando indagini complesse multiple sono attive?",
+          "options": [
+            {
+              "value": "optimized",
+              "score": 0,
+              "label": "Temporizzazione ottimizzata - Temporizzazione turno flessibile per evitare passaggi consegne a metà indagine, periodi sovrapposizione per trasferimento conoscenza appropriato"
+            },
+            {
+              "value": "standard",
+              "score": 0.5,
+              "label": "Temporizzazione standard - Cambi turno fissi con passaggio consegne breve indipendentemente da stato indagine"
+            },
+            {
+              "value": "rigid",
+              "score": 1,
+              "label": "Temporizzazione rigida - Cambi turno stretti indipendentemente da indagini attive, procedure passaggio consegne minimali"
+            }
+          ],
+          "evidence_required": "Politica gestione turni, esempio di cambio turno durante incidente attivo",
+          "soc_mapping": "shift_change_time correlated with active_investigations from shift_management_system"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezionare UNA opzione per ciascuna domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Task Switching and Workflow Patterns",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Descrivimi un'ora tipica durante il vostro periodo picco allarmi - quanti strumenti diversi, indagini o tipi allarme gestisce un analista?",
+              "scoring_guidance": {
+                "green": "Workflow dettagliato che mostra compiti simili raggruppati, blocchi focus protetti, meno di 5 cambi contesto all'ora",
+                "yellow": "Cambio compito moderato (5-10 all'ora) con consapevolezza del problema ma controlli limitati",
+                "red": "Workflow caotico con interruzioni costanti, 10+ cambi all'ora, nessuna consapevolezza costo cognitivo"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quando un analista cambia dall'analizzare un'intrusione rete all'investigare un allarme phishing email, cosa succede all'indagine rete?",
+                  "evidence_type": "investigation_continuity"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quanto tempo impiega tipicamente un analista per mentalmente 'rientrare' in un'indagine che è stato forzato ad abbandonare prima?",
+                  "evidence_type": "cognitive_recovery_awareness"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Raccontami dell'ultima volta che un allarme urgente ha interrotto un analista durante analisi incidente complessa - esattamente come è stato gestito?",
+              "scoring_guidance": {
+                "green": "Esempio specifico che mostra passaggio consegne strutturato, documentazione stato mentale, protezione analisi critica",
+                "yellow": "Esempio mostra interruzione con note base ma preservazione contesto incompleta",
+                "red": "Abbandono immediato lavoro corrente senza documentazione o protocollo transizione"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quale documentazione ha creato l'analista prima di cambiare all'allarme urgente?",
+                  "evidence_type": "transition_documentazione"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quando sono tornati all'indagine originale, hanno perso qualcosa o dovuto ricominciare?",
+                  "evidence_type": "attention_residue_impact"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Quale percentuale di indagini sicurezza stimate sono completate dall'analista originale versus trasferite ad altri? Datemi un esempio specifico recente.",
+              "scoring_guidance": {
+                "green": "Tasso completamento >80% con procedure passaggio consegne dettagliate per rimanente 20%, metriche specifiche tracciate",
+                "yellow": "Completamento 60-79%, passaggi consegne informali, nessun tracciamento sistematico",
+                "red": "Completamento <60%, abbandoni frequenti, nessuna procedura passaggio consegne"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Perché le indagini sono abbandonate incomplete - cosa tipicamente causa questo?",
+                  "evidence_type": "abandonment_root_cause"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Tracciate quali indagini vengono trasferite e cosa succede al loro tempo risoluzione o qualità?",
+                  "evidence_type": "handoff_impact_metrics"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Handoff Procedures and Cognitive Transfer",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Mostratemi la vostra documentazione passaggio consegne dal più recente cambio turno dove indagini attive sono state trasferite tra analisti.",
+              "scoring_guidance": {
+                "green": "Documentazione completa includendo contesto mentale, ipotesi testate, prossimi passi analisi, più briefing verbale",
+                "yellow": "Note scritte base ma mancano stato mentale o pensiero analitico",
+                "red": "Documentazione passaggio consegne minimale o assente, analista in arrivo ricostruisce da zero"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Questo passaggio consegne include cosa stava pensando l'analista precedente - il loro modello mentale di cosa potrebbe accadere?",
+                  "evidence_type": "mental_model_transfer"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quanto tempo impiega l'analista in arrivo per essere 'aggiornato' su un'indagine trasferita?",
+                  "evidence_type": "knowledge_transfer_efficiency"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Durante cambi turno, come prevenite che l'analista in arrivo sia influenzato dal residuo attentivo dell'analista uscente da indagini diverse?",
+              "scoring_guidance": {
+                "green": "Consapevolezza residuo attentivo, briefing strutturati che separano contesti indagine diversi, protocolli transizione",
+                "yellow": "Pratiche passaggio consegne generali ma nessuna attenzione specifica a trasferimento stato cognitivo",
+                "red": "Nessuna consapevolezza concetto residuo attentivo, passaggi consegne rapidi senza considerazione cognitiva"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Avete mai notato un analista in arrivo perdere cose perché ha ereditato assunzioni dall'analista precedente?",
+                  "evidence_type": "residue_transfer_esempio"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa fa la vostra procedura passaggio consegne per aiutare analisti a mentalmente 'chiudere' lavoro completato prima di briefing nuovo lavoro?",
+                  "evidence_type": "cognitive_closure_practice"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Tool Integration and Context Management",
+          "weight": 0.2,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Quanti diversi strumenti sicurezza con interfacce diverse deve padroneggiare un analista? Guidatemi attraverso il cambio da uno all'altro.",
+              "scoring_guidance": {
+                "green": "1-2 piattaforme integrate con interfacce consistenti, costo cambio cognitivo minimale",
+                "yellow": "3-5 strumenti con qualche integrazione, analisti consapevoli sfide cambio mentale",
+                "red": "6+ strumenti disparati, confusione interfaccia costante, nessuna consapevolezza costo cognitivo"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Avete osservato analisti commettere errori quando cambiano rapidamente tra interfacce strumenti diverse?",
+                  "evidence_type": "interface_confusion_incidents"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Qual è il vostro piano per consolidare strumenti sicurezza per ridurre carico cognitivo analisti?",
+                  "evidence_type": "tool_rationalization_strategy"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Protezione Focus e Recupero",
+          "weight": 0.2,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Quali politiche proteggono analisti che investigano minacce complesse dall'essere interrotti? Datemi un esempio di quando questa protezione è stata applicata.",
+              "scoring_guidance": {
+                "green": "Politiche protezione focus documentate con esempi applicazione recenti, periodi 'focus profondo' rispettati",
+                "yellow": "Pratiche informali ma frequentemente superate, nessuna protezione formale",
+                "red": "Nessuna politica protezione, analisti devono essere costantemente interrompibili"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succede quando qualcuno prova a interrompere un analista durante tempo focus protetto?",
+                  "evidence_type": "protection_enforcement"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come segnalano gli analisti che necessitano tempo ininterrotto per analisi complessa?",
+                  "evidence_type": "focus_signaling_mechanism"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q8",
+              "text": "Quando gli analisti ritornano a indagini interrotte, quale procedura li aiuta a riguadagnare il loro contesto mentale e focus?",
+              "scoring_guidance": {
+                "green": "Protocollo recupero cognitivo strutturato includendo revisione contesto, esercizi attenzione, passi transizione documentati",
+                "yellow": "Gli analisti revisionano informalmente note ma nessuna procedura recupero standardizzata",
+                "red": "Ripresa immediata attesa senza tempo recupero cognitivo"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Gli analisti ottengono tempo per transitare mentalmente tra domini sicurezza diversi, o cambiano immediatamente?",
+                  "evidence_type": "transition_time_allocation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Avete formato analisti su tecniche per ridurre residuo attentivo quando cambiano compiti?",
+                  "evidence_type": "residue_management_training"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Monitorare tassi errore analisti in finestre 30 minuti seguenti cambi compito",
+      "correlation_analysis": "Confrontare frequenza cambio compito con accuratezza rilevamento minacce (correlazione target > 0.80)",
+      "drift_detection": "Test Kolmogorov-Smirnov su distribuzioni tasso completamento, ricalibrazione se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicurare che impatto residuo attentivo previsto corrisponda a degradazione accuratezza rilevamento osservata",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift rilevato o punteggio validazione < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Ottimizzazione Cambio Compito",
+        "formula": "Ridurre cambi compito analista medi da baseline a <5 all'ora",
+        "baseline": "Media storica 90 giorni",
+        "target": "Riduzione 40% entro 90 giorni",
+        "measurement": "Tracciamento workflow automatizzato, monitoraggio settimanale"
+      },
+      {
+        "metric": "Tasso Completamento Indagine",
+        "formula": "% di indagini sicurezza completate da analista originale senza passaggio consegne",
+        "baseline": "Tasso completamento corrente da gestione casi",
+        "target": ">80% entro 90 giorni",
+        "measurement": "Analisi sistema gestione casi mensile"
+      },
+      {
+        "metric": "Accuratezza Rilevamento Post-Cambio",
+        "formula": "Tasso falsi negativi per allarmi che si verificano entro 30 minuti da cambi compito",
+        "baseline": "Analisi incidenti trimestrale",
+        "target": "Miglioramento 25% nel rilevamento minacce post-cambio",
+        "measurement": "Valutazione minacce perse trimestralmente correlata con eventi cambio compito"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Protocolli Transizione Cognitiva",
+        "description": "Implementare procedure obbligatorie 'reset mentale' 2-3 minuti tra domini analisi sicurezza diversi",
+        "implementation": "Gli analisti usano checklist strutturate per documentare stato compito corrente, eseguono brevi esercizi focus attenzione e transitano consapevolmente contesto mentale prima di iniziare nuove indagini. Sistemi workflow automatizzati applicano tempi transizione minimi tra cambi strumento.",
+        "technical_controls": "Automazione workflow SOAR con ritardi transizione applicati, checklist digitali, template documentazione stato compito",
+        "roi": "340% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Sistema Raggruppamento Compiti",
+        "description": "Ristrutturare operazioni SOC per raggruppare attività sicurezza simili in blocchi tempo dedicati",
+        "implementation": "Gli analisti gestiscono allarmi sicurezza rete per sessioni focalizzate 2 ore, seguite da blocchi sicurezza endpoint, invece di cambiare costantemente tra domini. Procedure escalation emergenza superano raggruppamento solo per incidenti critici genuini.",
+        "technical_controls": "Regole routing allarmi, sistema schedulazione carico lavoro, automazione escalation basata su severità",
+        "roi": "380% average within 18 months",
+        "effort": "medium",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Finestre Analisi Protette",
+        "description": "Stabilire periodi 'focus profondo' dove analisti che investigano incidenti complessi sono protetti da interruzioni non critiche",
+        "implementation": "Implementare escalation a livelli dove solo incidenti Severità 1 possono interrompere analisi complessa in corso, con requisiti documentazione chiari per disturbare tempo focus protetto.",
+        "technical_controls": "Sistema stato analista, routing allarmi intelligente, workflow escalation con logging giustificazione",
+        "roi": "295% average within 12 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Integrazione Strumenti Consapevole Attenzione",
+        "description": "Distribuire piattaforme orchestrazione sicurezza unificate che minimizzano cambio contesto tra strumenti vendor diversi",
+        "implementation": "Implementare dashboard single-pane-of-glass con convenzioni interfaccia consistenti attraverso tutti i domini sicurezza per ridurre costi cambio modello mentale.",
+        "technical_controls": "Piattaforma SOAR, sviluppo dashboard unificata, integrazioni API per consolidamento strumenti",
+        "roi": "420% average within 24 months",
+        "effort": "high",
+        "timeline": "90-180 days"
+      },
+      {
+        "id": "sol_5",
+        "title": "Framework Passaggio Consegne Strutturato",
+        "description": "Sviluppare protocolli passaggio consegne dettagliati richiedendo documentazione esplicita di contesto mentale, risultati chiave e prossimi passi analisi",
+        "implementation": "Includere briefing verbale obbligatorio 5 minuti dove analisti uscenti spiegano il loro modello mentale ad analisti in arrivo, riducendo trasferimento residuo attentivo. Documentare pensiero analitico corrente, non solo risultati fattuali.",
+        "technical_controls": "Template documentazione passaggio consegne, checklist briefing verbale, punteggio qualità trasferimento conoscenza",
+        "roi": "260% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Monitoraggio Carico Cognitivo",
+        "description": "Implementare tracciamento tempo reale di frequenza cambio compito analista, tassi completamento indagine e metriche durata attenzione",
+        "implementation": "Allarmi automatizzati notificano supervisori quando analisti superano soglie cambio compito sane, attivando interventi riequilibrio carico lavoro.",
+        "technical_controls": "Dashboard analytics SOC, telemetria cambio compito, sistema allertamento supervisore, visualizzazione carico lavoro",
+        "roi": "310% average within 18 months",
+        "effort": "medium",
+        "timeline": "60 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": [
+        "sol_1",
+        "sol_5"
+      ],
+      "high_value": [
+        "sol_2",
+        "sol_3"
+      ],
+      "long_term_foundation": [
+        "sol_4",
+        "sol_6"
+      ],
+      "quick_wins": [
+        "sol_1",
+        "sol_5"
+      ]
+    }
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Attacco Bombardamento Cambio Contesto",
+      "description": "Avversari attivano deliberatamente allarmi simultanei multipli attraverso domini sicurezza diversi (rete, endpoint, email) per forzare cambio compito rapido, sapendo che residuo attentivo degraderà performance analista su allarmi critici successivi",
+      "attack_vector": "Allarmi bassa priorità coordinati attraverso domini sicurezza multipli seguiti da attacco primario durante stato cognitivo degradato",
+      "psychological_mechanism": "Residuo attentivo da compiti precedenti interferisce con rilevamento minacce, creando punti ciechi sistematici",
+      "historical_esempio": "Studi caso SOC multipli mostrano incidenti sicurezza genuini classificati erroneamente immediatamente dopo che analisti si sono impegnati in analisi falsi positivi complessa",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": [
+        "high_alert_volume",
+        "multi_domain_alerts",
+        "rapid_task_switching",
+        "detection_accuracy_drop"
+      ]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Sfruttamento Cambio Turno",
+      "description": "Attaccanti sofisticati temporizzano le loro attività infiltrazione per coincidere con cambi turno team sicurezza, quando residuo attentivo da indagini incomplete crea vulnerabilità cognitiva massima",
+      "attack_vector": "Attacco temporizzato a finestre cambio turno quando passaggio consegne crea residuo attentivo e gap conoscenza",
+      "psychological_mechanism": "Elaborazione mentale incompleta durante passaggio consegne lascia attenzione residuale allocata a indagini abbandonate",
+      "historical_esempio": "Analisi basata su tempo di incidenti sicurezza rivela clustering attorno a periodi cambio turno",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": [
+        "shift_change_timing",
+        "active_investigation_handoffs",
+        "incomplete_documentazione",
+        "delayed_threat_recognition"
+      ]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Confusione Interfaccia Strumenti",
+      "description": "Gli attaccanti sfruttano l'interferenza modello mentale creata quando analisti cambiano rapidamente tra piattaforme sicurezza diverse con interfacce variabili",
+      "attack_vector": "Allarmi simili presentati in strumenti diversi con interfacce diverse creano classificazione errata sistematica",
+      "psychological_mechanism": "Modelli mentali residuali da un'interfaccia strumento interferiscono con interpretazione accurata in piattaforme diverse",
+      "historical_esempio": "Confusione cross-platform documentata in analisi errori analisti SOC - accuratezza rilevamento cala durante periodi alto cambio strumenti",
+      "likelihood": "high",
+      "impact": "medium",
+      "detection_indicators": [
+        "frequent_tool_switching",
+        "similar_alert_types",
+        "interface_inconsistency",
+        "misclassification_patterns"
+      ]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Amplificazione Fatica Allarmi",
+      "description": "Seguendo periodi di falsi positivi alto volume che richiedono cambio analisi rapido, residuo attentivo eleva soglie rilevamento causando perdita minacce genuine",
+      "attack_vector": "Alto volume di falsi positivi complessi seguiti da minaccia genuina entro finestra residuo attentivo 30 minuti",
+      "psychological_mechanism": "Allocazione cognitiva residuale ad analisi falsi positivi precedenti compromette sensibilità rilevamento",
+      "historical_esempio": "Studi riconoscimento pattern SOC mostrano accuratezza rilevamento cala 40% in 15-30 minuti seguenti compiti alto carico cognitivo",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": [
+        "recent_false_positive_burst",
+        "analyst_cognitive_fatigue",
+        "elevated_detection_thresholds",
+        "genuine_threat_within_residue_window"
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-14",
+    "translator": "Claude (Anthropic)",
+    "research_basis": [
+      "Leroy, S. (2009). Why is it so hard to do my work? The challenge of attention residue when switching between work tasks",
+      "Miller, G. A. (1956). The magical number seven, plus or minus two: Some limits on our capacity for processing information",
+      "Kahneman, D. (2011). Thinking, Fast and Slow - System 1/System 2 framework",
+      "Monk, C. A., et al. (2008). The effect of interruption duration and demand on resuming suspended goals"
+    ],
+    "validation_status": "peer_revisioneed",
+    "deployment_status": "production_ready"
+  }
+}

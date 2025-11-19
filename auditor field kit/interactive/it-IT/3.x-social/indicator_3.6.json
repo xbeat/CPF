@@ -1,0 +1,981 @@
+{
+  "indicator": "3.6",
+  "title": "INDICATORE 3.6 FIELD KIT",
+  "subtitle": "Suscettibilità allo Sfruttamento del Principio di Unità",
+  "category": "Vulnerabilità di Social Engineering",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Categoria 3.x",
+
+  "description": {
+    "short": "Misura la vulnerabilità agli attaccanti che sfruttano marcatori di identità condivisa (alma mater, settore, professione, cultura) per stabilire fiducia intra-gruppo e bypassare i protocolli di sicurezza",
+    "context": "Quando gli individui incontrano segnali di identità condivisa (professione condivisa, alma mater, affiliazione di settore, background culturale), la corteccia prefrontale mediale elabora i membri intra-gruppo come estensioni del sé, creando fiducia automatica entro 200-400ms. Gli attaccanti sfruttano l'unità mimando credenziali professionali, background educativi o marcatori culturali per innescare favoritismo intra-gruppo e conformità di sicurezza.",
+    "impact": "Le organizzazioni con elevata suscettibilità subiscono phishing di identità professionale di successo (tasso di successo del 67% vs. 23% di base), violazioni di impersonificazione dipartimentale, social engineering basato su alumni e condivisione di credenziali all'interno di gruppi intra-gruppo percepiti. Lo sfruttamento dell'unità spesso bypassa lo scetticismo che si applicherebbe a estranei evidenti.",
+    "psychological_basis": "Principio di Unità di Cialdini (2016) - il 7° e più potente principio di influenza. L'unità trascende la similarità (simpatia) stabilendo identità condivisa. La Teoria dell'Identità Sociale (Tajfel & Turner, 1979) dimostra che il favoritismo intra-gruppo crea trattamento preferenziale, fiducia e cooperazione. Neurologicamente, la corteccia prefrontale mediale si attiva quando elabora i membri intra-gruppo come estensioni del sé, rendendo l'unità la forma più profonda di influenza sociale."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Punteggio_Finale = (w1 × Valutazione_Rapida + w2 × Profondità_Conversazione + w3 × Segnali_Allerta) × Moltiplicatore_Interdipendenza",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Protocolli di verifica dell'identità validano credenziali professionali e affiliazioni. L'auditing dell'impronta digitale previene l'instaurazione di identità false. La formazione consapevole dell'unità insegna il riconoscimento della manipolazione intra-gruppo. L'autenticazione delle comunicazioni professionali verifica le dichiarazioni di affiliazione condivisa.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Esiste una verifica delle credenziali di base ma nessuna consapevolezza sistematica dello sfruttamento dell'unità. Qualche scetticismo sulle dichiarazioni di identità condivisa ma nessun protocollo di validazione formale. Verifica incoerente delle affiliazioni professionali. Formazione limitata sulla manipolazione intra-gruppo.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Fiducia automatica concessa a coloro che dichiarano affiliazione condivisa. Nessuna verifica di alumni, credenziali professionali o di settore. Forti norme culturali che favoriscono i membri intra-gruppo. Nessuna formazione sul social engineering basato sull'unità. Eccezioni di sicurezza regolarmente concesse al gruppo intra-gruppo percepito.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_identity_verification": 0.18,
+      "q2_professional_credential_validation": 0.16,
+      "q3_alumni_industry_claims": 0.14,
+      "q4_in_group_privilege": 0.13,
+      "q5_cultural_affinity": 0.12,
+      "q6_unity_training": 0.11,
+      "q7_departmental_impersonation": 0.09,
+      "q8_communication_authentication": 0.07
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_3.6(t) = w1·R_3.6(t) + w2·A_3.6(t) + w3·B_3.6(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_3.6(t) = 1 se U_i(t) > τ_unity E Anomalia_Credenziale > σ, altrimenti 0",
+          "description": "Rilevamento binario basato su soglia di forza del segnale di unità e anomalie di verifica delle credenziali",
+          "threshold": {
+            "tau_unity": 0.5,
+            "sigma_anomaly": 2.0
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_3.6(t) = UII = Σ(δ_affiliazione × w_forza × τ_temporale) / Σw_forza",
+          "description": "Indice di Influenza dell'Unità che misura la forza aggregata del segnale intra-gruppo e il clustering temporale",
+          "variables": {
+            "delta_affiliazione": "Indicatore binario di affiliazione condivisa dichiarata (0 o 1)",
+            "w_forza": "Peso del tipo di affiliazione (alma mater=0.9, settore=0.7, dipartimento=0.8)",
+            "tau_temporale": "Fattore di decadimento temporale per il tempo dalla menzione dell'affiliazione"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_3.6(t) = P_fiducia(U,C,T) = 1/(1 + e^(-β(U·α + C·γ + T·δ - θ)))",
+          "factors": [
+            "forza_segnale_unità",
+            "punteggio_verifica_credenziale",
+            "clustering_temporale",
+            "diversità_affiliazione",
+            "punteggio_anomalia_richiesta"
+          ],
+          "priors": {
+            "P_legitimate": 0.60,
+            "P_exploitation": 0.40
+          },
+          "coefficients": {
+            "alpha_unity": 2.8,
+            "gamma_credential": 2.1,
+            "delta_temporal": 1.6,
+            "beta_sensitivity": 1.7,
+            "theta_threshold": 1.5
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.30,
+        "w2_anomaly": 0.40,
+        "w3_bayesian": 0.30
+      },
+      "temporal_decay": {
+        "formula": "T_3.6(t) = α·D_3.6(t) + (1-α)·T_3.6(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 10800,
+        "description": "Smoothing esponenziale con costante di tempo di 3 ore per la correlazione unità-richiesta"
+      }
+    },
+    "unity_influence_index": {
+      "formula": "U_i(t) = Σ[w_tipo × δ_dichiarazione × (1 - e^(-t/τ))] / N_affiliazioni",
+      "description": "Misura la forza cumulativa del segnale intra-gruppo normalizzata per numero di dichiarazioni di affiliazione distinte",
+      "interpretation": "Valori che si avvicinano a 1.0 indicano più segnali di unità forti che si raggruppano temporalmente prima delle richieste, suggerendo sfruttamento",
+      "affiliation_weights": {
+        "alma_mater": 0.9,
+        "professional_certification": 0.85,
+        "industry_membership": 0.7,
+        "departmental_unit": 0.8,
+        "cultural_background": 0.75,
+        "generational_cohort": 0.6
+      },
+      "tau_decay": 3600
+    },
+    "in_group_trust_amplification": {
+      "formula": "P_fiducia(U,C,T) = 1/(1 + e^(-β(U·α + C·γ + T·δ - θ)))",
+      "components": {
+        "U_unity_signal": "Forza del segnale di unità dalla formula UII",
+        "C_credential_score": "Punteggio di verifica per le credenziali dichiarate (0-1, 0=verificato, 1=non verificato)",
+        "T_temporal_clustering": "Tempistica della richiesta relativa all'instaurazione dell'unità (scala 0-1)",
+        "alpha_unity_weight": 2.8,
+        "gamma_credential_weight": 2.1,
+        "delta_temporal_weight": 1.6,
+        "beta_sensitivity": 1.7,
+        "theta_threshold": 1.5
+      },
+      "sigmoid": "σ(x) = 1/(1+e^(-x))",
+      "description": "Modella l'aumento della fiducia e della probabilità di conformità basata su segnali di unità, fallimento della verifica delle credenziali e pattern temporali di attacco"
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "interviste_dipendenti",
+        "revisione_politiche_verifica_identità",
+        "procedure_validazione_credenziali",
+        "gestione_affiliazione_alumni_settore",
+        "registri_formazione",
+        "analisi_cronologia_incidenti"
+      ],
+      "evidence_required": [
+        "protocolli_verifica_credenziali_professionali",
+        "procedure_verifica_alumni",
+        "materiali_formazione_sfruttamento_unità",
+        "log_incidenti_impersonificazione_dipartimentale",
+        "documentazione_autenticazione_comunicazioni",
+        "procedure_audit_impronta_digitale"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "log_dichiarazioni_identità",
+          "fields": ["id_dichiarante", "tipo_affiliazione", "dichiarazione_affiliazione", "stato_verifica", "timestamp"],
+          "retention": "365_giorni"
+        },
+        {
+          "source": "log_verifica_credenziali",
+          "fields": ["id_verificatore", "tipo_credenziale", "metodo_verifica", "risultato_verifica", "timestamp"],
+          "retention": "180_giorni"
+        },
+        {
+          "source": "log_richieste_accesso",
+          "fields": ["id_richiedente", "affiliazione_dichiarata", "tipo_richiesta", "giustificazione_approvazione", "timestamp"],
+          "retention": "90_giorni"
+        }
+      ],
+      "optional": [
+        {
+          "source": "sistema_directory_professionale",
+          "fields": ["id_dipendente", "credenziali_verificate", "alma_mater", "certificazioni_professionali", "appartenenze_settore"],
+          "retention": "continuo"
+        },
+        {
+          "source": "log_comunicazioni_email",
+          "fields": ["id_mittente", "marcatori_unità", "menzioni_affiliazione", "dichiarazioni_firma", "timestamp"],
+          "retention": "365_giorni"
+        },
+        {
+          "source": "api_verifica_linkedin",
+          "fields": ["id_profilo", "credenziali_verificate", "cronologia_impiego", "cronologia_istruzione"],
+          "retention": "90_giorni"
+        }
+      ],
+      "telemetry_mapping": {
+        "U_i": {
+          "calculation": "Indice di influenza dell'unità per interazione",
+          "query": "SELECT SUM(peso_affiliazione * indicatore_dichiarazione * fattore_temporale) / COUNT(DISTINCT tipo_affiliazione) as U_i FROM dichiarazioni_identità WHERE user_id=? AND finestra_tempo='6h'"
+        },
+        "Credential_Anomaly": {
+          "calculation": "Z-score delle credenziali non verificate rispetto alla baseline",
+          "query": "SELECT (tasso_non_verificato_corrente - AVG(tasso_baseline)) / STDDEV(tasso_baseline) FROM verifiche_credenziali WHERE finestra_tempo='30g'"
+        },
+        "trust_amplification": {
+          "calculation": "Concessioni di accesso seguenti dichiarazioni di unità / Richieste di accesso totali",
+          "query": "SELECT (COUNT(concesso=true AND dichiarazione_unità=true) / COUNT(*)) FROM richieste_accesso WHERE finestra_tempo='30g'"
+        }
+      }
+    },
+    "integration_apis": {
+      "identity_provider": "API IdP - Credenziali professionali verificate, certificazioni, affiliazioni",
+      "linkedin_verification": "API LinkedIn - Cronologia impiego, verifica istruzione, rete professionale",
+      "alumni_database": "API Alumni - Frequenza istituzione educativa verificata, registri di laurea",
+      "professional_registry": "API Registro Professionale - Certificazioni di settore, appartenenze, credenziali"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "3.3",
+        "name": "Manipolazione della Simpatia",
+        "probability": 0.80,
+        "factor": 1.7,
+        "description": "La simpatia combinata con l'unità crea fiducia composta attraverso similarità + identità condivisa",
+        "formula": "P(3.6|3.3) = 0.80",
+        "evidence": "L'unità trascende la simpatia; l'attivazione combinata crea massima fiducia e minimo scetticismo"
+      },
+      {
+        "indicator": "3.2",
+        "name": "Sfruttamento della Prova Sociale",
+        "probability": 0.70,
+        "factor": 1.5,
+        "description": "I membri intra-gruppo che forniscono prova sociale amplificano la conformità basata sull'unità",
+        "formula": "P(3.6|3.2) = 0.70"
+      },
+      {
+        "indicator": "1.3",
+        "name": "Impersonificazione di Figura di Autorità",
+        "probability": 0.75,
+        "factor": 1.6,
+        "description": "L'autorità che dichiara affiliazione condivisa combina conformità gerarchica con fiducia intra-gruppo",
+        "formula": "P(3.6|1.3) = 0.75",
+        "evidence": "Autorità + Unità = combinazione di influenza massima nel framework di Cialdini"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Bypass Indotto da Urgenza",
+        "probability": 0.65,
+        "factor": 1.4,
+        "description": "L'urgenza previene la verifica dei marcatori di unità dichiarati",
+        "formula": "P(3.6|2.1) = 0.65"
+      },
+      {
+        "indicator": "7.2",
+        "name": "Saturazione del Carico Cognitivo",
+        "probability": 0.60,
+        "factor": 1.35,
+        "description": "Il sovraccarico cognitivo riduce il controllo delle affiliazioni condivise dichiarate",
+        "formula": "P(3.6|7.2) = 0.60"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "3.4",
+        "name": "Escalation dell'Impegno",
+        "probability": 0.70,
+        "factor": 1.5,
+        "description": "L'unità stabilisce le fondamenta per impegni crescenti all'interno del gruppo intra-gruppo"
+      },
+      {
+        "indicator": "4.3",
+        "name": "Uso Improprio delle Credenziali",
+        "probability": 0.75,
+        "factor": 1.6,
+        "description": "La fiducia intra-gruppo facilita la condivisione e l'uso improprio delle credenziali"
+      },
+      {
+        "indicator": "6.1",
+        "name": "Sfruttamento del Canale di Comunicazione",
+        "probability": 0.65,
+        "factor": 1.4,
+        "description": "I segnali di unità consentono lo sfruttamento dei canali di comunicazione informali"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["3.6", "1.3", "3.3"],
+      "convergence_formula": "CI = ∏(1 + v_i) dove v_i = punteggio di vulnerabilità normalizzato",
+      "convergence_multiplier": 3.2,
+      "threshold_critical": 4.2,
+      "description": "Tempesta perfetta: Autorità + Unità + Simpatia = 420% di probabilità di sfruttamento aumentata attraverso attivazione massima della fiducia",
+      "real_world_example": "Violazione Anthem 2015: Gli attaccanti hanno impersonato operatori sanitari (unità) con credenziali di autorità e stili di comunicazione simpatici"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["3.3", "3.2", "1.3", "2.1", "7.2"],
+      "child_nodes": ["3.4", "4.3", "6.1"],
+      "conditional_probability_table": {
+        "P_3.6_base": 0.30,
+        "P_3.6_dato_simpatia": 0.62,
+        "P_3.6_dato_autorità": 0.58,
+        "P_3.6_dato_urgenza": 0.51,
+        "P_3.6_dato_tutti": 0.88
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_identity_verification",
+          "weight": 0.18,
+          "title": "Protocolli di Verifica dell'Identità Professionale",
+          "question": "Quando gli individui dichiarano affiliazioni professionali condivise, background educativi o credenziali di settore, quali procedure di verifica vengono seguite prima di concedere fiducia o accesso?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Verifica sistematica di tutte le dichiarazioni professionali attraverso canali ufficiali (verifica LinkedIn, controlli database alumni, validazione registro professionale) prima di concedere accesso privilegiato o fiducia"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Verifica di base per accesso sensibile ma fiducia di routine concessa basata su affiliazioni dichiarate senza validazione formale"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna verifica delle affiliazioni condivise dichiarate; fiducia automatica concessa a coloro che dichiarano status di alumni, credenziali professionali o appartenenza di settore"
+            }
+          ],
+          "evidence_required": "Politica di verifica dell'identità, log di validazione delle credenziali, documentazione della procedura di verifica",
+          "soc_mapping": "log_verifica_credenziali e statistiche risultato_verifica"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_professional_credential_validation",
+          "weight": 0.16,
+          "title": "Autenticazione delle Credenziali Professionali",
+          "question": "Come valida la Sua organizzazione le certificazioni professionali, le appartenenze di settore e le credenziali specializzate dichiarate nelle comunicazioni o richieste di accesso?",
+          "options": [
+            {
+              "value": "validated",
+              "score": 0,
+              "label": "Tutte le credenziali professionali validate attraverso registri ufficiali, organismi di certificazione o database di appartenenza prima di accettare le dichiarazioni"
+            },
+            {
+              "value": "selective",
+              "score": 0.5,
+              "label": "La validazione avviene per richieste di alto privilegio ma non sistematicamente per interazioni di routine"
+            },
+            {
+              "value": "accepted",
+              "score": 1,
+              "label": "Le credenziali professionali vengono accettate al valore nominale basandosi su firme email, profili LinkedIn o dichiarazioni verbali"
+            }
+          ],
+          "evidence_required": "Procedure di validazione delle credenziali, documentazione dell'integrazione del registro, esempi di verifica",
+          "soc_mapping": "correlazione sistema_directory_professionale con log_dichiarazioni_identità"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_alumni_industry_claims",
+          "weight": 0.14,
+          "title": "Verifica di Affiliazione Alumni e Settore",
+          "question": "Quando parti esterne dichiarano alma mater condivisa, affiliazione di settore o appartenenza ad associazione professionale per stabilire rapport, quale validazione avviene?",
+          "options": [
+            {
+              "value": "systematic",
+              "score": 0,
+              "label": "Verifica sistematica dello status di alumni attraverso database universitari e appartenenza di settore attraverso registri di associazione prima di concedere privilegi intra-gruppo"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Validazione informale attraverso conversazione o revisione LinkedIn ma nessun controllo di registro ufficiale"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna validazione delle dichiarazioni di alma mater o settore; dichiarazioni di affiliazione condivisa accettate come fondamento di fiducia"
+            }
+          ],
+          "evidence_required": "Procedure di verifica alumni, log di validazione associazione di settore, esempi di verifica affiliazione",
+          "soc_mapping": "log di integrazione database_alumni e api_verifica_linkedin"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_in_group_privilege",
+          "weight": 0.13,
+          "title": "Privilegi Intra-Gruppo e Decisioni di Accesso",
+          "question": "Quando le decisioni di sicurezza o accesso coinvolgono individui che dichiarano affiliazione condivisa con i decisori, esistono controlli specifici per prevenire il favoritismo intra-gruppo?",
+          "options": [
+            {
+              "value": "controlled",
+              "score": 0,
+              "label": "Approvazione indipendente richiesta quando il richiedente dichiara affiliazione condivisa con l'approvatore; segnalazione automatica di potenziale bias intra-gruppo nelle decisioni di accesso"
+            },
+            {
+              "value": "awareness",
+              "score": 0.5,
+              "label": "Consapevolezza generale che esiste il bias intra-gruppo ma nessun controllo formale o requisiti di revisione indipendente"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun controllo per il privilegio intra-gruppo; l'affiliazione condivisa viene vista positivamente nelle decisioni di accesso come 'rete fidata'"
+            }
+          ],
+          "evidence_required": "Log di audit delle decisioni di accesso, documentazione dei controlli del bias intra-gruppo, flussi di lavoro di approvazione indipendente",
+          "soc_mapping": "metrica amplificazione_fiducia da richieste_accesso correlate con dichiarazioni_identità"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_cultural_affinity",
+          "weight": 0.12,
+          "title": "Sfruttamento dell'Affinità Culturale e Generazionale",
+          "question": "Come affronta la Sua organizzazione i rischi di sicurezza derivanti da dichiarazioni di affinità culturale, etnica o generazionale utilizzate per stabilire fiducia?",
+          "options": [
+            {
+              "value": "addressed",
+              "score": 0,
+              "label": "La formazione copre esplicitamente lo sfruttamento dell'unità culturale e generazionale; i protocolli di verifica si applicano indipendentemente dall'affinità dichiarata; catene di approvazione diverse prevengono il bias di cultura singola"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Qualche consapevolezza dei rischi di affinità culturale ma nessun protocollo specifico per gestire la fiducia basata sull'unità"
+            },
+            {
+              "value": "unaddressed",
+              "score": 1,
+              "label": "L'affinità culturale e generazionale viene vista positivamente; nessun riconoscimento del rischio di sfruttamento attraverso dichiarazioni di identità condivisa"
+            }
+          ],
+          "evidence_required": "Materiali di formazione sull'affinità culturale, documentazione di catene di approvazione diverse, valutazioni di consapevolezza dello sfruttamento dell'unità",
+          "soc_mapping": "Diversità delle catene di approvazione e analisi della distribuzione tipo_affiliazione"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_unity_training",
+          "weight": 0.11,
+          "title": "Formazione sullo Sfruttamento del Principio di Unità",
+          "question": "Quale formazione specifica ricevono i dipendenti sul riconoscimento e la resistenza agli attacchi di social engineering basati sull'unità che sfruttano l'identità condivisa?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Formazione regolare che copre il principio di unità di Cialdini, psicologia del favoritismo intra-gruppo, phishing di identità professionale, sfruttamento dell'alma mater, con esercizi di scenario pratici e simulazioni"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "La consapevolezza generale della sicurezza menziona la verifica delle credenziali ma nessuna copertura specifica del principio di unità o dello sfruttamento intra-gruppo"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna formazione sul social engineering basato sull'unità o su come le dichiarazioni di identità condivisa creino vulnerabilità di sicurezza"
+            }
+          ],
+          "evidence_required": "Curriculum di formazione sullo sfruttamento dell'unità, registri di completamento, risultati di simulazione per attacchi basati sull'identità",
+          "soc_mapping": "Tracciamento del completamento della formazione e risultati di simulazione di phishing per scenari basati sull'unità"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_departmental_impersonation",
+          "weight": 0.09,
+          "title": "Controlli di Impersonificazione Dipartimentale Interna",
+          "question": "Quali controlli prevengono che gli attaccanti impersonino membri di dipartimenti o team specifici per sfruttare l'unità organizzativa e bypassare la sicurezza?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Verifica della firma digitale, protocolli di autenticazione specifici del dipartimento, verifica visiva per richieste inusuali e validazione sistematica delle dichiarazioni di dipartimento interno"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Verifica del dominio email ma nessuna autenticazione specifica del dipartimento o prevenzione dell'impersonificazione"
+            },
+            {
+              "value": "minimal",
+              "score": 1,
+              "label": "Nessun controllo specifico per l'impersonificazione dipartimentale; email dall'aspetto interno sono fidate basandosi sul dipartimento mittente apparente"
+            }
+          ],
+          "evidence_required": "Protocolli di autenticazione dipartimentale, implementazione della firma digitale, tracciamento degli incidenti di impersonificazione",
+          "soc_mapping": "log_incidenti_impersonificazione_dipartimentale e analisi log_comunicazioni_email"
+        },
+        {
+          "type": "radio-list",
+          "number": 8,
+          "id": "q8_communication_authentication",
+          "weight": 0.07,
+          "title": "Autenticazione delle Comunicazioni Professionali",
+          "question": "Quando gli individui utilizzano credenziali professionali, certificazioni o affiliazioni nelle loro firme email o comunicazioni per stabilire autorità, quale verifica avviene?",
+          "options": [
+            {
+              "value": "verified",
+              "score": 0,
+              "label": "Verifica automatizzata delle credenziali contro registri professionali; segnalazione di dichiarazioni di credenziali non verificate nelle comunicazioni esterne; validazione della firma digitale"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Verifica manuale solo quando sorge il sospetto ma nessuna validazione sistematica delle dichiarazioni nelle firme"
+            },
+            {
+              "value": "trusted",
+              "score": 1,
+              "label": "Le credenziali professionali nelle firme vengono accettate come autentiche; nessuna verifica di certificazioni, titoli o affiliazioni dichiarate"
+            }
+          ],
+          "evidence_required": "Sistemi di validazione della firma email, integrazione di verifica delle credenziali, politiche di autenticazione delle comunicazioni",
+          "soc_mapping": "analisi delle dichiarazioni di credenziali log_comunicazioni_email e tracciamento stato_verifica"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UNA opzione per ogni domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze devono essere documentate per il percorso di audit.",
+      "calculation": "Punteggio_Rapido = Σ(punteggio_domanda × peso_domanda) / Σ(peso_domanda)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Verifica dell'Identità e Credenziali Professionali",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Quando qualcuno si mette in contatto dichiarando di essere andato alla stessa università dei Suoi dipendenti, di aver lavorato nella stessa azienda o di condividere certificazioni professionali, quale verifica avviene prima di estendere la fiducia?",
+              "scoring_guidance": {
+                "green": "Processo di verifica dettagliato con esempi specifici: integrazione API LinkedIn, controlli database alumni, validazione registro professionale, casi documentati di dichiarazioni verificate o rifiutate",
+                "yellow": "Verifica informale attraverso conversazione o revisione del profilo ma nessun processo di validazione sistematica",
+                "red": "Nessun processo di verifica o mentalità 'ci fidiamo dei colleghi alumni/professionisti'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri il Suo ultimo caso in cui qualcuno ha dichiarato credenziali professionali condivise - come ha validato quella dichiarazione?",
+                  "evidence_type": "documentazione_verifica_credenziali"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succede se qualcuno dichiara di essere da un dipartimento o team ma non può verificarlo immediatamente?",
+                  "evidence_type": "protocollo_prevenzione_impersonificazione"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Mi parli della Sua rete di alumni, associazioni professionali o gruppi di settore. Come gestisce la sicurezza quando qualcuno dichiara l'appartenenza per stabilire fiducia?",
+              "scoring_guidance": {
+                "green": "Approccio sistematico con integrazione del registro, protocolli di verifica, esempi recenti di validazione, politiche di sicurezza della rete alumni/professionale documentate",
+                "yellow": "Consapevolezza che la verifica dovrebbe avvenire ma applicazione incoerente",
+                "red": "Le dichiarazioni di alumni o professionali stabiliscono automaticamente fiducia senza verifica"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può mostrarmi come verifica che qualcuno abbia effettivamente frequentato la Sua università o possieda le certificazioni professionali dichiarate?",
+                  "evidence_type": "sistema_verifica_alumni"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Qualcuno è mai stato scoperto a dichiarare falsamente background professionale condiviso? Cosa è successo?",
+                  "evidence_type": "incidente_dichiarazione_falsa"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Fiducia Intra-Gruppo e Decisioni di Accesso",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Quando le decisioni di accesso o sicurezza coinvolgono qualcuno che dichiara affiliazione condivisa con il decisore - stessa alma mater, stesso precedente datore di lavoro, stessa certificazione - esistono controlli per prevenire il favoritismo intra-gruppo?",
+              "scoring_guidance": {
+                "green": "Requisiti di approvazione indipendente quando esiste affiliazione condivisa, segnalazione automatica di potenziale bias, casi documentati di prevenzione del bias, catene di approvazione diverse",
+                "yellow": "Consapevolezza generale del bias intra-gruppo ma nessun controllo formale o revisione indipendente",
+                "red": "L'affiliazione condivisa è vista positivamente nelle decisioni di accesso; nessun controllo per la preferenza intra-gruppo"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri una decisione di accesso in cui qualcuno ha dichiarato background condiviso con l'approvatore - quali controlli aggiuntivi sono stati applicati?",
+                  "evidence_type": "esempio_controllo_intra_gruppo"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "I Suoi sistemi segnalano quando un approvatore e un richiedente condividono alma mater, precedente datore di lavoro o credenziali professionali?",
+                  "evidence_type": "rilevamento_bias_automatizzato"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Come gestisce la Sua organizzazione le situazioni in cui l'affinità culturale, etnica o generazionale viene utilizzata per stabilire fiducia in contesti di sicurezza?",
+              "scoring_guidance": {
+                "green": "Formazione esplicita sullo sfruttamento dell'unità culturale, i protocolli di verifica si applicano indipendentemente dall'affinità dichiarata, processi di approvazione diversi prevengono il bias di cultura singola, esempi documentati",
+                "yellow": "Qualche consapevolezza ma nessun protocollo specifico per gestire la fiducia basata sull'affinità culturale",
+                "red": "L'affinità culturale e generazionale è vista positivamente senza consapevolezza del rischio di sfruttamento"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Ha mai incontrato tentativi di social engineering utilizzando segnali di unità culturale o generazionale?",
+                  "evidence_type": "incidente_sfruttamento_culturale"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come prevengono le catene di approvazione diverse il bias culturale intra-gruppo nelle Sue decisioni di sicurezza?",
+                  "evidence_type": "meccanismo_controllo_diversità"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Formazione e Consapevolezza dello Sfruttamento dell'Unità",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Quale formazione ricevono i dipendenti specificamente sul social engineering basato sull'unità - attacchi che sfruttano identità condivisa, affiliazione professionale o background culturale?",
+              "scoring_guidance": {
+                "green": "Formazione completa che copre il principio di unità di Cialdini, teoria dell'identità sociale, psicologia del favoritismo intra-gruppo, scenari di phishing di identità professionale, dati di completamento recenti, risultati di test di simulazione",
+                "yellow": "La formazione generale sulla sicurezza menziona la verifica delle credenziali ma nessun principio di unità o specifiche di sfruttamento intra-gruppo",
+                "red": "Nessuna formazione sugli attacchi basati sull'unità o su come l'identità condivisa crei vulnerabilità di sicurezza"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Se inviassi un'email di phishing dichiarando di essere un collega alumni dell'università del Suo CEO richiedendo aiuto urgente, cosa farebbero i Suoi dipendenti?",
+                  "evidence_type": "risposta_scenario"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ha simulato attacchi di phishing di identità professionale per testare la consapevolezza dello sfruttamento dell'unità?",
+                  "evidence_type": "test_simulazione"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Quando gli attaccanti impersonano dipartimenti, team o gruppi professionali specifici all'interno della Sua organizzazione, quali controlli di rilevamento e prevenzione esistono?",
+              "scoring_guidance": {
+                "green": "Protocolli di autenticazione specifici del dipartimento, firme digitali, sistemi di rilevamento di impersonificazione interna, verifica visiva per richieste inusuali, esempi documentati di prevenzione",
+                "yellow": "Sicurezza email di base ma nessun controllo di impersonificazione specifico del dipartimento",
+                "red": "Le email dall'aspetto interno sono fidate basandosi sul dipartimento apparente; nessuna prevenzione dell'impersonificazione"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri come rileva quando attaccanti esterni impersonano il Suo dipartimento IT, HR o team finanziari.",
+                  "evidence_type": "rilevamento_impersonificazione_dipartimentale"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Qual è il Suo processo quando qualcuno riceve un'email dall'aspetto interno che sembra sbagliata?",
+                  "evidence_type": "protocollo_verifica"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Come valida le credenziali professionali, le certificazioni e i titoli dichiarati nelle firme email o comunicazioni professionali?",
+              "scoring_guidance": {
+                "green": "Sistemi automatizzati di verifica delle credenziali, integrazione con registri professionali, segnalazione di dichiarazioni non verificate, validazione della firma digitale, esempi specifici di validazione",
+                "yellow": "Verifica manuale quando sorge il sospetto ma nessuna validazione sistematica",
+                "red": "Le credenziali professionali nelle firme vengono accettate come autentiche senza verifica"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può mostrarmi il Suo sistema per validare certificazioni come CISSP, CPA, PE, MD o credenziali specifiche del settore nelle comunicazioni?",
+                  "evidence_type": "sistema_validazione_credenziali"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succede quando qualcuno utilizza credenziali professionali nella propria firma ma il Suo sistema non può verificarle?",
+                  "evidence_type": "gestione_credenziali_non_verificate"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Ricerca di Segnali di Allerta",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle politiche dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Abbiamo una forte rete di alumni - i colleghi laureati si aiutano sempre a vicenda...\"",
+              "severity": "critical",
+              "score_impact": 0.22,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Se qualcuno dichiara di essere dello stesso settore o background professionale, ci fidiamo di più...\"",
+              "severity": "high",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Diamo priorità alle richieste da persone che condividono il nostro background culturale o etnico - è comunità...\"",
+              "severity": "critical",
+              "score_impact": 0.20,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Se qualcuno ha la stessa certificazione che ho io, non ho bisogno di verificare la sua identità approfonditamente...\"",
+              "severity": "high",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Accettiamo i profili LinkedIn come prova di credenziali professionali e background...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Le firme email con titoli professionali e certificazioni stabiliscono credibilità per noi...\"",
+              "severity": "medium",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Quando il dipartimento IT invia un'email, controlliamo solo se sembra che provenga dall'IT - non verifichiamo ulteriormente...\"",
+              "severity": "critical",
+              "score_impact": 0.21,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Punteggio_Conversazione = Media_Ponderata(punteggi_sottosezione) + Σ(impatti_segnali_allerta)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare test simulati di phishing di identità professionale e social engineering basato su alumni trimestralmente",
+      "correlation_analysis": "Confrontare i punteggi di audit manuale con il rilevamento dell'influenza dell'unità SOC (correlazione target > 0.82)",
+      "drift_detection": "Test di Kolmogorov-Smirnov sulle correlazioni unità-accesso, ricalibrazione se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Garantire che la probabilità di sfruttamento dell'unità prevista corrisponda ai tassi di incidenti osservati",
+      "baseline_period": "90_giorni",
+      "recalibration_trigger": "Drift rilevato o punteggio di validazione < 0.72"
+    },
+    "success_metrics": [
+      {
+        "metric": "Tasso di Verifica delle Credenziali Professionali",
+        "formula": "% di dichiarazioni di credenziali professionali verificate attraverso registri ufficiali prima dell'estensione della fiducia",
+        "baseline": "audit dei 180 giorni precedenti",
+        "target": "98% di verifica entro 90 giorni",
+        "measurement": "analisi automatizzata log_verifica_credenziali + audit trimestrale"
+      },
+      {
+        "metric": "Risultati di Simulazione di Phishing di Identità Professionale",
+        "formula": "% di dipendenti che conformano con richieste da membri simulati di gruppi intra-gruppo alumni/professionali senza verifica",
+        "baseline": "simulazione di phishing iniziale con marcatori di unità",
+        "target": "ridurre la conformità dal 67% di base a <20% entro 90 giorni",
+        "measurement": "simulazioni di phishing di identità professionale trimestrali"
+      },
+      {
+        "metric": "Correlazione Unità-Accesso",
+        "formula": "Concessioni di accesso seguenti dichiarazioni di unità / Richieste di accesso totali",
+        "baseline": "media dei 6 mesi precedenti",
+        "target": "ridurre la correlazione di accesso basato su unità non verificata dell'85% entro 90 giorni",
+        "measurement": "analisi di correlazione automatizzata tra dichiarazioni_identità e richieste_accesso"
+      },
+      {
+        "metric": "Tasso di Rilevamento del Bias Intra-Gruppo",
+        "formula": "% di decisioni di accesso coinvolgenti affiliazione condivisa che innescano revisione indipendente",
+        "baseline": "implementazione corrente del controllo intra-gruppo",
+        "target": "100% di segnalazione e revisione indipendente entro 60 giorni",
+        "measurement": "analisi mensile del sistema di rilevamento del bias"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Formazione sulla Sicurezza Consapevole dell'Unità",
+        "description": "Programma di formazione completo sul principio di unità di Cialdini, teoria dell'identità sociale, psicologia del favoritismo intra-gruppo e riconoscimento degli attacchi di social engineering basati sull'unità",
+        "implementation": "Moduli di formazione trimestrali che coprono l'unità come principio di influenza più forte, elaborazione intra-gruppo della corteccia prefrontale mediale, phishing di identità professionale, sfruttamento alumni, attacchi di affinità culturale, impersonificazione dipartimentale. Includere esercizi pratici con scenari di identità professionale.",
+        "technical_controls": "Tracciamento del sistema di gestione dell'apprendimento, valutazioni di competenza specifiche sull'unità, simulazioni di phishing di identità professionale trimestrali, test di consapevolezza del bias intra-gruppo",
+        "roi": "420% medio entro 12 mesi",
+        "effort": "medio",
+        "timeline": "30 giorni di implementazione iniziale, continuo trimestrale"
+      },
+      {
+        "id": "sol_2",
+        "title": "Sistema di Verifica delle Credenziali Professionali",
+        "description": "Integrazione automatizzata con registri professionali, database alumni e organismi di certificazione per validare credenziali e affiliazioni dichiarate",
+        "implementation": "Distribuire piattaforma di verifica delle credenziali con integrazioni API a verifica LinkedIn, database alumni universitari, registri di certificazione professionale (CISSP, CPA, PE, ecc.), database di appartenenza ad associazioni di settore. Segnalazione automatizzata di dichiarazioni di credenziali non verificate nelle comunicazioni e richieste di accesso.",
+        "technical_controls": "Integrazione API multi-registro, verifica delle credenziali in tempo reale, alerting dichiarazioni non verificate, validazione firma digitale, sincronizzazione directory professionale",
+        "roi": "480% medio entro 18 mesi",
+        "effort": "alto",
+        "timeline": "60-90 giorni di implementazione"
+      },
+      {
+        "id": "sol_3",
+        "title": "Sistema di Rilevamento e Controllo del Bias Intra-Gruppo",
+        "description": "Rilevamento automatizzato delle affiliazioni condivise tra richiedenti e approvatori con revisione indipendente obbligatoria per prevenire il favoritismo intra-gruppo",
+        "implementation": "Implementare motore di rilevamento del bias che correla profili professionali, background educativi, precedenti datori di lavoro, certificazioni e affiliazioni culturali. Quando viene rilevata affiliazione condivisa tra richiedente e approvatore, il sistema escalade automaticamente a revisore indipendente da background diverso. Tracciare indice di influenza dell'unità (U_i) per decisioni di accesso.",
+        "technical_controls": "Motore di correlazione affiliazioni, flussi di lavoro di escalation automatizzati, routing di approvazione indipendente, calcolo e tracciamento U_i, dashboard di analisi pattern bias",
+        "roi": "390% medio entro 24 mesi",
+        "effort": "alto",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Prevenzione dell'Impersonificazione Dipartimentale",
+        "description": "Implementare protocolli di autenticazione specifici del dipartimento e firme digitali per prevenire l'impersonificazione di team interni da parte di attaccanti esterni",
+        "implementation": "Distribuire requisiti di firma digitale per dipartimenti sensibili (IT, HR, Finanza, Sicurezza), protocolli di verifica visiva per richieste inusuali, autenticazione email specifica del dipartimento, algoritmi di rilevamento impersonificazione che analizzano pattern di comunicazione. Formazione dei dipendenti sulle procedure di verifica per richieste di dipartimento interno.",
+        "technical_controls": "Firme S/MIME o PGP specifiche del dipartimento, autenticazione email (DMARC, DKIM, SPF), modelli ML di rilevamento impersonificazione, flussi di lavoro di verifica visiva, validazione comunicazione dipartimentale",
+        "roi": "440% medio entro 12 mesi",
+        "effort": "medio",
+        "timeline": "30-45 giorni"
+      },
+      {
+        "id": "sol_5",
+        "title": "Audit e Monitoraggio dell'Impronta Digitale",
+        "description": "Auditing sistematico dell'impronta digitale organizzativa per comprendere quali informazioni professionali, educative e culturali sono pubblicamente disponibili per gli attaccanti da sfruttare in attacchi basati sull'unità",
+        "implementation": "Audit trimestrali di profili LinkedIn pubblici, directory alumni universitari, elenchi membri associazioni professionali, elenchi partecipanti conferenze e social media per catalogare marcatori di unità sfruttabili. Valutazione del rischio di affiliazioni esposte. Guida per i dipendenti sulla gestione dei profili professionali per bilanciare networking e sicurezza.",
+        "technical_controls": "Strumenti automatizzati di scansione impronta digitale, analisi profilo pubblico, catalogo marcatori unità, scoring rischio per affiliazioni esposte, dashboard di monitoraggio continuo",
+        "roi": "310% medio entro 18 mesi",
+        "effort": "medio",
+        "timeline": "30-45 giorni audit iniziale, continuo trimestrale"
+      },
+      {
+        "id": "sol_6",
+        "title": "Framework di Autenticazione delle Comunicazioni",
+        "description": "Validazione tecnica di credenziali professionali e affiliazioni dichiarate nelle firme email e comunicazioni per prevenire lo sfruttamento della fiducia basato sulle credenziali",
+        "implementation": "Implementare parsing automatizzato delle firme email per credenziali professionali, titoli e certificazioni. Validazione in tempo reale contro registri professionali. Segnalazione di dichiarazioni di credenziali non verificate o sospette. Integrazione con gateway di sicurezza email per annotare le comunicazioni con lo stato di verifica.",
+        "technical_controls": "Motore di parsing firma email, integrazione API validazione credenziali, tagging di verifica in tempo reale, alerting dichiarazioni sospette, integrazione gateway email",
+        "roi": "360% medio entro 15 mesi",
+        "effort": "medio",
+        "timeline": "45 giorni"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_2"],
+      "high_value": ["sol_3", "sol_4"],
+      "foundational": ["sol_5", "sol_6"],
+      "technical_enforcement": ["sol_2", "sol_3", "sol_4", "sol_6"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Phishing di Identità Professionale (Edizione Alumni)",
+      "description": "Gli attaccanti ricercano i background educativi dei dipendenti target e impersonano colleghi alumni per stabilire fiducia intra-gruppo istantanea e richiedere credenziali, accesso o informazioni sensibili",
+      "attack_vector": "La ricognizione LinkedIn identifica alma mater condivisa. L'attaccante crea email con marcatori di affiliazione universitaria, menziona esperienze condivise (luoghi del campus, tradizioni, mascotte) e richiede aiuto come 'collega laureato' che necessita di accesso urgente o informazioni",
+      "psychological_mechanism": "La corteccia prefrontale mediale elabora gli alumni come estensione del sé entro 200-400ms. Il principio di unità (influenza più forte) attiva fiducia automatica e volontà di aiutare il membro intra-gruppo. Lo scetticismo viene soppresso per i colleghi alumni percepiti.",
+      "historical_example": "Violazione Target 2013: Gli attaccanti hanno ricercato e impersonato dipendenti del contraente HVAC condividendo certificazioni professionali con il team strutture di Target, stabilendo fiducia basata sull'unità prima del phishing delle credenziali",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["U_i > 0.7", "menzione_alma_mater", "richiesta_credenziali", "status_alumni_non_verificato", "marcatori_urgenza"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Impersonificazione di Insider di Settore",
+      "description": "Gli attaccanti dichiarano certificazioni di settore condivise, appartenenze ad associazioni professionali o credenziali specializzate per stabilire unità professionale e ottenere accesso fidato",
+      "attack_vector": "Ricerca dell'organizzazione target, del settore e delle certificazioni professionali comuni (CISSP, CPA, PE, ecc.). Creare comunicazioni dichiarando background professionale condiviso, sfide di settore e conoscenza specializzata. Richiedere accesso o condivisione informazioni di 'cortesia professionale'.",
+      "psychological_mechanism": "L'identità professionale come componente centrale del concetto di sé. La certificazione condivisa o appartenenza di settore attiva favoritismo intra-gruppo, norme di obbligo reciproco e aspettative di cortesia professionale. La teoria dell'identità sociale prevede trattamento preferenziale per professionisti intra-gruppo.",
+      "historical_example": "Violazione Anthem 2015: Gli attaccanti hanno impersonato professionisti IT sanitari utilizzando terminologia specifica del settore e conoscenza apparente, sfruttando l'unità degli operatori sanitari per ottenere accesso al database interessando 78,8 milioni di record",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["dichiarazioni_credenziali_professionali", "terminologia_settore", "C_punteggio_credenziale > 0.6", "certificazione_non_verificata", "linguaggio_cortesia_professionale"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Attacco di Impersonificazione Dipartimentale",
+      "description": "Gli attaccanti esterni impersonano dipartimenti interni (IT, HR, Finanza) sfruttando l'unità organizzativa e la fiducia automatica per comunicazioni dall'aspetto interno",
+      "attack_vector": "Spoofing di dominio o account compromesso per apparire come dipartimento interno. Utilizzare terminologia specifica del dipartimento, riferire sistemi interni, rivendicare autorità dipartimentale. Richiedere reset credenziali, accesso al sistema o eccezioni di politica come 'procedura standard del dipartimento'.",
+      "psychological_mechanism": "L'unità organizzativa crea fiducia automatica per i dipartimenti interni. Il gradiente di autorità (1.3) si combina con l'unità intra-gruppo (3.6) per vulnerabilità composta. L'urgenza (2.1) previene la verifica dell'autenticità dipartimentale.",
+      "historical_example": "Campagne diffuse di impersonificazione del dipartimento IT che raggiungono il 67% di tasso di conformità vs. 23% per richieste esterne ovvie. Le email dall'aspetto interno bypassano lo scetticismo attraverso l'attivazione dell'unità organizzativa.",
+      "likelihood": "very_high",
+      "impact": "critical",
+      "detection_indicators": ["dichiarazione_dipartimento_interno", "dominio_spoofed", "richiesta_credenziali_urgente", "nessuna_firma_digitale", "T_clustering_temporale < 0.3"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Sfruttamento dell'Affinità Culturale",
+      "description": "Gli attaccanti ricercano e sfruttano marcatori di identità culturale, etnica o generazionale per stabilire fiducia basata sull'unità all'interno di specifici gruppi demografici di dipendenti",
+      "attack_vector": "Targetizzare specifici gruppi culturali o demografici all'interno dell'organizzazione attraverso ricerca sui social media. Utilizzare riferimenti culturali, marcatori linguistici, terminologia generazionale o segnali di identità condivisa. Richiedere aiuto come membro dello stesso gruppo culturale intra-gruppo che affronta sfide.",
+      "psychological_mechanism": "L'identità culturale ed etnica come componenti fondamentali del sé. Il favoritismo intra-gruppo è più forte per l'unità culturale. L'unità di coorte generazionale (Millennials, Gen X, Boomers) crea fondamento di esperienza condivisa. La teoria dell'identità sociale prevede massimo comportamento di aiuto per il gruppo culturale intra-gruppo.",
+      "historical_example": "Violazione DNC 2016: Gli attaccanti hanno utilizzato marcatori di identità politica e terminologia insider per stabilire unità ideologica con i target, sfruttando l'affiliazione politica condivisa per ottenere fiducia prima del furto di credenziali",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["utilizzo_marcatore_culturale", "targetizzazione_demografica", "terminologia_generazionale", "U_i > 0.65", "tipo_affiliazione = culturale"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-10",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-10",
+    "translator": "Claude (Anthropic)",
+    "research_basis": [
+      "Cialdini, R. (2016). Pre-Suasion: A Revolutionary Way to Influence and Persuade - Principio di Unità (7° principio, più potente)",
+      "Tajfel, H. & Turner, J.C. (1979). Social Identity Theory - Favoritismo intra-gruppo e categorizzazione sociale",
+      "Mitchell, J.P. et al. (2006). Medial prefrontal cortex activity predicts memory for self - Base neurale dell'elaborazione intra-gruppo",
+      "Gunia, B.C. et al. (2011). Social identity and trust in intragroup vs. intergroup negotiations",
+      "Analisi Violazione Target 2013 - Studio di caso dello sfruttamento dell'unità del contraente HVAC",
+      "Report Violazione Anthem 2015 - Sfruttamento dell'identità professionale sanitaria (78,8M record)",
+      "Analisi Violazione DNC 2016 - Sfruttamento dell'identità politica e unità ideologica",
+      "Studi sul Phishing di Identità Professionale - 67% di tasso di successo con marcatori di unità vs. 23% di base",
+      "Neuroscienza della Fiducia Intra-Gruppo - Attivazione automatica della fiducia in 200-400ms per membri intra-gruppo"
+    ],
+    "validation_status": "peer_reviewed",
+    "deployment_status": "production_ready"
+  }
+}

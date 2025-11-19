@@ -1,0 +1,913 @@
+{
+  "indicator": "6.3",
+  "title": "INDICATOR 6.3 FIELD KIT",
+  "subtitle": "Diffusione di Responsabilità",
+  "category": "Vulnerabilità di Dinamiche di Gruppo",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 6.x",
+
+  "description": {
+    "short": "Misura la vulnerabilità creata quando gli individui in contesti di gruppo sentono una responsabilità personale diminuita per la sicurezza, portando a negligenza collettiva dove tutti assumono che 'qualcun altro' stia gestendo le minacce",
+    "context": "La diffusione di responsabilità (diffusion of responsibility) si verifica quando gli individui in contesti di gruppo sentono una responsabilità personale diminuita per la sicurezza, portando a negligenza collettiva dove tutti assumono che 'qualcun altro' stia gestendo le minacce. Questo meccanismo psicologico, più forte man mano che aumenta la dimensione del gruppo, crea vulnerabilità di sicurezza critiche quando tutti credono che qualcun altro stia monitorando i sistemi, rispondendo agli avvisi, aggiornando i controlli di sicurezza o escalando le preoccupazioni. Le organizzazioni manifestano questo attraverso culture di responsabilità vaghe dove i compiti di sicurezza 'appartengono a tutti' ma non c'è responsabilità individuale chiara, portando a risposte agli incidenti ritardate, avvisi di sicurezza non trattati e vulnerabilità note persistenti che 'qualcun altro' dovrebbe aver risolto.",
+    "impact": "Le organizzazioni con alta vulnerabilità alla diffusione di responsabilità sperimentano avvisi di sicurezza ignorati che tutti pensano qualcun altro stia gestendo, ritardi nella risposta agli incidenti perché nessuno si sente personalmente responsabile dell'escalation, patch e vulnerabilità note trascurate che rientrano nelle zone grigie di responsabilità, e tempo di decisione lento durante gli incidenti quando i gruppi attendono che 'qualcun altro' agisca. La ricerca mostra che la velocità di risposta agli incidenti diminuisce proporzionalmente alla dimensione del gruppo con correlazione r=-0.72.",
+    "psychological_basis": "La scoperta originale di Darley e Latané (1968) nell'effetto spettatore dimostra una riduzione del 75% nella probabilità di risposta man mano che aumentano i testimoni. L'analisi fMRI di Chekroun et al. (2012) mostra una ridotta attivazione del cortex cingolato anteriore (responsabilità personale) durante scenari di gruppo. La meta-analisi di Fischer et al. (2011) conferma l'effetto attraverso 105 studi con dimensione media dell'effetto d=0.35. Studi EEG mostrano ridotta preparazione motoria (potenziali di prontezza) quando altri sono presenti durante compiti di sicurezza."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Ruoli di responsabilità individuale chiara per tutti i compiti di sicurezza; responsabilità di escalation individuale per le preoccupazioni di sicurezza; metriche che tracciano le prestazioni di sicurezza individuali; tempo di risposta agli avvisi sotto i 15 minuti indipendentemente dalla dimensione del team.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Responsabilità di sicurezza condivisa con qualche sovrapposizione; responsabilità di escalation talvolta non chiara; monitoraggio occasionale di avvisi persi; tempi di risposta 15-45 minuti.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Cultura di sicurezza 'appartiene a tutti'; responsabilità di escalation non definita; avvisi di sicurezza regolarmente persi; tempi di risposta >45 minuti o pattern 'aspettando che qualcuno agisca'.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_accountability_clarity": 0.18,
+      "q2_alert_response": 0.17,
+      "q3_escalation_ownership": 0.16,
+      "q4_performance_tracking": 0.15,
+      "q5_incident_response_speed": 0.14,
+      "q6_vulnerability_remediation": 0.12,
+      "q7_decision_paralysis": 0.08
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_6.3(t) = w1·R_6.3(t) + w2·A_6.3(t) + w3·B_6.3(t)",
+      "components": {
+        "response_time_degradation": {
+          "formula": "RTD(g) = RT_group(g) / RT_individual",
+          "description": "Rapporto di tempo di risposta tra contesto di gruppo e contesto individuale",
+          "variables": {
+            "RT_group": "Tempo medio di risposta agli avvisi con dimensione gruppo g",
+            "RT_individual": "Tempo medio di risposta agli avvisti con responsabilità individuale chiara"
+          },
+          "interpretation": "RTD > 2.0 indica significativa degradazione del tempo di risposta dovuta a effetti di diffusione"
+        },
+        "rule_based": {
+          "formula": "R_6.3(t) = 1 if RTD(t) > θ_diffusion AND Responsibility_Clarity < 0.3, else 0",
+          "description": "Rilevamento binario basato su degradazione del tempo di risposta combinata con responsabilità poco chiara",
+          "threshold": {
+            "RTD_threshold": 2.0,
+            "responsibility_clarity": 0.3
+          }
+        },
+        "bystander_effect_index": {
+          "formula": "BEI(t) = 1 - (1 / (1 + α·n_witnesses))",
+          "description": "Probabilità di diffusione della responsabilità in funzione del numero di testimoni/membri del team",
+          "variables": {
+            "n_witnesses": "numero di membri del team consapevoli del problema di sicurezza",
+            "α": "parametro di decadimento calibrato da dati empirici (tipicamente 0.4)"
+          },
+          "interpretation": "BEI si avvicina a 1.0 man mano che aumenta la dimensione del gruppo, indicando maggiore diffusione"
+        },
+        "alert_abandonment_rate": {
+          "formula": "AAR(t) = Unresolved_Alerts(t) / Total_Alerts(t)",
+          "description": "Percentuale di avvisi di sicurezza che scadono senza risoluzione",
+          "threshold": {
+            "AAR_critical": 0.15,
+            "AAR_warning": 0.08
+          }
+        },
+        "bayesian_inference": {
+          "formula": "P(diffusion|evidence) = [P(evidence|diffusion) × P(diffusion)] / P(evidence)",
+          "factors": [
+            "group_size_greater_than_5",
+            "unclear_escalation_paths",
+            "shared_responsibility_culture",
+            "high_alert_abandonment_rate",
+            "slow_incident_response_times"
+          ],
+          "priors": {
+            "P_diffusion": 0.35,
+            "P_healthy_accountability": 0.65
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.30,
+        "w2_anomaly": 0.40,
+        "w3_bayesian": 0.30
+      },
+      "temporal_decay": {
+        "formula": "T_6.3(t) = α·D_6.3(t) + (1-α)·T_6.3(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 3600,
+        "description": "Smussamento esponenziale con costante temporale di 60 minuti per effetti di diffusione di responsabilità"
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "responsibility_assignment_matrices",
+        "security_alert_response_records",
+        "escalation_path_documentation",
+        "incident_response_timelines"
+      ],
+      "evidence_required": [
+        "clear_individual_accountability_documentation",
+        "alert_response_time_analysis_last_90_days",
+        "escalation_event_history",
+        "incident_response_decision_timelines"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "siem_system",
+          "fields": ["alert_id", "alert_timestamp", "acknowledgment_timestamp", "resolution_timestamp", "assigned_to", "escalated_by"],
+          "retention": "365_days"
+        },
+        {
+          "source": "incident_response_platform",
+          "fields": ["incident_id", "detection_time", "escalation_time", "response_time", "team_size", "decision_timestamp"],
+          "retention": "730_days"
+        },
+        {
+          "source": "vulnerability_management",
+          "fields": ["vulnerability_id", "discovery_date", "assigned_owner", "remediation_date", "ownership_changes"],
+          "retention": "730_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "collaboration_platform_logs",
+          "fields": ["security_discussion_participants", "decision_initiation_time", "decision_completion_time"],
+          "retention": "90_days"
+        },
+        {
+          "source": "change_management",
+          "fields": ["security_task_id", "owner", "reassignments", "completion_status"],
+          "retention": "365_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "RTD": {
+          "calculation": "Rapporto di degradazione del tempo di risposta",
+          "query": "SELECT AVG(TIMESTAMPDIFF(MINUTE, alert_timestamp, acknowledgment_timestamp)) / (SELECT AVG(response_time) FROM individual_assignments) FROM alerts WHERE team_size >= 5 AND time_window='30d'"
+        },
+        "BEI": {
+          "calculation": "Indice dell'effetto spettatore basato sulla dimensione del team",
+          "query": "SELECT 1 - (1 / (1 + 0.4 * team_size)) FROM security_events WHERE event_date > NOW() - INTERVAL '30 days'"
+        },
+        "AAR": {
+          "calculation": "Tasso di abbandono degli avvisi",
+          "query": "SELECT (COUNT(status='unresolved' AND age > threshold) / COUNT(*)) FROM alerts WHERE alert_date > NOW() - INTERVAL '30 days'"
+        }
+      }
+    },
+    "integration_apis": {
+      "siem_systems": "Splunk/QRadar API - Alert Response Times, Assignment Tracking",
+      "incident_platforms": "ServiceNow/PagerDuty API - Escalation Patterns, Response Metrics",
+      "collaboration": "Slack/Teams API - Group Decision Timing, Participant Counts",
+      "vulnerability_mgmt": "Tenable/Qualys API - Ownership Tracking, Remediation Delays"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "6.1",
+        "name": "Groupthink Security Blind Spots",
+        "probability": 0.70,
+        "factor": 1.35,
+        "description": "Il pensiero di gruppo sopprime l'azione individuale creando aspettative che il gruppo gestirà i problemi",
+        "formula": "P(6.3|6.1) = 0.70"
+      },
+      {
+        "indicator": "6.2",
+        "name": "Risky Shift Phenomena",
+        "probability": 0.80,
+        "factor": 1.50,
+        "description": "Lo spostamento rischioso combinato con la responsabilità diffusa crea accettazione estrema del rischio",
+        "formula": "P(6.3|6.2) = 0.80"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.60,
+        "factor": 1.20,
+        "description": "L'esaurimento cognitivo aumenta la dipendenza dagli altri per assumersi la responsabilità di sicurezza",
+        "formula": "P(6.3|5.2) = 0.60"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.55,
+        "factor": 1.15,
+        "description": "Lo stress crea dipendenza dal gruppo per la sicurezza riducendo l'iniziativa individuale",
+        "formula": "P(6.3|7.1) = 0.55"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.70,
+        "factor": 1.40,
+        "description": "La responsabilità diffusa combinata con l'urgenza crea bypass critici senza owner chiari"
+      },
+      {
+        "indicator": "6.4",
+        "name": "Social Loafing in Security Tasks",
+        "probability": 0.75,
+        "factor": 1.45,
+        "description": "La diffusione di responsabilità abilita direttamente il social loafing riducendo la responsabilità individuale"
+      },
+      {
+        "indicator": "2.3",
+        "name": "Deadline-Driven Risk Acceptance",
+        "probability": 0.65,
+        "factor": 1.30,
+        "description": "Nessuno si sente personalmente responsabile di sfidare decisioni rischiose guidate dalle scadenze"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["6.3", "6.2", "2.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 3.6,
+      "description": "Tempesta perfetta: Diffusione di responsabilità + Spostamento rischioso + Bypass guidati dall'urgenza = decisioni di sicurezza pericolose senza owner chiari",
+      "real_world_example": "Violazioni massicce dove più team assumevano che 'qualcun altro' stesse gestendo avvisi critici durante incidenti"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["6.1", "6.2", "5.2", "7.1"],
+      "child_nodes": ["2.1", "6.4", "2.3"],
+      "conditional_probability_table": {
+        "P_6.3_base": 0.35,
+        "P_6.3_given_groupthink": 0.63,
+        "P_6.3_given_risky_shift": 0.72,
+        "P_6.3_given_fatigue": 0.56,
+        "P_6.3_given_all": 0.88
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_accountability_clarity",
+          "weight": 0.18,
+          "title": "Chiarezza della Responsabilità Individuale",
+          "question": "Per i compiti critici di sicurezza nella Sua organizzazione, quanto è chiaro chi è personalmente responsabile di ciascun compito?",
+          "options": [
+            {
+              "value": "crystal_clear",
+              "score": 0,
+              "label": "Cristallina - ruoli individuali documentati per tutti i compiti di sicurezza con matrici RACI complete"
+            },
+            {
+              "value": "mostly_clear",
+              "score": 0.4,
+              "label": "Prevalentemente chiara - la maggior parte dei compiti ha owner ma qualche sovrapposizione o gap"
+            },
+            {
+              "value": "somewhat_vague",
+              "score": 0.7,
+              "label": "Alquanto vaga - responsabilità condivisa di team con responsabilità individuale poco chiara"
+            },
+            {
+              "value": "unclear",
+              "score": 1,
+              "label": "Non chiara - cultura 'la sicurezza è compito di tutti' senza responsabilità individuale specifica"
+            }
+          ],
+          "evidence_required": "Matrici RACI, documentazione di assegnazione di compiti di sicurezza, esempi recenti",
+          "soc_mapping": "responsibility_clarity_score from accountability_tracking"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_alert_response",
+          "weight": 0.17,
+          "title": "Tempo di Risposta agli Avvisi di Sicurezza",
+          "question": "Qual è il Suo tempo medio di risposta dal momento in cui viene generato un avviso di sicurezza fino a quando qualcuno lo riconosce e inizia a investigare?",
+          "options": [
+            {
+              "value": "immediate",
+              "score": 0,
+              "label": "Sotto i 15 minuti - assegnazione chiara con risposta immediata indipendentemente dalla dimensione del team"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "15-45 minuti - risposta generalmente tempestiva ma qualche ritardo quando coinvolti team multipli"
+            },
+            {
+              "value": "delayed",
+              "score": 1,
+              "label": "Oltre 45 minuti - ritardi regolari perché nessuno si sente personalmente responsabile della risposta immediata"
+            }
+          ],
+          "evidence_required": "Dati di tempo di risposta agli avvisi SIEM, metriche di riconoscimento, analisi comparativa",
+          "soc_mapping": "RTD metric from SIEM alert analysis"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_escalation_ownership",
+          "weight": 0.16,
+          "title": "Chiarezza della Responsabilità di Escalation",
+          "question": "Quando qualcuno identifica un problema di sicurezza, quanto è chiaro chi è personalmente responsabile di escalarlo se necessario?",
+          "options": [
+            {
+              "value": "explicit",
+              "score": 0,
+              "label": "Esplicita - percorsi di escalation documentati con responsabilità individuali chiare per ogni fase"
+            },
+            {
+              "value": "implied",
+              "score": 0.5,
+              "label": "Implicita - aspettative generali ma non formalmente documentate o costantemente seguite"
+            },
+            {
+              "value": "unclear",
+              "score": 1,
+              "label": "Non chiara - assume che 'qualcuno escala' senza assegnazioni personali esplicite"
+            }
+          ],
+          "evidence_required": "Documentazione dei percorsi di escalation, esempi di escalation recenti, registri di escalation",
+          "soc_mapping": "escalation_clarity from incident_response_platform"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_performance_tracking",
+          "weight": 0.15,
+          "title": "Tracciamento delle Prestazioni di Sicurezza Individuali",
+          "question": "Come traccia le prestazioni di sicurezza dei singoli membri del team rispetto alla responsabilità condivisa del team?",
+          "options": [
+            {
+              "value": "individual_metrics",
+              "score": 0,
+              "label": "Metriche individuali - tracciamento chiaro dei contributi di sicurezza individuali con responsabilità personale"
+            },
+            {
+              "value": "mixed_tracking",
+              "score": 0.5,
+              "label": "Tracciamento misto - alcune metriche individuali ma enfasi sulla prestazione del team"
+            },
+            {
+              "value": "team_only",
+              "score": 1,
+              "label": "Solo team - tracciamento esclusivo delle metriche di team senza visibilità della responsabilità individuale"
+            }
+          ],
+          "evidence_required": "Dashboard delle metriche di prestazione, documentazione di revisione individuale, esempi recenti",
+          "soc_mapping": "individual_performance_visibility from HR systems"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_incident_response_speed",
+          "weight": 0.14,
+          "title": "Velocità di Decisione della Risposta agli Incidenti",
+          "question": "Durante gli incidenti di sicurezza, quanto velocemente il Suo team prende decisioni critiche di risposta?",
+          "options": [
+            {
+              "value": "immediate",
+              "score": 0,
+              "label": "Immediata - decisioni chiare entro minuti con responsabili decisionali identificati"
+            },
+            {
+              "value": "moderate_delay",
+              "score": 0.5,
+              "label": "Ritardo moderato - decisioni prese ma con qualche esitazione su chi deve decidere"
+            },
+            {
+              "value": "significant_delay",
+              "score": 1,
+              "label": "Ritardo significativo - pattern 'aspettando che qualcuno decida' durante situazioni critiche"
+            }
+          ],
+          "evidence_required": "Timeline di risposta agli incidenti, registri decisionali, analisi di ritardo decisionale",
+          "soc_mapping": "decision_speed from incident_response_platform"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_vulnerability_remediation",
+          "weight": 0.12,
+          "title": "Ownership della Remediation delle Vulnerabilità",
+          "question": "Quando vengono identificate vulnerabilità, con quale frequenza vengono assegnate a owner individuali chiari rispetto a 'il team di sicurezza'?",
+          "options": [
+            {
+              "value": "always_individual",
+              "score": 0,
+              "label": "Sempre individuale - ogni vulnerabilità assegnata a persona specifica con responsabilità di remediation"
+            },
+            {
+              "value": "usually_individual",
+              "score": 0.4,
+              "label": "Solitamente individuale - la maggior parte assegnate ma alcune cadono in ownership di team generica"
+            },
+            {
+              "value": "often_team",
+              "score": 0.7,
+              "label": "Spesso team - molte vulnerabilità assegnate a 'team di sicurezza' senza owner individuale"
+            },
+            {
+              "value": "rarely_individual",
+              "score": 1,
+              "label": "Raramente individuale - la maggior parte delle vulnerabilità hanno ownership vaga di team"
+            }
+          ],
+          "evidence_required": "Registri di assegnazione delle vulnerabilità, metriche di remediation, esempi recenti",
+          "soc_mapping": "vulnerability_assignment_clarity from vulnerability_management"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_decision_paralysis",
+          "weight": 0.08,
+          "title": "Paralisi Decisionale di Gruppo",
+          "question": "Con quale frequenza le decisioni di sicurezza vengono ritardate perché il gruppo sta aspettando che qualcuno prenda l'iniziativa?",
+          "options": [
+            {
+              "value": "never",
+              "score": 0,
+              "label": "Mai - responsabili decisionali chiari prevengono la paralisi decisionale"
+            },
+            {
+              "value": "occasionally",
+              "score": 0.5,
+              "label": "Occasionalmente - qualche ritardo in situazioni ambigue ma generalmente risolte rapidamente"
+            },
+            {
+              "value": "frequently",
+              "score": 1,
+              "label": "Frequentemente - pattern regolare di decisioni ritardate mentre si aspetta che 'qualcuno' agisca"
+            }
+          ],
+          "evidence_required": "Registri decisionali mostrando ritardi, verbali delle riunioni, analisi dei pattern",
+          "soc_mapping": "decision_delay_frequency from collaboration_platform_logs"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UNA opzione per ogni domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze devono essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Domande di Apertura",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Mi parli dell'ultima volta che un avviso di sicurezza o un problema è stato ignorato perché tutti pensavano che qualcun altro lo stesse gestendo.",
+              "scoring_guidance": {
+                "green": "Non è possibile identificare esempi recenti; sistemi in atto prevengono avvisi persi; owner chiari per tutti gli avvisi",
+                "yellow": "Esempi occasionali con lacune di responsabilità riconosciute; qualche tracciamento ma non sistematico",
+                "red": "Esempi multipli recenti; pattern riconosciuto di avvisi persi; cultura 'pensavo tu lo stessi gestendo'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri i Suoi registri degli avvisi SIEM degli ultimi 30 giorni e evidenzi gli avvisi che sono scaduti senza risoluzione.",
+                  "evidence_type": "alert_abandonment_records"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa è successo quando qualcuno ha finalmente notato l'avviso perso? Chi è stato ritenuto responsabile?",
+                  "evidence_type": "accountability_consequence"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Descriva il Suo processo quando viene identificata una vulnerabilità di sicurezza. Come viene assegnato esattamente a qualcuno e come viene tracciata fino alla risoluzione?",
+              "scoring_guidance": {
+                "green": "Processo chiaro con assegnazione individuale, tracciamento sistematico, responsabilità definita, metriche di completamento",
+                "yellow": "Processo informale con assegnazione talvolta poco chiara; tracciamento misto; qualche riassegnazione",
+                "red": "Processo vago con assegnazione generale al team; tracciamento limitato; ownership poco chiara; vulnerabilità che persistono"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri le Sue vulnerabilità aperte attuali e chi è responsabile di ciascuna.",
+                  "evidence_type": "current_vulnerability_ownership"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quante volte le vulnerabilità vengono riassegnate prima della risoluzione?",
+                  "evidence_type": "reassignment_frequency"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Durante il Suo ultimo incidente di sicurezza, quanto tempo ci è voluto dal rilevamento iniziale fino a quando qualcuno ha preso chiaramente ownership e iniziato a coordinare la risposta?",
+              "scoring_guidance": {
+                "green": "Ownership immediata entro minuti; ruoli di risposta agli incidenti predefiniti; nessuna ambiguità",
+                "yellow": "Qualche ritardo iniziale (15-30 minuti) mentre venivano chiariti i ruoli; alla fine risolto",
+                "red": "Ritardo significativo (>30 minuti) con confusione su chi dovrebbe guidare; pattern 'aspettando che qualcuno prenda il comando'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri la timeline dell'incidente dal rilevamento all'escalation. Dove erano i ritardi?",
+                  "evidence_type": "incident_timeline_analysis"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa ha impedito un'escalation più rapida?",
+                  "evidence_type": "delay_root_cause"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Responsabilità e Metriche",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Come misura le prestazioni di sicurezza individuali rispetto alle prestazioni del team? Può mostrarmi i Suoi dashboard?",
+              "scoring_guidance": {
+                "green": "Dashboard individuali chiari che mostrano metriche di sicurezza personali; responsabilità individuale tracciata",
+                "yellow": "Principalmente metriche di team con qualche tracciamento individuale; visibilità limitata",
+                "red": "Solo metriche di team; nessun tracciamento delle prestazioni individuali; responsabilità diffusa"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può mostrarmi un report di prestazione individuale per un membro del team di sicurezza?",
+                  "evidence_type": "individual_performance_report"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come vengono utilizzate le metriche individuali nelle revisioni delle prestazioni?",
+                  "evidence_type": "metrics_usage"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Quando un compito di sicurezza non viene completato in tempo, come determina chi era responsabile?",
+              "scoring_guidance": {
+                "green": "Sistema di tracciamento chiaro mostra responsabilità individuale; facile identificazione del responsabile",
+                "yellow": "Qualche processo investigativo richiesto; responsabilità solitamente determinabile ma non sempre chiara",
+                "red": "Difficoltà a identificare il responsabile; responsabilità condivisa rende l'attribuzione poco chiara; nessun sistema chiaro"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi dia un esempio recente di un compito mancato e come ha identificato il responsabile.",
+                  "evidence_type": "missed_task_attribution"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quali conseguenze ci sono state per l'individuo?",
+                  "evidence_type": "accountability_consequences"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Dinamiche di Gruppo e Culture",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Descriva cosa succede nelle Sue riunioni di sicurezza quando viene sollevato un problema. Quanto velocemente qualcuno dice 'me ne occupo io'?",
+              "scoring_guidance": {
+                "green": "Ownership immediata; cultura di responsabilità individuale; membri del team si fanno avanti prontamente",
+                "yellow": "Qualche esitazione; alla fine qualcuno prende ownership; talvolta richiede assegnazione esplicita",
+                "red": "Pattern regolare di silenzio; attendono assegnazione; nessuno si fa volontario; 'qualcuno dovrebbe occuparsene'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Con quale frequenza i problemi sollevati nelle riunioni rimangono non assegnati?",
+                  "evidence_type": "unassigned_issue_frequency"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succede agli elementi di azione che non hanno owner chiari?",
+                  "evidence_type": "unowned_action_outcomes"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Come si confronta la velocità di risposta agli avvisi quando qualcuno è esplicitamente in servizio rispetto a quando c'è solo 'team di sicurezza generale'?",
+              "scoring_guidance": {
+                "green": "Tempi di risposta simili; responsabilità chiara indipendentemente dalla struttura; nessun degrado osservabile",
+                "yellow": "Qualche differenza con risposta leggermente più lenta in contesti di team generale ma gestibile",
+                "red": "Differenza drammatica; risposta individuale molto più veloce; significativa degradazione in contesti di team"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mi mostri i dati di tempo di risposta agli avvisi confrontando assegnazione individuale vs. team.",
+                  "evidence_type": "response_time_comparison"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quanto spesso il Suo approccio utilizza responsabilità individuale vs. team per gli avvisi?",
+                  "evidence_type": "assignment_approach_distribution"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Indagine per Segnali di Allerta",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle policy dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Pensavo tu te ne stessi occupando...\" (linguaggio frequente nelle conversazioni post-incidente)",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"La sicurezza è responsabilità di tutti...\" (senza assegnazioni individuali chiare)",
+              "severity": "critical",
+              "score_impact": 0.17,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Qualcuno dovrebbe occuparsene...\" (aspettando che altri agiscano)",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Non ero sicuro fosse mio compito escalare...\" (percorsi di escalation poco chiari)",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Con così tante persone nel team, ho pensato che qualcuno lo stesse monitorando...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Misuriamo il successo del team, non i contributi individuali...\" (nessun tracciamento individuale)",
+              "severity": "medium",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Aspettavamo che qualcuno prendesse la decisione...\" (paralisi durante gli incidenti)",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare scenari di diffusione di responsabilità simulati trimestralmente",
+      "correlation_analysis": "Confrontare i punteggi con i tassi di abbandono degli avvisi e i tempi di risposta (correlazione target > 0.80)",
+      "drift_detection": "Monitorare lo spostamento della baseline nei pattern di risposta di gruppo usando il test di Kolmogorov-Smirnov"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicurare che la magnitudine prevista della diffusione corrisponda alla degradazione osservata del tempo di risposta",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift rilevato o punteggio di validazione < 0.70"
+    },
+    "success_metrics": [
+      {
+        "metric": "Alert Response Time Consistency",
+        "formula": "Tempo medio di risposta indipendentemente dalla dimensione del team o dall'assegnazione",
+        "baseline": "tempo di risposta attuale individuale vs. team",
+        "target": "eliminare la penalità del tempo di risposta di gruppo - raggiungere la parità entro 90 giorni",
+        "measurement": "monitoraggio settimanale del tempo di risposta con analisi mensile dei trend"
+      },
+      {
+        "metric": "Alert Abandonment Rate",
+        "formula": "Percentuale di avvisi che scadono senza risoluzione",
+        "baseline": "tasso attuale di abbandono degli avvisi",
+        "target": "sotto il 5% entro 90 giorni",
+        "measurement": "monitoraggio giornaliero con revisione settimanale"
+      },
+      {
+        "metric": "Incident Decision Speed",
+        "formula": "Tempo dal rilevamento dell'incidente alla decisione di azione iniziale",
+        "baseline": "velocità decisionale attuale durante gli incidenti",
+        "target": "sotto i 15 minuti per il 95% degli incidenti entro 60 giorni",
+        "measurement": "analisi post-incidente con trend trimestrali"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Sistema di Gestione degli Avvisi Assegnati Individualmente",
+        "description": "Implementare assegnazione automatica degli avvisi SIEM a individui specifici con escalation forzata se non riconosciuti entro 10 minuti",
+        "implementation": "Configurare SIEM per assegnare rotazionalmente a individui specifici invece che a 'team di sicurezza'. Implementare notifiche di escalation automatica se non riconosciuto entro le soglie. Creare dashboard che mostrano i tempi di risposta individuali e i tassi di abbandono.",
+        "technical_controls": "Regole di assegnazione degli avvisi SIEM, automazione dell'escalation, dashboard di prestazione individuale, sistema di notifiche",
+        "roi": "380% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "45 giorni"
+      },
+      {
+        "id": "sol_2",
+        "title": "Matrice RACI di Responsabilità della Sicurezza",
+        "description": "Creare e mantenere matrici RACI complete documentando responsabilità individuale per tutti i compiti di sicurezza",
+        "implementation": "Documentare responsabile, responsabile (accountable), consultato e informato per ogni processo di sicurezza. Implementare revisioni trimestrali e aggiornamenti. Integrare con sistemi di gestione dei compiti per applicare l'assegnazione individuale. Rendere le matrici visibili e accessibili a tutto il personale di sicurezza.",
+        "technical_controls": "Database delle matrici RACI, integrazione con gestione dei compiti, promemoria di revisione automatizzati, portale di accessibilità",
+        "roi": "320% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "60 giorni"
+      },
+      {
+        "id": "sol_3",
+        "title": "Piano di Risposta agli Incidenti con Ruoli Definiti",
+        "description": "Implementare piani di risposta agli incidenti con responsabili decisionali chiaramente identificati per ogni fase",
+        "implementation": "Designare comandante degli incidenti, leads funzionali e decisori backup per ogni tipo di incidente. Condurre esercizi trimestrali validando la chiarezza dei ruoli. Creare carte di ruolo distribuite durante gli incidenti. Implementare formazione che enfatizza l'ownership individuale durante gli incidenti.",
+        "technical_controls": "Playbook di risposta agli incidenti con assegnazioni di ruolo, sistema di carte di ruolo, piattaforma di esercizi, automazione della designazione dei ruoli",
+        "roi": "350% medio entro 12 mesi",
+        "effort": "high",
+        "timeline": "90 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Tracciamento delle Prestazioni di Sicurezza Individuali",
+        "description": "Implementare dashboard che tracciano i contributi di sicurezza individuali separati dalle metriche di team",
+        "implementation": "Creare dashboard personalizzati per ciascun membro del team di sicurezza mostrando tempi di risposta agli avvisi, completamento delle vulnerabilità, azioni di risposta agli incidenti e contributi complessivi. Integrare con revisioni delle prestazioni. Implementare riconoscimenti per alte prestazioni individuali.",
+        "technical_controls": "Piattaforma di dashboard individuale, integrazione delle metriche da molteplici fonti, sistema di revisione delle prestazioni, programma di riconoscimento",
+        "roi": "290% medio entro 18 mesi",
+        "effort": "high",
+        "timeline": "90 giorni"
+      },
+      {
+        "id": "sol_5",
+        "title": "Percorsi di Escalation Documentati",
+        "description": "Creare e pubblicare percorsi di escalation chiari che identificano chi è personalmente responsabile di escalare in ogni fase",
+        "implementation": "Documentare criteri di escalation specifici con responsabilità individuale assegnata per iniziare l'escalation. Creare flowchart di escalation con nomi individuali (non ruoli generici). Implementare formazione trimestrale sui percorsi di escalation. Rivedere esempi di escalation ritardata per identificare gap.",
+        "technical_controls": "Documentazione dei percorsi di escalation, flowchart visivi, modulo di formazione, strumento di tracciamento dell'escalation, analisi post-incidente",
+        "roi": "310% medio entro 12 mesi",
+        "effort": "low",
+        "timeline": "30 giorni"
+      },
+      {
+        "id": "sol_6",
+        "title": "Ownership Individuale delle Vulnerabilità",
+        "description": "Richiedere assegnazione individuale di tutte le vulnerabilità con tracciamento fino al completamento",
+        "implementation": "Configurare strumenti di gestione delle vulnerabilità per richiedere assegnazione individuale. Implementare revisioni settimanali delle vulnerabilità non assegnate. Creare conseguenze di escalation per vulnerabilità che rimangono non assegnate oltre le 24 ore. Tracciare tempi di remediation per owner individuale.",
+        "technical_controls": "Applicazione dell'assegnazione della gestione delle vulnerabilità, sistema di revisione delle vulnerabilità non assegnate, automazione dell'escalation, dashboard dell'owner",
+        "roi": "270% medio entro 18 mesi",
+        "effort": "medium",
+        "timeline": "45 giorni"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_3"],
+      "high_value": ["sol_2", "sol_5"],
+      "governance": ["sol_4", "sol_6"],
+      "cultural_foundation": ["sol_2"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Violazione da Avviso Critico Ignorato",
+      "description": "Avviso SIEM critico che indica compromissione viene ignorato perché ogni membro del team di sicurezza assume che qualcun altro lo stia investigando. L'attaccante mantiene l'accesso e esfil tra dati per giorni mentre l'avviso rimane non trattato.",
+      "attack_vector": "Persistenza attraverso avvisi di sicurezza non trattati che cadono in zone di responsabilità di gruppo poco chiare",
+      "psychological_mechanism": "Diffusione di responsabilità in cui la presenza di altri riduce l'iniziativa individuale",
+      "historical_example": "Violazioni massive dove avvisi critici rimasero non trattati per giorni perché ogni analista assumeva che altri li stessero investigando",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["AAR > 0.15", "RTD > 2.0", "group_size > 5", "unclear_alert_assignment"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Escalation Ritardata dell'Incidente",
+      "description": "Team di sicurezza rileva incidente iniziale ma nessuno si sente personalmente responsabile di escalarlo al management. L'attacco si diffonde mentre il team aspetta che 'qualcuno senior' prenda ownership.",
+      "attack_vector": "Movimento laterale durante ritardi di escalation causati da responsabilità poco chiara",
+      "psychological_mechanism": "Effetto spettatore dove la presenza di altri riduce la probabilità di azione individuale",
+      "historical_example": "Violazioni dove la risposta iniziale era consapevole ma i ritardi di escalation permisero all'attacco di intensificarsi",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["BEI > 0.6", "unclear_escalation_paths", "group_decision_paralysis", "incident_escalation_delay > 30min"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Vulnerabilità Nota Non Patchata",
+      "description": "Vulnerabilità critica identificata ma cade in zona grigia di responsabilità tra team. Ciascun team assume che l'altro stia gestendo il patching. L'attaccante sfrutta la vulnerabilità non patchata mesi dopo la scoperta.",
+      "attack_vector": "Sfruttamento di vulnerabilità note in zone grigie di responsabilità organizzativa",
+      "psychological_mechanism": "Diffusione di responsabilità attraverso confini di team con ownership poco chiara",
+      "historical_example": "Violazioni di Equifax e altri dove vulnerabilità note rimasero non patchate per mesi nelle zone grigie di responsabilità",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["unclear_vulnerability_ownership", "cross_team_responsibility", "patch_delays > 60_days"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Infiltrazione durante Transizione di Turni",
+      "description": "Attaccanti cronometrano le intrusioni durante transizioni di turni del SOC quando la responsabilità è meno chiara. Gli avvisi generati durante le finestre di transizione hanno probabilità significativamente inferiore di risposta rapida.",
+      "attack_vector": "Timing dell'attacco per sfruttare periodi di responsabilità ridotta durante transizioni",
+      "psychological_mechanism": "Responsabilità diffusa massimizzata durante periodi di transizione con ownership ambigua",
+      "historical_example": "Attacchi che deliberatamente mirano alle finestre di transizione di turni dove la responsabilità è meno chiara",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["shift_transition_vulnerability", "RTD_during_transitions > 3.0", "unclear_handoff_process"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-09",
+    "translator": "Claude AI",
+    "research_basis": [
+      "Darley, J. M., & Latané, B. (1968). Bystander intervention in emergencies: Diffusion of responsibility",
+      "Latané, B., & Darley, J. M. (1970). The Unresponsive Bystander: Why Doesn't He Help?",
+      "Fischer, P., et al. (2011). The bystander-effect: A meta-analytic review on bystander intervention",
+      "Chekroun, P., et al. (2012). fMRI study of diffusion of responsibility"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

@@ -1,0 +1,940 @@
+{
+  "indicator": "7.4",
+  "title": "INDICATOR 7.4 FIELD KIT",
+  "subtitle": "Flight Response Avoidance",
+  "category": "Stress Response Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 7.x",
+  "description": {
+    "short": "Measures vulnerability to systematic avoidance of security decision-making during high-stress situations, creating dangerous delays that attackers exploit",
+    "context": "Flight response avoidance manifests when security personnel systematically avoid making critical security decisions or confronting security issues during high-stress situations, instead deferring, delegating, or delaying action. This psychological pattern creates dangerous security gaps because attackers exploit the decision delays and avoidance behaviors to maintain persistence and expand their access during the crucial early phases when containment would be most effective.",
+    "impact": "Organizations with flight response patterns experience unexplained delays in incident response, reluctance to escalate security issues, and security decisions that become stuck in committee during critical moments. Attackers time their activities during periods when key personnel exhibit avoidance behaviors, such as end-of-quarter business pressure or major system updates. Historical incidents include Target (2013) and Equifax (2017) where delayed responses to initial breach indicators allowed extended attacker dwell time.",
+    "psychological_basis": "Polyvagal Theory (Porges, 2011) shows flight response represents activation of the sympathetic nervous system's mobilization branch when social engagement fails. Seligman's Learned Helplessness Research (1972) demonstrates that repeated exposure to uncontrollable stressors leads to generalized avoidance behaviors. Cognitive Load Theory (Sweller, 1988) shows excessive cognitive demands lead to systematic avoidance of complex tasks as a protective mechanism against cognitive overload."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 � Quick_Assessment + w2 � Conversation_Depth + w3 � Red_Flags) � Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Low Vulnerability - Resilient",
+        "description": "Security decisions consistently made within 4 hours during incidents, clear escalation paths with documented authority at each level, security personnel regularly attend incident meetings (>90% attendance), delegation follows documented procedures with clear handoffs, complex issues have defined resolution processes with timeframes, no observable pattern of decision delays during high-stress periods, and authority conflicts resolved through documented processes within 24 hours.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Moderate Vulnerability - Developing",
+        "description": "Security decisions delayed 4-24 hours during incidents, escalation paths exist but authority boundaries unclear in some scenarios, security personnel attendance at incident meetings inconsistent (70-90%), some delegation occurs without clear procedures, complex issues sometimes delayed beyond necessary analysis time, occasional patterns of slower decision-making under stress, and authority conflicts sometimes require external intervention to resolve.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "High Vulnerability - Critical",
+        "description": "Security decisions delayed >24 hours during incidents or indefinitely postponed, unclear escalation paths or authority boundaries for security decisions, frequent absence from security meetings or incident response (<70% attendance), regular informal delegation without procedures or accountability, complex issues routinely deferred or avoided rather than resolved, consistent patterns of decision avoidance during high-stress situations, and authority conflicts remain unresolved or create ongoing security gaps.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_decision_timeline": 0.18,
+      "q2_escalation_authority": 0.16,
+      "q3_meeting_attendance": 0.14,
+      "q4_crisis_delegation": 0.15,
+      "q5_complex_issues": 0.14,
+      "q6_stress_patterns": 0.12,
+      "q7_authority_conflicts": 0.11
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_7.4(t) = AI(t) � P_flight(t) � (1 + � � criticality(t))",
+      "components": {
+        "flight_probability": {
+          "formula": "P_flight(S,A,E) = [e^(��S + ��A)] / [1 + e^(��S + ��A)] � (1-E)",
+          "description": "Flight response probability based on stress, trait anxiety, and environmental constraints",
+          "variables": {
+            "S": "Current stress level",
+            "A": "Trait anxiety baseline",
+            "E": "Environmental constraint preventing avoidance"
+          }
+        },
+        "task_abandonment": {
+          "formula": "TAR(t) = N_abandoned(t) / N_initiated(t)",
+          "description": "Task abandonment rate measuring security tasks started but not completed",
+          "interpretation": "Higher values indicate systematic avoidance of completing security tasks"
+        },
+        "session_termination": {
+          "formula": "STA(t) = (T_baseline - T_session(t)) / T_baseline",
+          "description": "Session termination acceleration compared to baseline",
+          "interpretation": "Positive values indicate premature session termination suggesting avoidance"
+        },
+        "avoidance_index": {
+          "formula": "AI(t) = w1�TAR(t) + w2�STA(t) + w3�delay_response(t)",
+          "description": "Composite avoidance index combining task abandonment, session termination, and response delays",
+          "components": {
+            "w1": "Task abandonment weight (0.35)",
+            "w2": "Session termination weight (0.30)",
+            "w3": "Response delay weight (0.35)"
+          }
+        }
+      },
+      "default_weights": {
+        "w1_task": 0.35,
+        "w2_session": 0.3,
+        "w3_delay": 0.35
+      },
+      "threshold": {
+        "P_flight": 0.7,
+        "AI": 0.5
+      }
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "incident_response_timelines",
+        "escalation_decision_logs",
+        "meeting_attendance_records",
+        "delegation_documentation"
+      ],
+      "evidence_required": [
+        "recent_incident_decision_timelines",
+        "authority_escalation_examples",
+        "meeting_participation_data",
+        "complex_issue_resolution_records"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "incident_management_system",
+          "fields": [
+            "incident_id",
+            "time_to_decision",
+            "escalation_timeline",
+            "authority_involved",
+            "resolution_time",
+            "timestamp"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "task_tracking_logs",
+          "fields": [
+            "task_id",
+            "assigned_to",
+            "initiated_time",
+            "completion_time",
+            "abandonment_flag",
+            "complexity_score"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "communication_logs",
+          "fields": [
+            "participant_id",
+            "response_latency",
+            "meeting_attendance",
+            "delegation_events",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "calendar_systems",
+          "fields": [
+            "meeting_id",
+            "attendee_list",
+            "no_show_flag",
+            "last_minute_cancellation"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "session_analytics",
+          "fields": [
+            "user_id",
+            "session_duration",
+            "premature_termination_flag",
+            "activity_level"
+          ],
+          "retention": "30_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "P_flight": {
+          "calculation": "Flight response probability from stress and anxiety indicators",
+          "query": "SELECT [e^(alpha*stress + beta*anxiety)] / [1 + e^(alpha*stress + beta*anxiety)] * (1-constraint) FROM stress_metrics WHERE time_window='1h'"
+        },
+        "TAR": {
+          "calculation": "Task abandonment rate",
+          "query": "SELECT (COUNT(abandonment_flag=true) / COUNT(*)) FROM task_logs WHERE assigned_to IN security_team AND timestamp > NOW() - INTERVAL '7 days'"
+        },
+        "delay_response": {
+          "calculation": "Average response delay for security communications",
+          "query": "SELECT AVG(response_latency) FROM communication_logs WHERE participant_id IN security_team AND message_type='security_critical' AND time_window='24h'"
+        }
+      }
+    },
+    "integration_apis": {
+      "incident_management": "ServiceNow/Jira API - Decision timelines, escalation patterns",
+      "calendar_systems": "Google Calendar/Outlook API - Meeting attendance, cancellation patterns",
+      "collaboration_platforms": "Slack/Teams API - Response times, communication patterns",
+      "hr_systems": "Workday/BambooHR API - Stress indicators, workload metrics"
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Impairment",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "Acute stress increases flight response by creating desire to escape overwhelming threat perception",
+        "formula": "P(7.4|7.1) = 0.70"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue Depletion",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "Decision fatigue increases avoidance of additional complex security decisions",
+        "formula": "P(7.4|5.2) = 0.75"
+      },
+      {
+        "indicator": "4.1",
+        "name": "Fear-Based Decision Corruption",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Fear states trigger flight responses to avoid confronting anxiety-inducing security situations",
+        "formula": "P(7.4|4.1) = 0.65"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "7.10",
+        "name": "Recovery Period Vulnerabilities",
+        "probability": 0.6,
+        "factor": 1.25,
+        "description": "Avoidance behaviors during incidents create extended recovery periods with continued vulnerability",
+        "formula": "P(7.10|7.4) = 0.6"
+      },
+      {
+        "indicator": "1.1",
+        "name": "Unquestioning Compliance",
+        "probability": 0.5,
+        "factor": 1.2,
+        "description": "Avoidance of confronting authority creates patterns of unquestioning compliance",
+        "formula": "P(1.1|7.4) = 0.5"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": [
+        "7.4",
+        "7.1",
+        "5.2"
+      ],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.6,
+      "threshold_critical": 3.8,
+      "description": "Perfect storm: Flight response avoidance + Acute stress + Decision fatigue = 260% increased risk of critical security decisions being indefinitely deferred while attacks progress",
+      "real_world_example": "Target 2013 breach - security personnel deferred critical decisions allowing 19-day delay between initial detection and containment"
+    },
+    "bayesian_network": {
+      "parent_nodes": [
+        "7.1",
+        "5.2",
+        "4.1"
+      ],
+      "child_nodes": [
+        "7.10",
+        "1.1"
+      ],
+      "conditional_probability_table": {
+        "P_7.4_base": 0.18,
+        "P_7.4_given_acute_stress": 0.48,
+        "P_7.4_given_decision_fatigue": 0.52,
+        "P_7.4_given_fear": 0.42,
+        "P_7.4_given_all": 0.78
+      }
+    }
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_decision_timeline",
+          "weight": 0.18,
+          "title": "Decision Timeline Tracking",
+          "question": "How long does it typically take your organization to make critical security decisions during an incident (from identification to action)?",
+          "options": [
+            {
+              "value": "fast",
+              "score": 0,
+              "label": "Security decisions consistently made within 4 hours during incidents with clear decision points"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Security decisions delayed 4-24 hours during incidents with some procedural delays"
+            },
+            {
+              "value": "slow",
+              "score": 1,
+              "label": "Security decisions delayed >24 hours during incidents or indefinitely postponed"
+            }
+          ],
+          "evidence_required": "Recent incident timelines showing time from identification to action decision",
+          "soc_mapping": "incident_management_system: time_to_decision metric"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_escalation_authority",
+          "weight": 0.16,
+          "title": "Escalation Authority Clarity",
+          "question": "When security personnel encounter issues requiring difficult decisions, what is your standard escalation procedure?",
+          "options": [
+            {
+              "value": "clear",
+              "score": 0,
+              "label": "Clear escalation paths with documented authority at each level for all decision types"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Escalation paths exist but authority boundaries unclear in some scenarios"
+            },
+            {
+              "value": "unclear",
+              "score": 1,
+              "label": "Unclear escalation paths or authority boundaries for security decisions"
+            }
+          ],
+          "evidence_required": "Escalation procedure documentation, recent escalation examples with authority clarity",
+          "soc_mapping": "incident_management_system: escalation_timeline and authority_involved"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_meeting_attendance",
+          "weight": 0.14,
+          "title": "Meeting and Communication Patterns",
+          "question": "How consistent is key security personnel attendance at security incident meetings?",
+          "options": [
+            {
+              "value": "high",
+              "score": 0,
+              "label": "Security personnel regularly attend incident meetings (>90% attendance) with documented participation"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Security personnel attendance at incident meetings inconsistent (70-90%)"
+            },
+            {
+              "value": "low",
+              "score": 1,
+              "label": "Frequent absence from security meetings or incident response (<70% attendance)"
+            }
+          ],
+          "evidence_required": "Meeting attendance records for security incidents over past 90 days",
+          "soc_mapping": "calendar_systems: meeting_attendance and no_show_flag"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_crisis_delegation",
+          "weight": 0.15,
+          "title": "Delegation During Crisis",
+          "question": "What happens when your primary security decision-makers are unavailable during incidents?",
+          "options": [
+            {
+              "value": "documented",
+              "score": 0,
+              "label": "Delegation follows documented procedures with clear handoffs and authority transfer"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Some delegation occurs without clear procedures or complete documentation"
+            },
+            {
+              "value": "ad_hoc",
+              "score": 1,
+              "label": "Regular informal delegation without procedures or accountability tracking"
+            }
+          ],
+          "evidence_required": "Delegation procedures, recent examples of security responsibility transfers during incidents",
+          "soc_mapping": "communication_logs: delegation_events and authority_handoff_tracking"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_complex_issues",
+          "weight": 0.14,
+          "title": "Complex Issue Response",
+          "question": "How does your team handle security issues that don't have clear-cut solutions or might impact business operations?",
+          "options": [
+            {
+              "value": "timely",
+              "score": 0,
+              "label": "Complex issues have defined resolution processes with specific timeframes and decision criteria"
+            },
+            {
+              "value": "delayed",
+              "score": 0.5,
+              "label": "Complex issues sometimes delayed beyond necessary analysis time without clear resolution path"
+            },
+            {
+              "value": "avoided",
+              "score": 1,
+              "label": "Complex issues routinely deferred or avoided rather than resolved within reasonable timeframes"
+            }
+          ],
+          "evidence_required": "Recent complex security issue examples, resolution timelines, decision frameworks",
+          "soc_mapping": "task_tracking_logs: complexity_score and resolution_time correlation"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_stress_patterns",
+          "weight": 0.12,
+          "title": "Stress Response Documentation",
+          "question": "Do you track patterns in security decision-making effectiveness during high-stress periods versus normal operations?",
+          "options": [
+            {
+              "value": "yes",
+              "score": 0,
+              "label": "No observable pattern of decision delays during high-stress periods based on systematic tracking"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Occasional patterns of slower decision-making under stress without systematic tracking"
+            },
+            {
+              "value": "no",
+              "score": 1,
+              "label": "Consistent patterns of decision avoidance during high-stress situations"
+            }
+          ],
+          "evidence_required": "Decision-making metrics correlated with stress periods, incident analysis showing stress-decision patterns",
+          "soc_mapping": "incident_management_system: time_to_decision correlated with stress_indicators"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_authority_conflicts",
+          "weight": 0.11,
+          "title": "Authority Conflict Resolution",
+          "question": "What is your process when security requirements conflict with executive or departmental priorities?",
+          "options": [
+            {
+              "value": "documented",
+              "score": 0,
+              "label": "Authority conflicts resolved through documented processes within 24 hours with clear resolution paths"
+            },
+            {
+              "value": "ad_hoc",
+              "score": 0.5,
+              "label": "Authority conflicts sometimes require external intervention to resolve without clear process"
+            },
+            {
+              "value": "unresolved",
+              "score": 1,
+              "label": "Authority conflicts remain unresolved or create ongoing security gaps"
+            }
+          ],
+          "evidence_required": "Recent authority conflict examples, conflict resolution procedures, resolution timelines",
+          "soc_mapping": "incident_management_system: authority_conflict_flag and resolution_time"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = �(question_score � question_weight) / �(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Opening Questions",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Tell me about a specific recent security incident and the decision timeline from initial detection to taking action.",
+              "scoring_guidance": {
+                "green": "Specific timeline provided showing decisions made within 4 hours, clear decision process",
+                "yellow": "Timeline shows delays of 4-24 hours with procedural complications or unclear authority",
+                "red": "Timeline >24 hours or unable to recall specific timeline indicating lack of decision process"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What prevented faster decision-making during this incident?",
+                  "evidence_type": "barrier_identification"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Who had authority to make the key decisions and were they available when needed?",
+                  "evidence_type": "authority_availability"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "What happens when security incidents occur outside normal business hours and your primary decision-makers are unavailable?",
+              "scoring_guidance": {
+                "green": "Clear backup authority structure with documented procedures and recent successful examples",
+                "yellow": "Informal backup arrangements with some gaps or inconsistencies",
+                "red": "Decisions delayed until primary personnel available or unclear backup authority"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Give me an example of an after-hours incident and how the decision process worked.",
+                  "evidence_type": "specific_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What authority do backup personnel have compared to primary decision-makers?",
+                  "evidence_type": "authority_documentation"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "How often do key security personnel miss or reschedule security incident meetings?",
+              "scoring_guidance": {
+                "green": ">90% attendance with rare absences due to documented conflicts",
+                "yellow": "70-90% attendance with some pattern of avoidance",
+                "red": "<70% attendance or regular last-minute cancellations without clear justification"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Has meeting attendance ever affected the quality or timeliness of incident response?",
+                  "evidence_type": "impact_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What is your policy for mandatory attendance at critical security meetings?",
+                  "evidence_type": "policy_documentation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Complex Decision-Making",
+          "weight": 0.3,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Describe a recent security issue that required difficult decisions affecting business operations. How long did it take to resolve?",
+              "scoring_guidance": {
+                "green": "Complex issue resolved within defined timeframes using documented decision framework",
+                "yellow": "Complex issue delayed beyond necessary analysis time without clear resolution path",
+                "red": "Complex issue deferred indefinitely or avoided rather than confronted and resolved"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What made this decision difficult and how did you work through the difficulty?",
+                  "evidence_type": "decision_framework"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Looking back, was the delay in decision-making justified by the complexity?",
+                  "evidence_type": "retrospective_analysis"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "When security requirements conflict with executive priorities, what happens?",
+              "scoring_guidance": {
+                "green": "Conflict resolved through documented escalation process with clear authority and timelines",
+                "yellow": "Conflict resolution informal and time-consuming without clear process",
+                "red": "Conflicts avoided, deferred, or remain unresolved creating ongoing security gaps"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Give me a specific recent example of such a conflict and how it was resolved.",
+                  "evidence_type": "specific_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How comfortable are security personnel with escalating conflicts to higher authority?",
+                  "evidence_type": "cultural_indicator"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Stress and Avoidance Patterns",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Do you notice differences in security team responsiveness during high-stress periods versus normal operations?",
+              "scoring_guidance": {
+                "green": "No significant difference, or systematic tracking shows consistent performance under stress",
+                "yellow": "Informal awareness of slower responses under stress without systematic tracking",
+                "red": "Clear pattern of decision delays or avoidance during high-stress situations"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What specific behaviors change when the team is under stress?",
+                  "evidence_type": "behavioral_observation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you support decision-making effectiveness during high-pressure situations?",
+                  "evidence_type": "support_system"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Tell me about a time when security responsibilities were passed between multiple people during an active issue.",
+              "scoring_guidance": {
+                "green": "Clear handoff with documented transfer of authority and no loss of momentum",
+                "yellow": "Informal handoff with some confusion or delays in decision continuity",
+                "red": "Multiple handoffs creating decision paralysis or accountability gaps"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Did the delegation improve or delay incident resolution?",
+                  "evidence_type": "outcome_assessment"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What procedures ensure accountability when security decisions are delegated?",
+                  "evidence_type": "procedural_control"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"We need more time to analyze before making any security decisions...\" (pattern of indefinite delay)",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"It's better to escalate security decisions to senior leadership...\" (systematic upward delegation)",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Security meetings conflict with other priorities...\" (pattern of meeting avoidance)",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"We're waiting for the right time to address that security issue...\" (indefinite deferral)",
+              "severity": "critical",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Complex security issues need committee review...\" (decision paralysis through committee)",
+              "severity": "medium",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"I'd rather not make that call - let's see if someone else can decide...\" (explicit avoidance)",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"We don't track decision timelines - security is too complex for that...\" (resistance to accountability)",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + �(red_flag_impacts)"
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP�TN - FP�FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject simulated complex security scenarios monthly to test decision latency patterns",
+      "correlation_analysis": "Compare manual audit scores with automated decision timeline metrics (target correlation > 0.82)",
+      "drift_detection": "Kolmogorov-Smirnov test on decision latency distributions, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted avoidance probabilities match observed decision delay frequencies",
+      "baseline_period": "30_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Decision Latency Reduction",
+        "formula": "50% reduction in decision time for routine incidents, 75% reduction for pre-authorized scenarios",
+        "baseline": "Average time from security issue identification to action decision",
+        "target": "Routine incidents <4 hours, critical incidents <2 hours within 90 days",
+        "measurement": "Monthly tracking of incident response timelines with quarterly trend analysis"
+      },
+      {
+        "metric": "Escalation Effectiveness Rate",
+        "formula": "Percentage of security issues properly escalated within documented timeframes",
+        "baseline": "Current escalation compliance rate",
+        "target": "95% compliance with escalation procedures and timeframes",
+        "measurement": "Weekly review of escalation logs with monthly compliance reporting"
+      },
+      {
+        "metric": "Stress Response Consistency",
+        "formula": "Comparison of decision-making speed between normal and high-stress periods",
+        "baseline": "Current differential between normal and high-stress decision times",
+        "target": "<20% difference in response times between normal and high-stress situations",
+        "measurement": "Quarterly analysis of decision patterns correlated with organizational stress indicators"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Automated Decision Support System",
+        "description": "Implement decision trees and automated workflows that provide clear action steps for common security scenarios",
+        "implementation": "Deploy decision support tools that reduce cognitive load during stress situations, include automatic escalation timers and pre-approved response procedures that eliminate decision paralysis, create clear action paths for different security scenario types",
+        "technical_controls": "Decision tree automation, escalation timer systems, pre-approved response workflow engine, scenario-action mapping database",
+        "roi": "410% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Authority Matrix Documentation",
+        "description": "Create explicit authority matrices defining who can make what security decisions under various circumstances",
+        "implementation": "Document clear authority levels for all security decision types, define escalation timeframes, establish alternate decision-makers to prevent bottlenecks, include emergency authorization procedures",
+        "technical_controls": "Authority matrix database, decision routing automation, backup authority notification system, escalation timeframe tracking",
+        "roi": "320% average within 18 months",
+        "effort": "medium",
+        "timeline": "30-45 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Stress Inoculation Training Program",
+        "description": "Conduct regular incident response simulations that progressively increase complexity and stress levels",
+        "implementation": "Build team tolerance for high-pressure security decisions through graduated exposure, include scenarios requiring difficult business conversations and authority confrontation, practice decision-making under increasing stress conditions",
+        "technical_controls": "Simulation platform, progressive difficulty scaling, stress monitoring during exercises, performance tracking system",
+        "roi": "280% average within 24 months",
+        "effort": "medium",
+        "timeline": "ongoing program with 60 day initial setup"
+      },
+      {
+        "id": "sol_4",
+        "title": "Decision Timeline Monitoring",
+        "description": "Implement tracking systems that monitor security decision latency and alert when decisions exceed established timeframes",
+        "implementation": "Deploy automated monitoring of decision timelines, create dashboards showing decision patterns and bottlenecks, implement alerts when decisions exceed timeframes, enable identification of avoidance behaviors before security impact",
+        "technical_controls": "Decision timeline tracking system, automated alerting for delays, bottleneck visualization dashboard, pattern analysis engine",
+        "roi": "360% average within 12 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_5",
+        "title": "Buddy System Protocol",
+        "description": "Establish paired decision-making for high-stress security situations",
+        "implementation": "Require two personnel to jointly approve action plans for complex scenarios, reduce individual anxiety about making wrong decisions while ensuring decisions still get made promptly, create buddy pairings with complementary skills and stress responses",
+        "technical_controls": "Buddy assignment system, joint approval workflow, decision documentation platform, backup buddy coverage automation",
+        "roi": "270% average within 18 months",
+        "effort": "low",
+        "timeline": "30 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Pre-Authorization Framework",
+        "description": "Develop pre-authorized response procedures for common security scenarios that eliminate in-the-moment decision requirements",
+        "implementation": "Create pre-approved response procedures for common security scenarios, include business impact pre-approvals and stakeholder communication templates, reduce decision friction during incident response",
+        "technical_controls": "Pre-authorization database, automated response procedure retrieval, stakeholder approval tracking, impact pre-assessment system",
+        "roi": "390% average within 12 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": [
+        "sol_1",
+        "sol_4"
+      ],
+      "high_value": [
+        "sol_2",
+        "sol_6"
+      ],
+      "cultural_foundation": [
+        "sol_3",
+        "sol_5"
+      ],
+      "governance": [
+        "sol_2",
+        "sol_4"
+      ]
+    }
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Extended Dwell Time Exploitation",
+      "description": "Attackers time their activities during periods when key security personnel exhibit avoidance behaviors such as end-of-quarter business pressure or major system updates",
+      "attack_vector": "Timing attacks to coincide with organizational stress periods when decision-making is impaired",
+      "psychological_mechanism": "Delayed security response allows attackers additional weeks to establish persistence, steal data, and prepare lateral movement before detection systems are properly investigated",
+      "historical_example": "Target 2013 - security teams delayed response to breach indicators allowing 19-day window for attacker activity",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": [
+        "P_flight > 0.7",
+        "decision_delays > 24h",
+        "high_stress_period",
+        "extended_attacker_dwell_time"
+      ]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Authority Escalation Attack",
+      "description": "Social engineers deliberately create security incidents that require confronting senior executives or business unit leaders",
+      "attack_vector": "Creating security incidents that trigger authority conflict and avoidance responses",
+      "psychological_mechanism": "Security personnel avoid direct confrontation while attackers use the time gap to complete data exfiltration or system compromise",
+      "historical_example": "BEC attacks where security personnel avoid challenging apparent executive requests",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": [
+        "authority_conflict_flag",
+        "escalation_delays",
+        "executive_involvement",
+        "decision_deferral_pattern"
+      ]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Complexity Overwhelm Campaign",
+      "description": "Sophisticated attackers launch multi-vector attacks designed to create cognitive overload in security operations teams",
+      "attack_vector": "Multi-system, multi-vector attack creating decision paralysis through complexity",
+      "psychological_mechanism": "Overwhelmed personnel avoid making rapid containment decisions, allowing attackers to exploit decision paralysis for system pivoting and persistence establishment",
+      "historical_example": "SolarWinds 2020 - attack sophistication created decision paralysis in multiple organizations",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": [
+        "multi_vector_attack",
+        "cognitive_overload_indicators",
+        "decision_paralysis",
+        "lateral_movement_during_delay"
+      ]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Crisis Decision Exploitation",
+      "description": "During organizational stress periods (layoffs, mergers, system outages), attackers launch campaigns requiring security decisions conflicting with business continuity",
+      "attack_vector": "Exploiting organizational stress periods when flight response is heightened",
+      "psychological_mechanism": "Security personnel's flight response leads to delayed patching, reduced monitoring, and acceptance of temporary security workarounds that attackers exploit for long-term access",
+      "historical_example": "Attacks during merger periods when security decision-making is compromised by organizational uncertainty",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": [
+        "organizational_stress_period",
+        "security_workaround_requests",
+        "patch_delays",
+        "monitoring_gaps"
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Selye, H. (1956). The Stress of Life - Stress Response Theory",
+      "Porges, S. (2011). Polyvagal Theory - Autonomic nervous system responses",
+      "Seligman, M. (1972). Learned Helplessness - Avoidance behavior patterns",
+      "Sweller, J. (1988). Cognitive Load Theory - Task avoidance under cognitive overload"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

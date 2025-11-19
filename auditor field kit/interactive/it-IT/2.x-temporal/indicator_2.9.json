@@ -1,0 +1,681 @@
+{
+  "indicator": "2.9",
+  "title": "INDICATOR 2.9 FIELD KIT",
+  "subtitle": "Finestre Sfruttamento Cambio Turno",
+  "category": "Vulnerabilità Temporali",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 2.x",
+  "description": {
+    "short": "Misura vulnerabilità durante finestre cambio turno quando overlap insufficiente, handoff poveri e ownership ambigua creano gap rilevamento sicurezza",
+    "context": "Finestre sfruttamento cambio turno rappresentano periodi vulnerabilità acuta quando responsabilità sicurezza transiziona tra team o individui senza overlap adeguato o processo handoff robusto. Durante cambio turno—particolarmente SOC operations, IT operations e ruoli on-call—informazione critica sicurezza può perdersi, alert mancati e ownership incident diventare ambigua. Attaccanti sophisticated temporizzano initial compromise, movimento laterale e exfiltration per coincidere con finestre cambio turno quando vigilanza temporaneamente degrada.",
+    "impact": "Organizzazioni con processi cambio turno poveri sperimentano incident detection clustering temporalmente attorno transizioni turni, response time aumentato durante finestre handoff e compromissioni sfruttanti gap coverage. Analisi incidenti SOC mostra 18-25% alert critici mancati o ritardati verificarsi durante ±30 minuti cambio turno. Attaccanti demonstrano awareness operativa scheduling turni attraverso timing attacchi precision.",
+    "psychological_basis": "Ricerca Human Factors Engineering identifica shift changeover come high-risk failure point in continuous operations. Attention research documenta 'attentional blink' durante transizioni cognitive quando mental model ricostruito. Teoria Prospettiva Temporale mostra turno uscente sperimentano 'end-of-shift mentality' con ridotta vigilanza ore finali. Memory research dimostra handoff verbali perdono 40-60% informazione critica senza documentazione strutturata. Diffusione responsabilità amplificata quando ownership passa tra individui."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Overlap significativo (30+ min) tra turni. Handoff strutturati con checklist standardizzate e documentazione digitale. Automation compensa gap umani durante transizioni. Ownership esplicitamente trasferita e confermata. Alert tracking attraverso cambio turno automated.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Overlap minimo (10-15 min) tra turni. Handoff avvengono ma informali. Qualche documentazione ma inconsistente. Alert tracking manuale attraverso turni. Ownership assume trasferita ma non sempre confermata esplicitamente.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Zero overlap tra turni. Handoff ad-hoc se avvengono. Nessuna documentazione strutturata transizioni. Alert perduti durante cambio turno. Ownership ambigua durante finestre transizione. Incident response degradata significativamente durante changeover.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_overlap_duration": 0.22,
+      "q2_handoff_structure": 0.18,
+      "q3_alert_continuity": 0.16,
+      "q4_ownership_transfer": 0.15,
+      "q5_incident_correlation": 0.14,
+      "q6_automation": 0.1,
+      "q7_training": 0.05
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_2.9(t) = w1·R_2.9(t) + w2·A_2.9(t) + w3·T_2.9(t) + w4·C_2.9(t)",
+      "components": {
+        "shift_transition_vulnerability": {
+          "formula": "STV(t) = Σ_i [A_i · e^(-(t-t_shift,i)²/(2σ_transition²))]",
+          "description": "Vulnerabilità ponderata temporale attorno shift transitions",
+          "sigma_transition": "30 minutes characteristic width"
+        },
+        "alert_miss_rate": {
+          "formula": "AMR(t) = Alerts_missed_during_transition(t) / Alerts_total_transition(t)",
+          "description": "Frazione alert mancati durante finestre cambio turno",
+          "threshold": {
+            "warning": 0.15,
+            "critical": 0.25
+          }
+        },
+        "response_degradation": {
+          "formula": "RD(t) = (ResponseTime_transition(t) - ResponseTime_steady) / ResponseTime_steady",
+          "description": "Degradazione percentuale response time durante transizioni"
+        },
+        "handoff_information_loss": {
+          "formula": "HIL = 1 - (CriticalInfo_received / CriticalInfo_required)",
+          "description": "Frazione informazione critica persa durante handoff"
+        }
+      },
+      "weights": {
+        "R": 0.3,
+        "A": 0.3,
+        "T": 0.25,
+        "C": 0.15
+      }
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "shift_schedules",
+        "handoff_logs",
+        "incident_timeline_analysis",
+        "alert_acknowledgment_records"
+      ],
+      "evidence_required": [
+        "shift_changeover_times",
+        "24_month_incidents_vs_shift_changes",
+        "alert_miss_analysis",
+        "handoff_quality_audits"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "soc_platform_shift_tracking",
+          "fields": [
+            "alert_id",
+            "alert_time",
+            "shift_in_progress",
+            "time_to_shift_change",
+            "acknowledged_by",
+            "acknowledgment_time",
+            "escalation_required",
+            "handoff_documented",
+            "timestamp"
+          ],
+          "retention": "730_days"
+        }
+      ]
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "2.4",
+        "name": "Finestre Transizione Temporale",
+        "probability": 0.95,
+        "factor": 1.8,
+        "description": "Cambio turno è finestra transizione primaria"
+      },
+      {
+        "indicator": "5.3",
+        "name": "Erosione Vigilanza",
+        "probability": 0.8,
+        "factor": 1.5,
+        "description": "Vigilanza erode verso fine turno amplificando vulnerabilità changeover"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "6.3",
+        "name": "Diffusione Responsabilità",
+        "probability": 0.85,
+        "factor": 1.6,
+        "description": "Ownership ambigua durante transizioni amplifica diffusione responsabilità"
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_overlap_duration",
+          "weight": 0.22,
+          "title": "Durata Overlap Cambio Turno",
+          "question": "Quanto overlap tempo esiste tra turni entranti e uscenti per handoff completo?",
+          "options": [
+            {
+              "value": "substantial",
+              "score": 0,
+              "label": "Sostanziale - 30+ minuti overlap dedicato esclusivamente handoff strutturato"
+            },
+            {
+              "value": "minimal",
+              "score": 0.5,
+              "label": "Minimo - 10-15 minuti overlap, spesso affrettato o interrotto"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuno - Zero overlap, turno uscente parte quando turno entrante arriva"
+            }
+          ]
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_handoff_structure",
+          "weight": 0.18,
+          "title": "Struttura Processo Handoff",
+          "question": "Quanto strutturato è processo handoff tra turni con checklist e format standardizzato?",
+          "options": [
+            {
+              "value": "structured",
+              "score": 0,
+              "label": "Strutturato - Checklist obbligatoria, format standardizzato (es. SBAR), verification completezza"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Informale - Handoff avviene ma ad-hoc, format variabile tra individui"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuno - Nessun processo formale, handoff verbali brevi o assenti"
+            }
+          ]
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_alert_continuity",
+          "weight": 0.16,
+          "title": "Continuità Alert Attraverso Cambio Turno",
+          "question": "Come viene garantita continuità tracking e response alert attraverso cambio turno?",
+          "options": [
+            {
+              "value": "automated",
+              "score": 0,
+              "label": "Automatizzato - Sistema tracking alert con stato persistente, automatic escalation se non addressed"
+            },
+            {
+              "value": "manual_documented",
+              "score": 0.5,
+              "label": "Manuale Documentato - Handoff manuale alert ma documentato in sistema"
+            },
+            {
+              "value": "verbal_only",
+              "score": 1,
+              "label": "Solo Verbale - Alert tracking attraverso handoff verbali, nessun sistema persistenza"
+            }
+          ]
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_ownership_transfer",
+          "weight": 0.15,
+          "title": "Trasferimento Ownership Esplicito",
+          "question": "Come viene trasferita ownership incident e responsabilità sicurezza durante cambio turno?",
+          "options": [
+            {
+              "value": "explicit_confirmed",
+              "score": 0,
+              "label": "Esplicita Confermata - Trasferimento formale con read-back confirmation, ownership sempre chiara"
+            },
+            {
+              "value": "implicit_assumed",
+              "score": 0.5,
+              "label": "Implicita Assunta - Ownership assume trasferita ma non sempre esplicitamente confermata"
+            },
+            {
+              "value": "ambiguous",
+              "score": 1,
+              "label": "Ambigua - Ownership frequentemente unclear durante e dopo transizioni"
+            }
+          ]
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_incident_correlation",
+          "weight": 0.14,
+          "title": "Correlazione Incidenti Cambio Turno",
+          "question": "Analisi incidenti mostra clustering durante finestre ±30 min cambio turno?",
+          "options": [
+            {
+              "value": "no_correlation",
+              "score": 0,
+              "label": "Nessuna Correlazione - Incidenti distribuiti uniformemente rispetto cambio turno"
+            },
+            {
+              "value": "some_correlation",
+              "score": 0.5,
+              "label": "Qualche Correlazione - Leggero aumento detection delay durante changeover"
+            },
+            {
+              "value": "strong_correlation",
+              "score": 1,
+              "label": "Correlazione Forte - Spike significativo alert mancati/ritardati durante cambio turno"
+            }
+          ]
+        }
+      ],
+      "subsections": [],
+      "scoring_method": "weighted_average",
+      "instructions": "Selezionare UNA opzione per ciascuna domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = SUM(question_score x question_weight) / SUM(question_weight)"
+    },
+    {
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "icon": "💬",
+      "type": "conversation",
+      "subsections": [
+        {
+          "title": "Domande Apertura - finestre di sfruttamento durante cambio turno",
+          "weight": 0.3,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Come funziona il processo di handoff tra turni per il team di sicurezza? Cosa viene comunicato?",
+              "scoring_guidance": {
+                "green": "Processo strutturato con checklist, documentazione e overlap period tra turni",
+                "yellow": "Handoff informale ma con comunicazione di base degli stati critici",
+                "red": "Handoff minimo o assente, ogni turno 'ricomincia da zero'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quanto tempo si sovrappongono i turni per l'handoff?",
+                  "evidence_type": "overlap_duration"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succede se qualcuno è in ritardo o assente durante un cambio turno?",
+                  "evidence_type": "absence_procedure"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Mi racconti di una situazione dove qualcosa è sfuggito o è stato ritardato a causa di un cambio turno. Cosa è successo?",
+              "scoring_guidance": {
+                "green": "Nessun esempio significativo perché i processi di handoff sono robusti",
+                "yellow": "Esempio minore che ha portato a miglioramenti nel processo",
+                "red": "Esempi di incident o ritardi significativi dovuti a gap nel cambio turno"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa è stato cambiato nel processo di handoff dopo quell'incidente?",
+                  "evidence_type": "process_improvements"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come vengono tracciate le attività in-progress durante i cambi turno?",
+                  "evidence_type": "tracking_mechanism"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Meccanismi Verifica",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Che sistema esiste per garantire continuità durante i cambi turno del team di sicurezza?",
+              "scoring_guidance": {
+                "green": "Sistema formale con tracking automatico degli stati e checklist di handoff obbligatorie",
+                "yellow": "Procedure di base con documentazione parziale",
+                "red": "Nessun sistema formale, dipende da iniziativa individuale"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Come viene verificato che i handoff siano completi e accurati?",
+                  "evidence_type": "verification_method"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Fattori Culturali e Psicologici",
+          "weight": 0.3,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Quanto tempo viene allocato e rispettato per handoff appropriati tra turni?",
+              "scoring_guidance": {
+                "green": "Tempo dedicato e protetto per handoff completi, visto come critico",
+                "yellow": "Tempo allocato ma spesso compresso per pressioni operative",
+                "red": "Handoff visti come 'overhead', minimizzati per efficienza"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Esistono metriche sulla qualità e completezza degli handoff?",
+                  "evidence_type": "quality_metrics"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Come viene formato il personale di sicurezza su importanza e tecniche di handoff efficaci?",
+              "scoring_guidance": {
+                "green": "Formazione strutturata con scenari pratici e best practices",
+                "yellow": "Formazione di base che menziona handoff",
+                "red": "Nessuna formazione specifica, gli handoff sono 'imparati sul campo'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "La formazione include esempi di incident causati da handoff inadeguati?",
+                  "evidence_type": "case_studies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Sondaggio per Segnali d'Allarme",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle policy dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "Nessun processo formale di handoff tra turni di sicurezza",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"I turni si scambiano rapidamente le informazioni essenziali...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "Nessun overlap time tra turni per handoff appropriato",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "Evidenza di incident o alert persi durante cambi turno",
+              "severity": "high",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "Mancanza di sistema per tracciare attività in-progress tra turni",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Gli handoff rallentano le operazioni, li facciamo veloci...\"",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "Nessuna formazione specifica su handoff efficaci",
+              "severity": "medium",
+              "score_impact": 0.09,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "Cultura che vede handoff come overhead piuttosto che controllo di sicurezza",
+              "severity": "medium",
+              "score_impact": 0.1,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "success_metrics": [
+      {
+        "metric": "Alert Miss Rate Durante Changeover",
+        "formula": "Percentuale alert critici mancati entro ±30min cambio turno",
+        "target": "Ridurre a <5% entro 90 giorni"
+      },
+      {
+        "metric": "Response Time Durante Transizioni",
+        "formula": "Differenza percentuale response time changeover vs steady-state",
+        "target": "Ridurre gap a <15% entro 120 giorni"
+      },
+      {
+        "metric": "Handoff Completeness",
+        "formula": "Percentuale handoff completanti checklist obbligatoria con verification",
+        "target": "Raggiungere 95% entro 60 giorni"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Handoff Strutturati con Overlap Protetto",
+        "description": "Implementare handoff process strutturati con overlap tempo dedicato e checklist standardizzate",
+        "roi": "480% media entro 18 mesi",
+        "effort": "medium",
+        "timeline": "45-60 giorni",
+        "steps": [
+          "Mandare 30+ minuti overlap protetto tra tutti turni dedicato esclusivamente handoff",
+          "Sviluppare checklist handoff standardizzata coprendo stato sicurezza critico",
+          "Implementare structured communication protocol (SBAR: Situation, Background, Assessment, Recommendation)",
+          "Richiedere read-back verification per alert critici e incident in-progress",
+          "Documentare tutti handoff digitally in sistema persistent accessibile entrambi turni",
+          "Audit quality handoff regolarmente con feedback constructive"
+        ],
+        "kpis": [
+          "100% turni hanno 30+ min overlap",
+          "95% handoff completano checklist",
+          "Riduzione 70% informazione persa durante transizioni"
+        ],
+        "tools": [
+          "Shift management software",
+          "Handoff checklist tools",
+          "Communication protocol training"
+        ],
+        "cost_estimate": "€25.000 - €65.000"
+      },
+      {
+        "id": "sol_2",
+        "title": "Automation Alert Continuità e Escalation",
+        "description": "Implementare automation garantente alert continuity e automatic escalation attraverso cambio turno",
+        "roi": "520% media entro 24 mesi",
+        "effort": "high",
+        "timeline": "75-105 giorni",
+        "steps": [
+          "Implementare alert tracking system con stato persistente attraverso turni",
+          "Configurare automatic escalation alert non acknowledged entro threshold durante changeover",
+          "Deploy SOAR playbook automation continuing investigation durante transizioni",
+          "Creare persistent dashboards mostranti stato sicurezza real-time accessibile tutti turni",
+          "Implementare AI-assisted alert triage compensante attention gaps umani",
+          "Automated context preservation capturing stato incident attraverso handoff"
+        ],
+        "kpis": [
+          "Zero alert critici persi durante changeover",
+          "Riduzione 85% escalation delay",
+          "Miglioramento 75% incident context preservation"
+        ],
+        "tools": [
+          "SIEM with alert tracking",
+          "SOAR platform",
+          "AI-assisted triage",
+          "Persistent dashboards",
+          "Automated escalation"
+        ],
+        "cost_estimate": "€80.000 - €220.000"
+      },
+      {
+        "id": "sol_3",
+        "title": "Training Handoff e Cultura Continuity",
+        "description": "Sviluppare competency handoff attraverso training e cultura emphasis continuity sicurezza",
+        "roi": "340% media entro 12 mesi",
+        "effort": "low",
+        "timeline": "30-45 giorni",
+        "steps": [
+          "Sviluppare training program specifico effective shift handoff practices",
+          "Includere case study reali incident exploitation durante changeover windows",
+          "Condurre scenario-based exercises practicing handoff sotto stress e urgency",
+          "Implementare peer feedback e quality scoring handoff performance",
+          "Riconoscere publicly examples handoff excellence",
+          "Leadership messaging enfatizzante handoff come critical security activity non administrative burden",
+          "Incorporare handoff competency in performance evaluations"
+        ],
+        "kpis": [
+          "100% personale turni completa handoff training",
+          "Miglioramento 60% peer ratings handoff quality",
+          "Riduzione 75% handoff-related near-misses"
+        ],
+        "tools": [
+          "Training platform",
+          "Scenario simulation",
+          "Peer feedback systems",
+          "Performance tracking"
+        ],
+        "cost_estimate": "€18.000 - €45.000"
+      }
+    ]
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Movimento Laterale Durante Finestra Cambio Turno SOC",
+      "description": "Attaccante con initial access temporizza movimento laterale aggressivo coincidere con cambio turno SOC 14:00-14:30. Alert generati ma mancati durante handoff affrettato. Compromissione progredisce 45 minuti non rilevata.",
+      "likelihood": "high",
+      "impact": "high",
+      "financial_impact": "€100.000 - €1.800.000",
+      "attack_chain": [
+        "Initial compromise stabilito settimane prima via phishing",
+        "Attaccante reconnaissance identifica shift change timing osservando SOC activity patterns",
+        "Movimento laterale staging preparato anticipatamente",
+        "14:05 - Inizia movimento laterale aggressivo targeting multiple systems",
+        "14:10-14:25 - Alert generati ma SOC in middle changeover, turno uscente disengaging",
+        "14:15 - Handoff affrettato manca comunicazione alert pending investigation",
+        "14:30 - Turno entrante starting fresh, alert backlog non prioritized correctly",
+        "14:50 - Alert finalmente investigated, attaccante ha 45 min head start",
+        "Compromissione sistemi multipli e privilege escalation durante gap"
+      ],
+      "indicators": [
+        "Timing attività malevola precision-aligned con shift changes",
+        "Alert acknowledgment delay clustering cambio turno",
+        "Movimento laterale velocità insolita durante finestra specifica",
+        "Post-incident analysis mostra attacker awareness SOC schedule"
+      ],
+      "cpe_mapping": [
+        "CPE:2.3:*:temporal_exploitation:shift_change_window:*"
+      ],
+      "mitre_attack": [
+        "T1071 - Application Layer Protocol",
+        "T1570 - Lateral Tool Transfer",
+        "T1078 - Valid Accounts"
+      ]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Exfiltration Dati Durante Transizione On-Call",
+      "description": "Attaccante exfiltrates dati sensibili durante rotation on-call weekend, sfruttando ownership ambigua e handoff povero tra engineer venerdì sera e weekend on-call.",
+      "likelihood": "medium",
+      "impact": "critical",
+      "financial_impact": "€200.000 - €3.000.000",
+      "attack_chain": [
+        "Compromissione preventiva establishing persistence su database server",
+        "Timing exfiltration per venerdì 17:30 quando weekday engineer preparing leave",
+        "Alert DLP generato 17:35 per unusual data transfer volume",
+        "Weekday engineer vede alert ma end-of-week mentality, assume weekend on-call handle",
+        "Handoff on-call ad-hoc via email non menziona alert pending",
+        "Weekend on-call engineer non aware alert, monitoring reactive not proactive",
+        "Exfiltration continua attraverso weekend 48h",
+        "Detection solo lunedì mattina quando weekday team ritorna"
+      ],
+      "indicators": [
+        "Exfiltration timing venerdì evening",
+        "Alert response gap durante on-call transition",
+        "Ownership ambiguity tra weekday e weekend team",
+        "Extended exfiltration duration correlating con weekend"
+      ],
+      "cpe_mapping": [
+        "CPE:2.3:*:data_exfiltration:oncall_transition:*"
+      ],
+      "mitre_attack": [
+        "T1041 - Exfiltration Over C2 Channel",
+        "T1048 - Exfiltration Over Alternative Protocol"
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-09",
+    "translator": "Claude (Anthropic)",
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

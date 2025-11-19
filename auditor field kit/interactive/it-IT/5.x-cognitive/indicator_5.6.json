@@ -1,0 +1,1123 @@
+{
+  "indicator": "5.6",
+  "title": "FIELD KIT INDICATORE 5.6",
+  "subtitle": "Tunneling Cognitivo (Cognitive Tunneling)",
+  "category": "Vulnerabilità da Sovraccarico Cognitivo",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 5.x",
+  "description": {
+    "short": "Misura la vulnerabilità derivante dalla focalizzazione attentiva ristretta che esclude informazioni periferiche importanti durante le indagini di sicurezza",
+    "context": "Il tunneling cognitivo si verifica quando i professionisti della sicurezza diventano così focalizzati su un aspetto specifico di un incidente o indagine che inconsciamente escludono indicatori periferici importanti. Questo stato cognitivo ristretto crea vulnerabilità sistematiche dove gli analisti \"mancano la foresta per gli alberi\", concentrandosi intensamente su un singolo indicatore di compromissione mentre perdono attività di attacco correlate. Il tunneling cognitivo è particolarmente pericoloso durante le indagini ad alta pressione dove il focus intenso sembra produttivo ma crea effettivamente punti ciechi.",
+    "impact": "Le organizzazioni che sperimentano tunneling cognitivo mancano attacchi laterali mentre si focalizzano su un vettore iniziale, trascurano escalation di privilegi mentre investigano esfiltrazione di dati, e perdono attività di persistence mentre remediano malware iniziale. Gli incidenti storici mostrano che il tunneling cognitivo contribuisce a tassi elevati di reinfezione e rilevamento incompleto dell'ambito della violazione. Gli attaccanti sofisticati sfruttano il tunneling cognitivo creando indicatori \"rumorosi\" che catturano l'attenzione mentre conducono obiettivi primari attraverso canali più silenziosi.",
+    "psychological_basis": "La ricerca di Wickens e Alexander (2009) sull'attenzione cognitiva mostra come lo stress e l'alto carico di lavoro inducano tunneling attentivo, dove il campo percettivo si restringe. Gli studi di Dirkin e Hancock (1985) dimostrano che sotto stress, le persone si focalizzano sempre più su indicatori centrali mentre perdono informazioni periferiche. La ricerca neuroscientifica mostra che l'alta attivazione dell'amigdala (risposta allo stress) riduce il campo attentivo mediato dalla corteccia prefrontale. La Teoria del Carico Cognitivo di Kahneman dimostra che risorse attentive limitate sotto pressione portano a strategie di campionamento selettivo che possono perdere minacce critiche."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "L'organizzazione ha procedure documentate per mantenere ampia consapevolezza della sicurezza durante gli incidenti, con evidenza di rilevamento di attacchi multi-vettore riuscito. I team dimostrano correlazione incrociata consistente degli allarmi, mantengono controlli di sicurezza durante operazioni urgenti e mostrano efficacia della formazione in scenari reali.",
+        "risk_level": "basso",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "L'organizzazione ha alcune procedure per la gestione degli incidenti ma manca monitoraggio incrociato consistente durante periodi di alta focalizzazione. Evidenza occasionale di attacchi multi-vettore mancati o bypass di controlli di sicurezza durante operazioni urgenti. La formazione esiste ma l'efficacia non è chiara.",
+        "risk_level": "medio",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Nessun approccio sistematico per mantenere consapevolezza ampia durante periodi di focus intenso. Scoperta regolare di vettori di attacco mancati, bypass frequenti di controlli di sicurezza durante operazioni urgenti, o nessun processo per correlazione incrociata di eventi di sicurezza simultanei. La formazione è generica o non esistente.",
+        "risk_level": "alto",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_incident_monitoring": 0.16,
+      "q2_multi_vector_detection": 0.15,
+      "q3_alert_prioritization": 0.14,
+      "q4_operational_urgency": 0.13,
+      "q5_backup_monitoring": 0.12,
+      "q6_alert_correlation": 0.11,
+      "q7_awareness_training": 0.1,
+      "q8_attention_rotation": 0.09
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_5.6(t) = w1·R_5.6(t) + w2·A_5.6(t) + w3·B_5.6(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_5.6(t) = 1 if TI(t) > 0.4 AND L(t) > L_threshold, else 0",
+          "description": "Rilevamento binario basato sull'indice tunneling che supera la soglia durante alto carico cognitivo",
+          "threshold": {
+            "TI": 0.4,
+            "L_threshold": 1.5
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_5.6(t) = sqrt((x(t) - μ)ᵀ Σ⁻¹ (x(t) - μ))",
+          "description": "Distanza di Mahalanobis per pattern multivariati di allocazione dell'attenzione",
+          "variables": {
+            "x(t)": "observation vector [peripheral_detection_rate, task_switching_frequency, correlation_effectiveness]",
+            "μ": "baseline mean from historical operational data",
+            "Σ": "covariance matrix (exponential weighted moving average)"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_5.6(t) = P(tunneling|factors) = [P(factors|tunneling) × P(tunneling)] / P(factors)",
+          "factors": [
+            "concurrent_incident_count",
+            "workload_intensity",
+            "time_under_pressure",
+            "missed_correlation_events",
+            "security_bypass_frequency"
+          ],
+          "priors": {
+            "P_tunneling": 0.25,
+            "P_normal": 0.75
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.35,
+        "w2_anomaly": 0.35,
+        "w3_bayesian": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_5.6(t) = α·D_5.6(t) + (1-α)·T_5.6(t-1)·e^(-λΔt)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 3600,
+        "lambda": 0.0002,
+        "description": "Levigatura esponenziale con decadimento recupero cognitivo"
+      }
+    },
+    "tunneling_index": {
+      "formula": "TI(t) = 1 - N_peripheral_detected(t) / N_peripheral_presented(t)",
+      "description": "Misura la proporzione di eventi sicurezza periferici mancati durante attenzione focalizzata",
+      "interpretation": "Valori più alti indicano tunneling aumentato - più eventi periferici vengono mancati"
+    },
+    "attention_width": {
+      "formula": "W_attention(L) = W_0 · e^(-γL)",
+      "description": "Restringimento esponenziale dell'ampiezza dell'attenzione con l'aumento del carico cognitivo",
+      "parameters": {
+        "W_0": "baseline attention width under normal conditions",
+        "γ": "tunneling coefficient (typically 0.15-0.25)",
+        "L": "cognitive load level"
+      }
+    },
+    "peripheral_detection": {
+      "formula": "P_peripheral(t) = P_max · W_attention(L(t)) / W_max",
+      "description": "Probabilità di rilevare minacce periferiche in funzione dell'ampiezza dell'attenzione"
+    },
+    "workload_correlation": {
+      "formula": "L(t) = α · N_primary_tasks(t)/N_baseline + β · Urgency(t)",
+      "description": "Carico cognitivo in funzione del conteggio compiti e livello urgenza",
+      "parameters": {
+        "α": "task count weight (typically 0.6)",
+        "β": "urgency weight (typically 0.4)",
+        "N_primary_tasks": "concurrent primary security tasks",
+        "N_baseline": "normal baseline task count",
+        "Urgency": "normalized urgency score [0,1]"
+      }
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "incident_response_procedures",
+        "soc_operational_playbooks",
+        "alert_correlation_documentazione",
+        "training_records_awareness",
+        "incident_post_mortem_revisiones"
+      ],
+      "evidence_required": [
+        "attention_rotation_protocols",
+        "multi_vector_detection_esempios",
+        "security_override_approval_log",
+        "peripheral_awareness_training_materials",
+        "successful_correlation_case_studies"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "siem_alert_log",
+          "fields": [
+            "alert_id",
+            "category",
+            "severity",
+            "acknowledged_time",
+            "investigated",
+            "correlated_alerts",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "incident_response_log",
+          "fields": [
+            "incident_id",
+            "primary_vector",
+            "related_incidents",
+            "investigation_scope",
+            "duration",
+            "timestamp"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "security_override_log",
+          "fields": [
+            "override_type",
+            "requester",
+            "approver",
+            "business_justification",
+            "restoration_time",
+            "timestamp"
+          ],
+          "retention": "365_days"
+        },
+        {
+          "source": "analyst_activity_log",
+          "fields": [
+            "analyst_id",
+            "active_tasks",
+            "task_switches",
+            "alerts_handled",
+            "investigation_depth",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "threat_hunting_log",
+          "fields": [
+            "hunt_id",
+            "scope",
+            "findings",
+            "concurrent_incidents",
+            "timestamp"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "cross_domain_correlation_events",
+          "fields": [
+            "primary_alert",
+            "correlated_alerts",
+            "time_to_correlation",
+            "attack_success",
+            "timestamp"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "workload_metrics",
+          "fields": [
+            "team_size",
+            "open_incidents",
+            "alert_volume",
+            "average_response_time",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "TI": {
+          "calculation": "Tunneling index from peripheral event detection rate",
+          "query": "SELECT 1 - (COUNT(peripheral_detected=true) / COUNT(peripheral_presented=true)) as TI FROM security_events WHERE event_priority='low' AND concurrent_incidents > 2 AND time_window='24h'"
+        },
+        "L": {
+          "calculation": "Cognitive load from task count and urgency metrics",
+          "query": "SELECT (0.6 * AVG(active_tasks)/baseline_tasks + 0.4 * AVG(urgency_score)) as L FROM analyst_workload WHERE timestamp > NOW() - INTERVAL '1 hour'"
+        },
+        "correlation_effectiveness": {
+          "calculation": "Time to detect multi-vector attacks across security domains",
+          "query": "SELECT AVG(time_to_correlation) FROM incidents WHERE attack_vectors > 1 AND detection_time > initial_alert_time AND time_window='30d'"
+        }
+      }
+    },
+    "integration_apis": {
+      "siem": "Splunk/Sentinel API - Alert Correlation, Investigation Timelines",
+      "soar": "SOAR Platform API - Incident Response Workflows, Task Management",
+      "ticketing": "ServiceNow/Jira API - Incident Tickets, Investigation Scope",
+      "pam": "PAM System API - Emergency Access Grants, Security Overrides"
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue Desensitization",
+        "probability": 0.7,
+        "factor": 1.35,
+        "description": "La fatica da allarmi aumenta il tunneling poiché gli analisti si concentrano solo sugli allarmi percepiti come critici",
+        "formula": "P(5.6|5.1) = 0.7",
+        "evidence": "L'alto volume di allarmi forza attenzione selettiva creando focus tunnel"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue Errors",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "L'esaurimento cognitivo riduce la capacità di mantenere consapevolezza periferica",
+        "formula": "P(5.6|5.2) = 0.65"
+      },
+      {
+        "indicator": "5.4",
+        "name": "Multitasking Degradation",
+        "probability": 0.55,
+        "factor": 1.25,
+        "description": "Compiti concorrenti multipli forzano restringimento attenzione per mantenere performance",
+        "formula": "P(5.6|5.4) = 0.55"
+      },
+      {
+        "indicator": "5.5",
+        "name": "Context Switching Vulnerabilities",
+        "probability": 0.5,
+        "factor": 1.2,
+        "description": "Cambi di contesto frequenti creano focus tunnel durante ogni contesto per gestire carico cognitivo",
+        "formula": "P(5.6|5.5) = 0.5"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "Lo stress attiva restringimento automatico dell'attenzione come risposta di sopravvivenza",
+        "formula": "P(5.6|7.1) = 0.75",
+        "evidence": "Kahneman (1973) - lo stress causa riallocazione automatica delle risorse attentive"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "La pressione temporale crea focus tunnel sulla risoluzione immediata dei problemi",
+        "formula": "P(5.6|2.1) = 0.7"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "5.3",
+        "name": "Information Overload Paralysis",
+        "probability": 0.6,
+        "factor": 1.25,
+        "description": "Il tunneling riduce l'elaborazione delle informazioni, rendendo più probabile il sovraccarico"
+      },
+      {
+        "indicator": "5.7",
+        "name": "Working Memory Overflow",
+        "probability": 0.7,
+        "factor": 1.3,
+        "description": "Il focus tunnel monopolizza la capacità della memoria di lavoro"
+      },
+      {
+        "indicator": "3.2",
+        "name": "Security Theater Compliance",
+        "probability": 0.5,
+        "factor": 1.15,
+        "description": "Tunneling su attività di sicurezza visibili mentre si mancano minacce reali"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": [
+        "5.6",
+        "7.1",
+        "2.1",
+        "5.1"
+      ],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 3.2,
+      "threshold_critical": 4,
+      "description": "Tempesta perfetta: Tunneling cognitivo + Stress acuto + Urgenza temporale + Fatica da allarmi = 420% aumento probabilità successo attacco multi-vettore",
+      "real_world_esempio": "Violazione Target 2013 - Analisti SOC tunnel-focalizzati su allarmi malware POS mentre perdevano movimento laterale attraverso segmenti rete durante stress stagione festiva"
+    },
+    "bayesian_network": {
+      "parent_nodes": [
+        "5.1",
+        "5.2",
+        "5.4",
+        "5.5",
+        "7.1",
+        "2.1"
+      ],
+      "child_nodes": [
+        "5.3",
+        "5.7",
+        "3.2"
+      ],
+      "conditional_probability_table": {
+        "P_5.6_base": 0.25,
+        "P_5.6_given_stress": 0.55,
+        "P_5.6_given_fatigue": 0.48,
+        "P_5.6_given_urgency": 0.62,
+        "P_5.6_given_all": 0.85
+      }
+    }
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_incident_monitoring",
+          "weight": 0.16,
+          "title": "Monitoraggio Continuato Durante Incidenti ad Alta Priorità",
+          "question": "Quando il vostro team di sicurezza sta rispondendo a un incidente ad alta priorità (come una potenziale violazione o interruzione del sistema), quale processo assicura che continuino a monitorare altre minacce?",
+          "options": [
+            {
+              "value": "documented_process",
+              "score": 0,
+              "label": "Processo documentato con protocolli di rotazione, team di monitoraggio backup si attiva automaticamente, esempio recente dimostra efficacia"
+            },
+            {
+              "value": "informal_process",
+              "score": 0.5,
+              "label": "Comprensione informale che qualcuno dovrebbe continuare a monitorare, ma nessuna procedura formale di passaggio consegne o rotazione"
+            },
+            {
+              "value": "no_process",
+              "score": 1,
+              "label": "Tutto il personale disponibile si concentra sull'incidente primario, altro monitoraggio si ferma durante incidenti maggiori"
+            }
+          ],
+          "evidence_required": "Procedure di risposta agli incidenti, protocolli di rotazione, esempio di incidente recente con monitoraggio continuato",
+          "soc_mapping": "concurrent_incident_count, peripheral_detection_rate from detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_multi_vector_detection",
+          "weight": 0.15,
+          "title": "Tasso di Rilevamento Attacchi Multi-Vettore",
+          "question": "Quanto spesso scoprite che gli attaccanti hanno usato métodi di attacco múltipli simultanei (come DDoS + esfiltrazione dati, o phishing + movimento laterale) durante un singolo incidente?",
+          "options": [
+            {
+              "value": "frequently_detected",
+              "score": 0,
+              "label": "Rilevato frequentemente durante indagine iniziale (>80% degli attacchi multi-vettore identificati come coordinati entro 24 ore)"
+            },
+            {
+              "value": "occasionally_detected",
+              "score": 0.5,
+              "label": "Talvolta scoperto durante l'indagine (tasso di rilevamento 40-80%), spesso trovato nell'analisi post-incidente"
+            },
+            {
+              "value": "rarely_detected",
+              "score": 1,
+              "label": "Raramente identificato come attacchi coordinati (tasso di rilevamento <40%), solitamente scoperto settimane dopo o per niente"
+            }
+          ],
+          "evidence_required": "Analisi incidenti che mostra tasso di rilevamento multi-vettore, esempio di attacco coordinato recente",
+          "soc_mapping": "correlation_effectiveness metric from telemetry_mapping"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_alert_prioritization",
+          "weight": 0.14,
+          "title": "Processo di Prioritizzazione Overflow Allarmi",
+          "question": "Quando gli allarmi di sicurezza si accumulano e il vostro team non può investigarli tutti immediatamente, qual è la vostra procedura per assicurare che nulla di critico venga perso?",
+          "options": [
+            {
+              "value": "systematic_triage",
+              "score": 0,
+              "label": "Triage sistematico con criteri decisionali documentati, monitoraggio in background per allarmi a bassa priorità, trigger di escalation se emergono pattern"
+            },
+            {
+              "value": "priority_focus",
+              "score": 0.5,
+              "label": "Focus sugli allarmi a priorità massima, allarmi a priorità inferiore in coda ma potrebbero non essere indagati se arrivano nuovi allarmi ad alta priorità"
+            },
+            {
+              "value": "best_effort",
+              "score": 1,
+              "label": "Approccio best effort, allarmi più vecchi o a priorità minore spesso respinti o auto-chiusi senza indagine durante periodi ad alto volume"
+            }
+          ],
+          "evidence_required": "Procedure di triage allarmi, esempio di periodo ad alto volume recente, processo di revisione allarmi respinti",
+          "soc_mapping": "TI (tunneling index) calculation based on low-priority alert handling"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_operational_urgency",
+          "weight": 0.13,
+          "title": "Controlli di Sicurezza Durante Urgenza Operativa",
+          "question": "Durante manutenzione IT urgente o risoluzione problemi, quali controlli prevengono che i vostri team tecnici bypassino accidentalmente le procedure di sicurezza?",
+          "options": [
+            {
+              "value": "mandatory_controls",
+              "score": 0,
+              "label": "Autorizzazione obbligatoria a due persone per qualsiasi bypass di sicurezza, eccezioni a tempo limitato con ripristino automatico, notifica al team di sicurezza richiesta"
+            },
+            {
+              "value": "approval_required",
+              "score": 0.5,
+              "label": "Approvazione richiesta ma può essere retroattiva, i controlli di sicurezza possono essere bypassati temporaneamente con documentazione"
+            },
+            {
+              "value": "operational_priority",
+              "score": 1,
+              "label": "L'urgenza operativa ha priorità, i team tecnici possono bypassare i controlli di sicurezza come necessario per risolvere problemi rapidamente"
+            }
+          ],
+          "evidence_required": "Politiche di override sicurezza, esempio recente di bypass emergenza con record di approvazione",
+          "soc_mapping": "security_bypass_frequency from automated_soc data sources"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_backup_monitoring",
+          "weight": 0.12,
+          "title": "Monitoraggio Backup Durante Focus Profondo",
+          "question": "Come assicurate che il monitoraggio della sicurezza continui con piena efficacia quando il vostro team è profondamente concentrato su un'indagine complessa di un incidente o sulla risoluzione di problemi tecnici?",
+          "options": [
+            {
+              "value": "automated_backup",
+              "score": 0,
+              "label": "Sistemi automatizzati forniscono monitoraggio backup, sistema buddy abbina focus profondo con consapevolezza ampia, controlli attenzione obbligatori ogni 30 minuti"
+            },
+            {
+              "value": "partial_coverage",
+              "score": 0.5,
+              "label": "Qualche monitoraggio automatizzato continua, ma supervisione umana ridotta durante indagini intensive"
+            },
+            {
+              "value": "focused_only",
+              "score": 1,
+              "label": "Il team si focalizza sul problema complesso, efficacia monitoraggio ridotta fino al completamento dell'indagine"
+            }
+          ],
+          "evidence_required": "Procedure di monitoraggio backup, sistemi di allertamento automatizzati, documentazione sistema buddy",
+          "soc_mapping": "peripheral_detection_rate during high workload periods"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_alert_correlation",
+          "weight": 0.11,
+          "title": "Correlazione Allarmi Cross-Domain",
+          "question": "Quando i vostri strumenti di sicurezza generano allarmi in categorie diverse (rete, endpoint, email, cloud) simultaneamente, quale processo assicura che gli analisti li correlino per rilevare attacchi coordinati?",
+          "options": [
+            {
+              "value": "automated_correlation",
+              "score": 0,
+              "label": "Correlazione SIEM automatizzata con dashboard visive che mostrano attività cross-domain, revisioni big-picture obbligatorie ogni 15 minuti durante incidenti"
+            },
+            {
+              "value": "manual_correlation",
+              "score": 0.5,
+              "label": "Gli analisti revisionano manualmente diversi strumenti di sicurezza, la correlazione avviene se l'analista nota pattern attraverso gli strumenti"
+            },
+            {
+              "value": "siloed_investigation",
+              "score": 1,
+              "label": "Ogni tipo di allarme indagato da team specializzato, correlazione cross-domain avviene raramente"
+            }
+          ],
+          "evidence_required": "Regole di correlazione SIEM, esempi di rilevamento attacchi cross-domain, screenshot dashboard",
+          "soc_mapping": "correlation_effectiveness from telemetry_mapping"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_awareness_training",
+          "weight": 0.1,
+          "title": "Formazione Consapevolezza Situazionale",
+          "question": "Quale formazione ricevono i membri del vostro team di sicurezza per mantenere consapevolezza situazionale durante incidenti ad alto stress?",
+          "options": [
+            {
+              "value": "comprehensive_training",
+              "score": 0,
+              "label": "Esercizi tabletop trimestrali con scenari multi-vettore simultanei, formazione gestione attenzione, efficacia verificata in incidenti reali"
+            },
+            {
+              "value": "basic_training",
+              "score": 0.5,
+              "label": "Esiste formazione generale di risposta agli incidenti, ma non affronta specificamente allocazione attenzione o consapevolezza periferica"
+            },
+            {
+              "value": "no_specific_training",
+              "score": 1,
+              "label": "Nessuna formazione specifica sul mantenimento di consapevolezza ampia durante periodi di focus intenso"
+            }
+          ],
+          "evidence_required": "Curriculum formazione con contenuti su tunneling cognitivo, risultati simulazioni, esempi di incidenti reali",
+          "soc_mapping": "training completion records, simulation performance metrics"
+        },
+        {
+          "type": "radio-list",
+          "number": 8,
+          "id": "q8_attention_rotation",
+          "weight": 0.09,
+          "title": "Protocolli Obbligatori Rotazione Attenzione",
+          "question": "Durante operazioni di sicurezza estese (incidenti che durano >2 ore), quali protocolli assicurano che i membri del team resettino periodicamente la loro attenzione e scansionino minacce periferiche?",
+          "options": [
+            {
+              "value": "mandatory_rotation",
+              "score": 0,
+              "label": "Rotazione obbligatoria di 90 minuti tra focus profondo e scansione ambientale, procedure di reset attenzione guidate da checklist"
+            },
+            {
+              "value": "encouraged_breaks",
+              "score": 0.5,
+              "label": "Membri del team incoraggiati a fare pause, ma nessuna procedura formale di rotazione o reset attenzione"
+            },
+            {
+              "value": "continuous_focus",
+              "score": 1,
+              "label": "Membri del team lavorano continuamente su incidenti fino alla risoluzione, pause prese solo quando necessario"
+            }
+          ],
+          "evidence_required": "Protocolli di rotazione, log incidenti estesi che mostra implementazione rotazione",
+          "soc_mapping": "task_switches frequency from analyst_activity_log"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezionare UNA opzione per ciascuna domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Risposta Incidenti e Rilevamento Multi-Vettore",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Quando il vostro team di sicurezza sta rispondendo a un incidente ad alta priorità (come una potenziale violazione o interruzione del sistema), quale processo assicura che continuino a monitorare altre minacce? Raccontateci un esempio specifico di come questo ha funzionato durante il vostro ultimo incidente importante.",
+              "scoring_guidance": {
+                "green": "Processo documentato specifico con protocolli di rotazione, attivazione team backup, esempio recente di successo nel rilevare minaccia secondaria durante incidente maggiore",
+                "yellow": "Qualche consapevolezza della necessità ma processo informale, implementazione inconsistente, nessun esempio recente",
+                "red": "Tutti si concentrano sull'incidente primario, il monitoraggio si ferma, approccio 'affrontiamo una cosa alla volta'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Durante il vostro ultimo incidente di sicurezza importante, avete scoperto attività di attacco secondario che stava accadendo simultaneamente? Quanto tempo ci è voluto per scoprirlo?",
+                  "evidence_type": "specific_incident"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa succede al vostro monitoraggio di sicurezza di routine quando l'intero team è concentrato su un incidente critico?",
+                  "evidence_type": "operational_reality"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Con quale frequenza scoprite che gli attaccanti hanno usato metodi di attacco multipli simultanei (come DDoS + esfiltrazione dati, o phishing + movimento laterale) durante un singolo incidente? Quale percentuale dei vostri incidenti di sicurezza coinvolge vettori di attacco concorrenti multipli?",
+              "scoring_guidance": {
+                "green": "Metriche specifiche che mostrano >80% tasso di rilevamento per attacchi coordinati, esempi di correlazione precoce riuscita",
+                "yellow": "Consapevoli che attacchi multi-vettore accadono ma nessuna metrica, correlazione avviene eventualmente attraverso l'indagine",
+                "red": "La maggior parte degli attacchi trattati come singolo vettore, natura coordinata scoperta settimane dopo o mai"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quando scoprite attacchi multi-vettore, in quale punto dell'indagine realizzate tipicamente che sono coordinati? Rilevamento iniziale, durante l'indagine, o analisi post-incidente?",
+                  "evidence_type": "detection_timeline"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "I vostri strumenti di sicurezza segnalano automaticamente quando categorie di attacco multiple si attivano entro finestre temporali brevi?",
+                  "evidence_type": "technical_capability"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Qual è la vostra procedura quando gli allarmi di sicurezza si accumulano e il vostro team non può investigarli tutti immediatamente? Descrivete come date priorità e assicurate che nulla di critico venga perso. Dateci un esempio recente di quando questo processo è stato testato.",
+              "scoring_guidance": {
+                "green": "Triage documentato con criteri decisionali, monitoraggio in background mantiene copertura, esempio recente di cattura allarme critico durante periodo ad alto volume",
+                "yellow": "Approccio basato su priorità ma nessun processo formale di triage, allarmi a bassa priorità possono essere respinti",
+                "red": "Allarmi auto-chiusi dopo invecchiamento, focus solo sulla massima severità, nessun meccanismo per rilevare pattern negli allarmi respinti"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Avete mai scoperto che qualcosa di importante si nascondeva negli allarmi a bassa priorità che sono stati respinti durante un periodo intenso?",
+                  "evidence_type": "missed_threat_esempio"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quale percentuale dei vostri allarmi viene indagata versus respinta, e come revisionate gli allarmi respinti per pattern?",
+                  "evidence_type": "metrics"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Urgenza Operativa e Controlli di Sicurezza",
+          "weight": 0.3,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Durante manutenzione IT urgente o risoluzione problemi, quali controlli prevengono che i vostri team tecnici bypassino accidentalmente le procedure di sicurezza? Raccontateci una situazione recente dove l'urgenza operativa è entrata in conflitto con i protocolli di sicurezza.",
+              "scoring_guidance": {
+                "green": "Controlli obbligatori con autorizzazione a due persone, eccezioni a tempo limitato, ripristino automatico, esempio recente di bypass emergenza controllato",
+                "yellow": "Approvazione richiesta ma spesso retroattiva, bypass di sicurezza documentati ma non sempre prevenuti",
+                "red": "Le operazioni possono bypassare la sicurezza come necessario per problemi urgenti, cultura 'prima risolvi, poi documenta'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quando è stata l'ultima volta che un team tecnico ha dovuto bypassare un controllo di sicurezza per risolvere un problema urgente? Qual è stato il processo di approvazione?",
+                  "evidence_type": "recent_bypass_esempio"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come assicurate che i bypass di sicurezza temporanei vengano ripristinati dopo che l'emergenza è risolta?",
+                  "evidence_type": "restoration_process"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Come assicurate che il monitoraggio di sicurezza continui con piena efficacia quando il vostro team è profondamente concentrato su un'indagine complessa di incidente o risoluzione problemi tecnici? Quali processi backup specifici si attivano?",
+              "scoring_guidance": {
+                "green": "Sistemi automatizzati di monitoraggio backup, protocolli sistema buddy documentati, procedure controllo attenzione, esempio recente di sistema backup che rileva minaccia durante indagine complessa",
+                "yellow": "Qualche monitoraggio automatizzato continua ma supervisione umana ridotta, consapevolezza informale del rischio punto cieco",
+                "red": "L'efficacia del monitoraggio degrada durante indagini complesse, approccio 'tutti sul ponte'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Durante la vostra indagine complessa più recente che ha richiesto diverse ore, cosa stava succedendo con il vostro monitoraggio di sicurezza di routine?",
+                  "evidence_type": "operational_esempio"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Usate un sistema buddy dove una persona mantiene focus profondo mentre un'altra mantiene consapevolezza ampia?",
+                  "evidence_type": "organizational_practice"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Correlazione Cross-Domain e Formazione",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Quando i vostri strumenti di sicurezza generano allarmi in categorie diverse (rete, endpoint, email, ecc.) simultaneamente, quale processo assicura che gli analisti li correlino per rilevare attacchi coordinati? Dateci un esempio di quando avete catturato con successo un tale attacco.",
+              "scoring_guidance": {
+                "green": "Correlazione SIEM automatizzata con dashboard visive cross-domain, revisioni big-picture periodiche obbligatorie, esempio specifico di correlazione multi-dominio riuscita",
+                "yellow": "Correlazione manuale possibile se l'analista capita di notare, qualche regola SIEM ma copertura incompleta",
+                "red": "Team isolati indagano il loro dominio separatamente, correlazione rara o accidentale"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Potete mostrarci la vostra dashboard SIEM che visualizza attività attraverso tutti i domini di sicurezza simultaneamente?",
+                  "evidence_type": "technical_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "I team specializzati (rete, endpoint, sicurezza email) comunicano durante indagini attive per condividere osservazioni?",
+                  "evidence_type": "collaboration_process"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Quale formazione ricevono i membri del vostro team di sicurezza per mantenere consapevolezza situazionale durante incidenti ad alto stress? Come verificate che questa formazione sia efficace in situazioni reali?",
+              "scoring_guidance": {
+                "green": "Esercizi tabletop trimestrali specificamente progettati per scenari multi-vettore, formazione consapevolezza tunneling cognitivo, efficacia verificata attraverso analisi incidenti reali",
+                "yellow": "Esiste formazione generale di risposta incidenti, menziona l'importanza della consapevolezza ma nessuna pratica specifica",
+                "red": "La formazione si concentra su competenze tecniche di indagine, nessuna attenzione a fattori cognitivi o consapevolezza situazionale"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Avete condotto simulazioni dove il team ha dovuto gestire eventi di sicurezza simultanei multipli? Cosa avete imparato?",
+                  "evidence_type": "training_exercise"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "I membri del vostro team sanno cosa è il tunneling cognitivo e come riconoscere quando lo stanno sperimentando?",
+                  "evidence_type": "awareness_level"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Sondaggio per Segnali di Allarme",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle politiche dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Quando stiamo spegnendo un incendio, tutto il resto deve aspettare...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Non siamo mai stati colpiti da attacchi multipli contemporaneamente, quindi non ce ne preoccupiamo...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Durante le interruzioni, disabilitiamo temporaneamente i controlli di sicurezza per risolvere i problemi più velocemente...\"",
+              "severity": "critical",
+              "score_impact": 0.17,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"I nostri analisti si specializzano - il team rete gestisce gli allarmi rete, il team endpoint gestisce gli allarmi endpoint...\"",
+              "severity": "medium",
+              "score_impact": 0.1,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Gli allarmi a bassa priorità vengono auto-chiusi dopo 7 giorni - non abbiamo tempo per investigare tutto...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Quando l'intero team sta indagando un incidente, QUELLO è il nostro monitoraggio - stiamo guardando tutto...\"",
+              "severity": "medium",
+              "score_impact": 0.09,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Abbiamo scoperto settimane dopo che mentre eravamo concentrati sul DDoS, stavano rubando dati...\"",
+              "severity": "critical",
+              "score_impact": 0.17,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "\"Il nostro team lavora meglio quando può concentrarsi profondamente su un problema senza distrazioni...\"",
+              "severity": "medium",
+              "score_impact": 0.08,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare attacchi multi-vettore simulati trimestralmente per testare efficacia correlazione",
+      "correlation_analysis": "Confrontare punteggi valutazione manuale con metriche indice tunneling automatizzate (correlazione target > 0.80)",
+      "drift_detection": "Test Kolmogorov-Smirnov sui tassi di rilevamento periferico, ricalibrazione se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicurare che le probabilità di tunneling previste corrispondano ai tassi di mancanza attacchi multi-vettore osservati",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift rilevato o punteggio validazione < 0.70"
+    },
+    "success_metrics": [
+      {
+        "metric": "Tasso Rilevamento Multi-Vettore",
+        "formula": "% di incidenti di sicurezza dove i team identificano con successo attacchi coordinati attraverso domini multipli entro 90 minuti",
+        "baseline": "audit incidenti precedenti 90 giorni",
+        "target": "85% tasso rilevamento entro 90 giorni",
+        "measurement": "report analisi incidenti mensili"
+      },
+      {
+        "metric": "Mantenimento Controlli Sicurezza",
+        "formula": "Frequenza di bypass controlli sicurezza non autorizzati durante urgenze operative",
+        "baseline": "tasso bypass corrente dal log override sicurezza",
+        "target": "75% riduzione entro 90 giorni",
+        "measurement": "revisione settimanale log override sicurezza e report eccezioni operative"
+      },
+      {
+        "metric": "Efficacia Correlazione Incrociata",
+        "formula": "Tempo tra allarme iniziale e rilevamento di attività attacco correlata attraverso domini sicurezza diversi",
+        "baseline": "tempo medio correlazione corrente",
+        "target": "ridurre tempo medio correlazione del 50% entro 90 giorni",
+        "measurement": "analisi SIEM e analisi timeline incidenti"
+      },
+      {
+        "metric": "Rilevamento Minacce Periferiche Durante Alto Carico",
+        "formula": "% di eventi sicurezza a bassa priorità indagati durante periodi di incidenti concorrenti ad alta priorità",
+        "baseline": "tasso rilevamento periferico corrente",
+        "target": "mantenere >60% tasso rilevamento periferico anche durante incidenti concorrenti",
+        "measurement": "analisi trimestrale correlazione carico di lavoro e tasso rilevamento"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Protocollo Rotazione Attenzione",
+        "description": "Implementare rotazioni focus obbligatorie di 90 minuti dove i membri del team passano tra analisi incidente profonda e scansione ambientale ampia",
+        "implementation": "Creare passaggi consegne guidati da checklist che forzano reset attenzione e controllo consapevolezza periferica. Distribuire dashboard monitoraggio che allertano quando qualsiasi membro del team supera limiti tempo focus senza scansione ambientale. Documentare programma rotazione e far rispettare tramite team lead.",
+        "technical_controls": "Timer attenzione automatizzati, sistema schedulazione rotazione, revisioni dashboard big-picture obbligatorie",
+        "roi": "380% average within 18 months",
+        "effort": "medium",
+        "timeline": "30-45 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Sistema Correlazione Allarmi Cross-Domain",
+        "description": "Distribuire regole correlazione SIEM che segnalano automaticamente quando vettori attacco multipli si attivano entro finestre temporali specificate",
+        "implementation": "Creare dashboard visive che mostrano attività attacco attraverso tutti i domini sicurezza simultaneamente (rete, endpoint, email, cloud, identità). Stabilire revisioni 'big picture' obbligatorie di 15 minuti durante qualsiasi incidente che dura più di 2 ore. Configurare regole correlazione per pattern multi-vettore comuni.",
+        "technical_controls": "Motore correlazione SIEM, dashboard sicurezza unificata, allarmi multi-vettore automatizzati",
+        "roi": "450% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Controlli Override Sicurezza",
+        "description": "Implementare autorizzazione a due persone per qualsiasi bypass controllo sicurezza durante urgenze operative",
+        "implementation": "Creare eccezioni sicurezza a tempo limitato con ripristino automatico. Distribuire monitoraggio che allerta team sicurezza quando procedure operative creano vulnerabilità potenziali, richiedendo riconoscimento esplicito team sicurezza. Documentare tutti gli override con giustificazione business.",
+        "technical_controls": "Integrazione PAM per approvazione override, scadenza automatica eccezioni, allarmi monitoraggio bypass sicurezza",
+        "roi": "320% average within 18 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Sistema Buddy Risposta Incidenti",
+        "description": "Accoppiare responder incidenti dove una persona mantiene focus profondo mentre il partner mantiene consapevolezza ambientale ampia",
+        "implementation": "Ruotare ruoli ogni ora durante incidenti estesi. Creare checkpoint obbligatori 'cos'altro potrebbe succedere?' ogni 30 minuti durante risposta incidente critico. Documentare assegnazioni buddy nelle procedure risposta incidenti.",
+        "technical_controls": "Sistema gestione incidenti con tracking buddy, timer checkpoint, schedulazione rotazione ruoli",
+        "roi": "290% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days"
+      },
+      {
+        "id": "sol_5",
+        "title": "Formazione Consapevolezza Periferica",
+        "description": "Condurre esercizi tabletop trimestrali con attacchi multi-vettore simultanei progettati specificamente per testare allocazione attenzione",
+        "implementation": "Formare team a riconoscere sintomi tunneling cognitivo in se stessi e colleghi. Implementare protocolli 'controllo attenzione' dove membri team verificano regolarmente consapevolezza situazionale reciproca durante periodi alto stress. Usare risultati simulazione per identificare pattern tunneling individuali.",
+        "technical_controls": "Piattaforma simulazione per scenari multi-vettore, tracking completamento formazione, valutazioni competenza",
+        "roi": "340% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days initial, quarterly ongoing"
+      },
+      {
+        "id": "sol_6",
+        "title": "Monitoraggio Background Automatizzato",
+        "description": "Distribuire sistemi AI-powered che mantengono rilevamento minacce ampio mentre team umani si concentrano su incidenti specifici",
+        "implementation": "Creare procedure escalation che interrompono focus profondo quando sistemi background rilevano attività attacco correlata o coordinata. Implementare allarmi 'guardiano attenzione' che notificano analisti tunnel-focused di minacce in sviluppo fuori dal loro scope corrente. Configurare analisi comportamentale per rilevamento anomalie attraverso tutti i domini sicurezza.",
+        "technical_controls": "Rilevamento minacce UEBA/AI, sistema escalation automatizzato, allertamento minacce periferiche",
+        "roi": "520% average within 18 months",
+        "effort": "high",
+        "timeline": "90-120 days"
+      },
+      {
+        "id": "sol_7",
+        "title": "Gestione Capacità Carico Lavoro",
+        "description": "Progettare operazioni sicurezza per rispettare limitazioni carico cognitivo attraverso rotazione compiti, design ambientale e strategie distribuzione carico lavoro",
+        "implementation": "Monitorare conteggi compiti concorrenti e implementare limiti massimi. Creare indicatori visivi carico lavoro per team lead. Stabilire protocolli escalation quando carico cognitivo supera soglie capacità. Implementare accodamento compiti automatizzato e bilanciamento carico.",
+        "technical_controls": "Dashboard monitoraggio carico lavoro, automazione distribuzione compiti, allarmi soglia capacità",
+        "roi": "270% average within 12 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_8",
+        "title": "Miglioramento Triage Allarmi",
+        "description": "Implementare triage sistematico con criteri decisionali documentati e monitoraggio background per allarmi respinti",
+        "implementation": "Creare rilevamento pattern attraverso allarmi bassa priorità respinti. Stabilire trigger escalation se allarmi respinti mostrano pattern correlazione. Implementare revisione settimanale di allarmi auto-chiusi per indicatori minaccia mancati.",
+        "technical_controls": "Sistema triage allarmi automatizzato, correlazione pattern per allarmi respinti, report digest settimanali",
+        "roi": "310% average within 12 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": [
+        "sol_2",
+        "sol_4"
+      ],
+      "high_value": [
+        "sol_1",
+        "sol_6"
+      ],
+      "operational_foundation": [
+        "sol_3",
+        "sol_7"
+      ],
+      "training_cultural": [
+        "sol_5"
+      ],
+      "process_improvement": [
+        "sol_8"
+      ]
+    }
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Attacco Multi-Vettore Durante Risposta Incidenti",
+      "description": "Gli attaccanti lanciano attacchi DDoS ovvi per consumare attenzione team sicurezza, mentre conducono simultaneamente esfiltrazione dati sottile attraverso account email compromessi. Il team sicurezza si tunnel-focalizza sulla mitigazione DDoS mentre perde il furto dati in corso, risultando in violazione dati massiva.",
+      "attack_vector": "DDoS coordinato (cattura-attenzione) + esfiltrazione dati (sottile)",
+      "psychological_mechanism": "Il tunneling cognitivo causa che il team allochi tutte le risorse attenzione alla minaccia DDoS visibile mentre l'esfiltrazione automatizzata opera non rilevata",
+      "historical_esempio": "Target 2013 - Team sicurezza tunnel-focalizzati su allarmi malware POS mentre perdevano movimento laterale ed esfiltrazione dati attraverso segmenti rete",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": [
+        "TI > 0.5",
+        "concurrent_attack_categories > 2",
+        "low_priority_alerts_dismissed",
+        "prolonged_incident_focus > 4h"
+      ]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Movimento Laterale Durante Focus Tecnico",
+      "description": "Mentre i team IT si tunnel-focalizzano sulla risoluzione interruzione sistema critica, gli attaccanti sfruttano la distrazione per muoversi lateralmente attraverso segmenti rete usando account servizio compromessi. I team tecnici bypassano controlli accesso normali per accelerare riparazioni, fornendo inavvertitamente percorsi attacco addizionali.",
+      "attack_vector": "Sfruttare urgenza operativa e supervisione sicurezza ridotta durante interruzione sistema",
+      "psychological_mechanism": "Focus intenso sulla risoluzione interruzione crea punti ciechi per movimento laterale, l'urgenza giustifica bypass controlli sicurezza",
+      "historical_esempio": "Equifax 2017 - Focus tunnel team IT su attività patching urgenti ha contribuito a perdere sfruttamento Apache Struts durante periodo focus operativo alto",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": [
+        "security_bypass_count > 3",
+        "concurrent_incident=true",
+        "lateral_movement_alerts",
+        "access_anomalies"
+      ]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Compromissione Supply Chain Durante Fatica Allarmi",
+      "description": "I team sicurezza diventano tunnel-focalizzati su attacchi alto volume, bassa sofisticazione mentre gli attaccanti incorporano codice malevolo in aggiornamenti software. Il focus sulle minacce ovvie crea punti ciechi per attacchi sofisticati supply chain che bypassano metodi rilevamento tradizionali.",
+      "attack_vector": "Compromissione supply chain software durante periodo volume allarmi alto",
+      "psychological_mechanism": "Fatica allarmi combinata con tunneling su allarmi alta priorità causa che il team perda indicatori supply chain lenti e bassi",
+      "historical_esempio": "SolarWinds 2020 - Focus tunnel team sicurezza su IOC tradizionali e pattern attacco noti ha perso compromissione supply chain operante fuori dai framework attenzione tipici",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": [
+        "alert_volume > 3x_baseline",
+        "low_priority_investigation_rate < 20%",
+        "software_update_anomalies",
+        "TI > 0.6"
+      ]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Minaccia Insider Durante Focus Esterno",
+      "description": "Mentre i team sicurezza monitorano intensamente minacce esterne e difese perimetrali, insider malevoli sfruttano il gap attenzione per esfiltrazione dati sensibili attraverso applicazioni business legittime, evitando rilevamento rimanendo fuori dallo scope monitoraggio sicurezza focalizzato esternamente.",
+      "attack_vector": "Abuso insider di accesso legittimo durante focus minaccia esterna",
+      "psychological_mechanism": "Tunneling organizzativo su minacce esterne crea punto cieco sistematico per attività insider",
+      "historical_esempio": "Sony Pictures 2014 - Focus tunnel team sicurezza su protezione asset alto valore specifici ha portato ad attenzione insufficiente a sistemi email e reti amministrative",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": [
+        "internal_monitoring_gaps",
+        "data_exfiltration_via_sanctioned_apps",
+        "focus_metric_shows_external_only",
+        "insider_anomalies"
+      ]
+    },
+    {
+      "id": "scenario_5",
+      "title": "Distribuzione Ransomware Durante Indagine",
+      "description": "Mentre il team sicurezza indaga profondamente compromissione iniziale e meccanismi persistenza attaccante, gli attori minaccia distribuiscono ransomware attraverso la rete. Il focus tunnel sull'indagine forense ritarda il rilevamento della distribuzione ransomware fino a quando la cifratura è diffusa.",
+      "attack_vector": "Distribuzione ransomware durante indagine forense intensiva di violazione iniziale",
+      "psychological_mechanism": "Focus profondo sulla comprensione meccanismi attacco crea punto cieco temporale per attività attaccante in corso",
+      "historical_esempio": "Incidenti ransomware multipli dove l'indagine del vettore violazione iniziale ha fornito copertura per staging e distribuzione ransomware",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": [
+        "investigation_duration > 8h",
+        "peripheral_monitoring_reduced",
+        "file_encryption_indicators",
+        "TI > 0.7"
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-14",
+    "translator": "Claude (Anthropic)",
+    "research_basis": [
+      "Miller, G. A. (1956). The magical number seven, plus or minus two: Some limits on our capacity for processing information",
+      "Kahneman, D. (1973). Attention and Effort",
+      "Wickens, C. D. (1984). Multiple Resource Theory",
+      "Endsley, M. R. (1995). Situation Awareness Research",
+      "Baddeley, A. (1992). Working memory",
+      "Sweller, J. (1988). Cognitive load during problem solving"
+    ],
+    "validation_status": "generated",
+    "deployment_status": "validation_required"
+  }
+}
