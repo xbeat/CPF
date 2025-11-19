@@ -1,0 +1,248 @@
+name: Convert ALL Documentation to PDF (Markdown + LaTeX, Recursive)
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_folder:
+        description: 'Cartella di partenza - processa ricorsivamente Markdown E LaTeX (es: docs, cpf-soc-integration/docs)'
+        required: true
+        default: 'docs'
+        type: string
+      output_folder:
+        description: 'Cartella dove salvare i PDF (lascia vuoto per stessa cartella dei sorgenti, preserva struttura)'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  convert-all:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install Pandoc and Full LaTeX
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          pandoc \
+          texlive-full \
+          texlive-latex-base \
+          texlive-fonts-recommended \
+          texlive-latex-extra \
+          texlive-xetex \
+          latexmk
+
+    - name: Convert Markdown files to PDF (Recursive)
+      run: |
+        SOURCE_FOLDER="${{ github.event.inputs.source_folder }}"
+        OUTPUT_FOLDER="${{ github.event.inputs.output_folder }}"
+
+        echo "=========================================="
+        echo "STEP 1: Converting Markdown files to PDF"
+        echo "=========================================="
+        echo "Source folder: $SOURCE_FOLDER"
+        echo "Output folder: ${OUTPUT_FOLDER:-same as source}"
+        echo ""
+
+        # Verify source folder exists
+        if [ ! -d "$SOURCE_FOLDER" ]; then
+          echo "Error: Folder '$SOURCE_FOLDER' does not exist"
+          exit 1
+        fi
+
+        # Create output folder if specified
+        if [ -n "$OUTPUT_FOLDER" ]; then
+          mkdir -p "$OUTPUT_FOLDER"
+        fi
+
+        # Count total Markdown files
+        MD_COUNT=$(find "$SOURCE_FOLDER" -name "*.md" -type f | wc -l)
+        echo "Found $MD_COUNT Markdown files to convert"
+        echo ""
+
+        if [ $MD_COUNT -gt 0 ]; then
+          CURRENT=0
+          # Find .md files recursively
+          find "$SOURCE_FOLDER" -name "*.md" -type f | sort | while read mdfile; do
+            CURRENT=$((CURRENT + 1))
+            echo "=========================================="
+            echo "[$CURRENT/$MD_COUNT] Converting: $mdfile"
+
+            dir=$(dirname "$mdfile")
+            filename=$(basename "$mdfile" .md)
+
+            # Convert using pandoc
+            if [ -n "$OUTPUT_FOLDER" ]; then
+              # Preserve directory structure
+              relative_dir=${dir#$SOURCE_FOLDER}
+              relative_dir=${relative_dir#/}
+              if [ -n "$relative_dir" ]; then
+                mkdir -p "$OUTPUT_FOLDER/$relative_dir"
+                output_path="$OUTPUT_FOLDER/$relative_dir/$filename.pdf"
+              else
+                output_path="$OUTPUT_FOLDER/$filename.pdf"
+              fi
+            else
+              output_path="$dir/$filename.pdf"
+            fi
+
+            pandoc "$mdfile" \
+              -o "$output_path" \
+              --pdf-engine=xelatex \
+              -V geometry:margin=1in \
+              -V fontsize=11pt \
+              -V documentclass=article \
+              --toc \
+              --toc-depth=3 \
+              --highlight-style=tango \
+              --shift-heading-level-by=-1 \
+              2>&1 || echo "✗ Failed: $mdfile"
+
+            if [ -f "$output_path" ]; then
+              echo "✓ Created: $output_path"
+            else
+              echo "✗ Failed to create PDF for: $mdfile"
+            fi
+          done
+        else
+          echo "No Markdown files found"
+        fi
+
+    - name: Compile LaTeX files to PDF (Recursive)
+      run: |
+        SOURCE_FOLDER="${{ github.event.inputs.source_folder }}"
+        OUTPUT_FOLDER="${{ github.event.inputs.output_folder }}"
+
+        echo ""
+        echo "=========================================="
+        echo "STEP 2: Compiling LaTeX files to PDF"
+        echo "=========================================="
+        echo "Source folder: $SOURCE_FOLDER"
+        echo "Output folder: ${OUTPUT_FOLDER:-same as source}"
+        echo ""
+
+        # Count total LaTeX files
+        TEX_COUNT=$(find "$SOURCE_FOLDER" -name "*.tex" -type f | wc -l)
+        echo "Found $TEX_COUNT LaTeX files to compile"
+        echo ""
+
+        if [ $TEX_COUNT -gt 0 ]; then
+          CURRENT=0
+          # Find .tex files recursively
+          find "$SOURCE_FOLDER" -name "*.tex" -type f | sort | while read texfile; do
+            CURRENT=$((CURRENT + 1))
+            echo "=========================================="
+            echo "[$CURRENT/$TEX_COUNT] Compiling: $texfile"
+
+            dir=$(dirname "$texfile")
+            filename=$(basename "$texfile" .tex)
+
+            # Compile
+            cd "$dir"
+            pdflatex -interaction=nonstopmode -halt-on-error "$filename.tex" || true
+            pdflatex -interaction=nonstopmode -halt-on-error "$filename.tex" || true
+
+            # Move PDF to output folder if specified
+            if [ -f "$filename.pdf" ]; then
+              if [ -n "$OUTPUT_FOLDER" ]; then
+                # Preserve directory structure
+                relative_dir=${dir#$GITHUB_WORKSPACE/$SOURCE_FOLDER}
+                relative_dir=${relative_dir#/}
+                if [ -n "$relative_dir" ]; then
+                  mkdir -p "$GITHUB_WORKSPACE/$OUTPUT_FOLDER/$relative_dir"
+                  mv "$filename.pdf" "$GITHUB_WORKSPACE/$OUTPUT_FOLDER/$relative_dir/"
+                  echo "✓ Created: $OUTPUT_FOLDER/$relative_dir/$filename.pdf"
+                else
+                  mv "$filename.pdf" "$GITHUB_WORKSPACE/$OUTPUT_FOLDER/"
+                  echo "✓ Created: $OUTPUT_FOLDER/$filename.pdf"
+                fi
+              else
+                echo "✓ Created: $dir/$filename.pdf"
+              fi
+            else
+              echo "✗ Failed: $texfile"
+            fi
+
+            # Clean up auxiliary files
+            rm -f *.aux *.log *.toc *.out *.lof *.lot *.bbl *.blg *.idx *.ind *.ilg *.fls *.fdb_latexmk *.synctex.gz
+
+            cd "$GITHUB_WORKSPACE"
+          done
+        else
+          echo "No LaTeX files found"
+        fi
+
+    - name: Summary of generated PDFs
+      run: |
+        OUTPUT_FOLDER="${{ github.event.inputs.output_folder }}"
+        SOURCE_FOLDER="${{ github.event.inputs.source_folder }}"
+
+        echo ""
+        echo "=========================================="
+        echo "SUMMARY: Generated PDFs"
+        echo "=========================================="
+
+        if [ -n "$OUTPUT_FOLDER" ]; then
+          PDF_COUNT=$(find "$OUTPUT_FOLDER" -name "*.pdf" -type f 2>/dev/null | wc -l)
+          echo "Total PDFs in $OUTPUT_FOLDER: $PDF_COUNT"
+          echo ""
+          find "$OUTPUT_FOLDER" -name "*.pdf" -type f -exec ls -lh {} \; 2>/dev/null || echo "No PDFs found"
+        else
+          PDF_COUNT=$(find "$SOURCE_FOLDER" -name "*.pdf" -type f 2>/dev/null | wc -l)
+          echo "Total PDFs in $SOURCE_FOLDER: $PDF_COUNT"
+          echo ""
+          find "$SOURCE_FOLDER" -name "*.pdf" -type f -exec ls -lh {} \; 2>/dev/null || echo "No PDFs found"
+        fi
+
+    - name: Commit and push all PDFs to repository
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+
+        OUTPUT_FOLDER="${{ github.event.inputs.output_folder }}"
+        SOURCE_FOLDER="${{ github.event.inputs.source_folder }}"
+
+        echo ""
+        echo "=========================================="
+        echo "COMMIT: Adding PDFs to repository"
+        echo "=========================================="
+
+        # Add all PDFs recursively
+        if [ -n "$OUTPUT_FOLDER" ]; then
+          PDF_COUNT=$(find "$OUTPUT_FOLDER" -name "*.pdf" -type f 2>/dev/null | wc -l)
+          echo "Found $PDF_COUNT PDFs in $OUTPUT_FOLDER"
+          find "$OUTPUT_FOLDER" -name "*.pdf" -type f -exec git add -fv {} \; 2>&1
+        else
+          PDF_COUNT=$(find "$SOURCE_FOLDER" -name "*.pdf" -type f 2>/dev/null | wc -l)
+          echo "Found $PDF_COUNT PDFs in $SOURCE_FOLDER"
+          find "$SOURCE_FOLDER" -name "*.pdf" -type f -exec git add -fv {} \; 2>&1
+        fi
+
+        # Show git status
+        echo ""
+        echo "Git status after add:"
+        git status
+
+        if git diff --staged --quiet; then
+          echo ""
+          echo "No new PDFs to commit"
+          echo "All PDFs are already in the repository"
+        else
+          echo ""
+          STAGED_COUNT=$(git diff --staged --name-only | grep -c ".pdf" || echo "0")
+          echo "Committing $STAGED_COUNT new/modified PDFs..."
+          git commit -m "docs: Add PDF versions from ${{ github.event.inputs.source_folder }} (Markdown + LaTeX, recursive)"
+          echo "Pushing to repository..."
+          if git push; then
+            echo "✓ Successfully committed and pushed $STAGED_COUNT PDFs to repository"
+          else
+            echo "✗ ERROR: Failed to push to repository"
+            exit 1
+          fi
+        fi
