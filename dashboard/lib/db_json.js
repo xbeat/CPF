@@ -39,6 +39,41 @@ function ensureDir(dirPath) {
 }
 
 // ============================================================================
+// Initialization
+// ============================================================================
+
+/**
+ * Initialize JSON storage - create necessary directories and files
+ */
+async function initialize() {
+  console.log('[DB-JSON] Initializing JSON storage...');
+
+  // Ensure all necessary directories exist
+  ensureDir(dataDir);
+  ensureDir(orgsDir);
+
+  // Create organizations index if it doesn't exist
+  const indexExists = fs.existsSync(indexFile);
+  if (!indexExists) {
+    console.log('[DB-JSON] Creating organizations index...');
+    const emptyIndex = {
+      metadata: {
+        version: '2.0',
+        last_updated: new Date().toISOString(),
+        total_organizations: 0
+      },
+      organizations: []
+    };
+    await writeOrganizationsIndex(emptyIndex);
+  }
+
+  console.log('[DB-JSON] JSON storage initialized successfully');
+  console.log(`[DB-JSON] Data directory: ${dataDir}`);
+  console.log(`[DB-JSON] Organizations directory: ${orgsDir}`);
+  console.log(`[DB-JSON] Index file: ${indexFile}`);
+}
+
+// ============================================================================
 // Main Data Functions
 // ============================================================================
 
@@ -483,6 +518,7 @@ async function recalculateAllAggregates() {
 }
 
 module.exports = {
+  initialize,
   createOrganization,
   readOrganization,
   saveAssessment,
