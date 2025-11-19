@@ -101,9 +101,9 @@ async function createOrganization(orgData) {
 async function saveAssessment(orgId, indicatorId, assessmentData) {
     const organization = await readOrganization(orgId);
     if (!organization) throw new Error(`Organization with ID ${orgId} not found.`);
-    
+
     organization.assessments[indicatorId] = assessmentData;
-    organization.aggregates = calculateAggregates(organization.assessments);
+    organization.aggregates = calculateAggregates(organization.assessments, organization.metadata.industry);
     organization.metadata.updated_at = new Date().toISOString();
 
     await writeOrganization(orgId, organization);
@@ -111,21 +111,319 @@ async function saveAssessment(orgId, indicatorId, assessmentData) {
 }
 
 // ============================================================================
-// Aggregates Calculation (copied from generator)
+// Aggregates Calculation + CPF Maturity Model
 // ============================================================================
 
 const CATEGORY_NAMES = {
-  '1': 'Authority-Based Vulnerabilities', '2': 'Temporal-Based Vulnerabilities', '3': 'Social-Based Vulnerabilities', '4': 'Affective-Based Vulnerabilities', '5': 'Cognitive-Based Vulnerabilities', '6': 'Group-Based Vulnerabilities', '7': 'Stress-Based Vulnerabilities', '8': 'Unconscious-Based Vulnerabilities', '9': 'AI-Enhanced Vulnerabilities', '10': 'Convergent Vulnerabilities'
+  '1': 'Authority-Based Vulnerabilities',
+  '2': 'Temporal-Based Vulnerabilities',
+  '3': 'Social-Based Vulnerabilities',
+  '4': 'Affective-Based Vulnerabilities',
+  '5': 'Cognitive-Based Vulnerabilities',
+  '6': 'Group-Based Vulnerabilities',
+  '7': 'Stress-Based Vulnerabilities',
+  '8': 'Unconscious-Based Vulnerabilities',
+  '9': 'AI-Enhanced Vulnerabilities',
+  '10': 'Convergent Vulnerabilities'
 };
+
+/**
+ * CPF Domain Weights (from CPF Maturity Model documentation)
+ */
+const CPF_DOMAIN_WEIGHTS = {
+  '1': 0.15,  // Authority-Based
+  '2': 0.12,  // Temporal-Based
+  '3': 0.11,  // Social Influence
+  '4': 0.10,  // Affective
+  '5': 0.11,  // Cognitive Overload
+  '6': 0.09,  // Group Dynamics
+  '7': 0.10,  // Stress Response
+  '8': 0.08,  // Unconscious Process
+  '9': 0.07,  // AI-Specific
+  '10': 0.07  // Convergent States
+};
+
+/**
+ * Sector Benchmarks (from CPF Maturity Model documentation)
+ */
+const SECTOR_BENCHMARKS = {
+  'Technology': { mean: 71, std_dev: 11 },
+  'Finance': { mean: 68, std_dev: 12 },
+  'Healthcare': { mean: 52, std_dev: 15 },
+  'Government': { mean: 58, std_dev: 14 },
+  'Retail': { mean: 48, std_dev: 13 },
+  'Education': { mean: 55, std_dev: 14 },
+  'Manufacturing': { mean: 60, std_dev: 13 },
+  'Energy': { mean: 62, std_dev: 12 },
+  'Transportation': { mean: 57, std_dev: 13 },
+  'Other': { mean: 58, std_dev: 15 }
+};
+
+/**
+ * ROI Data for maturity level transitions
+ */
+const ROI_TRANSITIONS = {
+  '0_to_1': { investment: 50000, annual_benefit: 200000, payback_months: 3, npv_5yr: 850000 },
+  '1_to_2': { investment: 250000, annual_benefit: 600000, payback_months: 5, npv_5yr: 2500000 },
+  '2_to_3': { investment: 750000, annual_benefit: 1500000, payback_months: 6, npv_5yr: 5800000 },
+  '3_to_4': { investment: 1500000, annual_benefit: 3000000, payback_months: 6, npv_5yr: 12000000 },
+  '4_to_5': { investment: 2500000, annual_benefit: 5000000, payback_months: 6, npv_5yr: 20000000 }
+};
+
 function generateAllIndicatorIds() {
-  const i = []; for (let c = 1; c <= 10; c++) for (let n = 1; n <= 10; n++) i.push(`${c}.${n}`); return i;
+  const indicators = [];
+  for (let category = 1; category <= 10; category++) {
+    for (let num = 1; num <= 10; num++) {
+      indicators.push(`${category}.${num}`);
+    }
+  }
+  return indicators;
 }
-function calculateAggregates(assessments) {
-  const a = Object.values(assessments); if (a.length === 0) return { overall_risk: 0.5, overall_confidence: 0.0, trend: 'stable', by_category: {}, completion: { total_indicators: 100, assessed_indicators: 0, percentage: 0.0, missing_indicators: generateAllIndicatorIds() }, last_calculated: new Date().toISOString() };
-  const r = a.reduce((s, i) => s + i.bayesian_score, 0) / a.length, c = a.reduce((s, i) => s + i.confidence, 0) / a.length, b = {};
-  for (let i=1;i<=10;i++) { const k=i.toString(), f=a.filter(x=>x.indicator_id.startsWith(`${k}.`)); if (f.length > 0) { const s=f.reduce((_,x)=>_+x.bayesian_score,0)/f.length,d=f.reduce((_,x)=>_+x.confidence,0)/f.length; b[k]={category_name:CATEGORY_NAMES[k],avg_score:parseFloat(s.toFixed(4)),avg_confidence:parseFloat(d.toFixed(4)),total_assessments:f.length,completion_percentage:parseFloat((f.length/10*100).toFixed(2))}; } }
-  const d=generateAllIndicatorIds(), e=Object.keys(assessments), m=d.filter(id=>!e.includes(id));
-  return { overall_risk:parseFloat(r.toFixed(4)), overall_confidence:parseFloat(c.toFixed(4)), trend:'stable', by_category:b, completion:{total_indicators:100,assessed_indicators:e.length,percentage:parseFloat((e.length/100*100).toFixed(2)),missing_indicators:m}, last_calculated:new Date().toISOString() };
+
+/**
+ * Calculate overall CPF Score (0-100)
+ */
+function calculateCPFScore(assessments, byCategory) {
+  let weightedSum = 0;
+  for (let cat = 1; cat <= 10; cat++) {
+    const catKey = cat.toString();
+    const weight = CPF_DOMAIN_WEIGHTS[catKey] || 0;
+    if (byCategory[catKey] && byCategory[catKey].avg_score !== undefined) {
+      const domainScore = byCategory[catKey].avg_score * 40;
+      weightedSum += weight * domainScore;
+    }
+  }
+  const cpfScore = 100 - (weightedSum * 2.5);
+  return Math.max(0, Math.min(100, parseFloat(cpfScore.toFixed(2))));
+}
+
+/**
+ * Calculate Convergence Index
+ */
+function calculateConvergenceIndex(byCategory) {
+  const categories = Object.keys(byCategory);
+  let convergenceIndex = 0;
+  const highRiskDomains = categories.filter(cat => byCategory[cat].avg_score > 0.66);
+  for (let i = 0; i < highRiskDomains.length; i++) {
+    for (let j = i + 1; j < highRiskDomains.length; j++) {
+      const risk_i = byCategory[highRiskDomains[i]].avg_score;
+      const risk_j = byCategory[highRiskDomains[j]].avg_score;
+      convergenceIndex += risk_i * risk_j;
+    }
+  }
+  return parseFloat(convergenceIndex.toFixed(4));
+}
+
+/**
+ * Determine maturity level (0-5)
+ */
+function determineMaturityLevel(cpfScore, convergenceIndex, redDomainsCount) {
+  const levelNames = ['Unaware', 'Initial', 'Developing', 'Defined', 'Managed', 'Optimizing'];
+  if (cpfScore >= 90 && redDomainsCount === 0 && convergenceIndex < 2) {
+    return { level: 5, name: levelNames[5] };
+  }
+  if (cpfScore >= 80 && redDomainsCount === 0 && convergenceIndex < 3) {
+    return { level: 4, name: levelNames[4] };
+  }
+  if (cpfScore >= 60 && redDomainsCount <= 2 && convergenceIndex < 5) {
+    return { level: 3, name: levelNames[3] };
+  }
+  if (cpfScore >= 40 && redDomainsCount <= 5 && convergenceIndex < 8) {
+    return { level: 2, name: levelNames[2] };
+  }
+  if (cpfScore >= 20 && redDomainsCount <= 8 && convergenceIndex < 10) {
+    return { level: 1, name: levelNames[1] };
+  }
+  return { level: 0, name: levelNames[0] };
+}
+
+/**
+ * Count domains by maturity level
+ */
+function countDomainsByMaturity(byCategory) {
+  let greenCount = 0, yellowCount = 0, redCount = 0;
+  Object.values(byCategory).forEach(cat => {
+    const score = cat.avg_score;
+    if (score <= 0.33) greenCount++;
+    else if (score <= 0.66) yellowCount++;
+    else redCount++;
+  });
+  return { greenCount, yellowCount, redCount };
+}
+
+/**
+ * Check regulatory compliance
+ */
+function checkCompliance(maturityLevel) {
+  return {
+    gdpr: {
+      status: maturityLevel >= 1 ? 'compliant' : 'non_compliant',
+      min_level_required: 1,
+      recommended_level: 2
+    },
+    nis2: {
+      status: maturityLevel >= 2 ? 'compliant' : (maturityLevel >= 1 ? 'at_risk' : 'non_compliant'),
+      min_level_required: 2,
+      recommended_level: 3
+    },
+    dora: {
+      status: maturityLevel >= 2 ? 'compliant' : (maturityLevel >= 1 ? 'at_risk' : 'non_compliant'),
+      min_level_required: 2,
+      recommended_level: 3
+    },
+    iso27001: {
+      status: maturityLevel >= 1 ? 'compliant' : 'non_compliant',
+      min_level_required: 1,
+      recommended_level: 2
+    }
+  };
+}
+
+/**
+ * Get sector benchmark comparison
+ */
+function getSectorBenchmark(industry, cpfScore) {
+  const benchmark = SECTOR_BENCHMARKS[industry] || SECTOR_BENCHMARKS['Other'];
+  const gap = cpfScore - benchmark.mean;
+  const zScore = gap / benchmark.std_dev;
+  let percentile = 50;
+  if (zScore > 0) percentile = 50 + (zScore * 19.1);
+  else if (zScore < 0) percentile = 50 + (zScore * 19.1);
+  percentile = Math.max(0, Math.min(100, percentile));
+  return {
+    sector_mean: benchmark.mean,
+    sector_std_dev: benchmark.std_dev,
+    percentile: parseFloat(percentile.toFixed(1)),
+    gap: parseFloat(gap.toFixed(2))
+  };
+}
+
+/**
+ * Determine certification eligibility
+ */
+function determineCertificationPath(maturityLevel) {
+  const eligibleFor = [];
+  if (maturityLevel >= 1) eligibleFor.push('CPF-F');
+  if (maturityLevel >= 2) eligibleFor.push('CPF-P');
+  if (maturityLevel >= 4) eligibleFor.push('CPF-E');
+  if (maturityLevel >= 5) eligibleFor.push('CPF-M');
+  const currentCertification = eligibleFor.length > 0 ? eligibleFor[eligibleFor.length - 1] : 'none';
+  return { current_certification: currentCertification, eligible_for: eligibleFor };
+}
+
+/**
+ * Calculate ROI for next level
+ */
+function calculateROI(currentLevel) {
+  if (currentLevel >= 5) return null;
+  const transitionKey = `${currentLevel}_to_${currentLevel + 1}`;
+  const roiData = ROI_TRANSITIONS[transitionKey];
+  if (!roiData) return null;
+  return {
+    next_level: currentLevel + 1,
+    estimated_investment: roiData.investment,
+    annual_benefit: roiData.annual_benefit,
+    payback_months: roiData.payback_months,
+    npv_5yr: roiData.npv_5yr
+  };
+}
+
+/**
+ * Calculate complete maturity model
+ */
+function calculateMaturityModel(assessments, byCategory, industry) {
+  const cpfScore = calculateCPFScore(assessments, byCategory);
+  const convergenceIndex = calculateConvergenceIndex(byCategory);
+  const { greenCount, yellowCount, redCount } = countDomainsByMaturity(byCategory);
+  const maturityLevel = determineMaturityLevel(cpfScore, convergenceIndex, redCount);
+  const compliance = checkCompliance(maturityLevel.level);
+  const sectorBenchmark = getSectorBenchmark(industry, cpfScore);
+  const certificationPath = determineCertificationPath(maturityLevel.level);
+  const roiAnalysis = calculateROI(maturityLevel.level);
+  return {
+    cpf_score: cpfScore,
+    maturity_level: maturityLevel.level,
+    level_name: maturityLevel.name,
+    convergence_index: convergenceIndex,
+    red_domains_count: redCount,
+    yellow_domains_count: yellowCount,
+    green_domains_count: greenCount,
+    compliance: compliance,
+    sector_benchmark: sectorBenchmark,
+    certification_path: certificationPath,
+    roi_analysis: roiAnalysis
+  };
+}
+
+/**
+ * Calculate aggregates for organization
+ */
+function calculateAggregates(assessments, industry = 'Other') {
+  const assessmentArray = Object.values(assessments);
+  if (assessmentArray.length === 0) {
+    return {
+      overall_risk: 0.5,
+      overall_confidence: 0.0,
+      trend: 'stable',
+      by_category: {},
+      completion: {
+        total_indicators: 100,
+        assessed_indicators: 0,
+        percentage: 0.0,
+        missing_indicators: generateAllIndicatorIds()
+      },
+      last_calculated: new Date().toISOString()
+    };
+  }
+
+  // Overall stats
+  const overallRisk = assessmentArray.reduce((sum, a) => sum + a.bayesian_score, 0) / assessmentArray.length;
+  const overallConfidence = assessmentArray.reduce((sum, a) => sum + a.confidence, 0) / assessmentArray.length;
+
+  // By category
+  const byCategory = {};
+  for (let cat = 1; cat <= 10; cat++) {
+    const catKey = cat.toString();
+    const catAssessments = assessmentArray.filter(a => a.indicator_id.startsWith(`${cat}.`));
+    if (catAssessments.length > 0) {
+      const avgScore = catAssessments.reduce((sum, a) => sum + a.bayesian_score, 0) / catAssessments.length;
+      const avgConfidence = catAssessments.reduce((sum, a) => sum + a.confidence, 0) / catAssessments.length;
+      byCategory[catKey] = {
+        category_name: CATEGORY_NAMES[catKey],
+        avg_score: parseFloat(avgScore.toFixed(4)),
+        avg_confidence: parseFloat(avgConfidence.toFixed(4)),
+        total_assessments: catAssessments.length,
+        completion_percentage: parseFloat((catAssessments.length / 10 * 100).toFixed(2))
+      };
+    }
+  }
+
+  // Completion
+  const allIndicators = generateAllIndicatorIds();
+  const assessedIndicators = Object.keys(assessments).filter(id =>
+    assessments[id] && assessments[id].bayesian_score > 0
+  );
+  const missingIndicators = allIndicators.filter(id => !assessedIndicators.includes(id));
+
+  // Maturity model
+  const maturityModel = Object.keys(byCategory).length > 0
+    ? calculateMaturityModel(assessments, byCategory, industry)
+    : null;
+
+  return {
+    overall_risk: parseFloat(overallRisk.toFixed(4)),
+    overall_confidence: parseFloat(overallConfidence.toFixed(4)),
+    trend: 'stable',
+    by_category: byCategory,
+    completion: {
+      total_indicators: 100,
+      assessed_indicators: assessedIndicators.length,
+      percentage: parseFloat((assessedIndicators.length / 100 * 100).toFixed(2)),
+      missing_indicators: missingIndicators
+    },
+    maturity_model: maturityModel,
+    last_calculated: new Date().toISOString()
+  };
 }
 
 module.exports = {

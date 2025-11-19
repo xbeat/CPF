@@ -2369,9 +2369,225 @@ function switchTab(tabName) {
         document.getElementById('progressTab').classList.add('active');
     } else if (tabName === 'risk') {
         document.getElementById('riskTab').classList.add('active');
+    } else if (tabName === 'maturity') {
+        document.getElementById('maturityTab').classList.add('active');
+        renderMaturityTab(); // Render maturity model data
     } else if (tabName === 'compile') {
         document.getElementById('compileTab').classList.add('active');
     }
+}
+
+// ===== MATURITY MODEL TAB =====
+function renderMaturityTab() {
+    if (!selectedOrgData || !selectedOrgData.aggregates || !selectedOrgData.aggregates.maturity_model) {
+        console.warn('No maturity model data available');
+        return;
+    }
+
+    const mm = selectedOrgData.aggregates.maturity_model;
+
+    // Maturity Level Descriptions
+    const levelDescriptions = {
+        0: 'Psychological blind spots are pervasive. No systematic approach to security awareness.',
+        1: 'Initial awareness emerging. Ad-hoc security practices with significant gaps.',
+        2: 'Foundational security culture developing. Documented processes being established.',
+        3: 'Systematic approach in place. Processes are well-defined and followed consistently.',
+        4: 'Quantitatively managed. Security metrics drive continuous improvement.',
+        5: 'Adaptive excellence. Proactive optimization and industry-leading practices.'
+    };
+
+    // Level colors
+    const levelColors = {
+        0: '#dc2626', // red-600
+        1: '#ea580c', // orange-600
+        2: '#f59e0b', // amber-500
+        3: '#eab308', // yellow-500
+        4: '#84cc16', // lime-500
+        5: '#22c55e'  // green-500
+    };
+
+    // 1. Update Maturity Level Badge
+    document.getElementById('maturityLevelBadge').textContent = mm.maturity_level;
+    document.getElementById('maturityLevelBadge').style.color = levelColors[mm.maturity_level];
+    document.getElementById('maturityLevelName').textContent = mm.level_name;
+    document.getElementById('maturityLevelName').style.color = levelColors[mm.maturity_level];
+    document.getElementById('maturityLevelDescription').textContent = levelDescriptions[mm.maturity_level];
+
+    // 2. Update CPF Score Gauge
+    const cpfScore = mm.cpf_score;
+    document.getElementById('cpfScoreValue').textContent = Math.round(cpfScore);
+
+    // Animate circular progress
+    const circle = document.getElementById('cpfScoreCircle');
+    const circumference = 2 * Math.PI * 80; // r=80
+    const offset = circumference - (cpfScore / 100) * circumference;
+    circle.style.strokeDashoffset = offset;
+
+    // Color based on score
+    if (cpfScore >= 80) {
+        circle.style.stroke = 'var(--success)';
+    } else if (cpfScore >= 60) {
+        circle.style.stroke = 'var(--warning)';
+    } else {
+        circle.style.stroke = 'var(--danger)';
+    }
+
+    // 3. Progress to Next Level
+    if (mm.maturity_level < 5) {
+        const currentLevelMin = mm.maturity_level * 20;
+        const nextLevelMin = (mm.maturity_level + 1) * 20;
+        const progress = ((cpfScore - currentLevelMin) / (nextLevelMin - currentLevelMin)) * 100;
+        const progressClamped = Math.max(0, Math.min(100, progress));
+
+        const levelNames = ['Unaware', 'Initial', 'Developing', 'Defined', 'Managed', 'Optimizing'];
+        document.getElementById('nextLevelName').textContent = `Level ${mm.maturity_level + 1}: ${levelNames[mm.maturity_level + 1]}`;
+        document.getElementById('progressBar').style.width = progressClamped + '%';
+        document.getElementById('progressText').textContent = Math.round(progressClamped) + '%';
+        document.getElementById('progressToNextLevel').style.display = 'block';
+    } else {
+        document.getElementById('progressToNextLevel').style.display = 'none';
+    }
+
+    // 4. Convergence Index
+    document.getElementById('convergenceIndexValue').textContent = mm.convergence_index.toFixed(2);
+    let ciStatus = '';
+    if (mm.convergence_index < 2) {
+        ciStatus = '✅ Excellent - Low compound risk';
+    } else if (mm.convergence_index < 5) {
+        ciStatus = '⚠️ Moderate - Monitor closely';
+    } else if (mm.convergence_index < 10) {
+        ciStatus = '🔴 High - Remediation needed';
+    } else {
+        ciStatus = '🚨 Critical - Immediate action required';
+    }
+    document.getElementById('convergenceIndexStatus').textContent = ciStatus;
+    document.getElementById('convergenceIndexStatus').style.color = mm.convergence_index < 2 ? 'var(--success)' :
+        mm.convergence_index < 5 ? 'var(--warning)' : 'var(--danger)';
+
+    // 5. Domain Distribution
+    document.getElementById('greenDomainsCount').textContent = mm.green_domains_count;
+    document.getElementById('yellowDomainsCount').textContent = mm.yellow_domains_count;
+    document.getElementById('redDomainsCount').textContent = mm.red_domains_count;
+
+    // 6. Sector Percentile
+    document.getElementById('sectorPercentileValue').textContent = mm.sector_benchmark.percentile.toFixed(0) + '%';
+    const gap = mm.sector_benchmark.gap;
+    const gapText = gap >= 0 ?
+        `+${gap.toFixed(1)} points above sector average` :
+        `${gap.toFixed(1)} points below sector average`;
+    document.getElementById('sectorComparison').textContent = gapText;
+    document.getElementById('sectorComparison').style.color = gap >= 0 ? 'var(--success)' : 'var(--danger)';
+
+    // 7. Regulatory Compliance Table
+    const complianceTableBody = document.getElementById('complianceTableBody');
+    const regulations = [
+        { name: 'GDPR Article 32', key: 'gdpr', description: 'Data Protection Regulation' },
+        { name: 'NIS2 Directive', key: 'nis2', description: 'Network & Information Security' },
+        { name: 'DORA', key: 'dora', description: 'Digital Operational Resilience (Financial)' },
+        { name: 'ISO 27001:2022', key: 'iso27001', description: 'Information Security Management' }
+    ];
+
+    let complianceHTML = '';
+    regulations.forEach(reg => {
+        const compliance = mm.compliance[reg.key];
+        const statusIcon = compliance.status === 'compliant' ? '✅' :
+            compliance.status === 'at_risk' ? '⚠️' : '❌';
+        const statusText = compliance.status === 'compliant' ? 'Compliant' :
+            compliance.status === 'at_risk' ? 'At Risk' : 'Non-Compliant';
+        const statusColor = compliance.status === 'compliant' ? 'var(--success)' :
+            compliance.status === 'at_risk' ? 'var(--warning)' : 'var(--danger)';
+
+        complianceHTML += `
+            <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 12px;">
+                    <div style="font-weight: 600;">${reg.name}</div>
+                    <div style="font-size: 12px; color: var(--text-light);">${reg.description}</div>
+                </td>
+                <td style="padding: 12px; text-align: center;">
+                    <span style="color: ${statusColor}; font-weight: 600;">${statusIcon} ${statusText}</span>
+                </td>
+                <td style="padding: 12px; text-align: center;">Level ${compliance.min_level_required}</td>
+                <td style="padding: 12px; text-align: center;">Level ${compliance.recommended_level}</td>
+                <td style="padding: 12px; text-align: center; font-weight: 600; color: var(--primary);">Level ${mm.maturity_level}</td>
+            </tr>
+        `;
+    });
+    complianceTableBody.innerHTML = complianceHTML;
+
+    // 8. Sector Benchmark Visualization
+    const sectorMean = mm.sector_benchmark.sector_mean;
+    const sectorMeanPercent = (sectorMean / 100) * 100;
+    const yourScorePercent = (cpfScore / 100) * 100;
+
+    document.getElementById('sectorMeanMarker').style.left = sectorMeanPercent + '%';
+    document.getElementById('sectorMeanLabel').style.left = sectorMeanPercent + '%';
+    document.getElementById('sectorMeanLabel').textContent = `Sector Mean: ${sectorMean}`;
+
+    document.getElementById('yourScoreMarker').style.left = yourScorePercent + '%';
+    document.getElementById('yourScoreLabel').style.left = yourScorePercent + '%';
+    document.getElementById('yourScoreLabel').textContent = `Your Score: ${Math.round(cpfScore)}`;
+
+    // Benchmark Stats
+    const benchmarkStatsHTML = `
+        <div style="padding: 10px; background: var(--bg-gray); border-radius: 6px;">
+            <div style="font-size: 12px; color: var(--text-light);">Sector Mean</div>
+            <div style="font-size: 20px; font-weight: 600;">${sectorMean}</div>
+        </div>
+        <div style="padding: 10px; background: var(--bg-gray); border-radius: 6px;">
+            <div style="font-size: 12px; color: var(--text-light);">Your Score</div>
+            <div style="font-size: 20px; font-weight: 600; color: var(--primary);">${Math.round(cpfScore)}</div>
+        </div>
+        <div style="padding: 10px; background: var(--bg-gray); border-radius: 6px;">
+            <div style="font-size: 12px; color: var(--text-light);">Percentile Rank</div>
+            <div style="font-size: 20px; font-weight: 600;">${mm.sector_benchmark.percentile.toFixed(0)}th</div>
+        </div>
+        <div style="padding: 10px; background: var(--bg-gray); border-radius: 6px;">
+            <div style="font-size: 12px; color: var(--text-light);">Sector</div>
+            <div style="font-size: 16px; font-weight: 600;">${selectedOrgData.metadata.industry}</div>
+        </div>
+    `;
+    document.getElementById('benchmarkStats').innerHTML = benchmarkStatsHTML;
+
+    // 9. Certification Path
+    const certifications = [
+        { id: 'CPF-F', level: 1, name: 'Foundation', cost: '€500', duration: '2 days' },
+        { id: 'CPF-P', level: 2, name: 'Practitioner', cost: '€1,500', duration: '5 days' },
+        { id: 'CPF-E', level: 4, name: 'Expert', cost: '€3,500', duration: '10 days' },
+        { id: 'CPF-M', level: 5, name: 'Master', cost: 'Invitation only', duration: 'Research required' }
+    ];
+
+    let certPathHTML = '';
+    certifications.forEach(cert => {
+        const isEligible = mm.certification_path.eligible_for.includes(cert.id);
+        const isCurrent = mm.certification_path.current_certification === cert.id;
+
+        certPathHTML += `
+            <div style="text-align: center; padding: 20px; background: ${isEligible ? 'var(--bg-success)' : 'var(--bg-gray)'}; border-radius: 12px; min-width: 150px; position: relative;">
+                ${isCurrent ? '<div style="position: absolute; top: -10px; right: -10px; background: var(--primary); color: white; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">CURRENT</div>' : ''}
+                <div style="font-size: 32px; margin-bottom: 10px;">${isEligible ? '🎖️' : '🔒'}</div>
+                <div style="font-size: 18px; font-weight: 700; margin-bottom: 5px;">${cert.id}</div>
+                <div style="font-size: 14px; color: var(--text-light); margin-bottom: 10px;">${cert.name}</div>
+                <div style="font-size: 12px; color: var(--text-light);">Level ${cert.level}+</div>
+                <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">${cert.cost}</div>
+                <div style="font-size: 11px; color: var(--text-light);">${cert.duration}</div>
+            </div>
+        `;
+    });
+    document.getElementById('certificationPath').innerHTML = certPathHTML;
+
+    // 10. ROI Analysis
+    if (mm.roi_analysis && mm.maturity_level < 5) {
+        const roi = mm.roi_analysis;
+        document.getElementById('roiInvestment').textContent = `€${(roi.estimated_investment / 1000).toFixed(0)}k`;
+        document.getElementById('roiAnnualBenefit').textContent = `€${(roi.annual_benefit / 1000).toFixed(0)}k`;
+        document.getElementById('roiPayback').textContent = `${roi.payback_months} months`;
+        document.getElementById('roiNPV').textContent = `€${(roi.npv_5yr / 1000000).toFixed(1)}M`;
+        document.getElementById('roiAnalysisContainer').style.display = 'block';
+    } else {
+        document.getElementById('roiAnalysisContainer').style.display = 'none';
+    }
+
+    console.log('✅ Maturity Model tab rendered successfully');
 }
 
 // ===== UTILITIES =====
