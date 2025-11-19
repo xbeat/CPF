@@ -1,0 +1,937 @@
+{
+  "indicator": "1.10",
+  "title": "INDICATOR 1.10 FIELD KIT",
+  "subtitle": "Crisis Authority Escalation",
+  "category": "Authority-Based Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 1.x",
+
+  "description": {
+    "short": "Measures vulnerability to automatically granting elevated privileges or bypassing security protocols during crises based solely on authority claims, without proper verification",
+    "context": "Crisis Authority Escalation occurs when employees automatically grant elevated privileges or bypass security protocols during high-stress situations based solely on authority claims, without proper verification. During crises, people seek quick decisions from authority figures and skip normal security checks due to time pressure and stress. This creates a prime opportunity for attackers to impersonate executives or IT leaders during emergencies to gain unauthorized access to systems and sensitive data.",
+    "impact": "Organizations with high crisis authority vulnerability experience successful business email compromise during emergencies, unauthorized break-glass access exploitation, fraudulent emergency IT support attacks, and regulatory impersonation during compliance crises. Attackers specifically time attacks to coincide with legitimate organizational crises or manufacture crisis conditions to activate this vulnerability.",
+    "psychological_basis": "During crisis conditions, cognitive resources become severely limited, forcing individuals to rely on System 1 (fast, automatic) rather than System 2 (slow, deliberate) thinking. Crisis states activate the amygdala's threat response system, flooding the brain with stress hormones that impair prefrontal cortex functioning. This neurochemical cascade creates hypervigilance to authority cues while simultaneously losing capacity for critical analysis. Milgram's obedience studies (1974) showed that compliance with authority increases dramatically under crisis conditions as individuals seek external structure to manage overwhelming uncertainty."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Resilient",
+        "description": "Documented emergency procedures require multi-person verification for all elevated access. Regular crisis simulation training includes authority verification components. Secure communication channels with authentication for crisis communications. Break glass access used less than quarterly with full documentation.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Developing",
+        "description": "Emergency procedures exist but allow single-person authorization in some situations. Crisis training occurs annually but limited focus on authority verification. Some secure communication channels but gaps in crisis communication security. Break glass access used monthly with basic approval processes.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Critical",
+        "description": "Emergency procedures routinely bypass normal security controls without verification. No regular crisis training or authority verification training. Crisis communications primarily through unsecured channels. Break glass access used weekly or more with minimal oversight. Culture of not questioning authority during emergencies.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_emergency_procedures": 0.20,
+      "q2_verification_during_crisis": 0.18,
+      "q3_crisis_communication": 0.15,
+      "q4_break_glass_access": 0.14,
+      "q5_crisis_response_review": 0.13,
+      "q6_cross_department_authority": 0.12,
+      "q7_crisis_training": 0.08
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_1.10(t) = w1·R_1.10(t) + w2·A_1.10(t) + w3·B_1.10(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_1.10(t) = 1 if Crisis_Active(t) AND Emergency_Access_Granted > 3, else 0",
+          "description": "Binary detection based on crisis state correlated with emergency access grants",
+          "threshold": {
+            "crisis_active": true,
+            "emergency_access_count": 3
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_1.10(t) = sqrt((x(t) - μ)ᵀ Σ⁻¹ (x(t) - μ))",
+          "description": "Mahalanobis distance for crisis response patterns",
+          "variables": {
+            "x(t)": "observation vector [emergency_access_rate, verification_attempts, response_time, crisis_severity]",
+            "μ": "baseline mean from historical crisis data",
+            "Σ": "covariance matrix (exponential weighted moving average)"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_1.10(t) = P(legitimate|crisis_factors) = [P(crisis_factors|legitimate) × P(legitimate)] / P(crisis_factors)",
+          "factors": [
+            "crisis_severity",
+            "time_pressure_markers",
+            "authority_claim_strength",
+            "verification_completed",
+            "break_glass_frequency",
+            "communication_channel_security"
+          ],
+          "priors": {
+            "P_legitimate": 0.70,
+            "P_malicious": 0.30
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.35,
+        "w2_anomaly": 0.35,
+        "w3_bayesian": 0.30
+      },
+      "temporal_decay": {
+        "formula": "T_1.10(t) = α·D_1.10(t) + (1-α)·T_1.10(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 1800,
+        "description": "Exponential smoothing with 30-minute time constant due to crisis urgency"
+      }
+    },
+    "crisis_amplification_factor": {
+      "formula": "CAF(t) = 1 + β·tanh(γ·Threat_Level(t))",
+      "description": "Crisis amplification factor showing enhanced authority compliance during perceived crisis",
+      "parameters": {
+        "beta": "Maximum amplification factor (typically 1.5-2.0)",
+        "gamma": "Sensitivity to threat level (typically 0.5-1.0)",
+        "Threat_Level": "Normalized threat perception score (0-1)"
+      }
+    },
+    "modified_compliance": {
+      "formula": "C_crisis(t) = C_baseline(t) × CAF(t)",
+      "description": "Compliance probability modified by crisis amplification"
+    },
+    "crisis_detection": {
+      "formula": "Crisis_Score(t) = Σ w_i·f_i(t)",
+      "description": "Multi-factor crisis detection score",
+      "factors": {
+        "f1": "External threat level (security incidents, DDoS, breach)",
+        "f2": "Internal incidents (system outages, data loss)",
+        "f3": "Media attention (public crisis, regulatory scrutiny)",
+        "f4": "Executive stress indicators (urgent communications, escalations)"
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "emergency_procedure_documentation",
+        "crisis_simulation_records",
+        "incident_response_logs",
+        "break_glass_access_logs"
+      ],
+      "evidence_required": [
+        "written_emergency_access_procedures",
+        "crisis_communication_authentication_methods",
+        "authority_verification_decision_trees",
+        "crisis_simulation_exercise_results",
+        "break_glass_access_approval_records"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "privilege_access_management",
+          "fields": ["emergency_access_grants", "approver", "timestamp", "business_justification", "crisis_flag"],
+          "retention": "180_days"
+        },
+        {
+          "source": "incident_response_system",
+          "fields": ["incident_severity", "status", "assigned_team", "authorization_chain", "timestamp"],
+          "retention": "365_days"
+        },
+        {
+          "source": "authentication_logs",
+          "fields": ["user_id", "authentication_method", "emergency_override", "source_ip", "timestamp"],
+          "retention": "90_days"
+        },
+        {
+          "source": "crisis_communication_logs",
+          "fields": ["sender", "recipient", "channel", "authentication_status", "urgency_markers", "timestamp"],
+          "retention": "180_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "security_orchestration",
+          "fields": ["automated_response_actions", "human_approval_required", "approval_granted", "override_reason"],
+          "retention": "90_days"
+        },
+        {
+          "source": "network_access_logs",
+          "fields": ["emergency_network_grants", "segmentation_bypasses", "approver", "duration"],
+          "retention": "90_days"
+        },
+        {
+          "source": "change_management_system",
+          "fields": ["emergency_change_requests", "normal_approval_bypassed", "crisis_justification"],
+          "retention": "365_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "emergency_access_rate": {
+          "calculation": "Count of emergency access grants during crisis periods",
+          "query": "SELECT COUNT(*) FROM pam_logs WHERE emergency_flag=true AND crisis_active=true AND time_window='1h'"
+        },
+        "verification_rate": {
+          "calculation": "Percentage of emergency requests with multi-person verification",
+          "query": "SELECT (COUNT(approver_count >= 2) / COUNT(*)) FROM emergency_access WHERE time_window='24h'"
+        },
+        "break_glass_frequency": {
+          "calculation": "Monthly count of break glass access usage",
+          "query": "SELECT COUNT(*) FROM pam_logs WHERE access_type='break_glass' AND DATE_TRUNC('month', timestamp) = CURRENT_MONTH"
+        },
+        "crisis_response_time": {
+          "calculation": "Time from crisis declaration to first emergency access grant",
+          "query": "SELECT AVG(first_access_timestamp - crisis_start_timestamp) FROM incidents WHERE severity >= 'high'"
+        }
+      }
+    },
+    "integration_apis": {
+      "pam_system": "CyberArk/BeyondTrust API - Emergency Access Requests, Approvals, Break Glass Usage",
+      "incident_response": "ServiceNow/Jira API - Incident Status, Severity, Authorization Chains",
+      "siem": "Splunk/Sentinel API - Crisis Detection, Correlation Events, Anomaly Scores",
+      "communication_platforms": "Slack/Teams API - Crisis Channel Activity, Authentication Events"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.85,
+        "factor": 1.6,
+        "description": "Acute stress during crises dramatically amplifies authority compliance by impairing prefrontal cortex function",
+        "formula": "P(1.10|7.1) = 0.85",
+        "evidence": "Stress hormones activate amygdala threat response while suppressing critical thinking"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.80,
+        "factor": 1.5,
+        "description": "Time pressure inherent in crisis situations compounds authority escalation vulnerability",
+        "formula": "P(1.10|2.1) = 0.80"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.70,
+        "factor": 1.4,
+        "description": "Cognitive depletion during extended crisis response reduces verification capacity",
+        "formula": "P(1.10|5.2) = 0.70"
+      },
+      {
+        "indicator": "6.1",
+        "name": "Groupthink",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Crisis response teams may suppress individual verification instincts to maintain group cohesion",
+        "formula": "P(1.10|6.1) = 0.65"
+      },
+      {
+        "indicator": "1.3",
+        "name": "Authority Figure Impersonation",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "Crisis conditions make impersonation attacks more effective by reducing verification",
+        "formula": "P(1.10|1.3) = 0.75"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "1.1",
+        "name": "Unquestioning Compliance",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "Crisis authority escalation normalizes unquestioning compliance patterns that persist beyond crisis",
+        "formula": "P(1.1|1.10) = 0.75"
+      },
+      {
+        "indicator": "1.5",
+        "name": "Fear-Based Compliance",
+        "probability": 0.80,
+        "factor": 1.5,
+        "description": "Crisis situations amplify fear-based compliance mechanisms",
+        "formula": "P(1.5|1.10) = 0.80"
+      },
+      {
+        "indicator": "2.3",
+        "name": "Deadline-Driven Risk Acceptance",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Crisis escalation increases deadline-driven risk acceptance",
+        "formula": "P(2.3|1.10) = 0.65"
+      },
+      {
+        "indicator": "1.8",
+        "name": "Executive Exception Normalization",
+        "probability": 0.60,
+        "factor": 1.25,
+        "description": "Frequent crisis authority claims normalize executive exception requests",
+        "formula": "P(1.8|1.10) = 0.60"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["1.10", "7.1", "2.1", "1.3"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 3.2,
+      "threshold_critical": 4.0,
+      "description": "Perfect storm: Crisis authority escalation + Acute stress + Time urgency + Authority impersonation = 400% increased breach probability during organizational crises",
+      "real_world_example": "Target 2013 breach - Crisis response to initial compromise exploited by attackers claiming emergency IT authority to expand access"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["7.1", "2.1", "5.2", "6.1", "1.3"],
+      "child_nodes": ["1.1", "1.5", "2.3", "1.8"],
+      "conditional_probability_table": {
+        "P_1.10_base": 0.12,
+        "P_1.10_given_stress": 0.55,
+        "P_1.10_given_urgency": 0.48,
+        "P_1.10_given_impersonation": 0.42,
+        "P_1.10_given_stress_and_urgency": 0.78,
+        "P_1.10_given_all": 0.89
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_emergency_procedures",
+          "weight": 0.20,
+          "title": "Emergency Access Procedures",
+          "question": "What is your standard procedure when someone claiming to be senior leadership requests immediate system access or security bypasses during an emergency?",
+          "options": [
+            {
+              "value": "multi_verification",
+              "score": 0,
+              "label": "Multi-person verification required for all emergency access grants with documented approval workflow"
+            },
+            {
+              "value": "single_approval",
+              "score": 0.5,
+              "label": "Single-person authorization allowed in emergencies with post-incident review"
+            },
+            {
+              "value": "immediate_grant",
+              "score": 1,
+              "label": "Immediate access granted during emergencies without verification delays"
+            }
+          ],
+          "evidence_required": "Emergency access procedures document, specific example from last 12 months",
+          "soc_mapping": "emergency_access_rate from detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_verification_during_crisis",
+          "weight": 0.18,
+          "title": "Authority Verification During Crises",
+          "question": "How often do your employees verify the identity of people requesting emergency assistance or system changes during high-stress situations (system outages, security incidents, compliance deadlines)?",
+          "options": [
+            {
+              "value": "always",
+              "score": 0,
+              "label": "Always - Verification required regardless of crisis conditions with specific verification steps documented"
+            },
+            {
+              "value": "sometimes",
+              "score": 0.5,
+              "label": "Sometimes - Verification performed when time permits but may be skipped in severe crises"
+            },
+            {
+              "value": "rarely",
+              "score": 1,
+              "label": "Rarely - Verification viewed as obstacle during emergencies and routinely bypassed"
+            }
+          ],
+          "evidence_required": "Crisis response examples, verification step documentation",
+          "soc_mapping": "verification_rate from detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_crisis_communication",
+          "weight": 0.15,
+          "title": "Crisis Communication Channels",
+          "question": "What secure communication methods does your organization use during emergencies, and how do employees confirm they're receiving legitimate crisis communications from authorized personnel?",
+          "options": [
+            {
+              "value": "secure_authenticated",
+              "score": 0,
+              "label": "Secure channels with multi-factor authentication and pre-shared verification codes for crisis communications"
+            },
+            {
+              "value": "basic_security",
+              "score": 0.5,
+              "label": "Some secure channels but inconsistent authentication methods or gaps in coverage"
+            },
+            {
+              "value": "unsecured",
+              "score": 1,
+              "label": "Crisis communications primarily through unsecured channels (email, phone calls) without authentication"
+            }
+          ],
+          "evidence_required": "Crisis communication platform documentation, authentication methods, recent crisis example",
+          "soc_mapping": "communication_channel_security from bayesian_factors"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_break_glass_access",
+          "weight": 0.14,
+          "title": "Break Glass Access Controls",
+          "question": "How frequently are your emergency access or break glass procedures used, and what approval process is required before granting these elevated privileges during crisis situations?",
+          "options": [
+            {
+              "value": "rare",
+              "score": 0,
+              "label": "Less than quarterly with documented multi-person approval and full post-incident review"
+            },
+            {
+              "value": "monthly",
+              "score": 0.5,
+              "label": "Monthly usage with basic approval process and limited oversight"
+            },
+            {
+              "value": "frequent",
+              "score": 1,
+              "label": "Weekly or more frequent usage with minimal approval requirements or oversight"
+            }
+          ],
+          "evidence_required": "Break glass access logs for past 6 months, approval workflow documentation",
+          "soc_mapping": "break_glass_frequency from detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_crisis_response_review",
+          "weight": 0.13,
+          "title": "Recent Crisis Response Review",
+          "question": "In your most recent crisis situation (system outage, security incident, urgent compliance request), what security procedures were followed or bypassed during the response?",
+          "options": [
+            {
+              "value": "procedures_followed",
+              "score": 0,
+              "label": "All standard security procedures followed with documented verification steps during crisis"
+            },
+            {
+              "value": "some_bypasses",
+              "score": 0.5,
+              "label": "Some procedures bypassed with justification and post-incident documentation"
+            },
+            {
+              "value": "routinely_bypassed",
+              "score": 1,
+              "label": "Security procedures routinely bypassed during crisis with minimal documentation or oversight"
+            }
+          ],
+          "evidence_required": "Recent crisis incident documentation, post-mortem report, security procedure compliance log",
+          "soc_mapping": "crisis_response_time and verification correlation"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_cross_department_authority",
+          "weight": 0.12,
+          "title": "Cross-Department Crisis Authority",
+          "question": "What happens when someone from outside an employee's normal chain of command (different department, external consultant, vendor) requests urgent access or information during an emergency?",
+          "options": [
+            {
+              "value": "strict_verification",
+              "score": 0,
+              "label": "Strict verification policy requiring confirmation through established channels regardless of urgency"
+            },
+            {
+              "value": "flexible_policy",
+              "score": 0.5,
+              "label": "Flexible policy allowing judgment calls with management approval in emergencies"
+            },
+            {
+              "value": "no_policy",
+              "score": 1,
+              "label": "No specific verification policy for cross-department emergency requests"
+            }
+          ],
+          "evidence_required": "Cross-department access policy, vendor verification procedures, recent example",
+          "soc_mapping": "External authority claim detection from bayesian_factors"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_crisis_training",
+          "weight": 0.08,
+          "title": "Employee Crisis Decision Training",
+          "question": "How often do you train employees on verifying authority and maintaining security protocols during high-stress emergency situations?",
+          "options": [
+            {
+              "value": "regular_comprehensive",
+              "score": 0,
+              "label": "Regular crisis simulation training (quarterly or more) with specific authority verification components"
+            },
+            {
+              "value": "annual_basic",
+              "score": 0.5,
+              "label": "Annual training with limited focus on crisis authority verification"
+            },
+            {
+              "value": "no_training",
+              "score": 1,
+              "label": "No regular crisis training or authority verification training during emergencies"
+            }
+          ],
+          "evidence_required": "Training curriculum, simulation exercise results, completion records from most recent crisis drill",
+          "soc_mapping": "Training effectiveness measured through simulation compliance rates"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Emergency Access & Crisis Response",
+          "weight": 0.40,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Walk me through what happened during your last significant emergency or crisis situation. Who took charge, what security procedures were followed or bypassed, and how were authority claims verified?",
+              "scoring_guidance": {
+                "green": "Detailed example with documented verification steps maintained during crisis, multi-person approval for security bypasses, post-incident review conducted",
+                "yellow": "General recollection with some verification but inconsistent application, informal approval processes, limited documentation",
+                "red": "Vague details or admission that verification was skipped, single person granted broad access, no post-incident review"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "How did employees verify that the person claiming authority during the crisis was actually authorized?",
+                  "evidence_type": "specific_verification_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Were any security procedures bypassed during the crisis? What was the justification and approval process?",
+                  "evidence_type": "security_bypass_documentation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What would have happened if an employee had insisted on following normal verification procedures despite the urgency?",
+                  "evidence_type": "cultural_attitude"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Describe your break glass or emergency access procedures. Who can authorize emergency access, what approvals are required, and how frequently are these procedures actually used?",
+              "scoring_guidance": {
+                "green": "Written procedures with multi-person authorization, used less than quarterly, full audit trail and post-incident reviews documented",
+                "yellow": "Procedures exist but single-person approval allowed, monthly usage, basic logging without regular review",
+                "red": "Informal or no documented procedures, frequent usage, minimal oversight or documentation"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show me your break glass access logs for the past 6 months. How many times was it used and for what reasons?",
+                  "evidence_type": "technical_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What happens when someone uses emergency access - are there automatic alerts, approval requirements, time limits?",
+                  "evidence_type": "technical_control"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Has emergency access ever been used inappropriately? What happened?",
+                  "evidence_type": "incident_example"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "During a security incident or system outage, what communication channels do you use, and how do employees verify they're receiving legitimate instructions from authorized crisis response personnel?",
+              "scoring_guidance": {
+                "green": "Secure authenticated channels (dedicated platforms with MFA), pre-shared verification codes or phrases, pre-authorized crisis response roster",
+                "yellow": "Mix of secure and insecure channels, some authentication but not comprehensive, informal understanding of who's authorized",
+                "red": "Standard email and phone calls, no authentication mechanisms, anyone claiming authority is trusted during crisis"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Do you have pre-authorized contact lists or verification codes that legitimate crisis responders use to confirm their identity?",
+                  "evidence_type": "preparedness_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What would prevent an attacker from inserting themselves into your crisis communications and claiming to be emergency IT support?",
+                  "evidence_type": "threat_scenario_response"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cross-Department & External Authority",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "What happens when someone from outside an employee's normal chain of command - a different department, an external consultant, or a vendor - requests urgent access or information during an emergency? What's the verification policy?",
+              "scoring_guidance": {
+                "green": "Strict verification required regardless of urgency, pre-vetted vendor contact database, multi-channel confirmation required",
+                "yellow": "Flexible policy with management discretion, basic vendor checks performed, inconsistent enforcement",
+                "red": "No specific policy, technical expertise or authority claims accepted at face value, verification seen as impediment"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Give me a recent example of an external person requesting access during a crisis. How was their identity verified?",
+                  "evidence_type": "vendor_verification_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Do you maintain a verified database of legitimate vendor and consultant contacts for crisis situations?",
+                  "evidence_type": "technical_control"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Training & Cultural Factors",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "How do you train employees to maintain security verification protocols during high-stress emergency situations? Describe your most recent crisis simulation exercise.",
+              "scoring_guidance": {
+                "green": "Regular crisis simulations (quarterly+) with fake authority scenarios mixed in, measured compliance rates, employees demonstrate verification under pressure",
+                "yellow": "Annual training mentions crisis response but limited hands-on practice, no authority verification component",
+                "red": "No crisis training or simulations, or training emphasizes speed over security during emergencies"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "During your crisis simulations, do you ever test whether employees will verify authority claims under pressure, or do you only test technical response?",
+                  "evidence_type": "training_methodology"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What percentage of employees maintained proper verification protocols during your last crisis drill?",
+                  "evidence_type": "quantitative_metric"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "How comfortable are employees with questioning or delaying urgent requests from apparent authority figures during emergencies? Is there explicit protection for employees who insist on verification?",
+              "scoring_guidance": {
+                "green": "Explicit policies protecting verification behaviors, examples of employees questioning crisis authority without negative consequences, celebrated as good security practice",
+                "yellow": "Mixed comfort levels, informal understanding that verification is okay but not explicitly protected",
+                "red": "Strong cultural expectation not to question authority during emergencies, verification seen as insubordination or lack of team spirit"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Has anyone ever questioned or delayed a crisis request from senior leadership? What happened to them?",
+                  "evidence_type": "cultural_indicator"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What language do leaders use when discussing crisis response - do they emphasize speed and trust, or verification and security?",
+                  "evidence_type": "cultural_language"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"In emergencies, we need to move fast without verification delays...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"We trust people who step up during crises - questioning them would undermine crisis response...\"",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Our break glass access is used weekly/daily because normal access provisioning is too slow...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"During outages, IT can get whatever access they need without approvals...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"We've never had a problem with fake emergency responders, so we don't worry about it...\"",
+              "severity": "medium",
+              "score_impact": 0.10,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Crisis simulations focus on technical response, not security verification...\"",
+              "severity": "medium",
+              "score_impact": 0.09,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"External consultants and vendors are vetted by management, so crisis responders don't need to verify them...\"",
+              "severity": "medium",
+              "score_impact": 0.08,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject simulated crisis authority scenarios during crisis drills",
+      "correlation_analysis": "Compare manual audit scores with SOC detection scores (target correlation > 0.85)",
+      "drift_detection": "Kolmogorov-Smirnov test, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted probabilities match observed frequencies for crisis scenarios",
+      "baseline_period": "60_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.75 or after major crisis event"
+    },
+    "success_metrics": [
+      {
+        "metric": "Emergency Access Compliance Rate",
+        "formula": "% of emergency access requests completing multi-person authorization",
+        "baseline": "audit past 90 days",
+        "target": "100% compliance with documented approvals",
+        "measurement": "automated PAM logging + monthly audit"
+      },
+      {
+        "metric": "Crisis Simulation Performance",
+        "formula": "% of employees maintaining verification protocols during crisis exercises",
+        "baseline": "initial crisis simulation",
+        "target": "95% proper verification under simulated high-stress conditions",
+        "measurement": "quarterly crisis drill assessments"
+      },
+      {
+        "metric": "Break Glass Access Frequency",
+        "formula": "Monthly count of emergency access procedure usage",
+        "baseline": "previous 6 months average",
+        "target": "reduce to quarterly or less through better normal access provisioning",
+        "measurement": "weekly break glass access log review"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Multi-Person Authorization for Emergency Access",
+        "description": "Implement two-person integrity requirements for all emergency access grants during crises",
+        "implementation": "Any crisis-related security bypass requires approval from two separate authorized individuals with independent verification of requestor identity. Create pre-authorized crisis response teams with verified contact methods. Implement automated system requiring dual approval before emergency access grants take effect.",
+        "technical_controls": "PAM system dual-approval workflows, automated alerts to security team for all emergency access requests, mandatory post-incident review within 24 hours, real-time monitoring dashboard for break glass usage",
+        "roi": "450% average within 18 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Crisis Communication Authentication System",
+        "description": "Deploy secure communication platforms with multi-factor authentication for crisis communications",
+        "implementation": "Establish dedicated crisis communication channels with strong authentication. Implement pre-shared verification codes or phrases that legitimate authority figures use to confirm identity during emergencies. Create photo identification cards or biometric authentication for crisis response team members. Document verified contact numbers and communication methods for all authorized crisis responders.",
+        "technical_controls": "Secure messaging platform (Signal, dedicated Slack workspace with MFA), pre-shared authentication tokens, verified contact database, automated authentication challenges for high-risk requests",
+        "roi": "380% average within 12 months",
+        "effort": "medium",
+        "timeline": "30-45 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Authority Verification Decision Trees",
+        "description": "Create simple flowcharts guiding employees through identity verification during high-stress situations",
+        "implementation": "Design clear decision trees posted at workstations and integrated into crisis response systems. Include specific contact numbers and verification questions for different authority levels. Create pocket cards or digital quick-reference guides with verification steps that work even under stress. Make verification procedures feel respectful rather than insubordinate through careful language design.",
+        "technical_controls": "Digital workflow integration in ticketing systems, visual decision tree posters, mobile app quick-reference, automated verification step reminders",
+        "roi": "320% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Regular Crisis Authority Simulation",
+        "description": "Conduct quarterly crisis exercises including fake authority scenarios mixed with legitimate crisis training",
+        "implementation": "Design tabletop exercises that test both technical crisis response and authority verification protocols. Include simulated impersonation attempts during crisis drills to teach employees to maintain verification even under pressure. Measure compliance rates and provide immediate feedback. Gradually increase difficulty to build stress inoculation. Celebrate appropriate verification behaviors to build cultural acceptance.",
+        "technical_controls": "Simulation platform with authority scenario templates, compliance tracking dashboard, automated scoring of verification behaviors, post-exercise analytics",
+        "roi": "360% average within 18 months",
+        "effort": "medium",
+        "timeline": "60 days initial, quarterly ongoing"
+      },
+      {
+        "id": "sol_5",
+        "title": "Break Glass Access Monitoring",
+        "description": "Implement automated monitoring of emergency access usage with real-time alerts and mandatory reviews",
+        "implementation": "Deploy automated monitoring that alerts security teams in real-time whenever break glass access is used. Require mandatory post-incident review within 24 hours verifying the access was legitimately authorized and appropriately scoped. Trend analysis to identify departments or individuals with frequent emergency access usage. Regular executive reporting on break glass access patterns and reduction initiatives.",
+        "technical_controls": "SIEM correlation rules for emergency access, automated alerting via SOC, post-incident workflow system, executive dashboard, quarterly trend analysis reports",
+        "roi": "280% average within 12 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Crisis Response Team Pre-Authentication",
+        "description": "Establish pre-verified crisis response teams allowing rapid but secure identification during emergencies",
+        "implementation": "Create formal crisis response teams with pre-authorized members. Issue photo identification cards, establish biometric authentication, or implement other verification methods enabling rapid identification during actual emergencies. Maintain updated roster with verified contact information. Regular exercises to ensure team members know each other and can identify impersonators. Clear escalation procedures for situations requiring external expertise.",
+        "technical_controls": "Crisis response team database with photos and verification credentials, biometric enrollment for team members, physical identification badges, verified out-of-band contact methods",
+        "roi": "310% average within 18 months",
+        "effort": "medium",
+        "timeline": "60 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_2"],
+      "high_value": ["sol_3", "sol_4"],
+      "monitoring_foundation": ["sol_5"],
+      "infrastructure": ["sol_6"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "CEO Fraud During System Outages",
+      "description": "Attackers monitor for system outages and send urgent emails from spoofed executive accounts requesting immediate wire transfers or system access, exploiting the chaos when normal verification procedures are suspended",
+      "attack_vector": "Email spoofing or compromised account during legitimate organizational crisis",
+      "psychological_mechanism": "Crisis-induced cognitive load reduction leads to System 1 thinking and authority compliance without verification",
+      "historical_example": "Target 2013 - Compromised vendor credentials during crisis response to initial breach allowed attackers to expand access by claiming emergency IT authority",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["crisis_active", "urgent_financial_request", "unusual_request_timing", "no_verification_attempted", "V_auth > 0.3"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Fake IT Emergency Support",
+      "description": "During legitimate security incidents, attackers call employees claiming to be emergency IT contractors hired to resolve the crisis, requesting remote access credentials or system information that they use to expand their attack",
+      "attack_vector": "Phone-based social engineering during actual incident response",
+      "psychological_mechanism": "Anxiety-driven compliance during crisis activates amygdala threat response while suppressing critical analysis",
+      "historical_example": "Multiple APT campaigns maintaining persistence by posing as incident responders during actual breach investigations",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["incident_active", "unknown_caller_claims_IT_role", "requests_broad_access", "no_pre_authorization", "urgency_markers"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Regulatory Authority Impersonation",
+      "description": "Attackers pose as regulators demanding immediate compliance actions during manufactured or real regulatory crises, leveraging fear of penalties to gain access to sensitive compliance data and financial systems",
+      "attack_vector": "Email or phone impersonating SEC, FTC, industry regulators during compliance deadlines or investigations",
+      "psychological_mechanism": "Fear of regulatory consequences prevents verification, crisis amplification factor increases authority compliance",
+      "historical_example": "Anthem 2015 - Sophisticated spear-phishing leveraging healthcare regulatory environment and administrative hierarchy",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["regulatory_language", "compliance_crisis_active", "sensitive_data_request", "unverified_authority", "threat_of_penalties"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Insider Threat Amplification",
+      "description": "During organizational crises, malicious insiders exploit relaxed security environments to claim false emergency authority or expand their legitimate authority beyond normal bounds, accessing systems and data typically restricted",
+      "attack_vector": "Authorized insider leveraging crisis conditions to exceed normal access boundaries",
+      "psychological_mechanism": "Crisis conditions normalize authority escalation, diffusion of responsibility, reduced verification",
+      "historical_example": "Numerous insider threat cases where legitimate crises provided cover for unauthorized data exfiltration",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["crisis_active", "unusual_access_patterns", "authorized_user_scope_expansion", "emergency_justification", "anomalous_data_access"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Milgram, S. (1974). Obedience to Authority: An Experimental View",
+      "Kahneman, D. (2011). Thinking, Fast and Slow - System 1/System 2 processing",
+      "Bion, W. R. (1961). Experiences in Groups - Basic assumption dependency",
+      "Janis, I. L. (1982). Groupthink: Psychological Studies of Policy Decisions",
+      "Berns et al. (2005). Neurological basis of authority compliance and stress effects",
+      "Sapolsky, R. M. (2004). Why Zebras Don't Get Ulcers - Stress neurobiology"
+    ],
+    "validation_status": "peer_reviewed",
+    "deployment_status": "production_ready"
+  }
+}

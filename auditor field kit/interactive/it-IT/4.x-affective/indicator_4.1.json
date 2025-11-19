@@ -1,0 +1,886 @@
+{
+  "indicator": "4.1",
+  "title": "FIELD KIT INDICATORE 4.1",
+  "subtitle": "Paralisi Decisionale Basata sulla Paura",
+  "category": "Vulnerabilità Affettive",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Categoria 4.x",
+
+  "description": {
+    "short": "Misura la vulnerabilità alla paralisi decisionale in ambito sicurezza causata da paura e ansia, che porta a una pericolosa inazione durante eventi di sicurezza critici",
+    "context": "La paralisi decisionale basata sulla paura si verifica quando le decisioni di cybersecurity innescano risposte d'ansia che bloccano i processi decisionali razionali. Questa vulnerabilità si manifesta quando i dipendenti diventano cognitivamente sopraffatti dalla complessità della sicurezza, dall'incertezza sull'autorità decisionale o dalla paura di fare scelte sbagliate, portando a una pericolosa inazione durante eventi di sicurezza critici. Le organizzazioni con questa vulnerabilità sperimentano ritardi nella risposta agli incidenti, sistemi non aggiornati e opportunità di rilevamento delle minacce perse che gli attaccanti sfruttano attivamente.",
+    "impact": "Le organizzazioni che soffrono di paralisi basata sulla paura subiscono ritardi critici nell'attivazione della risposta agli incidenti, fallimenti nella gestione delle patch e ritardi nelle decisioni di controllo degli accessi. Gli incidenti storici includono la violazione di Target del 2013, dove i team di sicurezza hanno ritardato la risposta a causa dell'incertezza sul protocollo e della paura di falsi positivi, consentendo agli attaccanti 19 giorni aggiuntivi di accesso. La violazione di Equifax del 2017 ha coinvolto molteplici punti in cui la paralisi basata sulla paura ha impedito azioni appropriate, con team paralizzati dalla complessità del coordinamento delle patch su sistemi critici e dalla paura di causare interruzioni al business.",
+    "psychological_basis": "La paralisi decisionale basata sulla paura emerge dal dirottamento dell'amigdala (amygdala hijack), dove i trigger di paura attivano il sistema nervoso simpatico prima del coinvolgimento della corteccia prefrontale, compromettendo il processo decisionale razionale. La ricerca di LeDoux dimostra che le risposte di paura si attivano entro 12-15 millisecondi tramite il percorso amigdala-talamo, mentre l'elaborazione razionale attraverso la corteccia prefrontale richiede 300-500 millisecondi. Combinato con l'impotenza appresa (learned helplessness) derivante dall'esposizione ripetuta a incidenti di sicurezza complessi e la paralisi da analisi sotto minaccia (limitazione cognitiva del 'numero magico sette' di Miller con stress indotto dalla paura), questo crea una tempesta perfetta dove gli individui diventano incapaci di elaborare efficacemente le informazioni rilevanti per la sicurezza. La teoria del prospetto (prospect theory) di Kahneman e Tversky rivela che l'avversione alla perdita si intensifica sotto incertezza, con le persone che pesano le potenziali perdite 2,5 volte più pesantemente rispetto ai guadagni equivalenti."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Punteggio_Finale = (w1 × Valutazione_Rapida + w2 × Profondità_Conversazione + w3 × Segnali_Allerta) × Moltiplicatore_Interdipendenza",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Le decisioni di sicurezza vengono implementate in modo coerente entro tempi definiti (patch critiche <72 ore, incidenti <1 ora). La delega chiara dell'autorità consente al personale appropriato di agire immediatamente. Le decisioni vengono prese in modo efficiente anche in condizioni di incertezza con standard 'sufficientemente buoni' stabiliti. I playbook di risposta preautorizzati consentono un'azione rapida senza paralisi da analisi.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Alcune decisioni di sicurezza subiscono ritardi moderati (patch critiche 3-7 giorni, incidenti 1-4 ore). L'autorità è generalmente chiara ma occasionalmente la confusione causa ritardi. La maggior parte delle decisioni viene presa entro tempi ragionevoli ma si verifica una certa paralisi da analisi. Esistono framework decisionali ma non vengono applicati in modo coerente.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Ritardi significativi regolari nelle decisioni di sicurezza (patch critiche >7 giorni, incidenti >4 ore). Confusione frequente sull'autorità decisionale o requisiti di escalation eccessivi. Paralisi da analisi comune, con team incapaci di agire senza informazioni perfette o consenso. Assenza di framework decisionali preautorizzati o procedure di bypass di emergenza.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_patch_decision_time": 0.18,
+      "q2_authority_clarity": 0.16,
+      "q3_escalation_frequency": 0.15,
+      "q4_disagreement_resolution": 0.14,
+      "q5_uncertainty_tolerance": 0.13,
+      "q6_offhours_authority": 0.12,
+      "q7_perfectionism_delay": 0.12
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_4.1(t) = w1·R_4.1(t) + w2·A_4.1(t) + w3·E_4.1(t) + w4·T_4.1(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_4.1(t) = 1 se DP > 0.7 e AD > 2·AD_baseline, altrimenti 0",
+          "description": "Rilevamento binario basato sull'indice di paralisi decisionale e sulla soglia di ritardo nell'azione",
+          "threshold": {
+            "DP": 0.7,
+            "AD_multiplier": 2.0
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_4.1(t) = sqrt((x(t) - μ)ᵀ Σ⁻¹ (x(t) - μ))",
+          "description": "Distanza di Mahalanobis per pattern di ritardo decisionale multivariato",
+          "variables": {
+            "x(t)": "vettore di osservazione [latenza_decisionale, conteggio_escalation, tempo_ricerca]",
+            "μ": "media baseline dai pattern decisionali storici",
+            "Σ": "matrice di covarianza (media mobile ponderata esponenziale)"
+          }
+        },
+        "emotional_state": {
+          "formula": "E_4.1(t) = α·Emozione_4.1(t) + β·E_4.1(t-1) + γ·Σ_j Contagio_Emotivo_j,4.1(t)",
+          "description": "Fattore di stato emotivo che incorpora intensità della paura e momentum emotivo",
+          "factors": [
+            "marcatori_paura_linguistici",
+            "indicatori_stress_comportamentali",
+            "pattern_comunicazione_incertezza",
+            "frequenza_escalation_ansia"
+          ]
+        },
+        "temporal_emotional": {
+          "formula": "T_4.1(t) = τ_0·e^(δ·F(t))·(1 + ζ·Incertezza(t))",
+          "description": "Funzione di ritardo nell'azione basata sull'intensità della paura e sull'incertezza",
+          "variables": {
+            "τ_0": "tempo decisionale baseline",
+            "F(t)": "intensità della paura al tempo t",
+            "Incertezza(t)": "livello di incertezza decisionale"
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.25,
+        "w2_anomaly": 0.35,
+        "w3_emotional": 0.25,
+        "w4_temporal": 0.15
+      },
+      "fear_intensity_model": {
+        "formula": "F_i(t) = P_minaccia(t)·V_vulnerabilità(t) / (C_controllo(t) + ε)",
+        "description": "Intensità della paura che incorpora percezione della minaccia, valutazione della vulnerabilità e controllo percepito",
+        "interpretation": "Paura più elevata quando minaccia e vulnerabilità sono alte ma il controllo è basso"
+      },
+      "decision_paralysis_index": {
+        "formula": "DP(F,T,O) = [F^α / (F^α + β^α)]·[1 - 1/(1 + e^(-γ(T - T_0)))]·[1/(1 + O)]",
+        "description": "Indice di paralisi composito basato su paura, pressione temporale e numero di opzioni",
+        "components": {
+          "F": "intensità della paura",
+          "T": "pressione temporale",
+          "T_0": "soglia di paralisi",
+          "O": "numero di opzioni"
+        }
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "analisi_timeline_decisioni_sicurezza",
+        "log_risposta_incidenti",
+        "registri_distribuzione_patch",
+        "tracciamento_pattern_escalation"
+      ],
+      "evidence_required": [
+        "timeline_decisioni_patch_critiche_recenti",
+        "playbook_risposta_incidenti_con_autorità",
+        "documentazione_matrice_autorità_decisionale",
+        "procedure_bypass_emergenza",
+        "registri_formazione_simulazione_decisionale"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "sistema_risposta_incidenti",
+          "fields": ["id_incidente", "tempo_rilevamento", "tempo_contenimento", "approvatori_decisione", "conteggio_escalation"],
+          "retention": "180_giorni"
+        },
+        {
+          "source": "sistema_gestione_patch",
+          "fields": ["id_vulnerabilità", "data_identificazione", "data_distribuzione_patch", "criticità", "catena_approvazione"],
+          "retention": "365_giorni"
+        },
+        {
+          "source": "sistema_ticketing",
+          "fields": ["id_ticket", "relativo_sicurezza", "tempo_creazione", "tempo_risoluzione", "cambi_stato", "conteggio_riassegnazioni"],
+          "retention": "180_giorni"
+        }
+      ],
+      "optional": [
+        {
+          "source": "piattaforma_comunicazione",
+          "fields": ["id_messaggio", "parole_chiave_decisione_sicurezza", "marcatori_urgenza", "linguaggio_incertezza", "timestamp"],
+          "retention": "90_giorni"
+        },
+        {
+          "source": "log_controllo_accessi",
+          "fields": ["id_richiesta_accesso", "tempo_richiesta", "tempo_approvazione", "tempo_negazione", "override_emergenza"],
+          "retention": "365_giorni"
+        },
+        {
+          "source": "metriche_stress_benessere",
+          "fields": ["id_utente_anonimo", "indicatori_stress", "metriche_carico_lavoro", "timestamp"],
+          "retention": "90_giorni"
+        }
+      ],
+      "telemetry_mapping": {
+        "decision_latency": {
+          "calculation": "Tempo dall'identificazione del problema di sicurezza all'implementazione della decisione",
+          "query": "SELECT AVG(tempo_risoluzione - tempo_rilevamento) FROM incidenti WHERE relativo_sicurezza=true AND criticità='alta' AND finestra_temporale='30g'"
+        },
+        "escalation_frequency": {
+          "calculation": "Percentuale di decisioni di sicurezza che richiedono escalation multiple",
+          "query": "SELECT (COUNT(conteggio_escalation > 2) / COUNT(*)) FROM decisioni_sicurezza WHERE finestra_temporale='30g'"
+        },
+        "paralysis_indicators": {
+          "calculation": "Conteggio delle decisioni che superano la timeline prevista di 2x o più",
+          "query": "SELECT COUNT(*) FROM decisioni WHERE (tempo_effettivo / tempo_previsto) > 2 AND relativo_sicurezza=true"
+        }
+      }
+    },
+    "integration_apis": {
+      "incident_response": "API ServiceNow/Jira - Tracciamento incidenti, Cambi di stato, Escalation",
+      "patch_management": "API WSUS/SCCM/Qualys - Rilevamento vulnerabilità, Stato distribuzione patch",
+      "communication": "API Slack/Teams - Messaggi canali sicurezza, Analisi sentiment",
+      "siem": "API Splunk/Sentinel - Correlazione eventi sicurezza, Timeline di risposta"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "7.1",
+        "name": "Risposta Acuta allo Stress",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "Lo stress acuto amplifica la paralisi basata sulla paura riducendo l'attività della corteccia prefrontale e aumentando la reattività dell'amigdala",
+        "formula": "P(4.1|7.1) = 0.75"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Affaticamento Decisionale",
+        "probability": 0.70,
+        "factor": 1.4,
+        "description": "L'affaticamento decisionale esaurisce le risorse cognitive necessarie per superare l'inazione basata sulla paura",
+        "formula": "P(4.1|5.2) = 0.70"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Bypass Indotto da Urgenza",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "La pressione temporale paradossalmente intensifica la paralisi aumentando la paura di prendere decisioni sbagliate rapidamente",
+        "formula": "P(4.1|2.1) = 0.65"
+      },
+      {
+        "indicator": "1.5",
+        "name": "Conformità Basata sulla Paura",
+        "probability": 0.80,
+        "factor": 1.6,
+        "description": "I pattern di conformità basata sulla paura sono fortemente correlati con la paralisi decisionale sotto minaccia",
+        "formula": "P(4.1|1.5) = 0.80"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "4.7",
+        "name": "Errori Innescati dall'Ansia",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "La paralisi decisionale crea periodi di ansia prolungati che aumentano i tassi di errore quando l'azione finalmente si verifica"
+      },
+      {
+        "indicator": "4.5",
+        "name": "Occultamento della Sicurezza Basato sulla Vergogna",
+        "probability": 0.60,
+        "factor": 1.3,
+        "description": "I ritardi indotti dalla paralisi creano condizioni per la vergogna riguardo all'inazione, portando a comportamenti di occultamento"
+      },
+      {
+        "indicator": "5.1",
+        "name": "Affaticamento da Allerta",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "La paralisi basata sulla paura impedisce la risoluzione tempestiva degli allerta, aumentando il volume complessivo di allerta e l'affaticamento"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["4.1", "7.1", "2.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) dove v_i = punteggio vulnerabilità normalizzato",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 3.2,
+      "description": "Tempesta perfetta: Paralisi da paura + Stress acuto + Urgenza temporale = 280% di aumento della probabilità di fallimento nella risposta agli incidenti",
+      "real_world_example": "Violazione Target 2013 - Team di sicurezza paralizzati da allerta complessi, stress derivante dalle potenziali conseguenze di falsi positivi e autorità poco chiara durante la finestra di rilevamento critica"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["7.1", "5.2", "2.1", "1.5"],
+      "child_nodes": ["4.7", "4.5", "5.1"],
+      "conditional_probability_table": {
+        "P_4.1_base": 0.18,
+        "P_4.1_dato_stress": 0.48,
+        "P_4.1_dato_affaticamento": 0.42,
+        "P_4.1_dato_urgenza": 0.45,
+        "P_4.1_dato_tutti": 0.85
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_patch_decision_time",
+          "weight": 0.18,
+          "title": "Timeline Decisionale per Patch Critiche",
+          "question": "Quanto tempo impiega tipicamente la Sua organizzazione per decidere se implementare patch di sicurezza critiche dopo che sono state identificate come necessarie?",
+          "options": [
+            {
+              "value": "fast",
+              "score": 0,
+              "label": "Le patch critiche vengono distribuite in modo coerente entro 72 ore dall'identificazione"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Le patch critiche vengono tipicamente distribuite entro 3-7 giorni con ritardi occasionali"
+            },
+            {
+              "value": "slow",
+              "score": 1,
+              "label": "Le patch critiche richiedono regolarmente più di 7 giorni a causa di ritardi decisionali"
+            }
+          ],
+          "evidence_required": "Documentazione timeline decisionale patch critiche recenti, log gestione patch",
+          "soc_mapping": "metrica decision_latency dal sistema gestione patch"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_authority_clarity",
+          "weight": 0.16,
+          "title": "Autorità per Azione Immediata",
+          "question": "Quando viene identificato un allerta di sicurezza o un potenziale incidente, qual è il Suo processo standard per decidere chi ha l'autorità di intraprendere un'azione immediata?",
+          "options": [
+            {
+              "value": "clear",
+              "score": 0,
+              "label": "Playbook di risposta preautorizzati specificano esattamente chi può intraprendere azione immediata senza approvazioni aggiuntive"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Esiste una comprensione generale dell'autorità ma confusione occasionale su chi può agire immediatamente"
+            },
+            {
+              "value": "unclear",
+              "score": 1,
+              "label": "Confusione frequente sull'autorità decisionale che richiede escalation in tempo reale per determinare chi può agire"
+            }
+          ],
+          "evidence_required": "Playbook risposta incidenti, matrice autorità decisionale, esempio recente risposta incidenti",
+          "soc_mapping": "escalation_frequency dai log risposta incidenti"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_escalation_frequency",
+          "weight": 0.15,
+          "title": "Pattern di Escalation Multi-Livello",
+          "question": "Con quale frequenza le decisioni relative alla sicurezza vengono sottoposte a escalation a più livelli di management prima che venga intrapresa un'azione?",
+          "options": [
+            {
+              "value": "rare",
+              "score": 0,
+              "label": "Meno del 15% delle decisioni di sicurezza di routine richiede escalation oltre i livelli di autorità designati"
+            },
+            {
+              "value": "occasional",
+              "score": 0.5,
+              "label": "Il 15-40% delle decisioni di sicurezza richiede escalation multiple"
+            },
+            {
+              "value": "frequent",
+              "score": 1,
+              "label": "Più del 40% delle decisioni di sicurezza richiede escalation multiple al management prima dell'azione"
+            }
+          ],
+          "evidence_required": "Log escalation degli ultimi 6 mesi, documentazione catena approvazioni",
+          "soc_mapping": "distribuzione escalation_count dal sistema ticketing"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_disagreement_resolution",
+          "weight": 0.14,
+          "title": "Risoluzione Disaccordi nel Team",
+          "question": "Cosa accade quando i membri del Suo team IT o di sicurezza non sono d'accordo sulla migliore risposta a una minaccia alla sicurezza?",
+          "options": [
+            {
+              "value": "structured",
+              "score": 0,
+              "label": "Processo decisionale con tempi definiti e decisore designato che risolve i disaccordi entro tempi stabiliti"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Discussione di team per raggiungere il consenso ma senza limiti di tempo formali o autorità decisionale designata"
+            },
+            {
+              "value": "paralyzed",
+              "score": 1,
+              "label": "I disaccordi ritardano frequentemente le decisioni indefinitamente mentre si cerca consenso o informazioni perfette"
+            }
+          ],
+          "evidence_required": "Documentazione processo decisionale, esempio recente risoluzione disaccordo",
+          "soc_mapping": "correlazione decision_latency con team_member_count"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_uncertainty_tolerance",
+          "weight": 0.13,
+          "title": "Processo Decisionale in Condizioni di Incertezza",
+          "question": "Come gestisce la Sua organizzazione le decisioni di sicurezza quando la scelta 'giusta' non è chiara e il tempo è limitato?",
+          "options": [
+            {
+              "value": "actionable",
+              "score": 0,
+              "label": "Standard documentati 'sufficientemente buoni' specificano quando una confidenza dell'80% è sufficiente per agire sotto pressione temporale"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Alcune decisioni vengono prese in condizioni di incertezza ma senza standard formali per livelli di confidenza accettabili"
+            },
+            {
+              "value": "perfectionist",
+              "score": 1,
+              "label": "Il team è incapace di agire senza alta certezza, portando a ritardi pericolosi durante minacce ambigue"
+            }
+          ],
+          "evidence_required": "Linee guida tolleranza rischio, documentazione framework decisionale",
+          "soc_mapping": "paralysis_indicators dall'analisi timeline decisionale"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_offhours_authority",
+          "weight": 0.12,
+          "title": "Autorità di Emergenza Fuori Orario",
+          "question": "Qual è la Sua politica per i membri del team di sicurezza che prendono decisioni durante orari non lavorativi o quando gli approvatori usuali non sono disponibili?",
+          "options": [
+            {
+              "value": "empowered",
+              "score": 0,
+              "label": "I protocolli di bypass di emergenza consentono al personale designato di agire immediatamente con revisione post-incidente e protezione da ritorsioni"
+            },
+            {
+              "value": "limited",
+              "score": 0.5,
+              "label": "Esistono alcune procedure di emergenza ma autorità poco chiara o paura delle conseguenze ne limita l'utilizzo"
+            },
+            {
+              "value": "blocked",
+              "score": 1,
+              "label": "Nessuna procedura di bypass di emergenza; decisioni critiche ritardate fino a quando le autorità di approvazione normali sono disponibili"
+            }
+          ],
+          "evidence_required": "Procedure risposta emergenza, esempio risposta incidente fuori orario, log utilizzo bypass",
+          "soc_mapping": "frequenza emergency_override dai log controllo accessi"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_perfectionism_delay",
+          "weight": 0.12,
+          "title": "Prevenzione Paralisi da Analisi",
+          "question": "Con quale frequenza le azioni di sicurezza importanti vengono ritardate perché i membri del team stanno cercando la soluzione 'perfetta'?",
+          "options": [
+            {
+              "value": "rare",
+              "score": 0,
+              "label": "Limiti di tempo obbligatori prevengono il perfezionismo; azioni predefinite si verificano se le decisioni non vengono prese entro tempi specificati"
+            },
+            {
+              "value": "occasional",
+              "score": 0.5,
+              "label": "Paralisi da analisi occasionale si verifica ma generalmente viene riconosciuta e corretta"
+            },
+            {
+              "value": "frequent",
+              "score": 1,
+              "label": "Ritardi frequenti dovuti a ricerche eccessive, analisi e ricerca di soluzioni perfette in condizioni di incertezza"
+            }
+          ],
+          "evidence_required": "Documentazione politica decisioni con tempi definiti, esempi di paralisi da analisi e risoluzione",
+          "soc_mapping": "distribuzione research_time dall'analisi timeline decisionale"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UNA opzione per ogni domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze devono essere documentate per la traccia di audit.",
+      "calculation": "Punteggio_Rapido = Σ(punteggio_domanda × peso_domanda) / Σ(peso_domanda)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Velocità Decisionale e Autorità",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Mi parli della Sua più recente decisione su una patch critica. Quanto tempo è trascorso dall'identificazione alla distribuzione, e quali passaggi sono stati coinvolti?",
+              "scoring_guidance": {
+                "green": "Timeline specifica sotto 72 ore con autorità decisionale chiara e minima escalation",
+                "yellow": "Timeline 3-7 giorni con una certa confusione sull'autorità o livelli di approvazione non necessari",
+                "red": "Timeline superiore a 7 giorni con escalation multiple, revisioni di comitato o periodi di ricerca indefiniti"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa sarebbe successo se la persona che ha preso quella decisione non fosse stata disponibile? Chi sarebbe intervenuto?",
+                  "evidence_type": "autorità_backup"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ci sono stati punti in cui la decisione ha subito ritardi? Cosa ha causato quei ritardi?",
+                  "evidence_type": "analisi_ritardi"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Mi illustri cosa è successo durante il Suo ultimo allerta di sicurezza o potenziale incidente. Dal rilevamento al contenimento, chi ha preso le decisioni e quanto rapidamente?",
+              "scoring_guidance": {
+                "green": "Contenimento entro 1 ora con catena di autorità chiara e autorizzazione all'azione immediata",
+                "yellow": "Contenimento entro 1-4 ore con una certa confusione sull'autorità o ritardi di escalation",
+                "red": "Contenimento ritardato oltre 4 ore a causa di autorità poco chiara, processo decisionale di comitato o paura di agire"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Qualcuno ha esitato ad intraprendere un'azione perché non era sicuro di avere l'autorità? Cosa è successo?",
+                  "evidence_type": "esitazione_autorità"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come sarebbe stato gestito questo incidente diversamente se fosse accaduto alle 2 del mattino di un weekend?",
+                  "evidence_type": "preparazione_fuori_orario"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Gestione dell'Incertezza e dei Disaccordi",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Descriva una situazione recente in cui il Suo team di sicurezza ha dovuto prendere una decisione senza informazioni complete o in cui i membri del team non erano d'accordo sull'approccio giusto. Cosa è successo?",
+              "scoring_guidance": {
+                "green": "Processo decisionale con tempi definiti e decisore designato che ha agito nonostante l'incertezza entro un tempo ragionevole",
+                "yellow": "Discussione prolungata per raggiungere il consenso ma alla fine decisione presa, timeline più lunga dell'ottimale",
+                "red": "Decisione paralizzata dal disaccordo o dall'incertezza, ricerca eccessiva senza azione o ritardo indefinito"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quanto tempo è trascorso dal riconoscimento del disaccordo alla presa della decisione finale?",
+                  "evidence_type": "tempo_risoluzione_disaccordo"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quale percentuale di confidenza aveva il team quando la decisione è stata finalmente presa?",
+                  "evidence_type": "soglia_confidenza"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Mi racconti di una volta in cui una decisione di sicurezza è stata ritardata perché il team stava cercando di trovare la soluzione 'perfetta'. Come si è risolta quella situazione?",
+              "scoring_guidance": {
+                "green": "L'organizzazione ha riconosciuto rapidamente la paralisi da analisi e ha implementato decisione con tempi definiti o azione predefinita",
+                "yellow": "Il ritardo si è verificato ma alla fine è stato corretto attraverso intervento informale o pressione esterna",
+                "red": "Ritardo significativo ha causato impatto misurabile sulla sicurezza; pattern di perfezionismo che impedisce azione tempestiva"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa ha finalmente rotto lo stallo? È stata pressione esterna, una scadenza o qualcos'altro?",
+                  "evidence_type": "risoluzione_paralisi"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Guardando indietro, si sarebbe potuta prendere una decisione prima con rischio accettabile? Cosa lo ha impedito?",
+                  "evidence_type": "analisi_retrospettiva"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cultura Organizzativa e Sicurezza Psicologica",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Quanto si sentono a proprio agio i membri del Suo team di sicurezza nel prendere decisioni che potrebbero essere sbagliate ma sono necessarie dati i vincoli di tempo? Può farmi un esempio?",
+              "scoring_guidance": {
+                "green": "Esempi chiari di processo decisionale protetto; l'organizzazione celebra l'assunzione appropriata di rischi; politiche esplicite proteggono decisioni di emergenza in buona fede",
+                "yellow": "Livelli di comfort misti; esiste una certa protezione ma la paura della colpa influenza ancora la velocità decisionale",
+                "red": "Forte paura di prendere decisioni sbagliate; cultura della colpa punisce gli errori più dell'inazione; nessuna protezione per decisioni di emergenza"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Qualcuno è mai stato criticato o punito per aver preso una decisione di sicurezza troppo rapidamente, anche se era la scelta giusta? Cosa è successo?",
+                  "evidence_type": "indicatore_cultura_colpa"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quali politiche o pratiche specifiche proteggono le persone che devono prendere decisioni di sicurezza rapide sotto pressione?",
+                  "evidence_type": "sicurezza_psicologica"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Descriva la Sua formazione sul processo decisionale. I membri del team praticano il prendere decisioni di sicurezza sotto pressione temporale con informazioni incomplete?",
+              "scoring_guidance": {
+                "green": "Esercitazioni tabletop regolari specificamente focalizzate sul processo decisionale sotto pressione; la simulazione include limiti di tempo e scenari di incertezza",
+                "yellow": "Esiste qualche formazione ma si concentra principalmente sulla risposta tecnica piuttosto che sulla velocità e confidenza decisionale",
+                "red": "Nessuna formazione focalizzata sulle decisioni; i membri del team non hanno mai praticato il prendere decisioni di sicurezza rapide sotto pressione simulata"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quando è stata l'ultima simulazione decisionale o esercitazione tabletop? Quali scenari avete praticato?",
+                  "evidence_type": "recenza_formazione"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come misura se la velocità e la confidenza decisionale dei membri del team migliorano nel tempo?",
+                  "evidence_type": "tracciamento_competenze"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Ricerca di Segnali di Allerta",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle politiche dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Dobbiamo essere assolutamente certi prima di intraprendere qualsiasi azione di sicurezza che potrebbe influenzare il business...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"È meglio ritardare che prendere rapidamente la decisione sbagliata...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Formiamo un comitato per valutare qualsiasi decisione di sicurezza significativa...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"I membri del nostro team di sicurezza non sono autorizzati a prendere decisioni senza approvazione...\"",
+              "severity": "critical",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Dobbiamo ricercare tutte le opzioni in modo approfondito prima di agire sugli allerta di sicurezza...\"",
+              "severity": "high",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Abbiamo avuto allerta di sicurezza rimasti irrisolti per giorni mentre cercavamo di capire cosa fare...\"",
+              "severity": "critical",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Tutti devono essere d'accordo prima che possiamo intraprendere azioni su problemi di sicurezza...\"",
+              "severity": "high",
+              "score_impact": 0.11,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Punteggio_Conversazione = Media_Ponderata(punteggi_sottosezioni) + Σ(impatti_segnali_allerta)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare incidenti di sicurezza simulati che richiedono processo decisionale rapido mensilmente",
+      "correlation_analysis": "Confrontare i punteggi di valutazione manuale con le metriche effettive di latenza decisionale (correlazione target > 0.80)",
+      "drift_detection": "Test di Kolmogorov-Smirnov sulle distribuzioni delle timeline decisionali, ricalibrazione se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicurarsi che il rischio di paralisi previsto corrisponda alle frequenze di ritardo decisionale osservate",
+      "baseline_period": "90_giorni",
+      "recalibration_trigger": "Drift rilevato o punteggio di validazione < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Velocità di Implementazione Decisionale",
+        "formula": "Tempo dall'identificazione del problema di sicurezza all'implementazione dell'azione",
+        "baseline": "latenza decisionale mediana corrente",
+        "target": "Patch critiche <72 ore (conformità 90%), incidenti contenuti <1 ora (conformità 95%)",
+        "measurement": "logging automatizzato + audit mensile"
+      },
+      {
+        "metric": "Rapporto di Efficienza delle Escalation",
+        "formula": "Percentuale di decisioni di sicurezza che richiedono escalation oltre i livelli di autorità designati",
+        "baseline": "frequenza escalation corrente",
+        "target": "<15% delle decisioni di sicurezza di routine richiedono escalation",
+        "measurement": "analisi sistema ticketing + revisione trimestrale"
+      },
+      {
+        "metric": "Tasso di Attivazione Risposta Emergenza",
+        "formula": "Percentuale di incidenti qualificanti che innescano risposta rapida entro i limiti di tempo documentati",
+        "baseline": "utilizzo corrente protocollo emergenza",
+        "target": "100% degli incidenti qualificanti per gravità innescano risposta rapida, <5% falsi positivi",
+        "measurement": "tracciamento incidenti automatizzato + revisione post-incidente"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Playbook di Risposta Preautorizzati",
+        "description": "Sviluppare playbook di risposta agli incidenti specifici con azioni preautorizzate per scenari comuni",
+        "implementation": "Creare alberi decisionali con logica if-then che eliminano la paralisi decisionale in tempo reale. Includere designazioni di autorità specifiche per ogni azione di risposta e condizioni in base alle quali ciascuna azione può essere eseguita senza approvazioni aggiuntive. Documentare soglie decisionali (impatto finanziario, criticità business, complessità tecnica) che innescano diversi livelli di approvazione. Assicurarsi che i playbook specifichino chi può eseguire ciascuna risposta in momenti diversi (orario lavorativo, fuori orario, weekend).",
+        "technical_controls": "Sistema playbook digitale integrato con piattaforma risposta incidenti, navigazione automatizzata albero decisionale, verifica preautorizzazione",
+        "roi": "380% medio entro 18 mesi",
+        "effort": "medium",
+        "timeline": "60-90 giorni"
+      },
+      {
+        "id": "sol_2",
+        "title": "Matrice di Autorità Decisionale",
+        "description": "Creare matrici di autorità chiare che specificano esattamente chi può prendere diversi tipi di decisioni di sicurezza",
+        "implementation": "Documentare autorità decisionali specifiche per tutti gli scenari di sicurezza comuni (distribuzione patch, risposta incidenti, revoca accessi, configurazione strumenti sicurezza). Includere disposizioni di 'autorità supplente' per situazioni fuori orario ed emergenze. Definire soglie specifiche (limiti finanziari, livelli impatto business, complessità tecnica) che determinano i livelli di approvazione richiesti. Assicurarsi che la matrice sia accessibile, regolarmente aggiornata e testata attraverso esercitazioni di simulazione.",
+        "technical_controls": "Database matrice autorità con accesso basato su ruoli, routing approvazioni automatizzato, tracciamento decisioni",
+        "roi": "320% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_3",
+        "title": "Processi Decisionali con Tempi Definiti",
+        "description": "Implementare limiti di tempo obbligatori per diverse categorie di decisioni di sicurezza",
+        "implementation": "Stabilire limiti di tempo specifici per categorie di decisioni (patch critiche: 24 ore, attivazione risposta incidenti: 30 minuti, revoca accessi: 2 ore). Dopo la scadenza del tempo, azioni predefinite si verificano automaticamente a meno che non vengano esplicitamente annullate da autorità designata. Creare timer di escalation che automaticamente elevano le decisioni al livello di autorità successivo se i tempi definiti vengono superati. Monitorare la conformità con i requisiti di tempo definito e affrontare i ritardi sistematici.",
+        "technical_controls": "Timer decisionali automatizzati nel sistema ticketing, trigger azioni predefinite, dashboard conformità tempi definiti",
+        "roi": "410% medio entro 12 mesi",
+        "effort": "high",
+        "timeline": "60-90 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Standard di Sicurezza 'Sufficientemente Buoni'",
+        "description": "Stabilire criteri documentati per decisioni di sicurezza accettabili in condizioni di incertezza",
+        "implementation": "Creare linee guida di tolleranza al rischio che specificano quando una confidenza dell'80% è sufficiente per agire rispetto a quando è necessaria un'analisi aggiuntiva. Documentare standard di qualità decisionale che bilanciano velocità con accuratezza. Fornire esempi specifici di decisioni 'sufficientemente buone' in vari contesti di sicurezza. Formare i membri del team sull'applicazione di framework di tolleranza al rischio durante situazioni critiche temporalmente. Celebrare e proteggere l'assunzione appropriata di rischi nel processo decisionale di sicurezza.",
+        "technical_controls": "Strumenti di supporto decisionale sulla tolleranza al rischio, tracciamento livelli confidenza, metriche qualità decisionale",
+        "roi": "290% medio entro 18 mesi",
+        "effort": "low",
+        "timeline": "30-45 giorni"
+      },
+      {
+        "id": "sol_5",
+        "title": "Protocolli di Bypass delle Escalation",
+        "description": "Progettare procedure di emergenza che consentano al personale di sicurezza di bypassare le catene di approvazione normali durante incidenti attivi",
+        "implementation": "Definire trigger specifici per l'attivazione del bypass di emergenza (violazione attiva, ransomware, esfiltrazione dati in corso). Creare procedure protette che consentono al personale di sicurezza designato di agire immediatamente con requisiti di documentazione post-incidente. Stabilire protezione esplicita contro ritorsioni per azioni di emergenza in buona fede. Implementare processo di revisione post-incidente per validare l'utilizzo del bypass senza focus punitivo. Testare regolarmente le procedure di bypass attraverso esercitazioni di simulazione.",
+        "technical_controls": "Sistema approvazione bypass emergenza, trigger revisione post-incidente automatizzati, analytics utilizzo bypass",
+        "roi": "450% medio entro 12 mesi",
+        "effort": "medium",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_6",
+        "title": "Formazione di Simulazione Decisionale",
+        "description": "Condurre esercitazioni tabletop regolari focalizzate specificamente sul processo decisionale sotto pressione",
+        "implementation": "Progettare scenari realistici con pressione temporale, informazioni incomplete e interessi degli stakeholder contrastanti. Praticare la velocità decisionale piuttosto che solo la risposta tecnica. Includere scenari dove le informazioni 'perfette' non sono disponibili e i team devono agire con confidenza dell'80%. Debriefing delle esercitazioni focalizzato su qualità decisionale, velocità e confidenza. Costruire resilienza psicologica per decisioni di sicurezza ad alto rischio. Misurare e tracciare il miglioramento della competenza decisionale nel tempo.",
+        "technical_controls": "Piattaforma simulazione con tracciamento decisioni, strumenti valutazione competenze, analytics prestazioni",
+        "roi": "310% medio entro 18 mesi",
+        "effort": "low",
+        "timeline": "30 giorni iniziale, trimestrale continuativo"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_3", "sol_5"],
+      "high_value": ["sol_1", "sol_2"],
+      "foundational": ["sol_4", "sol_6"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Sfruttamento Ransomware Durante Paralisi Decisionale",
+      "description": "Gli attaccanti creano deliberatamente pressione temporale introducendo scenari tecnici complessi che sopraffanno la capacità decisionale. Le organizzazioni con paralisi decisionale falliscono nell'isolare rapidamente i sistemi o attivare la risposta agli incidenti, consentendo al ransomware di diffondersi attraverso la rete mentre i team dibattono gli approcci di risposta.",
+      "attack_vector": "Ransomware con movimento laterale aggressivo che sfrutta decisioni di contenimento ritardate",
+      "psychological_mechanism": "La paura di prendere decisioni di contenimento sbagliate combinata con l'incertezza sull'impatto dell'isolamento dei sistemi crea paralisi mentre l'attacco progredisce",
+      "historical_example": "Molteplici incidenti ransomware dove le organizzazioni hanno ritardato l'isolamento della rete per ore mentre dibattevano l'impatto sul business, consentendo la crittografia completa della rete",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["DP > 0.7", "AD > 2·AD_baseline", "rilevamento_ransomware_senza_contenimento", "conteggio_escalation_in_aumento"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Sfruttamento Finestra di Vulnerabilità Critica",
+      "description": "Quando vengono pubblicati exploit zero-day, gli attaccanti hanno una finestra ristretta prima che le patch vengano applicate. Le organizzazioni che soffrono di paralisi decisionale impiegano giorni o settimane a dibattere approcci di distribuzione delle patch, lasciando sistemi critici vulnerabili mentre gli attaccanti sfruttano attivamente la risposta ritardata.",
+      "attack_vector": "Sfruttamento di vulnerabilità pubblicate durante periodi estesi di decisione sulle patch",
+      "psychological_mechanism": "La paura di causare interruzioni di sistema o di business crea paralisi che lascia le vulnerabilità non affrontate",
+      "historical_example": "Violazione Equifax 2017 dove la paralisi basata sulla paura riguardo al coordinamento delle patch su sistemi critici ha portato allo sfruttamento di una finestra di vulnerabilità estesa",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["latenza_patch > 7_giorni", "vulnerabilità_critica_identificata", "nessuna_distribuzione_patch_programmata", "paralisi_analisi_impatto_business"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Business Email Compromise Durante Ritardi di Risposta",
+      "description": "Gli attacchi di phishing sofisticati che prendono di mira i dirigenti si basano sulla lentezza delle organizzazioni nel rispondere a pattern o richieste email inusuali. La paralisi decisionale impedisce rapidi blocchi degli account o blocchi dei bonifici, consentendo alle frodi finanziarie di avere successo mentre i team di sicurezza cercano consenso sulle risposte appropriate.",
+      "attack_vector": "Attacchi BEC che sfruttano l'incapacità organizzativa di prendere decisioni rapide di sospensione account o blocco transazioni",
+      "psychological_mechanism": "La paura di bloccare accidentalmente comunicazioni esecutive legittime o transazioni business crea paralisi durante la finestra di frode",
+      "historical_example": "Molteplici incidenti BEC dove i team di sicurezza hanno identificato attività sospette ma hanno ritardato la sospensione dell'account per ore mentre cercavano approvazione, consentendo il completamento di trasferimenti fraudolenti",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["pattern_email_esecutivo_inusuale", "nessuna_risposta_rapida", "escalation_a_approvatori_multipli", "blocco_account_ritardato > 2_ore"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Progressione Minaccia Insider Attraverso Ritardo Accesso",
+      "description": "Gli insider malintenzionati sfruttano la riluttanza organizzativa a prendere decisioni difficili sul comportamento sospetto dei dipendenti. La paralisi basata sulla paura impedisce la revoca tempestiva degli accessi o l'avvio di indagini, consentendo alle minacce insider di progredire dalla ricognizione all'esfiltrazione dati mentre i team di sicurezza evitano decisioni conflittuali.",
+      "attack_vector": "Esfiltrazione dati insider durante ritardi estesi nella revisione e revoca degli accessi",
+      "psychological_mechanism": "La paura di accusare ingiustamente i dipendenti e le conseguenze HR crea paralisi nelle decisioni di controllo accessi nonostante pattern di comportamento sospetti",
+      "historical_example": "Casi di minaccia insider dove i team di sicurezza hanno osservato comportamenti sospetti per settimane ma hanno ritardato la restrizione degli accessi a causa di incertezza e paura di problemi di relazioni con i dipendenti",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": ["pattern_accesso_sospetti", "revoca_accesso_ritardata", "indagine_posticipata", "indicatori_esfiltrazione_dati_senza_risposta"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-09",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-09",
+    "translator": "Claude (Anthropic)",
+    "research_basis": [
+      "LeDoux, J. (2000). Emotion circuits in the brain. Annual Review of Neuroscience, 23, 155-184",
+      "Kahneman, D., & Tversky, A. (1979). Prospect theory: Loss aversion under uncertainty",
+      "Beck, A. T. (1967). Cognitive triad and negative automatic thoughts",
+      "Seligman, M. E. (1972). Learned helplessness model",
+      "Miller, G. A. (1956). The magical number seven, plus or minus two",
+      "Menzies Lyth, I. (1960). Social defense systems against anxiety"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

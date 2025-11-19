@@ -1,0 +1,614 @@
+{
+  "indicator": "1.7",
+  "title": "INDICATOR 1.7 FIELD KIT",
+  "subtitle": "Deferenza all'Autorità Tecnica",
+  "category": "Vulnerabilità Basate sull'Autorità",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 1.x",
+  "description": {
+    "short": "Misura la vulnerabilità agli attaccanti che sfruttano rivendicazioni di competenza tecnica per bypassare i controlli di sicurezza",
+    "context": "Quando i dipendenti incontrano problemi tecnici complessi oltre la loro conoscenza, spesso bypassano i normali protocolli di sicurezza e deferiscono a chiunque sembri tecnicamente competente. Gli attaccanti sfruttano questo impersonando supporto IT, fornitori o consulenti tecnici per ottenere accesso ai sistemi, credenziali o informazioni sensibili.",
+    "impact": "Le organizzazioni con alta suscettibilità sperimentano ingegneria sociale riuscita tramite falso supporto IT, installazione software maligno, raccolta credenziali ed esfiltrazione dati. Gli incidenti storici includono l'uso estensivo di impersonificazione tecnica da parte di Kevin Mitnick, violazione RSA SecurID (2011), violazione Target (2013) e violazione Anthem (2015) dove rivendicazioni di autorità tecnica facilitarono compromissione iniziale e furto credenziali.",
+    "psychological_basis": "Offloading cognitivo - quando gli individui incontrano complessità tecnica eccedente la loro competenza, trasferiscono automaticamente autorità decisionale agli esperti percepiti, bypassando normali protocolli di verifica. Questo meccanismo opera attraverso dipendenza epistemica (affidamento su altri per conoscenza specializzata) combinata con effetti Dunning-Kruger dove conoscenza tecnica limitata previene valutazione rivendicazioni tecniche. La Teoria del Carico Cognitivo spiega perché il gergo tecnico sopraffà capacità elaborazione, forzando affidamento su credibilità fonte piuttosto che valutazione contenuto."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Esistono protocolli di verifica obbligatori per tutti i contatti supporto tecnico e sono seguiti costantemente. I dipendenti usano verifica richiamata a numeri conosciuti. Evidenza documentata di richieste tecniche sospette rifiutate negli ultimi 6 mesi.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Esistono procedure di verifica base ma non seguite costantemente. Alcuni dipendenti bypassano verifica sotto pressione temporale. Protocolli verifica applicati solo a certi tipi richieste tecniche ma non altri.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Nessun processo formale di verifica per contatti supporto tecnico. I dipendenti conformano abitualmente con richieste tecniche senza verifica. Incidenti recenti mostrano ingegneria sociale riuscita tramite impersonificazione tecnica.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_verification_protocol": 0.2,
+      "q2_callback_system": 0.18,
+      "q3_vendor_authentication": 0.16,
+      "q4_training_frequency": 0.14,
+      "q5_central_logging": 0.12,
+      "q6_urgency_policy": 0.1,
+      "q7_documentation_standard": 0.1
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_1.7(t) = w1·R_1.7(t) + w2·A_1.7(t) + w3·B_1.7(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_1.7(t) = 1 if TJD(t) > θ_high AND verification_attempted = false, else 0",
+          "description": "Rilevamento binario quando densità gergo tecnico supera soglia senza verifica",
+          "threshold": {
+            "TJD_high": 0.4,
+            "verification_required": true
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_1.7(t) = (TJD(t) - μ_domain) / σ_domain",
+          "description": "Z-score densità gergo tecnico confrontato con baseline dominio",
+          "variables": {
+            "TJD(t)": "Densità gergo tecnico al tempo t",
+            "μ_domain": "Densità gergo media per comunicazioni tecniche legittime",
+            "σ_domain": "Deviazione standard accounting variazione tecnica normale"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_1.7(t) = P(legitimate|technical_claim) = [P(technical_claim|legitimate) × P(legitimate)] / P(technical_claim)",
+          "factors": [
+            "technical_jargon_density",
+            "sender_verification_status",
+            "request_urgency",
+            "system_access_requested",
+            "credential_disclosure_requested"
+          ],
+          "priors": {
+            "P_legitimate": 0.75,
+            "P_malicious": 0.25
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.35,
+        "w2_anomaly": 0.4,
+        "w3_bayesian": 0.25
+      },
+      "temporal_decay": {
+        "formula": "T_1.7(t) = α·D_1.7(t) + (1-α)·T_1.7(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200,
+        "description": "Livellamento esponenziale con costante tempo 2 ore per modelli supporto tecnico"
+      }
+    },
+    "technical_jargon_model": {
+      "formula": "TJD(m) = [Σ(I_technical(w)) / |m|] · log(1 + Σ Rarity(w))",
+      "description": "Densità gergo tecnico combinando frequenza termini tecnici con ponderazione rarità",
+      "interpretation": "Valori TJD più alti indicano maggior uso linguaggio tecnico che può sopraffare destinatari non tecnici"
+    },
+    "acceptance_correlation": {
+      "formula": "P_accept(m) = σ(α·TJD(m) + β·Authority(sender) + γ·Urgency(m))",
+      "components": {
+        "TJD": "Punteggio densità gergo tecnico",
+        "Authority": "Livello autorità percepito mittente (0-1)",
+        "Urgency": "Marcatori urgenza in messaggio (0-1)"
+      },
+      "sigmoid": "σ(x) = 1/(1+e^(-x))",
+      "weights": {
+        "α_jargon": 2.5,
+        "β_authority": 1.8,
+        "γ_urgency": 1.2
+      }
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "technical_support_contact_logs",
+        "verification_procedure_documentation",
+        "training_records",
+        "incident_history_technical_impersonation"
+      ],
+      "evidence_required": [
+        "written_verification_protocols",
+        "callback_verification_procedure",
+        "vendor_authentication_database",
+        "technical_support_simulation_results",
+        "central_logging_system_access"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "email_gateway_logs",
+          "fields": [
+            "sender_domain",
+            "message_content",
+            "technical_terms_count",
+            "recipient_action",
+            "verification_flag",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "helpdesk_ticket_system",
+          "fields": [
+            "ticket_id",
+            "requester_identity",
+            "verification_method",
+            "access_granted",
+            "approver",
+            "timestamp"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "phone_system_logs",
+          "fields": [
+            "caller_id",
+            "caller_claims",
+            "callback_performed",
+            "access_granted",
+            "duration",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "authentication_logs",
+          "fields": [
+            "user_id",
+            "authentication_method",
+            "password_reset_requested",
+            "authorization_source",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "privilege_access_management",
+          "fields": [
+            "elevated_access_grants",
+            "technical_justification",
+            "approver",
+            "verification_status"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "incident_response_tickets",
+          "fields": [
+            "ticket_id",
+            "technical_authority_involved",
+            "verification_performed",
+            "outcome",
+            "lessons_learned"
+          ],
+          "retention": "365_days"
+        },
+        {
+          "source": "nlp_analysis_system",
+          "fields": [
+            "message_id",
+            "technical_jargon_density",
+            "complexity_score",
+            "urgency_markers",
+            "authority_claims"
+          ],
+          "retention": "30_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "TJD": {
+          "calculation": "Densità gergo tecnico da analisi NLP",
+          "query": "SELECT AVG(technical_terms_count / total_words) as TJD FROM email_logs WHERE sender_claims_technical_role=true AND time_window='24h'"
+        },
+        "verification_rate": {
+          "calculation": "Percentuale contatti tecnici con verifica completata",
+          "query": "SELECT (COUNT(verification_flag=true) / COUNT(*)) FROM helpdesk_logs WHERE contact_type='technical_support' AND timestamp > NOW() - INTERVAL '7 days'"
+        },
+        "acceptance_without_verification": {
+          "calculation": "Richieste tecniche soddisfatte senza verifica",
+          "query": "SELECT (COUNT(access_granted=true AND verification_performed=false) / COUNT(*)) FROM ticket_system WHERE technical_request=true AND time_window='30d'"
+        }
+      }
+    },
+    "integration_apis": {
+      "email_gateway": "Email Security Gateway API - Content Analysis, Sender Verification",
+      "helpdesk_system": "ServiceNow/Jira API - Ticket Data, Approval Workflows",
+      "phone_system": "PBX/VoIP API - Call Logs, Caller ID, Recording Metadata",
+      "active_directory": "LDAP - IT Role Verification, Organizational Structure",
+      "nlp_platform": "Natural Language Processing API - Technical Term Extraction, Complexity Analysis"
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "5.2",
+        "name": "Fatica Decisionale",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "L'esaurimento cognitivo aumenta affidamento su rivendicazioni autorità tecnica senza verifica",
+        "formula": "P(1.7|5.2) = 0.75",
+        "evidence": "Teoria Carico Cognitivo - risorse esaurite aumentano elaborazione euristica"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Risposta da Stress Acuto",
+        "probability": 0.7,
+        "factor": 1.35,
+        "description": "Lo stress riduce capacità valutazione rivendicazioni tecniche, aumentando deferenza",
+        "formula": "P(1.7|7.1) = 0.70"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Bypass Indotto da Urgenza",
+        "probability": 0.82,
+        "factor": 1.6,
+        "description": "Pressione temporale combinata con complessità tecnica crea tempesta perfetta per bypassare verifica",
+        "formula": "P(1.7|2.1) = 0.82"
+      },
+      {
+        "indicator": "5.1",
+        "name": "Fatica da Allarmi",
+        "probability": 0.65,
+        "factor": 1.25,
+        "description": "Sovraccarico allarmi riduce scrutinio contatti supporto tecnico",
+        "formula": "P(1.7|5.1) = 0.65"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "1.1",
+        "name": "Conformità Acritica",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "Impersonificazione tecnica riuscita normalizza modelli conformità autorità"
+      },
+      {
+        "indicator": "1.3",
+        "name": "Impersonificazione Figure d'Autorità",
+        "probability": 0.6,
+        "factor": 1.3,
+        "description": "Deferenza autorità tecnica abilita attacchi impersonificazione autorità più ampi"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": [
+        "1.7",
+        "2.1",
+        "7.1"
+      ],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 3,
+      "threshold_critical": 4,
+      "description": "Tempesta perfetta: Deferenza autorità tecnica + Urgenza temporale + Stress acuto = aumento 400% probabilità violazione via falso supporto IT durante crisi",
+      "real_world_example": "Violazione Target 2013 - Credenziali fornitore HVAC compromesse usate con rivendicazioni autorità tecnica durante stagione festiva ad alta pressione"
+    },
+    "bayesian_network": {
+      "parent_nodes": [
+        "5.2",
+        "7.1",
+        "2.1",
+        "5.1"
+      ],
+      "child_nodes": [
+        "1.1",
+        "1.3"
+      ],
+      "conditional_probability_table": {
+        "P_1.7_base": 0.2,
+        "P_1.7_given_fatigue": 0.5,
+        "P_1.7_given_stress": 0.48,
+        "P_1.7_given_urgency": 0.58,
+        "P_1.7_given_all": 0.85
+      }
+    }
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_verification_protocol",
+          "weight": 0.2,
+          "title": "Protocollo Verifica Supporto Tecnico",
+          "question": "Qual è la Sua procedura obbligatoria di verifica quando qualcuno che afferma di essere supporto tecnico contatta un dipendente richiedendo password, accesso sistema o permesso installare software?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Verifica richiamata obbligatoria a numeri conosciuti richiesta per tutti i contatti supporto tecnico, con procedura documentata accessibile a tutti i dipendenti"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Esistono alcuni passaggi verifica ma non applicati costantemente o si applicano solo a certi tipi richieste"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun processo formale di verifica - dipendenti tenuti a conformare con richieste supporto tecnico"
+            }
+          ],
+          "evidence_required": "Protocollo verifica scritto, schede riferimento plastificate alle postazioni lavoro, esempio verifica recente",
+          "soc_mapping": "Metrica verification_rate da detection_formula"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezionare UNA opzione per ciascuna domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Domande Iniziali - Gestione della Verifica e del Disagio",
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Può descrivere una situazione recente relativa a questo indicatore e come è stata gestita?",
+              "scoring_guidance": {
+                "green": "Esempio specifico con procedure documentate e processo chiaro",
+                "yellow": "Esempio generale con processo parzialmente definito",
+                "red": "Nessun esempio specifico o procedura non chiara"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quali passaggi specifici sono stati seguiti?",
+                  "evidence_type": "specific_procedure"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Quali procedure standard esistono per gestire situazioni di questo tipo?",
+              "scoring_guidance": {
+                "green": "Procedure scritte e documentate con passaggi chiari",
+                "yellow": "Procedure informali o parzialmente documentate",
+                "red": "Nessuna procedura formale definita"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Può mostrarmi la documentazione di queste procedure?",
+                  "evidence_type": "documentation_artifact"
+                }
+              ]
+            }
+          ],
+          "weight": 0.3
+        },
+        {
+          "title": "Verifica tra Colleghi e Formazione",
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Come viene verificata l'autenticità delle richieste in questo contesto?",
+              "scoring_guidance": {
+                "green": "Sistema di verifica multi-canale documentato",
+                "yellow": "Verifica informale o applicata inconsistentemente",
+                "red": "Nessun processo di verifica formale"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Con quale frequenza viene aggiornato il processo di verifica?",
+                  "evidence_type": "maintenance_procedure"
+                }
+              ]
+            }
+          ],
+          "weight": 0.25
+        },
+        {
+          "title": "Verifica Video e Escalation",
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Come viene verificata l'autenticità delle richieste in questo contesto?",
+              "scoring_guidance": {
+                "green": "Sistema di verifica multi-canale documentato",
+                "yellow": "Verifica informale o applicata inconsistentemente",
+                "red": "Nessun processo di verifica formale"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Con quale frequenza viene aggiornato il processo di verifica?",
+                  "evidence_type": "maintenance_procedure"
+                }
+              ]
+            }
+          ],
+          "weight": 0.25
+        },
+        {
+          "title": "Indagini per Segnali Rossi",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "Mancanza di procedure documentate per gestire situazioni critiche",
+              "severity": "high",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "Resistenza culturale all'implementazione di controlli di sicurezza",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "Assenza di formazione specifica per il personale",
+              "severity": "medium",
+              "score_impact": 0.1,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "Nessun sistema di verifica o autenticazione implementato",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "Evidenza di incidenti precedenti non risolti",
+              "severity": "medium",
+              "score_impact": 0.12,
+              "subitems": []
+            }
+          ],
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle policy dichiarate"
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare scenari impersonificazione supporto tecnico simulati mensilmente",
+      "correlation_analysis": "Confrontare punteggi audit manuale con punteggi rilevamento SOC (correlazione obiettivo > 0.85)",
+      "drift_detection": "Test Kolmogorov-Smirnov, ricalibrare se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicurare probabilità previste corrispondano frequenze osservate",
+      "baseline_period": "30_days",
+      "recalibration_trigger": "Drift rilevato o punteggio validazione < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Tasso Conformità Verifica Tecnica",
+        "formula": "% di contatti supporto tecnico che attraversano protocolli verifica appropriati",
+        "baseline": "audit recenti 90 giorni",
+        "target": "95% entro 90 giorni",
+        "measurement": "audit mensile log help desk e report incidenti dipendenti"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Protocollo Verifica Autorità Tecnica",
+        "description": "Implementare sistema verifica richiamata obbligatorio per tutti i contatti supporto tecnico non sollecitati",
+        "implementation": "Implementare verifica richiamata richiedente dipendenti chiamino numero principale organizzazione rivendicata e richiedano trasferimento a persona specifica. Creare schede riferimento plastificate con passaggi verifica per tutte postazioni lavoro dipendenti. Includere database contatti verificati accessibile via intranet aziendale.",
+        "technical_controls": "Database contatti fornitori verificati, automazione procedura richiamata, integrazione sistema ticketing helpdesk, popup checklist verifica",
+        "roi": "450% media entro 18 mesi",
+        "effort": "medium",
+        "timeline": "30-60 giorni"
+      }
+    ],
+    "prioritization": {
+      "critical_first": [
+        "sol_1"
+      ],
+      "high_value": [],
+      "technical_foundation": [],
+      "governance": []
+    }
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Raccolta Credenziali Falso Supporto IT",
+      "description": "L'attaccante chiama dipendenti affermando di essere supporto IT necessitante verificare password per aggiornamento sistema. Senza protocolli verifica, i dipendenti forniscono credenziali dando agli attaccanti accesso rete immediato e capacità movimento laterale.",
+      "attack_vector": "Chiamata telefonica o email impersonante supporto IT interno con terminologia tecnica e apparente conoscenza sistema",
+      "psychological_mechanism": "Offloading cognitivo ad autorità tecnica combinato con conformità assistenza e sindrome impostore prevenente messa in discussione",
+      "historical_example": "Campagne Kevin Mitnick - Uso estensivo impersonificazione supporto tecnico per raccogliere credenziali attraverso organizzazioni multiple",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": [
+        "TJD > 0.4",
+        "credential_disclosure_requested",
+        "no_callback_verification",
+        "urgency_markers_present"
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-09",
+    "translator": "Claude (Anthropic)",
+    "research_basis": [
+      "Milgram, S. (1974). Obedience to Authority - Expertise-based authority extension",
+      "Cialdini, R. (2007). Influence: The Psychology of Persuasion - Authority principle in technical contexts",
+      "Kruger, J. & Dunning, D. (1999). Unskilled and unaware - Technical knowledge gaps",
+      "Miller, G. (1956). The Magical Number Seven - Cognitive Load Theory foundations",
+      "Klein, M. (1946). Object Relations Theory - Idealization of technical experts"
+    ],
+    "validation_status": "peer_reviewed",
+    "deployment_status": "production_ready"
+  }
+}

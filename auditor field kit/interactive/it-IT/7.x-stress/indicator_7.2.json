@@ -1,0 +1,977 @@
+{
+  "indicator": "7.2",
+  "title": "KIT SUL CAMPO INDICATORE 7.2",
+  "subtitle": "Esaurimento da Stress Cronico",
+  "category": "Vulnerabilità da Risposta allo Stress",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 7.x",
+  "description": {
+    "short": "Misura la vulnerabilità all'esaurimento psicologico e fisiologico prolungato derivante da fattori di stress organizzativi sostenuti che compromettono la vigilanza sulla sicurezza e il processo decisionale",
+    "context": "L'esaurimento da stress cronico si verifica quando il personale di sicurezza sperimenta un'esaurimento prolungato derivante da fattori di stress organizzativi sostenuti senza periodi di recupero adeguati. Questo crea un pericoloso paradosso: coloro che sono maggiormente responsabili della protezione dell'organizzazione diventano meno capaci di mantenere la vigilanza. Il personale di sicurezza esaurito mostra affaticamento da allarmi, prende decisioni scarse sotto pressione e diventa vulnerabile agli attacchi di social engineering. Organizzazioni come Target (2013) e Equifax (2017) hanno subito violazioni importanti in parte a causa dell'esaurimento del team di sicurezza che ha ridotto le capacità di rilevamento delle minacce.",
+    "impact": "Le organizzazioni con elevata vulnerabilità da burnout sperimentano turnover del team di sicurezza, ridotta efficacia nel rilevamento delle minacce, degrado della conformità ed escalation del rischio di minacce interne. Il personale esaurito diventa desensibilizzato agli allarmi, prende scorciatoie nelle procedure di sicurezza e può progredire verso il disimpegno attivo. La permanenza media del CISO di 24 mesi riflette il diffuso turnover correlato al burnout. La violazione Equifax ha coinvolto allarmi critici persi tra notifiche di routine elaborate da team di sicurezza esausti.",
+    "psychological_basis": "Maslach e Jackson (1981) hanno identificato tre dimensioni fondamentali del burnout: esaurimento emotivo, depersonalizzazione e ridotto senso di realizzazione personale. La Sindrome di Adattamento Generale di Selye (1956) mostra che lo stress cronico si verifica quando gli individui rimangono intrappolati nella fase di resistenza senza risoluzione, progredendo verso l'esaurimento. La Teoria della Conservazione delle Risorse di Hobfoll (1989) spiega che il burnout si sviluppa dalla perdita di risorse senza guadagno adeguato. L'elevazione cronica del cortisolo compromette la funzione ippocampale e la degradazione della corteccia prefrontale riduce la funzione esecutiva essenziale per il processo decisionale sulla sicurezza."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Il personale di sicurezza lavora settimane standard di 40-45 ore con politiche chiare sugli straordinari, volume di allarmi gestibile (<100 giornalieri per analista), politiche obbligatorie di rotazione e ferie applicate, processi formali di debriefing dello stress da incidenti, programmi di riconoscimento regolari, budget annuale di formazione >$3000 per membro e autorità per implementare misure di sicurezza standard.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Il personale di sicurezza lavora regolarmente 45-55 ore, volume elevato di allarmi (100-300 giornalieri per analista) con una certa automazione, le politiche sulle ferie esistono ma non sono applicate in modo coerente, supporto informale senza procedure documentate, riconoscimento occasionale focalizzato sulla risposta agli incidenti, budget di formazione limitato ($1000-3000), raccomandazioni di sicurezza a volte respinte.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Il personale di sicurezza lavora abitualmente >55 ore con frequenti emergenze, volume di allarmi travolgente (>300 giornalieri per analista) con automazione minima, nessuna politica applicata sulle ferie, nessun sistema di supporto psicologico, riconoscimento raro e focalizzato sulla colpa, budget di formazione minimo (<$1000), il team di sicurezza manca di autorità per misure di base.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_staffing_patterns": 0.18,
+      "q2_alert_management": 0.17,
+      "q3_workload_recovery": 0.16,
+      "q4_incident_support": 0.15,
+      "q5_recognition": 0.13,
+      "q6_career_development": 0.12,
+      "q7_decision_authority": 0.09
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_7.2(t) = AL(t) · B(t) · PD(t)",
+      "components": {
+        "allostatic_load": {
+          "formula": "AL(t) = ∫₀ᵗ e^(-λ(t-τ)) · S(τ) dτ",
+          "description": "Chronic stress accumulation model using allostatic load with exponential decay",
+          "variables": {
+            "S(τ)": "instantaneous stress level at time τ",
+            "λ": "recovery rate constant (default: 0.001 for slow recovery)",
+            "t": "current time"
+          }
+        },
+        "burnout_function": {
+          "formula": "B(t) = 0 if AL(t) < θ_low; (AL(t) - θ_low)/(θ_high - θ_low) if θ_low ≤ AL(t) < θ_high; 1 if AL(t) ≥ θ_high",
+          "description": "Piecewise burnout severity function with progressive stages",
+          "thresholds": {
+            "θ_low": 0.3,
+            "θ_high": 0.7
+          }
+        },
+        "performance_degradation": {
+          "formula": "PD(t) = PD₀ · (1 - α · B(t)) · e^(-β · AL(t))",
+          "description": "Security performance degradation as function of burnout and allostatic load",
+          "variables": {
+            "PD₀": "baseline performance level (normalized to 1.0)",
+            "α": "burnout impact coefficient (default: 0.6)",
+            "β": "allostatic load impact coefficient (default: 0.4)"
+          }
+        }
+      },
+      "default_weights": {
+        "w_allostatic": 0.35,
+        "w_burnout": 0.35,
+        "w_performance": 0.3
+      },
+      "temporal_evolution": {
+        "formula": "T_7.2(t) = α · D_7.2(t) + (1-α) · T_7.2(t-1)",
+        "alpha": 0.05,
+        "description": "Slow temporal smoothing reflecting chronic nature of burnout (20-day time constant)"
+      }
+    },
+    "threshold_condition": {
+      "formula": "R_7.2(t) = 1 if B(t) > 0.6 and PD(t) < 0.5 · PD₀, else 0",
+      "description": "Alert when burnout exceeds 60% and performance drops below 50% of baseline"
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "security_team_interviews",
+        "staffing_and_workload_analysis",
+        "alert_volume_assessment",
+        "psychological_support_policy_revisione",
+        "career_development_documentazione"
+      ],
+      "evidence_required": [
+        "time_tracking_records_past_6_months",
+        "overtime_authorization_log",
+        "alert_processing_metrics_by_analyst",
+        "rotation_and_time_off_policies",
+        "post_incident_debrief_documentazione",
+        "training_budget_and_expenditures",
+        "security_authority_approval_thresholds"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "hr_time_tracking",
+          "fields": [
+            "employee_id",
+            "hours_worked",
+            "overtime_hours",
+            "time_off_used",
+            "week_number"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "alert_management_system",
+          "fields": [
+            "alert_id",
+            "severity",
+            "assigned_analyst",
+            "time_to_revisione",
+            "resolution_status",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "incident_response_system",
+          "fields": [
+            "incident_id",
+            "duration",
+            "team_members",
+            "stress_level_indicator",
+            "resolution_quality"
+          ],
+          "retention": "365_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "wellness_survey_platform",
+          "fields": [
+            "employee_id_anonymized",
+            "stress_score",
+            "job_satisfaction",
+            "burnout_indicators",
+            "survey_date"
+          ],
+          "retention": "365_days"
+        },
+        {
+          "source": "training_management_system",
+          "fields": [
+            "employee_id",
+            "course_completed",
+            "certification_earned",
+            "training_budget_used",
+            "date"
+          ],
+          "retention": "730_days"
+        },
+        {
+          "source": "security_decision_log",
+          "fields": [
+            "decision_id",
+            "proposed_by",
+            "approved_rejected",
+            "override_reason",
+            "timestamp"
+          ],
+          "retention": "180_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "AL_stress_level": {
+          "calculation": "Exponentially weighted moving average of work hours, alert volume, and incident exposure",
+          "query": "SELECT EXP_WEIGHTED_AVG(hours_worked + alert_count*0.1 + incident_hours*2) FROM employee_metrics WHERE role='security' AND timeframe='90days'"
+        },
+        "alert_volume_per_analyst": {
+          "calculation": "Daily alert count per analyst requiring human revisione",
+          "query": "SELECT AVG(COUNT(alert_id)/COUNT(DISTINCT analyst_id)) FROM alerts WHERE requires_human_revisione=true AND timestamp > NOW() - INTERVAL '30 days'"
+        },
+        "performance_degradation": {
+          "calculation": "Ratio of current incident resolution quality to baseline quality",
+          "query": "SELECT (AVG(quality_current)/AVG(quality_baseline)) FROM incidents WHERE team='security'"
+        }
+      }
+    },
+    "integration_apis": {
+      "hr_systems": "Workday/BambooHR API - Work Hours, Overtime, Time Off Utilization, Turnover Rates",
+      "siem_soar": "Splunk/Sentinel/Cortex XSOAR API - Alert Volume, Response Times, Automation Rates",
+      "incident_management": "ServiceNow/Jira API - Incident Duration, Team Exposure, Resolution Quality",
+      "learning_management": "LinkedIn Learning/Udemy Business API - Training Completion, Budget Utilization"
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Impairment",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "Repeated acute stress incidents without recovery accelerate chronic burnout progression",
+        "formula": "P(7.2|7.1_repeated) = 0.75",
+        "evidence": "Each acute stress episode without adequate recovery increases allostatic load"
+      },
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.7,
+        "factor": 1.4,
+        "description": "Chronic decision fatigue compounds burnout through resource depletion",
+        "formula": "P(7.2|5.2) = 0.70"
+      },
+      {
+        "indicator": "1.8",
+        "name": "Executive Exception Normalization",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Costanti override di sicurezza creano impotenza appresa contribuendo al burnout",
+        "formula": "P(7.2|1.8) = 0.65"
+      },
+      {
+        "indicator": "6.3",
+        "name": "Diffusion of Responsibility",
+        "probability": 0.6,
+        "factor": 1.25,
+        "description": "Lack of clear accountability crea additional stress and burnout risk",
+        "formula": "P(7.2|6.3) = 0.60"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "7.10",
+        "name": "Recovery Period Vulnerabilities",
+        "probability": 0.9,
+        "factor": 2,
+        "description": "Chronic burnout severely impairs recovery capacity creating persistent vulnerability",
+        "evidence": "Very strong correlation (0.90) in interdependency matrix"
+      },
+      {
+        "indicator": "7.9",
+        "name": "Stress Contagion Cascades",
+        "probability": 0.85,
+        "factor": 1.8,
+        "description": "Burned-out team members spread stress and cynicism to colleagues",
+        "evidence": "Strong correlation (0.85) che mostra organizational stress propagation"
+      },
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue Blindness",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "Chronic burnout crea severe alert desensitization and missed threats"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": [
+        "7.2",
+        "5.1",
+        "7.9"
+      ],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 3.2,
+      "threshold_critical": 4.5,
+      "description": "Perfect storm: Chronic burnout + Alert fatigue + Stress contagion = 420% increased breach probability through systematic vigilance collapse",
+      "real_world_esempio": "Equifax 2017 breach - burned-out security team missed critical vulnerability notification among overwhelming alert volume with organizational stress propagation"
+    },
+    "bayesian_network": {
+      "parent_nodes": [
+        "7.1",
+        "5.2",
+        "1.8",
+        "6.3"
+      ],
+      "child_nodes": [
+        "7.10",
+        "7.9",
+        "5.1"
+      ],
+      "conditional_probability_table": {
+        "P_7.2_base": 0.15,
+        "P_7.2_given_acute": 0.45,
+        "P_7.2_given_fatigue": 0.42,
+        "P_7.2_given_overrides": 0.38,
+        "P_7.2_given_all": 0.8
+      }
+    }
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_staffing_patterns",
+          "weight": 0.18,
+          "title": "Orario di Lavoro e Straordinari del Team di Sicurezza",
+          "question": "Quante ore settimanali lavorano tipicamente gli analisti del centro operativo di sicurezza (SOC) durante le operazioni normali e i periodi di risposta agli incidenti?",
+          "options": [
+            {
+              "value": "standard",
+              "score": 0,
+              "label": "Standard 40-45 ore durante le operazioni normali con politiche chiare sugli straordinari e applicazione obbligatoria del tempo libero"
+            },
+            {
+              "value": "elevated",
+              "score": 0.5,
+              "label": "Regolarmente 45-55 ore con periodi prolungati occasionali durante gli incidenti, le politiche esistono ma l'applicazione è incoerente"
+            },
+            {
+              "value": "excessive",
+              "score": 1,
+              "label": "Abitualmente >55 ore con frequenti estensioni d'emergenza, nessuna politica applicata sul tempo libero, personale tenuto disponibile durante gli incidenti"
+            }
+          ],
+          "evidence_required": "Registri di tracciamento del tempo degli ultimi 6 mesi, registro delle autorizzazioni agli straordinari, esempio recente di personale durante incidente",
+          "soc_mapping": "Ore di lavoro dal sistema HR, analisi della frequenza degli straordinari, metriche sulla durata degli incidenti"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_alert_management",
+          "weight": 0.17,
+          "title": "Volume Giornaliero di Allarmi e Gestione",
+          "question": "Quanti allarmi di sicurezza elabora giornalmente il vostro team, e quale percentuale richiede analisi umana rispetto all'elaborazione automatizzata?",
+          "options": [
+            {
+              "value": "manageable",
+              "score": 0,
+              "label": "Volume gestibile (<100 allarmi giornalieri che richiedono revisione umana per analista) con elaborazione automatizzata al 60-80%"
+            },
+            {
+              "value": "high",
+              "score": 0.5,
+              "label": "Volume elevato (100-300 allarmi giornalieri per analista) con una certa automazione (30-60%)"
+            },
+            {
+              "value": "overwhelming",
+              "score": 1,
+              "label": "Volume travolgente (>300 allarmi giornalieri per analista) con automazione minima (<30%)"
+            }
+          ],
+          "evidence_required": "Metriche sul volume di allarmi SIEM/SOAR, percentuale di automazione, esempio specifico di allarme mancato",
+          "soc_mapping": "Conteggio allarmi per analista da SIEM, rapporto di automazione, tempi di risoluzione degli allarmi"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_workload_recovery",
+          "weight": 0.16,
+          "title": "Politiche di Riposo e Rotazione del Carico di Lavoro",
+          "question": "Qual è la vostra politica per il tempo libero obbligatorio e la rotazione del carico di lavoro tra i membri del team di sicurezza durante i periodi ad alto stress?",
+          "options": [
+            {
+              "value": "enforced",
+              "score": 0,
+              "label": "Politiche obbligatorie di rotazione e tempo libero esistono e sono applicate in modo coerente con pause minime di 48 ore tra incidenti importanti"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Le politiche esistono ma non sono applicate in modo coerente durante i periodi intensi, la rotazione avviene informalmente"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessuna politica formale di rotazione, richieste di permesso negate durante gli incidenti, aspettativa di disponibilità continua"
+            }
+          ],
+          "evidence_required": "Documentazione delle politiche di rotazione, esempio recente in cui più membri del personale hanno richiesto un permesso, tassi di utilizzo delle ferie",
+          "soc_mapping": "Utilizzo di ferie/congedi per malattia rispetto alle medie organizzative, registri di pianificazione della rotazione"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_incident_support",
+          "weight": 0.15,
+          "title": "Supporto Psicologico Post-Incidente",
+          "question": "Qual è la vostra procedura per supportare psicologicamente i membri del team durante e dopo incidenti di sicurezza importanti?",
+          "options": [
+            {
+              "value": "formal",
+              "score": 0,
+              "label": "Processi formali documentati di debriefing dello stress da incidenti e supporto con sessioni obbligatorie post-incidente e accesso a EAP"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Esiste supporto informale ma nessuna procedura documentata di assistenza post-incidente, dipendente dal manager"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Nessun sistema di supporto psicologico formale o informale, aspettativa di passare immediatamente all'incidente successivo"
+            }
+          ],
+          "evidence_required": "Documentazione di debriefing post-incidente da eventi recenti, dettagli del programma EAP, esempio specifico di supporto",
+          "soc_mapping": "Log di revisione post-incidente, tassi di utilizzo EAP tra il personale di sicurezza"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_recognition",
+          "weight": 0.13,
+          "title": "Programmi di Riconoscimento dei Successi di Sicurezza",
+          "question": "Con quale frequenza i membri del team di sicurezza ricevono feedback positivo o riconoscimenti per aver prevenuto minacce (non solo per aver risposto agli incidenti)?",
+          "options": [
+            {
+              "value": "regular",
+              "score": 0,
+              "label": "Programmi di riconoscimento regolari (mensili o più frequenti) riconoscono i successi di prevenzione e il rilevamento di quasi incidenti"
+            },
+            {
+              "value": "occasional",
+              "score": 0.5,
+              "label": "Riconoscimento occasionale ma principalmente focalizzato sulla risposta agli incidenti piuttosto che sulla prevenzione"
+            },
+            {
+              "value": "rare",
+              "score": 1,
+              "label": "Riconoscimento raro, principalmente focalizzato sulla colpa quando sorgono problemi di sicurezza, lavoro di prevenzione non riconosciuto"
+            }
+          ],
+          "evidence_required": "Documentazione del programma di riconoscimento, esempio di premio recente, celebrazione di successo di prevenzione",
+          "soc_mapping": "Registro dei riconoscimenti, risultati del sondaggio sulla soddisfazione dei dipendenti per il team di sicurezza"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_career_development",
+          "weight": 0.12,
+          "title": "Budget di Formazione e Avanzamento di Carriera",
+          "question": "Quale budget di formazione e quali opportunità di sviluppo professionale vengono allocati per ciascun membro del team di sicurezza annualmente?",
+          "options": [
+            {
+              "value": "substantial",
+              "score": 0,
+              "label": "Budget di formazione annuale >$3000 per membro del personale di sicurezza con percorsi di carriera documentati e promozioni recenti"
+            },
+            {
+              "value": "limited",
+              "score": 0.5,
+              "label": "Budget di formazione limitato ($1000-3000 annuali) con opportunità di avanzamento di carriera poco chiare"
+            },
+            {
+              "value": "minimal",
+              "score": 1,
+              "label": "Budget di formazione minimo (<$1000 annuali), nessun percorso chiaro di sviluppo di carriera, nessuna promozione recente"
+            }
+          ],
+          "evidence_required": "Allocazione del budget di formazione, esempio di promozione recente, registri delle spese di sviluppo professionale",
+          "soc_mapping": "Registri del sistema di formazione che mostrano l'utilizzo del budget e il completamento dei corsi"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_decision_authority",
+          "weight": 0.09,
+          "title": "Autorità Decisionale del Team di Sicurezza",
+          "question": "Quanta autorità hanno i membri del team di sicurezza per implementare misure di sicurezza senza approvazione del management?",
+          "options": [
+            {
+              "value": "substantial",
+              "score": 0,
+              "label": "Il team di sicurezza ha autorità pre-approvata per misure di sicurezza standard con approvazione accelerata per esigenze urgenti"
+            },
+            {
+              "value": "limited",
+              "score": 0.5,
+              "label": "Una certa autorità ma le raccomandazioni di sicurezza a volte vengono annullate, richiedendo escalation per misure di base"
+            },
+            {
+              "value": "minimal",
+              "score": 1,
+              "label": "Il team di sicurezza manca dell'autorità per implementare misure di base, la maggior parte delle raccomandazioni viene respinta o ritardata dalle priorità aziendali"
+            }
+          ],
+          "evidence_required": "Documentazione dell'autorità di sicurezza, esempio specifico in cui una raccomandazione è stata annullata, analisi del tasso di approvazione/rifiuto",
+          "soc_mapping": "Registro delle decisioni di sicurezza che mostra i tassi di approvazione e le frequenze di annullamento"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezionare UNA opzione per ciascuna domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Carico di Lavoro e Modelli di Dotazione Organica",
+          "weight": 0.3,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Mi descriva la settimana tipo del vostro team di sicurezza - quali sono gli orari di lavoro normali, e con quale frequenza si verificano orari prolungati o chiamate di emergenza?",
+              "scoring_guidance": {
+                "green": "Settimane standard di 40-45 ore con politiche documentate sugli straordinari, emergenze rare con periodi di recupero obbligatori, esempi recenti mostrano l'applicazione delle politiche",
+                "yellow": "Settimane regolari di 45-55 ore, periodi prolungati occasionali, approcci informali al recupero senza applicazione coerente",
+                "red": "Settimane abituali di >55 ore, emergenze frequenti, aspettativa di disponibilità costante, nessun periodo di recupero"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Durante il vostro incidente di sicurezza importante più recente, quante ore consecutive hanno lavorato i singoli analisti, e cosa è successo dopo per il recupero?",
+                  "evidence_type": "specific_incident"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come monitorate e limitate gli straordinari per prevenire il burnout? Mostratemi i vostri registri degli ultimi 6 mesi.",
+                  "evidence_type": "documentary_evidence"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Parlatemi del volume di allarmi di sicurezza - quanti allarmi gestiscono quotidianamente i vostri analisti, e quale percentuale richiede un'indagine approfondita rispetto alla gestione automatizzata?",
+              "scoring_guidance": {
+                "green": "Volume gestibile con automazione al 60-80%, gli analisti gestiscono <100 allarmi che richiedono revisione umana giornalmente, ottimizzazione continua per ridurre i falsi positivi",
+                "yellow": "Volume elevato con una certa automazione, 100-300 allarmi giornalieri per analista, sforzi periodici di ottimizzazione",
+                "red": "Volume travolgente con automazione minima, >300 allarmi giornalieri per analista, nessuna ottimizzazione sistematica, affaticamento costante da allarmi"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Descrivetemi cosa è successo l'ultima volta che il vostro team ha mancato o ritardato la risposta a un allarme di sicurezza critico - perché è successo?",
+                  "evidence_type": "failure_analysis"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quale percentuale dei vostri allarmi si rivela essere falsi positivi, e qual è il vostro processo per ridurre tale percentuale?",
+                  "evidence_type": "quality_metric"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Supporto Psicologico e Recupero",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Descrivete l'approccio della vostra organizzazione nel supportare psicologicamente i membri del team di sicurezza durante e dopo incidenti importanti.",
+              "scoring_guidance": {
+                "green": "Debriefing post-incidente obbligatori, accesso a consulenti familiari con lo stress della cybersecurity, reti di supporto tra pari, esempi recenti di supporto efficace",
+                "yellow": "Supporto informale del manager, EAP generico disponibile ma non specifico per la sicurezza, pratiche di debriefing incoerenti",
+                "red": "Nessun sistema di supporto formale, aspettativa di passare immediatamente all'incidente successivo, lo stress è visto come debolezza personale"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Parlatemi dell'evento di sicurezza più stressante della vostra organizzazione nell'ultimo anno - come avete supportato il team durante e dopo?",
+                  "evidence_type": "support_esempio"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Monitorate le metriche di benessere psicologico per il vostro team di sicurezza? Cosa mostrano?",
+                  "evidence_type": "measurement_practice"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Qual è la vostra politica per il tempo libero obbligatorio e la rotazione tra i membri del team di sicurezza, specialmente durante incidenti prolungati o periodi ad alto stress?",
+              "scoring_guidance": {
+                "green": "Programmi di rotazione applicati, pause obbligatorie tra incidenti importanti (48+ ore), esempio recente mostra l'applicazione della politica anche durante le crisi",
+                "yellow": "Le politiche esistono sulla carta ma vengono aggirate durante i periodi intensi, rotazione informale senza applicazione sistematica",
+                "red": "Nessuna politica di rotazione, richieste di permesso negate durante gli incidenti, aspettativa di prestazioni individuali eroiche"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Descrivete una situazione specifica in cui più membri del team di sicurezza hanno richiesto simultaneamente un permesso - come l'avete gestita?",
+                  "evidence_type": "stress_test_scenario"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Qual è il tasso di utilizzo delle ferie del vostro team di sicurezza rispetto al resto dell'organizzazione?",
+                  "evidence_type": "comparative_metric"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Riconoscimento e Sviluppo di Carriera",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Come riconosce e celebra la vostra organizzazione i successi di sicurezza, specialmente la prevenzione delle minacce piuttosto che solo la risposta agli incidenti?",
+              "scoring_guidance": {
+                "green": "Programmi di riconoscimento regolari (mensili), celebrazione dei rilevamenti di quasi incidenti e prevenzioni, esempi recenti documentati, morale positivo del team",
+                "yellow": "Riconoscimento occasionale ma principalmente focalizzato su risposte visibili agli incidenti, lavoro di prevenzione poco riconosciuto",
+                "red": "Riconoscimento raro, cultura focalizzata sulla colpa quando sorgono problemi, il team di sicurezza si sente non apprezzato e sottovalutato"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Parlatemi dell'ultima volta che avete celebrato un successo di sicurezza o un risultato di prevenzione - cosa è successo esattamente?",
+                  "evidence_type": "recognition_esempio"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come si confrontano il riconoscimento e il morale del vostro team di sicurezza con gli altri team tecnici della vostra organizzazione?",
+                  "evidence_type": "cultural_comparison"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Quali opportunità di sviluppo di carriera, budget di formazione e percorsi di avanzamento esistono per i membri del vostro team di sicurezza?",
+              "scoring_guidance": {
+                "green": "Budget di formazione sostanziale (>$3000/anno per persona), percorsi di carriera chiari con tracciati tecnici e manageriali, promozioni recenti, sviluppo professionale attivamente incoraggiato",
+                "yellow": "Budget di formazione limitato ($1000-3000), opportunità di avanzamento poco chiare, formazione occasionale ma nessuno sviluppo sistematico",
+                "red": "Budget di formazione minimo (<$1000), nessun percorso di carriera chiaro, nessuna promozione recente, lo sviluppo professionale è visto come spesa personale"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quando ha ricevuto l'ultima volta un membro del team di sicurezza una promozione o una nuova responsabilità significativa? Qual è stato il percorso per arrivarci?",
+                  "evidence_type": "career_progression"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Mostratemi le spese di formazione e le attività di sviluppo professionale del vostro team di sicurezza nell'ultimo anno.",
+                  "evidence_type": "investment_evidence"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Quanta autorità hanno i membri del team di sicurezza per implementare misure di sicurezza, e con quale frequenza le raccomandazioni di sicurezza vengono annullate dalle priorità aziendali?",
+              "scoring_guidance": {
+                "green": "Autorità pre-approvata per misure standard, approvazione accelerata per esigenze urgenti, raccomandazioni di sicurezza prese sul serio, basso tasso di annullamento",
+                "yellow": "Una certa autorità ma richiesta frequente escalation, tasso di approvazione misto per le raccomandazioni, annullamenti aziendali occasionali",
+                "red": "Autorità minima per misure di base, alto tasso di rifiuto per le raccomandazioni di sicurezza, frustrazione cronica da annullamenti aziendali"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Descrivete una situazione recente in cui una raccomandazione di sicurezza è stata annullata dalle priorità aziendali - cosa è successo e come ha reagito il team?",
+                  "evidence_type": "conflict_esempio"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quale percentuale delle raccomandazioni di sicurezza fatte nell'ultimo trimestre è stata approvata rispetto a quelle respinte o ritardate?",
+                  "evidence_type": "approval_metric"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Ricerca di Segnali di Allarme",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle politiche dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Il nostro team di sicurezza è sempre reperibile - è così che funziona la sicurezza...\"",
+              "severity": "critical",
+              "score_impact": 0.17,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Siamo sommersi dagli allarmi, ma non possiamo permetterci strumenti di automazione...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Il turnover del nostro team di sicurezza è alto, ma assumiamo semplicemente più persone...\"",
+              "severity": "critical",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Non abbiamo tempo per i debriefing post-incidente - dobbiamo concentrarci sulla prossima minaccia...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Le priorità aziendali spesso annullano le raccomandazioni di sicurezza...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Budget di formazione? Ci aspettiamo che i professionisti della sicurezza si mantengano aggiornati da soli...\"",
+              "severity": "medium",
+              "score_impact": 0.1,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"I nostri analisti di sicurezza lavorano regolarmente 60+ ore durante i periodi intensi, a volte per settimane...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Compare burnout scores with actual turnover and performance degradation metrics quarterly",
+      "correlation_analysis": "Correlate manual burnout assessments with automated stress indicators (target correlation > 0.75)",
+      "drift_detection": "Kolmogorov-Smirnov test on allostatic load distribution, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted burnout levels match observed performance degradation and turnover patterns",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.70"
+    },
+    "success_metrics": [
+      {
+        "metric": "Team Sustainability Index",
+        "formula": "Average weekly hours worked by security staff with turnover tracking",
+        "baseline": "measure past 6 months working hours and turnover rates",
+        "target": "<45 hours during normal operations, <55 during incidents, <5% annual turnover",
+        "measurement": "HR time tracking + monthly turnover analysis"
+      },
+      {
+        "metric": "Alert Processing Efficiency",
+        "formula": "Ratio of actionable alerts to total alerts with mean response times",
+        "baseline": "current alert volume and processing metrics",
+        "target": ">70% actionable rate, <30min for high-priority, <4h for medium-priority",
+        "measurement": "SIEM metrics + quarterly alert quality audit"
+      },
+      {
+        "metric": "Psychological Well-being Index",
+        "formula": "Quarterly stress and job satisfaction survey scores",
+        "baseline": "initial team survey establishing baseline",
+        "target": ">80% satisfaction, <20% reporting chronic stress symptoms",
+        "measurement": "anonymous quarterly surveys + sick leave utilization tracking"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Automated Alert Triage and Correlation System",
+        "description": "Implement SOAR platform to reduce manual alert processing by 60-80% through automation and intelligent prioritization",
+        "implementation": "Deploy Security Orchestration, Automation, Response (SOAR) platform with machine learning-based alert scoring to prioritize genuine threats. Configure automated response workflows for common low-risk incidents. Establish alert quality metrics and regular tuning schedules to reduce false positives. Create integration with SIEM for contextual enrichment.",
+        "technical_controls": "SOAR platform (Cortex XSOAR, Splunk Phantom, IBM Resilient), ML-based alert scoring, automated playbooks, alert quality dashboards",
+        "roi": "450% average within 18 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Security Team Rotation and Staffing Policy",
+        "description": "Establish mandatory rotation protocols and adequate staffing to prevent chronic overwork and ensure recovery periods",
+        "implementation": "Institute mandatory 48-hour break periods between major incident response cycles. Implement follow-the-sun staffing model for 24/7 operations distributing load across shifts/regions. Create cross-training programs enabling flexible role coverage during peak periods. Document escalation procedures preventing single points of failure. Enforce maximum consecutive work hours policies.",
+        "technical_controls": "Shift scheduling system with automated rotation enforcement, workload distribution tracking, escalation automation",
+        "roi": "320% average within 18 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Psychological Safety and Support Program",
+        "description": "Create comprehensive psychological support systems for security personnel during high-stress periods and post-incident recovery",
+        "implementation": "Institute mandatory post-incident debriefing sessions focusing on learning rather than blame. Provide access to Employee Assistance Programs with counselors familiar with cybersecurity-specific stress. Create peer support networks and mentoring relationships within security teams. Establish psychological safety days where team members can report stress without career impact. Train managers on recognizing and addressing burnout symptoms.",
+        "technical_controls": "EAP program integration, debriefing session tracking, peer mentoring platform, manager training modules",
+        "roi": "280% average within 24 months",
+        "effort": "low",
+        "timeline": "30-45 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Security Success Recognition and Career Development",
+        "description": "Implement systematic recognition programs and clear career paths to restore sense of accomplishment and professional growth",
+        "implementation": "Create monthly recognition programs highlighting threat prevention achievements and near-miss detections. Establish clear career progression paths with technical and management tracks. Provide annual $3000+ professional development budget per security team member. Document and celebrate prevention successes, not just incident responses. Implement mentorship programs pairing junior and senior security professionals.",
+        "technical_controls": "Recognition tracking system, career development portal, training budget management, certification tracking",
+        "roi": "310% average within 18 months",
+        "effort": "low",
+        "timeline": "30 days"
+      },
+      {
+        "id": "sol_5",
+        "title": "Decision Authority and Resource Allocation",
+        "description": "Grant security teams appropriate decision-making authority and resources to reduce frustration from constant overrides",
+        "implementation": "Establish pre-approved authority for standard security implementations reducing approval burden. Create fast-track approval processes for urgent security measures with executive support. Implement Security Champions program giving security team allies in business units. Define security KPIs that business leadership revisiones and supports regularly. Document decision-making thresholds clearly.",
+        "technical_controls": "Security decision workflow system, approval tracking, KPI dashboards for executives, authority matrix documentazione",
+        "roi": "290% average within 12 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Workload Management and Resource Planning",
+        "description": "Implement systematic workload assessment and resource planning to prevent unsustainable stress patterns",
+        "implementation": "Conduct quarterly workload assessments identifying and addressing unsustainable patterns. Implement resource planning accounting for both routine operations and incident response capacity reserve. Create service level agreements defining reasonable response times during different stress levels. Establish clear escalation criteria triggering additional resource allocation or external support engagement.",
+        "technical_controls": "Workload analytics dashboard, resource planning tools, SLA tracking system, escalation automation",
+        "roi": "260% average within 18 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": [
+        "sol_1",
+        "sol_2"
+      ],
+      "high_value": [
+        "sol_3",
+        "sol_4"
+      ],
+      "cultural_foundation": [
+        "sol_4",
+        "sol_5"
+      ],
+      "operational_sustainability": [
+        "sol_6"
+      ]
+    }
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Alert Fatigue Exploitation",
+      "description": "Overwhelmed security analysts become desensitized to alerts, missing genuine threats among false positives. Attackers exploit this by using techniques generating alerts similar to common false positives",
+      "attack_vector": "Attack techniques designed to blend with routine false positive alerts, knowing overwhelmed analysts are likely to ignore them",
+      "psychological_mechanism": "Chronic burnout creates alert desensitization and reduced cognitive capacity to distinguish routine from genuine threats",
+      "historical_esempio": "Equifax 2017 breach - critical vulnerability notification lost in noise of routine alerts processed by exhausted security team",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": [
+        "alert_volume > 300/analyst/day",
+        "B(t) > 0.6",
+        "false_positive_rate > 0.4",
+        "missed_critical_alerts"
+      ]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Social Engineering Targeting Burned-Out Staff",
+      "description": "Emotionally exhausted security personnel become easier social engineering targets, lacking energy for normal suspicion and verification procedures",
+      "attack_vector": "Attackers research security team stress patterns through job postings and social media, timing attacks during high-stress periods",
+      "psychological_mechanism": "Emotional exhaustion reduces empathy and interpersonal awareness, making burned-out individuals more susceptible to manipulation",
+      "historical_esempio": "Multiple incidents of phishing success rates increasing during known high-stress organizational periods",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": [
+        "PD(t) < 0.5",
+        "high_stress_period_active",
+        "verification_shortcuts",
+        "unusual_access_requests"
+      ]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Insider Threat Escalation",
+      "description": "Chronic burnout progresses to active disengagement or retaliation against the organization. Security staff with elevated privileges represent significant insider threat potential",
+      "attack_vector": "Severely burned-out security personnel with administrative access either intentionally or negligently compromise security",
+      "psychological_mechanism": "Depersonalization and reduced personal accomplishment can progress to active disengagement or hostile actions",
+      "historical_esempio": "NSA contractor breach 2016 involved individual whose psychological state deteriorated due to workplace stress and unrealistic expectations",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": [
+        "B(t) > 0.8",
+        "behavioral_changes",
+        "privilege_access_anomalies",
+        "disengagement_markers"
+      ]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Compliance and Process Degradation",
+      "description": "Burned-out teams take shortcuts in security processes to reduce cognitive load, creating systematic gaps that attackers identify and exploit",
+      "attack_vector": "Attackers identify patterns of incomplete security processes (delayed patching, inadequate access revisiones, shortcut procedures)",
+      "psychological_mechanism": "Chronic stress leads to procedural shortcuts and rule-bending to manage overwhelming workload",
+      "historical_esempio": "SolarWinds 2020 supply chain attack facilitated by security process shortcuts taken by overwhelmed understaffed team",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": [
+        "AL(t) > θ_high",
+        "process_compliance < 0.7",
+        "patching_delays",
+        "access_revisione_skipping"
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-14",
+    "translator": "Claude AI",
+    "research_basis": [
+      "Maslach, C. & Jackson, S. E. (1981). Maslach Burnout Inventory - emotional exhaustion, depersonalization, reduced accomplishment",
+      "Selye, H. (1956). General Adaptation Syndrome - alarm, resistance, exhaustion phases",
+      "Hobfoll, S. E. (1989). Conservation of Resources Theory - resource loss without gain creates burnout",
+      "Demerouti et al. (2001). Job Demands-Resources Model - imbalance between demands and resources",
+      "McEwen, B. S. (2007). Allostatic load and chronic stress physiology"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

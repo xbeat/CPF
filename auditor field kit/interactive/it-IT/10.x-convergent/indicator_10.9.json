@@ -1,0 +1,980 @@
+{
+  "indicator": "10.9",
+  "title": "FIELD KIT INDICATORE 10.9",
+  "subtitle": "Fallimenti di Accoppiamento dei Sistemi",
+  "category": "Vulnerabilità di Bias Specifiche dell'IA",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Categoria 9.x",
+  "description": {
+    "short": "Identifica il fallimento nel riconoscere e gestire le interdipendenze tra domini di sicurezza, creando vulnerabilità a cascata quando i sistemi accoppiati interagiscono in modo inaspettato",
+    "context": "I fallimenti di accoppiamento dei sistemi rappresentano l'incapacità psicologica di riconoscere e gestire le interdipendenze tra domini di sicurezza apparentemente separati. Questa vulnerabilità emerge dalla compartimentazione cognitiva - la tendenza mentale a trattare sistemi interconnessi come entità isolate - svolgendo una funzione difensiva riducendo il carico cognitivo ma creando pericolosi punti ciechi dove le vulnerabilità si propagano a cascata attraverso sistemi accoppiati.",
+    "impact": "Le organizzazioni con accoppiamento non gestito subiscono fallimenti a cascata: NotPetya 2017 (l'accoppiamento legittimo del sistema è diventato vettore di attacco diffondendosi globalmente), Target 2013 (accoppiamento del fornitore HVAC ai sistemi di pagamento), SolarWinds 2020 (l'accoppiamento degli aggiornamenti software affidabili ha amplificato l'attacco alla supply chain), Colonial Pipeline 2021 (l'accoppiamento IT/OT ha consentito al ransomware di interrompere l'infrastruttura fisica). I modelli comuni includono movimento laterale attraverso percorsi inaspettati, fallimenti a cascata che si propagano tra domini e minacce interne amplificate attraverso eccessivo accoppiamento.",
+    "psychological_basis": "Compartimentazione Cognitiva - tendenza mentale a trattare sistemi interconnessi come isolati. Teoria dei Sistemi (Perrow, 1984) - sistemi strettamente accoppiati creano modalità di fallimento inevitabili. Teoria del Carico Cognitivo (Miller, 1956) - la memoria di lavoro limitata impedisce una modellazione mentale completa delle interconnessioni complesse. Assunti di Base di Bion (1961) - le difese psicologiche oscurano le interdipendenze dei sistemi. Neuroscienze (Buckner et al., 2008) - modalità predefinita del cervello verso il pensiero lineare semplificato."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Punteggio_Finale = (w1 × Valutazione_Rapida + w2 × Profondità_Conversazione + w3 × Segnali_Rossi) × Moltiplicatore_Interdipendenza",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Accoppiamento Gestito",
+        "description": "Processo formale per documentare le connessioni di sistema prima dell'implementazione. Revisione regolare (trimestrale o più frequente) delle dipendenze di sistema. La risposta agli incidenti standard include la verifica dei sistemi connessi. Le modifiche di emergenza hanno controlli obbligatori dell'impatto sulle connessioni. Coordinamento tra team richiesto e documentato. Segmentazione di rete allineata con i confini di sicurezza.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - Consapevolezza Parziale",
+        "description": "Documentazione parziale delle connessioni di sistema ma incompleta o obsoleta. Impatti imprevisti occasionali dalle modifiche di sistema (1-2 per trimestre). La risposta agli incidenti a volte include controlli delle connessioni. Le modifiche di emergenza hanno considerazioni informali sulle connessioni. Il coordinamento tra team avviene ma non è documentato in modo coerente. Segmentazione di rete parziale ma con lacune nell'applicazione.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Cecità all'Accoppiamento",
+        "description": "Poca o nessuna documentazione delle connessioni di sistema. Impatti imprevisti frequenti dalle modifiche di sistema (mensili o più frequenti). La risposta agli incidenti si concentra solo sui sistemi direttamente interessati. Le modifiche di emergenza procedono senza analisi dell'impatto sulle connessioni. I team lavorano in isolamento con coordinamento minimo. Topologia di rete piatta con eccessivo accoppiamento.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_convergent_risk": 0.14,
+      "q2_convergent_risk": 0.14,
+      "q3_convergent_risk": 0.14,
+      "q4_convergent_risk": 0.14,
+      "q5_convergent_risk": 0.14,
+      "q6_convergent_risk": 0.14,
+      "q7_convergent_risk": 0.14
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "SCF(t) = Σ(i=1 to n) Σ(j>i) C(i,j)·(1 - A(i,j))·I(i,j)",
+      "components": {
+        "system_coupling_failure_index": {
+          "formula": "SCF(t) = Σ(i=1 to n) Σ(j>i) C(i,j)·(1 - A(i,j))·I(i,j)",
+          "description": "Rischio di accoppiamento a coppie tra tutte le combinazioni di sistema ponderato dalle lacune di consapevolezza",
+          "variables": {
+            "C(i,j)": "forza di accoppiamento tra i sistemi i e j (0-1)",
+            "A(i,j)": "consapevolezza organizzativa dell'accoppiamento (0-1)",
+            "I(i,j)": "potenziale di impatto del fallimento di accoppiamento",
+            "n": "numero di sistemi o domini distinti"
+          }
+        },
+        "coupling_density_metric": {
+          "formula": "CD = (Connessioni_Effettive / Connessioni_Possibili) × Fattore_Complessità",
+          "description": "Densità di rete delle connessioni di sistema normalizzata per complessità",
+          "thresholds": {
+            "low_coupling": "CD < 0.3 indica densità di connessione gestibile",
+            "moderate_coupling": "0.3 ≤ CD < 0.6 suggerisce complessità crescente",
+            "high_coupling": "CD ≥ 0.6 indica eccessivo accoppiamento che richiede attenzione"
+          }
+        },
+        "cascade_failure_probability": {
+          "formula": "CFP(v) = 1 - ∏(i=1 to n) (1 - p_i·c_i)",
+          "description": "Probabilità che una vulnerabilità iniziale si propaghi a cascata attraverso sistemi accoppiati",
+          "variables": {
+            "p_i": "probabilità di vulnerabilità nel sistema i",
+            "c_i": "forza di accoppiamento del sistema i con altri sistemi",
+            "n": "numero di sistemi accoppiati"
+          }
+        }
+      },
+      "default_weights": {
+        "w1_coupling_awareness": 0.35,
+        "w2_connection_management": 0.3,
+        "w3_impact_containment": 0.2,
+        "w4_documentation_quality": 0.15
+      },
+      "interpretation": {
+        "D < 0.3": "Accoppiamento gestito con buona consapevolezza e documentazione",
+        "0.3 ≤ D < 0.6": "Consapevolezza parziale dell'accoppiamento con alcuni punti ciechi",
+        "D ≥ 0.6": "Fallimenti critici di accoppiamento - punti ciechi sistemici e rischi a cascata"
+      }
+    },
+    "data_collection_frequency": "continua con revisione settimanale delle dipendenze",
+    "baseline_establishment": "finestra mobile di 90 giorni con adeguamento ai cambiamenti architetturali"
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_verification_procedures",
+        "gut_feeling_escalation_protocols",
+        "ai_communication_training_records",
+        "ambiguous_interaction_examples"
+      ],
+      "evidence_required": [
+        "ai_human_verification_policy",
+        "uncanny_response_protocols",
+        "recent_ambiguous_communication_cases",
+        "training_materials_ai_detection"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "communication_verification_logs",
+          "fields": [
+            "message_id",
+            "human_likeness_score",
+            "verification_performed",
+            "escalation_triggered",
+            "outcome"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "interaction_hesitation_metrics",
+          "fields": [
+            "user_id",
+            "interaction_type",
+            "response_time",
+            "hesitation_indicators",
+            "verification_requests"
+          ],
+          "retention": "60_days"
+        },
+        {
+          "source": "ai_communication_analysis",
+          "fields": [
+            "communication_id",
+            "ai_confidence",
+            "human_cues_present",
+            "artificial_cues_detected",
+            "uncanny_score"
+          ],
+          "retention": "180_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "employee_discomfort_reports",
+          "fields": [
+            "report_id",
+            "interaction_description",
+            "discomfort_level",
+            "resolution_action"
+          ],
+          "retention": "365_days"
+        },
+        {
+          "source": "video_call_verification",
+          "fields": [
+            "call_id",
+            "deepfake_detection_score",
+            "verification_triggered",
+            "authentication_method"
+          ],
+          "retention": "90_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "TD_trust_disruption": {
+          "calculation": "Disruzione della fiducia basata sulla valutazione della somiglianza umana",
+          "query": "SELECT -1 * DERIVATIVE(affinity_score, human_likeness_score) FROM ai_interactions WHERE uncanny_range=true"
+        },
+        "BI_behavioral": {
+          "calculation": "Somma ponderata dei comportamenti di evitamento",
+          "query": "SELECT SUM(weight * behavior_frequency) FROM avoidance_behaviors WHERE time_window='30d'"
+        },
+        "Interaction_drop": {
+          "calculation": "Riduzione nella frequenza di interazione con IA inquietante",
+          "query": "SELECT (baseline_frequency - current_frequency) / baseline_frequency FROM interaction_patterns WHERE uncanny_detected=true"
+        }
+      }
+    },
+    "integration_apis": {
+      "communication_platforms": "API Email/Chat - Analisi Messaggi, Rilevamento Segnali Umani",
+      "video_conferencing": "API Videochiamate - Integrazione Rilevamento Deepfake",
+      "nlp_services": "Elaborazione del Linguaggio Naturale - Rilevamento Pattern Linguaggio Inquietante",
+      "biometric_verification": "API Autenticazione - Verifica Umana Multi-Fattore"
+    }
+  },
+  "interdependencies": {
+    "primary": {
+      "10.8": {
+        "type": "amplifies",
+        "weight": 0.35,
+        "description": "L'imprevedibilità dell'emergenza impedisce il riconoscimento dei modelli di fallimento dell'accoppiamento come problemi sistemici",
+        "mathematical_relationship": "Accoppiamento non riconosciuto = D_10.9 × (1 + 0.6 × D_10.8)"
+      },
+      "10.7": {
+        "type": "compounds",
+        "weight": 0.25,
+        "description": "La catastrofe della complessità rende le relazioni di accoppiamento troppo complesse da comprendere e gestire",
+        "mathematical_relationship": "Fallimento nella comprensione dell'accoppiamento = D_10.9 + 0.5 × D_10.7"
+      },
+      "10.2": {
+        "type": "enabler",
+        "weight": 0.2,
+        "description": "I fallimenti a cascata sfruttano l'accoppiamento non gestito per propagarsi attraverso i confini organizzativi",
+        "mathematical_relationship": "Probabilità di propagazione a cascata = D_10.2 × (1 + D_10.9)"
+      }
+    },
+    "secondary": {
+      "10.4": {
+        "type": "compounds",
+        "weight": 0.15,
+        "description": "L'allineamento del formaggio svizzero abilitato dall'accoppiamento crea fallimenti simultanei multi-livello",
+        "mathematical_relationship": "Fallimento multi-livello = D_10.4 + D_10.9 - (D_10.4 × D_10.9 × 0.5)"
+      },
+      "3.2": {
+        "type": "amplifies",
+        "weight": 0.12,
+        "description": "Lo sfruttamento della fiducia nei fornitori sfrutta l'accoppiamento tra terze parti affidabili e sistemi interni",
+        "mathematical_relationship": "Rischio di sfruttamento dell'accoppiamento con i fornitori = D_3.2 × exp(0.3 × D_10.9)"
+      }
+    }
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "VALUTAZIONE RAPIDA",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_integration_documentation",
+          "weight": 0.18,
+          "title": "Documentazione delle Integrazioni",
+          "question": "Quando implementa un nuovo sistema o apporta modifiche significative a quelli esistenti, quale processo segue per documentare come si connette ad altri sistemi?",
+          "options": [
+            {
+              "value": "comprehensive_documentation",
+              "label": "Documentazione completa delle connessioni richiesta prima dell'implementazione con aggiornamenti regolari",
+              "score": 0,
+              "follow_up": "Ci mostri un esempio della Sua documentazione di integrazione."
+            },
+            {
+              "value": "basic_documentation",
+              "label": "Documentazione di base delle connessioni creata ma non sempre completa o mantenuta aggiornata",
+              "score": 0.5,
+              "follow_up": "Cosa impedisce alla documentazione di rimanere aggiornata?"
+            },
+            {
+              "value": "minimal_documentation",
+              "label": "Documentazione minima delle connessioni; si affida alla conoscenza del team tecnico",
+              "score": 0.85,
+              "follow_up": "Come tiene traccia di tutte le connessioni di sistema senza documentazione?"
+            },
+            {
+              "value": "no_documentation",
+              "label": "Nessuna documentazione sistematica delle connessioni di sistema; scoperte attraverso la risoluzione dei problemi",
+              "score": 1,
+              "follow_up": "Come valuta l'impatto delle modifiche senza documentazione delle connessioni?"
+            }
+          ],
+          "evidence_required": "",
+          "soc_mapping": ""
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_change_impact_analysis",
+          "weight": 0.17,
+          "title": "Analisi Impatto dei Cambiamenti",
+          "question": "Con quale frequenza le modifiche di sistema causano problemi imprevisti in altri sistemi, apparentemente non correlati?",
+          "options": [
+            {
+              "value": "rare_unexpected_impact",
+              "label": "Impatti imprevisti rari (<1 per trimestre); accoppiamento ben compreso e gestito",
+              "score": 0,
+              "follow_up": "Come raggiunge risultati di modifica così prevedibili?"
+            },
+            {
+              "value": "occasional_unexpected_impact",
+              "label": "Impatti imprevisti occasionali (1-2 per trimestre); generalmente identificati e risolti rapidamente",
+              "score": 0.5,
+              "follow_up": "Cosa causa gli impatti imprevisti che sperimenta?"
+            },
+            {
+              "value": "frequent_unexpected_impact",
+              "label": "Impatti imprevisti frequenti (mensili o più frequenti); la complessità dell'accoppiamento rende difficile la previsione",
+              "score": 0.85,
+              "follow_up": "Come influisce questo sulla Sua disponibilità ad apportare le modifiche necessarie?"
+            },
+            {
+              "value": "routine_unexpected_impact",
+              "label": "Gli impatti imprevisti sono di routine; le modifiche causano regolarmente fallimenti a cascata tra sistemi",
+              "score": 1,
+              "follow_up": "Qual è la Sua strategia per gestire questi fallimenti a cascata?"
+            }
+          ],
+          "evidence_required": "",
+          "soc_mapping": ""
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_incident_scope_assessment",
+          "weight": 0.16,
+          "title": "Valutazione Ambito Incidenti",
+          "question": "Quando si verifica un incidente di sicurezza, qual è la Sua procedura standard per verificare se altri sistemi potrebbero essere interessati?",
+          "options": [
+            {
+              "value": "systematic_scope_assessment",
+              "label": "Valutazione sistematica di tutti i sistemi connessi utilizzando mappe di dipendenza documentate",
+              "score": 0,
+              "follow_up": "Ci illustri la Sua procedura di controllo delle connessioni."
+            },
+            {
+              "value": "selective_scope_assessment",
+              "label": "Controllo dei sistemi ovviamente connessi; può perdere relazioni di accoppiamento indirette",
+              "score": 0.5,
+              "follow_up": "Come identifica quali sistemi controllare?"
+            },
+            {
+              "value": "reactive_scope_assessment",
+              "label": "Concentrazione sui sistemi direttamente interessati; scoperta reattiva degli impatti connessi man mano che emergono",
+              "score": 0.85,
+              "follow_up": "Con quale frequenza scopre sistemi aggiuntivi interessati dopo la risposta iniziale?"
+            },
+            {
+              "value": "isolated_response",
+              "label": "La risposta agli incidenti tratta i sistemi come isolati; raramente controlla gli impatti connessi",
+              "score": 1,
+              "follow_up": "Come impedisce agli incidenti di diffondersi ai sistemi connessi?"
+            }
+          ],
+          "evidence_required": "",
+          "soc_mapping": ""
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_vendor_connection_management",
+          "weight": 0.14,
+          "title": "Gestione Connessioni Fornitori",
+          "question": "Quale processo utilizza per comprendere e gestire come i sistemi di terze parti si connettono ai Suoi sistemi interni?",
+          "options": [
+            {
+              "value": "comprehensive_vendor_mapping",
+              "label": "Mappatura completa delle connessioni dei fornitori con flussi di dati documentati e controlli di sicurezza",
+              "score": 0,
+              "follow_up": "Ci mostri un esempio della Sua documentazione delle connessioni dei fornitori."
+            },
+            {
+              "value": "basic_vendor_mapping",
+              "label": "Comprensione di base delle connessioni dei fornitori ma non sempre documentata in modo completo",
+              "score": 0.5,
+              "follow_up": "Cosa impedisce una documentazione completa delle connessioni dei fornitori?"
+            },
+            {
+              "value": "minimal_vendor_mapping",
+              "label": "Visibilità limitata nelle connessioni dei fornitori; comprensione solo dell'integrazione primaria",
+              "score": 0.85,
+              "follow_up": "Come valuta i rischi di sicurezza senza comprendere tutte le connessioni dei fornitori?"
+            },
+            {
+              "value": "no_vendor_mapping",
+              "label": "Connessioni dei fornitori non tracciate sistematicamente; scoperte attraverso risoluzione problemi o incidenti",
+              "score": 1,
+              "follow_up": "Come impedisce che i problemi di sicurezza dei fornitori influenzino i sistemi interni?"
+            }
+          ],
+          "evidence_required": "",
+          "soc_mapping": ""
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_dependency_review_frequency",
+          "weight": 0.13,
+          "title": "Frequenza Revisione Dipendenze",
+          "question": "Con quale frequenza rivede e aggiorna la documentazione su quali sistemi dipendono l'uno dall'altro?",
+          "options": [
+            {
+              "value": "continuous_review",
+              "label": "Tracciamento automatico continuo delle dipendenze con validazione manuale trimestrale e aggiornamenti",
+              "score": 0,
+              "follow_up": "Come funziona il Suo tracciamento automatico delle dipendenze?"
+            },
+            {
+              "value": "regular_review",
+              "label": "Revisioni semestrali o annuali delle dipendenze con aggiornamenti quando si verificano modifiche importanti",
+              "score": 0.5,
+              "follow_up": "Cosa attiva gli aggiornamenti della documentazione delle dipendenze?"
+            },
+            {
+              "value": "reactive_review",
+              "label": "Documentazione delle dipendenze aggiornata reattivamente quando i problemi rivelano lacune o errori",
+              "score": 0.85,
+              "follow_up": "Come sa quando la documentazione delle dipendenze è imprecisa?"
+            },
+            {
+              "value": "no_review",
+              "label": "Nessuna revisione sistematica delle dipendenze; la documentazione diventa rapidamente obsoleta",
+              "score": 1,
+              "follow_up": "Come prende decisioni senza informazioni attuali sulle dipendenze?"
+            }
+          ],
+          "evidence_required": "",
+          "soc_mapping": ""
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_emergency_change_procedures",
+          "weight": 0.12,
+          "title": "Procedure Cambiamenti di Emergenza",
+          "question": "Quando deve apportare modifiche di emergenza ai sistemi critici, quali passaggi garantiscono di non interrompere le connessioni ad altri sistemi?",
+          "options": [
+            {
+              "value": "mandatory_connection_checks",
+              "label": "Lista di controllo obbligatoria dell'impatto sulle connessioni anche durante le emergenze; revisione documentata richiesta",
+              "score": 0,
+              "follow_up": "Ci illustri la Sua procedura di controllo delle connessioni di emergenza."
+            },
+            {
+              "value": "informal_connection_checks",
+              "label": "Considerazione informale delle connessioni durante le emergenze; si affida alla conoscenza del team",
+              "score": 0.5,
+              "follow_up": "Quanto sono affidabili i controlli informali sotto pressione temporale?"
+            },
+            {
+              "value": "minimal_connection_checks",
+              "label": "Le modifiche di emergenza procedono con valutazione minima delle connessioni; risoluzione reattiva dei problemi",
+              "score": 0.85,
+              "follow_up": "Con quale frequenza le modifiche di emergenza causano problemi di connessione?"
+            },
+            {
+              "value": "no_connection_checks",
+              "label": "Le procedure di emergenza bypassano la valutazione delle connessioni; concentrazione esclusiva sul problema immediato",
+              "score": 1,
+              "follow_up": "Qual è il Suo processo per ripristinare le interruzioni delle connessioni causate da modifiche di emergenza?"
+            }
+          ],
+          "evidence_required": "",
+          "soc_mapping": ""
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_cross_team_coordination",
+          "weight": 0.1,
+          "title": "Coordinamento tra Team",
+          "question": "Come si coordinano i diversi team IT (rete, sicurezza, applicazioni, ecc.) quando apportano modifiche che potrebbero influenzare i sistemi di altri team?",
+          "options": [
+            {
+              "value": "formal_coordination",
+              "label": "Coordinamento formale tra team richiesto e documentato per tutte le modifiche che interessano più domini",
+              "score": 0,
+              "follow_up": "Come funziona il Suo processo di coordinamento tra team?"
+            },
+            {
+              "value": "informal_coordination",
+              "label": "Il coordinamento informale avviene ma non sempre documentato o completo",
+              "score": 0.5,
+              "follow_up": "Cosa causa lacune nel coordinamento nel Suo processo?"
+            },
+            {
+              "value": "reactive_coordination",
+              "label": "I team si coordinano reattivamente quando sorgono conflitti; coordinamento proattivo minimo",
+              "score": 0.85,
+              "follow_up": "Con quale frequenza i fallimenti di coordinamento causano problemi?"
+            },
+            {
+              "value": "siloed_operations",
+              "label": "I team lavorano in isolamento; le interruzioni del coordinamento sono comuni",
+              "score": 1,
+              "follow_up": "Come risolve i conflitti quando i team apportano modifiche incompatibili?"
+            }
+          ],
+          "evidence_required": "",
+          "soc_mapping": ""
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezioni UNA opzione per ogni domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le prove dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Punteggio_Rapido = Σ(punteggio_domanda × peso_domanda) / Σ(peso_domanda)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CONVERSAZIONE CON IL CLIENTE",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Domande Iniziali - Gestione della Verifica e del Disagio",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Come la Sua organizzazione gestisce la verifica quando i dipendenti ricevono comunicazioni dai sistemi IA o chatbot (bot di assistenza clienti, assistenti automatizzati, email generate da IA)? Ci racconti un esempio specifico recente di un'interazione IA che ha richiesto verifica.",
+              "scoring_guidance": {
+                "green": "Procedure di verifica chiare con esempio recente specifico che mostra una gestione efficace",
+                "yellow": "Consapevolezza informale ma nessun processo di verifica sistematico",
+                "red": "Nessuna distinzione tra comunicazioni IA e umane o procedure di verifica"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Come sanno i dipendenti quando stanno interagendo con IA versus umani nei Suoi sistemi?",
+                  "evidence_type": "transparency_assessment"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Ha avuto situazioni in cui i dipendenti erano confusi se stavano parlando con IA o una persona?",
+                  "evidence_type": "ambiguity_examples"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Qual è la Sua procedura quando i dipendenti riferiscono di sentirsi 'qualcosa non va' riguardante le comunicazioni digitali, anche se non riescono a individuare perché? Ci faccia un esempio recente in cui un dipendente ha avuto questo sentimento intuitivo su un messaggio o un'interazione.",
+              "scoring_guidance": {
+                "green": "Protocollo di investigazione formale con esempio recente di escalation riuscita basata su sentimento intuitivo",
+                "yellow": "Gestione informale senza processo sistematico",
+                "red": "Nessun protocollo o rifiuto di preoccupazioni intuitive senza prove concrete"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Lei incoraggia o sconsiglia ai dipendenti di segnalare quando qualcosa 'sembra sbagliato' anche senza prove?",
+                  "evidence_type": "reporting_culture"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Verifica tra Colleghi e Formazione",
+          "weight": 0.3,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Con quale frequenza i dipendenti chiedono ai colleghi di verificare se le comunicazioni provengono da umani o da sistemi IA? Ci racconti dell'ultima volta che è successo e come è stato gestito.",
+              "scoring_guidance": {
+                "green": "Richieste di verifica regolari con processo documentato ed esempio recente",
+                "yellow": "Verifica occasionale ma nessun tracciamento formale o processo",
+                "red": "Rara o mai - i dipendenti non cercano verifica per l'ambiguità IA-umana"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Chiedere questo tipo di verifica è considerato normale o sorprende le persone?",
+                  "evidence_type": "cultural_acceptance"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Quale politica ha la Sua organizzazione per i dipendenti che esprimono disagio o confusione riguardante se stanno interagendo con sistemi IA o umani nelle comunicazioni di lavoro? Fornisca un esempio specifico di come il Suo team ha gestito tale situazione.",
+              "scoring_guidance": {
+                "green": "Politica di supporto con esempio di gestione specifico che mostra la protezione dei dipendenti",
+                "yellow": "Supporto limitato, riconosciuto ma nessuna procedura formale",
+                "red": "Nessuna politica o disagio respinto come eccesso di cautela verso la tecnologia"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "I dipendenti sono mai stati criticati per essere 'troppo sospetti' delle comunicazioni IA?",
+                  "evidence_type": "psychological_safety"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Come la Sua organizzazione forma i dipendenti a distinguere tra strumenti di sicurezza legittimi basati su IA e comunicazioni potenzialmente dannose generate da IA? Ci racconti della Sua sessione di formazione più recente o delle linee guida su questo argomento.",
+              "scoring_guidance": {
+                "green": "Formazione globale con esempi specifici e dettagli della sessione recente",
+                "yellow": "Consapevolezza di base senza competenze specifiche di rilevamento IA",
+                "red": "Nessuna formazione sulla distinzione tra IA legittima e dannosa"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "La Sua formazione include esempi di deepfake o contenuti sofisticati generati da IA?",
+                  "evidence_type": "training_content_quality"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Verifica Video e Escalation",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Cosa succede quando i dipendenti ricevono videochiamate o messaggi che sembrano quasi reali ma qualcosa sembra 'sbagliato' nell'aspetto o nel comportamento della persona? Ci faccia un esempio di come il Suo team gestirebbe una comunicazione video sospetta.",
+              "scoring_guidance": {
+                "green": "Protocollo chiaro con verifica multi-fattore ed esempio ipotetico/effettivo",
+                "yellow": "Consapevolezza informale ma nessun processo formale di verifica deepfake",
+                "red": "Nessun protocollo o presupposto che il video significa comunicazione legittima"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Ha qualche strumento tecnico per rilevare deepfake o video manipolato?",
+                  "evidence_type": "technical_controls"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quale metodo di verifica di backup se l'autenticità del video è messa in dubbio?",
+                  "evidence_type": "alternative_verification"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Con quale rapidità i dipendenti possono escalare le preoccupazioni riguardanti l'ambiguità IA-umana nelle comunicazioni ai team di sicurezza? Ci racconti il Suo processo di escalation e fornisca un esempio recente.",
+              "scoring_guidance": {
+                "green": "Escalation rapida (<30 min) con processo documentato ed esempio recente",
+                "yellow": "Velocità moderata (1-4 ore) o percorso di escalation poco chiaro",
+                "red": "Escalation lenta (>4 ore) o nessun processo chiaro per le preoccupazioni di ambiguità IA"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "C'è un canale dedicato o un processo specifico per segnalare interazioni IA inquietanti o sospette?",
+                  "evidence_type": "specialized_channel"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Indagini per Segnali Rossi",
+          "weight": 0,
+          "description": "Indicatori osservabili che aumentano il punteggio di vulnerabilità indipendentemente dalle politiche dichiarate",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Non abbiamo procedure per la verifica IA-umana - non è un vero problema...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"I dipendenti che segnalano 'sentimenti viscerali' sulle comunicazioni sono eccessivamente paranoici...\"",
+              "severity": "critical",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Non riusciamo a distinguere tra comunicazioni IA e umane e non pensiamo di doverlo fare...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Le videochiamate sono sempre autentiche - non ci preoccupiamo dei deepfake...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Nessuna formazione sul rilevamento dell'IA - presumiamo che le persone possano capirlo...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"L'escalation per le preoccupazioni di ambiguità IA richiede ore o giorni - è prioritaria bassa...\"",
+              "severity": "medium",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Non abbiamo mai avuto nessuno che segnali disagio con le comunicazioni IA...\" (suggerisce nessuna cultura di segnalazione)\"",
+              "severity": "medium",
+              "score_impact": 0.11,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Punteggio_Conversazione = Media_Ponderata(punteggi_sottosezione) + Σ(impatti_segnali_rossi)"
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare scenari di comunicazione IA inquietante mensilmente per testare i protocolli di risposta",
+      "correlation_analysis": "Confrontare la valutazione manuale con le metriche comportamentali automatizzate (correlazione target > 0.75)",
+      "drift_detection": "Test di Kolmogorov-Smirnov sui pattern di verifica, ricalibrare se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicurare che i punteggi della valle dell'inquietante prevedono incidenti di sicurezza di comunicazione IA",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift rilevato o punteggio di validazione < 0.70"
+    },
+    "success_metrics": [
+      {
+        "metric": "Tasso di Utilizzo del Protocollo di Verifica",
+        "formula": "% di comunicazioni IA ambigue che attivano procedure di verifica",
+        "baseline": "tasso di verifica corrente da indagini dipendenti e log di sistema",
+        "target": "80% di miglioramento nell'utilizzo della verifica entro 90 giorni",
+        "measurement": "analisi automatizzata mensile dei log di verifica"
+      },
+      {
+        "metric": "Tempo di Risposta all'Escalation della Valle dell'Inquietante",
+        "formula": "Tempo dal rapporto di incertezza del dipendente al completamento dell'investigazione del team di sicurezza",
+        "baseline": "tempo di risposta corrente dal sistema di ticketing",
+        "target": "<30 minuti risposta iniziale, <2 ore completamento investigazione",
+        "measurement": "monitoraggio continuo dei timestamp del ticketing"
+      },
+      {
+        "metric": "Riduzione dell'Incidente di Falsa Fiducia",
+        "formula": "Incidenti di sicurezza in cui i dipendenti si fidavano inadeguatamente di comunicazioni generate da IA",
+        "baseline": "tasso di incidente corrente dai rapporti di sicurezza",
+        "target": "70% di riduzione entro 90 giorni",
+        "measurement": "analisi trimestrale degli incidenti e indagini di feedback dei dipendenti"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Protocollo di Etichettatura delle Comunicazioni IA",
+        "description": "Implementare un sistema di etichettatura obbligatorio per tutte le comunicazioni generate da IA",
+        "implementation": "Distribuire controlli tecnici che etichettano automaticamente i messaggi IA con identificatori chiari. Stabilire requisiti di verifica per qualsiasi comunicazione senza etichetta che affermi origine umana. Creare percorso di escalation per le comunicazioni che mancano di identificazione IA/umana appropriata.",
+        "technical_controls": "Etichettatura automatica dei messaggi IA, sistema di verifica dell'identità, flag di comunicazioni senza etichetta",
+        "roi": "305% in media entro 12 mesi",
+        "effort": "medium",
+        "timeline": "45-60 giorni"
+      },
+      {
+        "id": "sol_2",
+        "title": "Formazione sulla Risposta della Valle dell'Inquietante",
+        "description": "Sviluppare modulo di formazione di 20 minuti insegnando ai dipendenti a riconoscere e fidarsi dei loro sentimenti 'inquietanti'",
+        "implementation": "Includere esercizi pratici utilizzando esempi di comunicazioni IA legittime vs dannose. Formare i dipendenti a utilizzare i protocolli di verifica quando sperimentano disagio psicologico con le interazioni digitali. Fornire script chiari per escalare le preoccupazioni 'qualcosa sembra sbagliato' ai team di sicurezza.",
+        "technical_controls": "Piattaforma di formazione con biblioteca di scenari, tracciamento delle competenze, script di escalation",
+        "roi": "265% in media entro 18 mesi",
+        "effort": "low",
+        "timeline": "30 giorni iniziali, aggiornamenti trimestrali"
+      },
+      {
+        "id": "sol_3",
+        "title": "Sistema di Verifica a Due Canali",
+        "description": "Stabilire una politica che richiede la verifica attraverso un canale di comunicazione separato per qualsiasi richiesta ad alto rischio",
+        "implementation": "Implementare un sistema tecnico che automaticamente richiede la verifica per richieste finanziarie, di accesso o di dati sensibili. Creare un processo semplice per i dipendenti per verificare rapidamente l'identità umana attraverso mezzi alternativi. Distribuire requisiti di verifica telefonica o di persona per richieste insolite, indipendentemente dall'autenticità della fonte.",
+        "technical_controls": "Automazione della verifica a doppio canale, metodi di verifica alternativi, flag ad alto rischio",
+        "roi": "330% in media entro 12 mesi",
+        "effort": "medium",
+        "timeline": "45 giorni"
+      },
+      {
+        "id": "sol_4",
+        "title": "Protocolli di Sicurezza Psicologica",
+        "description": "Creare un processo formale per i dipendenti per segnalare interazioni digitali 'inquietanti' o scomode senza giudizio",
+        "implementation": "Stabilire una procedura di risposta del team di sicurezza per investigare comunicazioni ambigue IA-umane. Implementare una politica che protegge i dipendenti che escalano in base a preoccupazioni intuitive piuttosto che prove tecniche. Distribuire un sistema di risposta rapida per i dipendenti che sperimentano confusione sull'autenticità della comunicazione.",
+        "technical_controls": "Portale di segnalazione anonima, ticketing a risposta rapida, applicazione della politica di protezione",
+        "roi": "245% in media entro 18 mesi",
+        "effort": "low",
+        "timeline": "30 giorni"
+      },
+      {
+        "id": "sol_5",
+        "title": "Monitoraggio della Linea di Base dell'Interazione IA",
+        "description": "Distribuire un sistema per monitorare i pattern nelle risposte dei dipendenti alle comunicazioni IA",
+        "implementation": "Stabilire metriche di linea di base per i normali comportamenti di interazione IA (tempi di risposta, richieste di verifica, escalation). Creare avvisi per pattern insoliti che potrebbero indicare lo sfruttamento della valle dell'inquietante. Implementare il rilevamento automatico per i pattern di comunicazione che tipicamente innescano risposte della valle dell'inquietante.",
+        "technical_controls": "Piattaforma di analisi comportamentale, tracciamento della linea di base, rilevamento anomalie, sistema di avviso",
+        "roi": "290% in media entro 12 mesi",
+        "effort": "high",
+        "timeline": "60-90 giorni"
+      },
+      {
+        "id": "sol_6",
+        "title": "Autenticazione Potenziata per Comunicazioni Ambigue",
+        "description": "Distribuire un sistema di verifica multi-fattore attivato dai rapporti di incertezza dei dipendenti",
+        "implementation": "Implementare l'autenticazione biometrica o comportamentale per le comunicazioni video/audio quando richiesto. Creare controlli tecnici che contrassegnano le comunicazioni che presentano caratteristiche della valle dell'inquietante. Stabilire codici o frasi di verifica sicure per confermare l'identità umana in interazioni sospette.",
+        "technical_controls": "Autenticazione multi-fattore, verifica biometrica, integrazione rilevamento deepfake",
+        "roi": "315% in media entro 12 mesi",
+        "effort": "high",
+        "timeline": "60-90 giorni"
+      }
+    ],
+    "prioritization": {
+      "critical_first": [
+        "sol_1",
+        "sol_3"
+      ],
+      "high_value": [
+        "sol_6",
+        "sol_5"
+      ],
+      "cultural_foundation": [
+        "sol_2",
+        "sol_4"
+      ],
+      "governance": [
+        "sol_1"
+      ]
+    }
+  },
+  "risk_scenarios": [
+    {
+      "id": "apt_lateral_movement",
+      "title": "Movimento Laterale APT Attraverso Accoppiamento Non Documentato",
+      "description": "Gli attaccanti Advanced Persistent Threat (APT) compromettono sistemi a bassa sicurezza e utilizzano connessioni non documentate per accedere a sistemi aziendali critici attraverso percorsi di movimento laterale che i difensori non realizzano esistere.",
+      "likelihood": "high",
+      "impact": "critical",
+      "attack_pattern": {
+        "reconnaissance": "Mappatura dell'accoppiamento dei sistemi dell'organizzazione attraverso scansione esterna e OSINT",
+        "timing": "Compromissione iniziale di sistemi debolmente difesi con ampio accoppiamento non documentato",
+        "execution": "Movimento laterale multi-hop attraverso percorsi di accoppiamento inaspettati",
+        "exploitation": "Compromissione del sistema critico ed esfiltrazione dei dati attraverso catene di accoppiamento"
+      },
+      "real_world_examples": [
+        "Target 2013: l'accoppiamento del fornitore HVAC ai sistemi di pagamento ha consentito il furto dei dati delle carte di pagamento",
+        "Campagne APT che utilizzano l'accoppiamento del sistema di supporto IT per accedere agli ambienti di produzione"
+      ],
+      "indicators": [
+        "Movimento laterale tra sistemi senza connessioni ovvie",
+        "Escalation dei privilegi attraverso i confini dei sistemi",
+        "Percorsi di esfiltrazione dei dati attraverso sistemi accoppiati",
+        "Anomalie di autenticazione nelle relazioni di sistema accoppiato"
+      ],
+      "mitigation_mapping": {
+        "network_dependency_mapping": "Fornisce visibilità sui percorsi di movimento laterale",
+        "incident_connection_protocol": "Consente il controllo sistematico dei sistemi accoppiati durante gli incidenti"
+      }
+    },
+    {
+      "id": "supply_chain_amplification",
+      "title": "Amplificazione dell'Attacco alla Supply Chain Attraverso l'Accoppiamento della Fiducia",
+      "description": "L'aggiornamento software di un fornitore affidabile contiene codice dannoso che si diffonde attraverso sistemi connessi oltre l'applicazione originariamente mirata perché l'organizzazione non sa quali sistemi condividono connessioni con il software del fornitore.",
+      "likelihood": "medium-high",
+      "impact": "critical",
+      "attack_pattern": {
+        "reconnaissance": "Comprensione dell'accoppiamento del software del fornitore e delle relazioni di fiducia",
+        "timing": "Iniezione di codice dannoso nell'aggiornamento affidabile del fornitore",
+        "execution": "Propagazione attraverso le connessioni del software del fornitore ai sistemi interni",
+        "exploitation": "Compromissione completa della rete attraverso relazioni di fiducia a cascata"
+      },
+      "real_world_examples": [
+        "SolarWinds 2020: l'accoppiamento degli aggiornamenti software affidabili ha consentito una compromissione diffusa in oltre 18.000 organizzazioni",
+        "NotPetya 2017: l'accoppiamento del software fiscale ucraino ha consentito la diffusione globale del ransomware"
+      ],
+      "indicators": [
+        "Aggiornamento del software del fornitore che interessa sistemi interni inaspettati",
+        "Fallimenti a cascata a seguito di modifiche del software del fornitore",
+        "Flussi di dati insoliti da sistemi connessi al fornitore",
+        "Sfruttamento delle relazioni di fiducia attraverso i confini dei sistemi"
+      ],
+      "mitigation_mapping": {
+        "vendor_integration_assessment": "Documenta e controlla l'accoppiamento del sistema del fornitore",
+        "cross_system_change_approval": "Richiede valutazione degli impatti degli aggiornamenti del fornitore"
+      }
+    },
+    {
+      "id": "cascading_failure",
+      "title": "Fallimenti a Cascata dei Sistemi da Dipendenze Non Riconosciute",
+      "description": "Una modifica di manutenzione di routine a un sistema causa fallimenti imprevisti nei sistemi connessi creando una finestra di sicurezza che gli attaccanti sfruttano mentre i difensori lottano con il contenimento della cascata.",
+      "likelihood": "medium",
+      "impact": "high",
+      "attack_pattern": {
+        "reconnaissance": "Monitoraggio delle finestre di modifica organizzative e della complessità dell'accoppiamento",
+        "timing": "Attacco lanciato durante la finestra di fallimento a cascata quando la sicurezza è degradata",
+        "execution": "Sfruttamento dei controlli di sicurezza disabilitati durante la risposta alla cascata",
+        "exploitation": "Esfiltrazione dei dati o accesso persistente durante il periodo di recupero esteso"
+      },
+      "real_world_examples": [
+        "Interruzioni di importanti fornitori di cloud in cui i fallimenti a cascata hanno creato una prolungata degradazione dei controlli di sicurezza",
+        "Manutenzione del database che causa fallimenti del sistema di autenticazione consentendo l'accesso non autorizzato"
+      ],
+      "indicators": [
+        "Fallimenti a cascata che si propagano attraverso sistemi presumibilmente isolati",
+        "Tempi di recupero estesi a causa della complessità dell'accoppiamento",
+        "Controlli di sicurezza disabilitati durante la risoluzione della cascata",
+        "Attività di attacco che coincidono con periodi di fallimento a cascata"
+      ],
+      "mitigation_mapping": {
+        "network_dependency_mapping": "Identifica proattivamente i percorsi di rischio a cascata",
+        "emergency_connection_checklist": "Previene modifiche di emergenza che attivano cascate"
+      }
+    },
+    {
+      "id": "cloud_premises_bridge",
+      "title": "Attacco Ponte Cloud-Sede Tramite Accoppiamento Nascosto",
+      "description": "Gli attaccanti compromettono un servizio cloud che ha connessioni nascoste ai sistemi on-premises attraverso single sign-on, database condivisi o sistemi di backup, trattando cloud e on-premises come domini di sicurezza separati mentre perdono i ponti di attacco basati sull'accoppiamento.",
+      "likelihood": "medium-high",
+      "impact": "critical",
+      "attack_pattern": {
+        "reconnaissance": "Identificazione dei punti di accoppiamento cloud-on-premises e delle relazioni di fiducia",
+        "timing": "Compromissione del servizio cloud seguita da pivot attraverso l'accoppiamento verso on-premises",
+        "execution": "Sfruttamento dell'accoppiamento di identità, dati o backup condiviso per movimento laterale",
+        "exploitation": "Compromissione completa dell'infrastruttura attraverso cloud e on-premises tramite ponti di accoppiamento"
+      },
+      "real_world_examples": [
+        "Compromissioni del provider di identità cloud che consentono l'accesso ad Active Directory on-premises",
+        "Accoppiamento del servizio di backup cloud che consente l'accesso e l'esfiltrazione dei dati on-premises"
+      ],
+      "indicators": [
+        "Autenticazione cloud utilizzata per accesso on-premises",
+        "Anomalie di sincronizzazione dei dati tra cloud e on-premises",
+        "Accesso al sistema di backup da credenziali cloud",
+        "Modelli di sfruttamento dell'accoppiamento di identità ibrida"
+      ],
+      "mitigation_mapping": {
+        "quarterly_relationship_reviews": "Identifica le relazioni di accoppiamento cloud-premises",
+        "vendor_integration_assessment": "Valuta la sicurezza dell'accoppiamento del servizio cloud"
+      }
+    }
+  ],
+  "metadata": {
+    "language": "it-IT",
+    "language_name": "Italian (Italy)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-10",
+    "translator": "CPF Translation Team",
+    "created_date": "2025-11-09",
+    "last_modified": "2025-11-09",
+    "version_history": [
+      {
+        "version": "1.0",
+        "date": "2025-11-09",
+        "changes": "Rilascio iniziale - Generazione batch Categoria 10.x",
+        "author": "CPF Development Team"
+      }
+    ]
+  }
+}

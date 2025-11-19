@@ -1,0 +1,935 @@
+{
+  "indicator": "1.9",
+  "title": "INDICATOR 1.9 FIELD KIT",
+  "subtitle": "Authority-Based Social Proof",
+  "category": "Authority-Based Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 1.x",
+
+  "description": {
+    "short": "Measures vulnerability to compliance cascades where employees observe colleagues deferring to authority figures and use this as justification for their own compliance, creating compound psychological pressure",
+    "context": "Authority-based social proof occurs when employees observe colleagues complying with apparent authority figures and use this as justification for their own compliance, creating a compound vulnerability. This psychological mechanism makes organizations particularly susceptible to CEO fraud, vendor impersonation, and policy bypass attacks because employees see 'everyone else is doing it' combined with 'the boss said so.' The result is reduced verification behaviors and faster spread of security incidents through organizations.",
+    "impact": "Organizations with high susceptibility experience compliance cascades where initial authority-approved exceptions become normalized across teams, CEO fraud attacks with 90% higher success rates when attackers reference other employees, and policy erosion through 'precedent' rather than formal changes. Business Email Compromise incidents show 300% effectiveness increase when combining authority and social proof claims, with financial losses averaging 40% higher than authority-only attacks.",
+    "psychological_basis": "This convergent vulnerability combines Milgram's authority obedience research (65% baseline compliance, increasing to 92% when participants observe confederates obeying first) with Cialdini's social proof mechanisms. fMRI studies show reduced prefrontal cortex activation when following both authority and social cues simultaneously. The dual-processing nature means System 1 (automatic) responses dominate when both influence types align, creating self-reinforcing cycles where each act of observed compliance increases likelihood of further compliance."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Resilient",
+        "description": "Multiple independent verification steps required regardless of authority level or social proof claims. Systematic documentation of all exceptions with trend analysis to prevent clustering. New employee orientation includes explicit training on authority+social proof scenarios. Recent examples show employees questioning combined influence attempts.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Developing",
+        "description": "Some verification procedures exist but can be bypassed for executive requests or when 'everyone else is doing it.' Occasional clustering of similar exception requests without systematic review. Mixed examples of employees following vs. questioning authority+social proof combinations.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Critical",
+        "description": "Executive requests routinely bypass verification especially when referencing others. Exception approvals create immediate precedent for similar requests. New employees learn procedures through social observation rather than formal training. Multiple examples of 'everyone was doing it' security incidents.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_approval_bypass": 0.18,
+      "q2_exception_clustering": 0.16,
+      "q3_executive_social_proof": 0.15,
+      "q4_cascade_incidents": 0.14,
+      "q5_verification_combined": 0.13,
+      "q6_informal_learning": 0.12,
+      "q7_policy_erosion": 0.12
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_1.9(t) = w1·R_1.9(t) + w2·A_1.9(t) + w3·B_1.9(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_1.9(t) = 1 if (N_exceptions > θ_cluster AND Authority_ref = true), else 0",
+          "description": "Binary detection when exception clustering occurs with authority references",
+          "threshold": {
+            "N_exceptions": 3,
+            "time_window_hours": 168,
+            "authority_reference_required": true
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_1.9(t) = sqrt((x(t) - μ)ᵀ Σ⁻¹ (x(t) - μ))",
+          "description": "Mahalanobis distance for exception clustering and social proof patterns",
+          "variables": {
+            "x(t)": "observation vector [exception_frequency, clustering_coefficient, social_proof_mentions]",
+            "μ": "baseline mean from 90-day historical data",
+            "Σ": "covariance matrix with exponential weighting"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_1.9(t) = P(cascade|factors) = [P(factors|cascade) × P(cascade)] / P(factors)",
+          "factors": [
+            "initial_authority_approval",
+            "follow_on_request_timing",
+            "social_proof_language_detected",
+            "organizational_proximity",
+            "verification_bypassed"
+          ],
+          "priors": {
+            "P_cascade": 0.12,
+            "P_independent": 0.88
+          }
+        },
+        "cascade_propagation": {
+          "formula": "P_adopt(i,t) = 1 - ∏[j∈N(i)] (1 - α_ij·A_j(t))",
+          "description": "Network cascade model where adoption probability increases with neighbor adoption",
+          "authority_amplification": "α_ij = α_base·(1 + γ·Authority_Level(j))",
+          "parameters": {
+            "α_base": 0.15,
+            "γ": 0.25
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.25,
+        "w2_anomaly": 0.45,
+        "w3_bayesian": 0.30
+      },
+      "temporal_decay": {
+        "formula": "T_1.9(t) = α·D_1.9(t) + (1-α)·T_1.9(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200,
+        "description": "Exponential smoothing with 2-hour time constant for cascade detection"
+      }
+    },
+    "exception_clustering": {
+      "formula": "EC(t,w) = Σ[i∈W(t,w)] Similar(i,j) / Total_exceptions",
+      "description": "Measures similarity of exception requests in time window",
+      "similarity_threshold": 0.7
+    },
+    "social_proof_detection": {
+      "formula": "SPD(m) = Σ[phrases] weight(phrase) × count(phrase,m)",
+      "phrases": {
+        "other_departments": 0.25,
+        "everyone_else": 0.30,
+        "standard_practice": 0.20,
+        "already_approved": 0.25
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "exception_request_logs",
+        "policy_compliance_history",
+        "new_hire_onboarding_records"
+      ],
+      "evidence_required": [
+        "exception_tracking_database",
+        "verification_procedures_documentation",
+        "recent_clustering_examples",
+        "employee_training_materials"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "approval_workflow_logs",
+          "fields": ["request_id", "requester", "approver", "exception_type", "justification_text", "timestamp"],
+          "retention": "180_days"
+        },
+        {
+          "source": "email_gateway_logs",
+          "fields": ["sender", "recipient", "subject", "body_keywords", "authority_markers", "timestamp"],
+          "retention": "90_days"
+        },
+        {
+          "source": "exception_management_system",
+          "fields": ["exception_id", "policy_bypassed", "authority_approver", "precedent_references", "timestamp"],
+          "retention": "365_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "organizational_network_graph",
+          "fields": ["employee_id", "reporting_structure", "communication_edges", "influence_weights"],
+          "retention": "current_state"
+        },
+        {
+          "source": "training_completion_logs",
+          "fields": ["employee_id", "training_module", "completion_date", "assessment_score"],
+          "retention": "365_days"
+        },
+        {
+          "source": "incident_response_tickets",
+          "fields": ["ticket_id", "root_cause", "social_proof_indicators", "cascade_pattern"],
+          "retention": "730_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "exception_clustering": {
+          "calculation": "Count of similar exceptions within 7-day window",
+          "query": "SELECT COUNT(*) FROM exceptions WHERE similarity(justification, baseline) > 0.7 AND timestamp > NOW() - INTERVAL '7 days' GROUP BY exception_type"
+        },
+        "social_proof_frequency": {
+          "calculation": "NLP detection of social proof phrases in requests",
+          "query": "SELECT COUNT(*) FROM requests WHERE (body LIKE '%other departments%' OR body LIKE '%everyone else%' OR body LIKE '%standard practice%') AND timestamp > NOW() - INTERVAL '24 hours'"
+        },
+        "cascade_detection": {
+          "calculation": "Network propagation analysis of exception adoptions",
+          "query": "SELECT employee_id, COUNT(exceptions) FROM exceptions WHERE preceded_by_peer_exception = true AND time_delta < 72 hours GROUP BY employee_id"
+        }
+      }
+    },
+    "integration_apis": {
+      "workflow_system": "ServiceNow/Jira API - Exception requests, approval chains",
+      "active_directory": "LDAP - Organizational structure, peer relationships",
+      "communication_platform": "Microsoft Teams/Slack API - Social proof language detection",
+      "siem": "Splunk/Sentinel API - Exception clustering correlation"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "1.3",
+        "name": "Authority Figure Impersonation Susceptibility",
+        "probability": 0.75,
+        "factor": 1.5,
+        "description": "Successful authority impersonation creates social proof for similar attacks",
+        "formula": "P(1.9|1.3) = 0.75"
+      },
+      {
+        "indicator": "6.1",
+        "name": "Groupthink",
+        "probability": 0.70,
+        "factor": 1.4,
+        "description": "Group conformity pressure amplifies social proof mechanisms",
+        "formula": "P(1.9|6.1) = 0.70"
+      },
+      {
+        "indicator": "1.1",
+        "name": "Unquestioning Compliance",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "Authority compliance creates observable behaviors others imitate",
+        "formula": "P(1.9|1.1) = 0.65"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.60,
+        "factor": 1.25,
+        "description": "Time pressure reduces ability to resist combined authority+social proof",
+        "formula": "P(1.9|2.1) = 0.60"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "1.8",
+        "name": "Executive Exception Normalization",
+        "probability": 0.80,
+        "factor": 1.6,
+        "description": "Social proof accelerates normalization of policy bypasses"
+      },
+      {
+        "indicator": "3.2",
+        "name": "Social Proof Exploitation",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "Authority-endorsed social proof creates powerful influence cascades"
+      },
+      {
+        "indicator": "6.3",
+        "name": "Diffusion of Responsibility",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "When everyone is doing it, individual responsibility diminishes"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["1.9", "1.3", "6.1", "2.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 3.2,
+      "threshold_critical": 4.0,
+      "description": "Perfect storm: Authority+social proof + Impersonation + Groupthink + Urgency = 320% increased breach probability with rapid organizational spread",
+      "real_world_example": "Target 2013 breach - Initial vendor compromise spread through organization via apparent authority approvals combined with social proof of 'normal business operations'"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["1.3", "6.1", "1.1", "2.1"],
+      "child_nodes": ["1.8", "3.2", "6.3"],
+      "conditional_probability_table": {
+        "P_1.9_base": 0.12,
+        "P_1.9_given_impersonation": 0.48,
+        "P_1.9_given_groupthink": 0.42,
+        "P_1.9_given_compliance": 0.38,
+        "P_1.9_given_all": 0.85
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_approval_bypass",
+          "weight": 0.18,
+          "title": "Authority Approval Process Bypass Frequency",
+          "question": "How often do employees bypass normal approval processes when a request comes from senior management or appears to have executive backing?",
+          "options": [
+            {
+              "value": "rarely",
+              "score": 0,
+              "label": "Rarely/Never - Verification required regardless of authority level, with documented examples of executive requests being properly verified"
+            },
+            {
+              "value": "occasionally",
+              "score": 0.5,
+              "label": "Occasionally - Some verification occurs but inconsistently applied when executives are involved"
+            },
+            {
+              "value": "frequently",
+              "score": 1,
+              "label": "Frequently - Daily or weekly bypasses when requests appear to have executive backing"
+            }
+          ],
+          "evidence_required": "Approval workflow logs showing bypass frequency, specific examples with timestamps",
+          "soc_mapping": "exception_clustering metric from detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_exception_clustering",
+          "weight": 0.16,
+          "title": "Policy Exception Clustering Patterns",
+          "question": "When one department or team gets approval for a security exception or new access, how quickly do other teams request similar exceptions?",
+          "options": [
+            {
+              "value": "slow",
+              "score": 0,
+              "label": "Slow/Never - Each exception evaluated independently, no clustering pattern in recent 6 months"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "Moderate - Some clustering occurs, typically within 2-4 weeks of initial approval"
+            },
+            {
+              "value": "rapid",
+              "score": 1,
+              "label": "Rapid - Follow-on requests occur within days, explicitly referencing the initial approval as precedent"
+            }
+          ],
+          "evidence_required": "Exception database showing timing and justification patterns, recent clustering example",
+          "soc_mapping": "cascade_detection from telemetry_mapping"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_executive_social_proof",
+          "weight": 0.15,
+          "title": "Executive + Social Proof Verification Protocol",
+          "question": "What's your procedure when employees receive urgent requests from executives that reference 'what other departments are already doing' or 'standard practice everyone follows'?",
+          "options": [
+            {
+              "value": "strict",
+              "score": 0,
+              "label": "Strict verification protocol - Multi-factor verification required regardless of authority or social proof claims"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Partial procedures - Some verification expected but social proof claims reduce scrutiny"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No specific protocol - Combination of executive authority and social proof typically results in immediate compliance"
+            }
+          ],
+          "evidence_required": "Verification procedure documentation, recent examples of handling such requests",
+          "soc_mapping": "social_proof_frequency from telemetry_mapping"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_cascade_incidents",
+          "weight": 0.14,
+          "title": "Compliance Cascade Incident History",
+          "question": "Describe a recent incident where multiple employees made the same security decision after seeing colleagues do it first. What was the outcome?",
+          "options": [
+            {
+              "value": "prevented",
+              "score": 0,
+              "label": "Prevented - Organization has mechanisms that detected and stopped cascade patterns before widespread adoption"
+            },
+            {
+              "value": "limited",
+              "score": 0.5,
+              "label": "Limited spread - Cascade occurred but was contained to single team or department"
+            },
+            {
+              "value": "widespread",
+              "score": 1,
+              "label": "Widespread - Cascade spread across multiple departments, became normalized practice organization-wide"
+            }
+          ],
+          "evidence_required": "Specific incident description, root cause analysis, remediation taken",
+          "soc_mapping": "Incident response ticket analysis"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_verification_combined",
+          "weight": 0.13,
+          "title": "Combined Authority+Social Proof Verification",
+          "question": "How do you verify the authenticity of requests when they come with both executive authority AND claims that 'other companies/departments/teams are doing this'?",
+          "options": [
+            {
+              "value": "multi_factor",
+              "score": 0,
+              "label": "Multi-factor verification - Independent verification of both authority source and social proof claims required"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Basic verification - Check one factor (usually authority) but accept social proof claims at face value"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No verification - Combination is considered sufficient justification without verification"
+            }
+          ],
+          "evidence_required": "Verification protocol document, recent examples showing actual practice",
+          "soc_mapping": "verification_attempts from anomaly detection vector"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_informal_learning",
+          "weight": 0.12,
+          "title": "New Employee Procedure Learning",
+          "question": "What happens when new employees ask existing staff about security procedures - do they get formal policy guidance or 'this is how we actually do things here' explanations?",
+          "options": [
+            {
+              "value": "formal",
+              "score": 0,
+              "label": "Formal guidance - Structured onboarding directs to written policies, mentors reinforce formal procedures"
+            },
+            {
+              "value": "mixed",
+              "score": 0.5,
+              "label": "Mixed approach - Some formal guidance but significant informal 'here's how it really works' communication"
+            },
+            {
+              "value": "informal",
+              "score": 1,
+              "label": "Primarily informal - New employees learn through observation and informal guidance on 'actual practice'"
+            }
+          ],
+          "evidence_required": "Onboarding documentation, new hire interviews, mentorship program details",
+          "soc_mapping": "Training completion logs correlation with actual behavior"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_policy_erosion",
+          "weight": 0.12,
+          "title": "Policy Erosion Through Precedent",
+          "question": "Tell us about a time when a security policy was gradually eroded because initial exceptions became 'normal practice' that others followed.",
+          "options": [
+            {
+              "value": "never",
+              "score": 0,
+              "label": "Never occurred - Exception tracking and review prevents precedent-based erosion"
+            },
+            {
+              "value": "minor",
+              "score": 0.5,
+              "label": "Minor erosion - Some policies weakened through exceptions but detected and corrected within months"
+            },
+            {
+              "value": "significant",
+              "score": 1,
+              "label": "Significant erosion - Multiple examples of policies becoming ineffective through exception-based precedent"
+            }
+          ],
+          "evidence_required": "Specific policy erosion example, timeline, corrective actions taken",
+          "soc_mapping": "Policy compliance trending analysis"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Opening Questions",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Walk me through what happens when an employee receives a request from a senior executive that includes language like 'the other departments have already done this' or 'this is standard practice everyone follows.' What's the actual process?",
+              "scoring_guidance": {
+                "green": "Detailed multi-step verification protocol described with recent example of successful verification despite authority+social proof pressure",
+                "yellow": "General awareness that verification should occur but inconsistent application, vague examples",
+                "red": "No specific protocol, 'we trust our executives' combined with social proof acceptance"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Give me a specific recent example - what exactly did the request say, who received it, and what happened?",
+                  "evidence_type": "specific_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you verify the social proof claims - do you actually check if 'other departments' really are doing this?",
+                  "evidence_type": "technical_control"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Tell me about the last time one team or department got approval for a security exception. What happened with other teams after that?",
+              "scoring_guidance": {
+                "green": "Exception tracking shows independent evaluation of each request, no clustering patterns",
+                "yellow": "Some follow-on requests but reviewed individually, moderate clustering",
+                "red": "Clear cascade pattern where initial approval triggers wave of similar requests using precedent"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "How long between the first approval and follow-on requests? What justification did the follow-on requests use?",
+                  "evidence_type": "temporal_pattern"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Do you track and analyze these clustering patterns? What system or process catches this?",
+                  "evidence_type": "technical_control"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "When new employees join, how do they learn about security procedures? What's the balance between formal training and learning from experienced colleagues?",
+              "scoring_guidance": {
+                "green": "Structured onboarding with formal security training, mentors reinforce written policies, recent examples show new hires following formal procedures",
+                "yellow": "Basic formal training but significant 'here's how it really works' informal learning",
+                "red": "Primarily learn through observation and informal guidance on 'actual practice' vs. official policy"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Ask a recent new hire: how did you learn what to do when you get an unusual request from management?",
+                  "evidence_type": "cultural_indicator"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What happens when formal policy conflicts with 'how we actually do things' - which wins?",
+                  "evidence_type": "cultural_indicator"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Exception and Precedent Patterns",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Describe how security policy exceptions work in your organization. Once an exception is granted, does it become precedent for similar requests?",
+              "scoring_guidance": {
+                "green": "Each exception evaluated independently with documented business justification, no automatic precedent, systematic review prevents erosion",
+                "yellow": "Informal precedent develops but exceptions still reviewed, some policy erosion over time",
+                "red": "Exceptions explicitly create precedent, 'we approved this before' is sufficient justification"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show me your exception tracking system. How do you identify when multiple similar exceptions indicate policy should be updated vs. policy erosion?",
+                  "evidence_type": "technical_control"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Give me an example of a security policy that weakened over time through exceptions. How was this detected and addressed?",
+                  "evidence_type": "specific_incident"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "What's your procedure for requests that claim 'this is what everyone in the industry does' or 'our competitors all have this access'? How do you verify these benchmark claims?",
+              "scoring_guidance": {
+                "green": "Independent verification of industry practices required, third-party benchmarking data, not accepted at face value",
+                "yellow": "Some skepticism but limited verification capability, often accepted with senior approval",
+                "red": "Industry practice claims accepted without verification, especially from authority figures"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Has anyone ever falsely claimed 'everyone does this' to get an exception? How would you know?",
+                  "evidence_type": "detection_capability"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What resources or processes do you have for actually verifying industry practice claims?",
+                  "evidence_type": "technical_control"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cultural & Organizational Factors",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Think about your organizational culture - when someone sees their colleagues or other teams doing something (like bypassing a security step or getting an exception), how does that influence their own behavior?",
+              "scoring_guidance": {
+                "green": "Strong culture of independent evaluation, 'everyone else is doing it' not considered valid justification, documented examples",
+                "yellow": "Mixed culture, social proof has some influence but not dominant",
+                "red": "Social proof is powerful justification, 'if others got approval, I should too' is common reasoning"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Has anyone ever been praised or recognized for questioning a request even though 'everyone else approved it'?",
+                  "evidence_type": "cultural_indicator"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What happens to someone who slows down a process by insisting on verification when others didn't?",
+                  "evidence_type": "cultural_indicator"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Tell me about a time when you had a 'everyone was doing it' security incident - where multiple people made the same security mistake after observing others.",
+              "scoring_guidance": {
+                "green": "No recent incidents, or incident was quickly detected and stopped before widespread adoption",
+                "yellow": "Incidents occurred but contained to single team, lessons learned implemented",
+                "red": "Multiple incidents where behavior cascaded across organization, became normalized before detection"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What was the root cause? How did the cascade start and spread? What stopped it?",
+                  "evidence_type": "root_cause_analysis"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What changes did you make to prevent similar cascades in the future?",
+                  "evidence_type": "remediation_actions"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"If other departments got approval, we should too - it's only fair...\"",
+              "severity": "critical",
+              "score_impact": 0.16,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Everyone in the industry does this, so it must be safe...\"",
+              "severity": "high",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"The executives said this is standard practice, so we don't need to verify...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"We can't be the only team that doesn't have this access...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"New employees learn by watching what experienced people do, not from policy documents...\"",
+              "severity": "medium",
+              "score_impact": 0.10,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"Once we approve something once, it becomes the new standard - that's just how it works...\"",
+              "severity": "critical",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Checking every request when the boss says everyone else is doing it would slow us down...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject simulated authority+social proof scenarios monthly to measure cascade detection",
+      "correlation_analysis": "Compare manual audit scores with SOC exception clustering detection (target correlation > 0.85)",
+      "drift_detection": "Kolmogorov-Smirnov test on exception clustering patterns, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted cascade probabilities match observed frequencies",
+      "baseline_period": "90_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Authority+Social Proof Attack Success Rate",
+        "formula": "Baseline measurement through simulated phishing campaigns combining executive impersonation with social proof claims",
+        "baseline": "initial simulation (month 0)",
+        "target": "75% reduction in successful exploitation within 90 days",
+        "measurement": "monthly controlled testing scenarios"
+      },
+      {
+        "metric": "Policy Exception Clustering Reduction",
+        "formula": "Frequency of follow-on exception requests after initial approvals",
+        "baseline": "previous 6 months average",
+        "target": "60% reduction in clustered exceptions within 60 days",
+        "measurement": "weekly exception database analysis and trending"
+      },
+      {
+        "metric": "Verification Behavior Compliance",
+        "formula": "Percentage of high-risk requests completing full verification protocol regardless of authority or social proof claims",
+        "baseline": "current state assessment",
+        "target": "95% compliance within 90 days",
+        "measurement": "workflow system logs and monthly compliance audits"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Multi-Factor Request Verification System",
+        "description": "Implement automated workflow requiring independent verification from two separate authorities for requests combining executive authorization with social proof claims",
+        "implementation": "Email and workflow system flags requests mentioning 'other departments,' 'everyone else,' 'standard practice' or similar social proof language. Routes through additional approval step requiring independent verification of both authority source and social proof claims. System tracks approval chains to detect clustering patterns.",
+        "technical_controls": "NLP-based social proof detection in request text, automated routing rules, dual-approval workflow engine, exception clustering analytics dashboard",
+        "roi": "380% average within 18 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Exception Tracking and Trend Analysis System",
+        "description": "Deploy monitoring system that tracks all policy exceptions and identifies clustering patterns where one approval leads to multiple similar requests",
+        "implementation": "Centralized exception database with automated similarity detection. Machine learning algorithms identify clustering patterns (>3 similar requests within 7 days). Automated alerts when exception frequency exceeds baseline. Mandatory review of social proof justifications before approval. Monthly trend reports to security leadership.",
+        "technical_controls": "Exception management platform, NLP similarity analysis, anomaly detection algorithms, automated alerting, executive dashboard",
+        "roi": "320% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "New Employee Security Mentorship Program",
+        "description": "Assign security-conscious mentors to new hires for first 90 days with structured training that explicitly addresses authority+social proof scenarios",
+        "implementation": "Select and train mentors on identifying authority+social proof psychological vulnerabilities. Provide scenario-based training materials covering common attack patterns. Mentors conduct monthly check-ins discussing real-world examples. New hires complete practical exercises on questioning authority+social proof combinations. Performance tracking ensures formal procedures win over informal 'how we really do it' guidance.",
+        "technical_controls": "Mentorship assignment system, training completion tracking, scenario assessment platform, quarterly effectiveness reviews",
+        "roi": "290% average within 18 months",
+        "effort": "medium",
+        "timeline": "30-45 days initial, ongoing program"
+      },
+      {
+        "id": "sol_4",
+        "title": "Authority Verification Protocol for Combined Influence",
+        "description": "Establish mandatory verification procedures for high-risk requests that activate regardless of apparent authority level or social proof claims",
+        "implementation": "Written protocol requiring: (1) Callback verification using independently sourced contact information when request includes social proof language, (2) Independent verification of social proof claims ('other departments are doing this' requires confirmation), (3) Mandatory 4-hour waiting period for urgent requests combining authority and social proof, (4) Exception justification must address why request is unique vs. following precedent.",
+        "technical_controls": "Verified contact database, automated waiting period enforcement, social proof claim verification workflow, approval chain logging",
+        "roi": "420% average within 18 months",
+        "effort": "medium",
+        "timeline": "30-45 days"
+      },
+      {
+        "id": "sol_5",
+        "title": "Social Proof Disruption Training",
+        "description": "Conduct quarterly simulations where employees practice identifying and responding to authority+social proof combinations",
+        "implementation": "Role-playing scenarios specific to organization's hierarchy and culture. Simulated phishing campaigns combining executive impersonation with social proof claims. Immediate feedback on compliance vs. verification behaviors. Success stories shared organization-wide creating positive social proof around security-conscious questioning. Training includes psychological education on cascade effects and compound influence.",
+        "technical_controls": "Phishing simulation platform with social proof templates, training delivery system, competency assessment tracking, success story communication platform",
+        "roi": "340% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days initial, quarterly ongoing"
+      },
+      {
+        "id": "sol_6",
+        "title": "Cultural Reward System for Appropriate Skepticism",
+        "description": "Implement recognition program that celebrates employees who appropriately question authority+social proof requests",
+        "implementation": "Formal recognition program for employees who verify suspicious requests despite authority or social proof pressure. Share prevented incident stories showing security value. Quarterly awards highlighting effective questioning behaviors. Leadership communication emphasizing that verification is valued over speed. Create positive social proof around security-conscious decision-making. Track and publicize metrics showing how skepticism prevented incidents.",
+        "technical_controls": "Recognition platform, incident prevention tracking, communication templates, leadership dashboards showing prevented incidents",
+        "roi": "280% average within 24 months",
+        "effort": "low",
+        "timeline": "ongoing cultural program, 30 days to launch"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_4"],
+      "high_value": ["sol_2", "sol_5"],
+      "cultural_foundation": ["sol_3", "sol_6"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "CEO Fraud Amplification with Social Proof",
+      "description": "Attacker impersonates executive requesting wire transfer while referencing 'what the board approved' and 'similar requests accounting has processed' to create combined authority+social proof pressure",
+      "attack_vector": "Email impersonation or compromised account with carefully crafted social proof language",
+      "psychological_mechanism": "Dual pathway compliance - authority recognition plus social validation creates compound pressure reducing verification likelihood",
+      "historical_example": "Business Email Compromise patterns show 90% higher success rates when attackers reference other employees, with 300% effectiveness increase combining authority and social proof claims",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": [
+        "social_proof_frequency > threshold",
+        "authority_markers + urgent_financial_request",
+        "verification_bypassed = true",
+        "no_precedent_verification"
+      ]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Vendor Compromise Cascade",
+      "description": "Malicious contractor gains initial access through social engineering, then uses their presence as social proof for additional access requests claiming 'other contractors have this access'",
+      "attack_vector": "Initial social engineering followed by internal propagation using presence as social proof",
+      "psychological_mechanism": "Initial success creates observable social proof that others use to justify similar approvals, resulting in cascade effect",
+      "historical_example": "Target Corporation 2013 - Initial vendor compromise spread through organization via apparent authority approvals combined with social proof of 'normal business operations'",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": [
+        "exception_clustering > 3 within 7 days",
+        "vendor_access_requests citing precedent",
+        "lateral_movement_pattern",
+        "social_proof_language_in_justification"
+      ]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Policy Erosion Through Exception Cascade",
+      "description": "Attackers exploit gradual security policy degradation by getting initial 'emergency' exceptions approved by authority figures, then using these as social proof for widespread policy bypasses",
+      "attack_vector": "Long-term systematic exploitation of exception precedent and social proof mechanisms",
+      "psychological_mechanism": "Normalization curve - each exception reduces perceived abnormality of subsequent violations, combined with social proof of 'everyone is doing it'",
+      "historical_example": "Common pattern in organizations where initial COVID-related security exceptions became permanent through social proof propagation",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": [
+        "policy_exception_trend > 200% baseline",
+        "exception_clustering_coefficient > 0.7",
+        "precedent_cited_in_justification",
+        "gradual_compliance_degradation"
+      ]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Insider Threat Multiplication via Social Proof",
+      "description": "Compromised employee demonstrates non-compliant behaviors that colleagues observe and replicate thinking it's authorized, turning single insider threat into organization-wide security culture degradation",
+      "attack_vector": "Initial insider compromise followed by behavioral cascade through social observation",
+      "psychological_mechanism": "Mirror neuron activation - automatic imitation of observed compliance behaviors, especially when behavior appears endorsed by authority",
+      "historical_example": "Security culture erosion patterns where single compromised employee's behaviors spread virally through teams",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": [
+        "behavioral_clustering across teams",
+        "policy_violation_propagation",
+        "cascade_origination_from_single_source",
+        "rapid_norm_shift in security behaviors"
+      ]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Milgram, S. (1974). Obedience to Authority - 65% baseline compliance, 92% with confederate social proof",
+      "Cialdini, R. (2007). Influence: The Psychology of Persuasion - Social proof mechanisms",
+      "Asch, S. (1951). Conformity experiments - 37% compliance with obviously wrong group consensus",
+      "Berns et al. (2005). Neurological basis - reduced prefrontal cortex activation with combined authority and social cues",
+      "Festinger, L. (1954). Social comparison theory"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

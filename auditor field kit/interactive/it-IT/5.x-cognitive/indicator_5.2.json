@@ -1,0 +1,1036 @@
+{
+  "indicator": "5.2",
+  "title": "FIELD KIT INDICATORE 5.2",
+  "subtitle": "Errori da Affaticamento Decisionale (Decision Fatigue)",
+  "category": "Vulnerabilità da Sovraccarico Cognitivo",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 5.x",
+  "description": {
+    "short": "Misura la vulnerabilità derivante dal deterioramento della qualità decisionale dopo sequenze prolungate di scelte di sicurezza",
+    "context": "L'affaticamento decisionale (Decision Fatigue) si verifica quando la qualità del giudizio si deteriora dopo sequenze prolungate di scelte consecutive. I professionisti della sicurezza che prendono centinaia di decisioni di triage al giorno esauriscono progressivamente le risorse cognitive, portando a scorciatoie rischiose, evitamento decisionale e selezioni di default non sicure. Le organizzazioni sperimentano questo quando gli analisti SOC processano volumi elevati di alert, gli amministratori gestiscono richieste di accesso continue, o i team di risposta agli incidenti affrontano crisi prolungate senza pause di recupero.",
+    "impact": "Le organizzazioni con elevato affaticamento decisionale sperimentano approvazioni di accesso rischiose, dismissioni premature di alert, selezione di opzioni di default più semplici ma meno sicure, e declino della qualità decisionale con il progredire del turno. Le analisi delle violazioni mostrano che decisioni di sicurezza critiche prese tarde nel turno o dopo sequenze di scelte complesse hanno tassi di errore significativamente più alti. Gli attaccanti sfruttano questa vulnerabilità temporizzando le richieste durante periodi noti di affaticamento decisionale.",
+    "psychological_basis": "La ricerca di Baumeister (1998) sull'ego-depletion dimostra che la forza di volontà e il controllo esecutivo funzionano come muscolo limitato che si affatica con l'uso. La Teoria del Carico Cognitivo di Kahneman mostra come decisioni sequenziali esauriscano le risorse del Sistema 2 forzando il ripiego sul Sistema 1 più veloce ma soggetto a errori. Gli studi neurologici rivelano l'esaurimento del glucosio nella corteccia prefrontale dopo un processo decisionale sostenuto, compromettendo l'autocontrollo e il giudizio analitico. La ricerca di Danziger (2011) sui giudici della libertà vigilata ha dimostrato un decadimento misurabile della qualità decisionale correlato al tempo trascorso dall'ultima pausa, con implicazioni dirette per i professionisti della sicurezza."
+  },
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [
+          0,
+          0.33
+        ],
+        "label": "Bassa Vulnerabilità - Resiliente",
+        "description": "Il team di sicurezza prende meno di 25 decisioni di sicurezza significative per turno di 8 ore, ha procedure decisionali documentate per i periodi ad alto volume, utilizza strumenti automatizzati per gestire le decisioni di routine e ha decision-maker di backup per i periodi di picco.",
+        "risk_level": "basso",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [
+          0.34,
+          0.66
+        ],
+        "label": "Vulnerabilità Moderata - In Sviluppo",
+        "description": "Il team di sicurezza prende 25-50 decisioni di sicurezza significative per turno, ha una certa automazione per le decisioni di routine, ma si basa fortemente sul giudizio individuale per la maggior parte delle scelte di sicurezza e ha procedure di backup limitate durante i periodi intensi.",
+        "risk_level": "medio",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [
+          0.67,
+          1
+        ],
+        "label": "Alta Vulnerabilità - Critica",
+        "description": "Il team di sicurezza prende più di 50 decisioni di sicurezza significative per turno, manca di automazione per le decisioni di routine, sperimenta frequentemente situazioni di sovraccarico decisionale e non ha procedure formali per gestire i periodi di picco del processo decisionale.",
+        "risk_level": "alto",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_decision_volume": 0.18,
+      "q2_peak_timing": 0.15,
+      "q3_overload_frequency": 0.14,
+      "q4_complex_decisions": 0.13,
+      "q5_tool_count": 0.12,
+      "q6_simultaneous_decisions": 0.12,
+      "q7_peak_periods": 0.1,
+      "q8_automation_level": 0.06
+    }
+  },
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_5.2(t) = w1·R_5.2(t) + w2·A_5.2(t) + w3·C_5.2(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_5.2(t) = 1 if (E_rate(t) - E_baseline)/E_baseline > 0.2 AND N_decisions(t) > N_baseline, else 0",
+          "description": "Rilevamento binario basato sull'aumento del tasso di errori correlato con volume decisionale elevato",
+          "threshold": {
+            "error_rate_increase": 0.2,
+            "decision_threshold_multiplier": 1.5
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_5.2(t) = sqrt((x(t) - μ)ᵀ Σ⁻¹ (x(t) - μ))",
+          "description": "Distanza di Mahalanobis per pattern multivariati di affaticamento decisionale",
+          "variables": {
+            "x(t)": "vettore di osservazione [velocità_decisionale, tasso_errori, qualità_decisionale, complessità]",
+            "μ": "media baseline dai dati storici",
+            "Σ": "matrice di covarianza (media mobile ponderata esponenziale)"
+          }
+        },
+        "cognitive_depletion": {
+          "formula": "C(t) = C_max - ∫[0,t] E_cognitive(τ)·e^(-λ(t-τ)) dτ",
+          "description": "Modello di esaurimento della capacità cognitiva con recupero esponenziale",
+          "variables": {
+            "C_max": "capacità cognitiva massima",
+            "E_cognitive": "tasso di spesa dello sforzo cognitivo",
+            "λ": "costante del tasso di recupero (default: 0.1/ora)"
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.3,
+        "w2_anomaly": 0.4,
+        "w3_cognitive": 0.3
+      },
+      "temporal_decay": {
+        "formula": "T_5.2(t) = α·D_5.2(t) + (1-α)·T_5.2(t-1)·e^(-λΔt)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 3600,
+        "description": "Smoothing esponenziale con costante temporale di 1 ora e decadimento del recupero cognitivo"
+      }
+    },
+    "decision_quality_model": {
+      "formula": "Q(n) = Q_0 · n^(-α)",
+      "description": "Decadimento a legge di potenza della qualità decisionale dopo n decisioni sequenziali",
+      "variables": {
+        "Q_0": "baseline di qualità decisionale iniziale",
+        "n": "numero di decisioni prese in sequenza",
+        "α": "esponente di affaticamento (range tipico: 0.15-0.25)"
+      },
+      "interpretation": "La qualità decisionale si degrada in modo prevedibile con il processo decisionale sequenziale"
+    },
+    "error_amplification": {
+      "formula": "E_rate(t) = E_baseline · (1 + γ · max(0, (C_required(t) - C(t))/C_max))",
+      "description": "Il tasso di errori aumenta quando la capacità cognitiva richiesta supera la capacità disponibile",
+      "variables": {
+        "E_baseline": "tasso di errori baseline in condizioni normali",
+        "γ": "fattore di amplificazione degli errori (tipicamente 2.0-3.0)",
+        "C_required": "capacità cognitiva richiesta per la decisione corrente",
+        "C(t)": "capacità cognitiva disponibile al tempo t"
+      }
+    }
+  },
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews_security_team",
+        "decision_log_documentazione",
+        "workload_analysis_records",
+        "security_team_schedules"
+      ],
+      "evidence_required": [
+        "daily_decision_volume_log",
+        "decision_quality_metrics",
+        "peak_period_procedures",
+        "automation_configuration_documentazione",
+        "team_rotation_schedules"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "security_alert_log",
+          "fields": [
+            "alert_id",
+            "presented_time",
+            "investigation_time",
+            "disposition",
+            "analyst_id",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "decision_tracking_system",
+          "fields": [
+            "decision_id",
+            "decision_type",
+            "time_to_decide",
+            "outcome",
+            "complexity_score",
+            "timestamp"
+          ],
+          "retention": "90_days"
+        },
+        {
+          "source": "access_request_log",
+          "fields": [
+            "request_id",
+            "approver_id",
+            "approval_time",
+            "request_complexity",
+            "approval_quality_score"
+          ],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "incident_classification_log",
+          "fields": [
+            "incident_id",
+            "classifier_id",
+            "classification_time",
+            "severity_assigned",
+            "reclassification_needed"
+          ],
+          "retention": "180_days"
+        },
+        {
+          "source": "policy_exception_requests",
+          "fields": [
+            "exception_id",
+            "approver",
+            "approval_speed",
+            "business_justification_quality",
+            "time_of_day"
+          ],
+          "retention": "365_days"
+        },
+        {
+          "source": "workload_telemetry",
+          "fields": [
+            "analyst_id",
+            "concurrent_tasks",
+            "decision_queue_depth",
+            "response_latency",
+            "timestamp"
+          ],
+          "retention": "60_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "E_rate": {
+          "calculation": "Tasso di errori da rilavorazione e correzioni delle decisioni",
+          "query": "SELECT (COUNT(reclassified=true OR reversed=true) / COUNT(*)) as error_rate FROM decisions WHERE time_window='shift' GROUP BY shift_id"
+        },
+        "N_decisions": {
+          "calculation": "Conteggio delle decisioni di sicurezza significative per periodo di tempo",
+          "query": "SELECT COUNT(*) FROM decisions WHERE decision_type IN ('alert_disposition', 'access_approval', 'policy_exception', 'incident_classification') AND timestamp > NOW() - INTERVAL '8 hours' GROUP BY analyst_id"
+        },
+        "decision_speed": {
+          "calculation": "Tempo dalla presentazione della decisione al completamento",
+          "query": "SELECT AVG(TIMESTAMPDIFF(SECOND, presented_time, decision_time)) FROM decisions WHERE timestamp > NOW() - INTERVAL '1 hour' GROUP BY analyst_id"
+        },
+        "decision_quality": {
+          "calculation": "Inverso del tasso di rilavorazione/revisione",
+          "query": "SELECT (1 - COUNT(revised=true)/COUNT(*)) as quality FROM decisions WHERE time_window='shift'"
+        }
+      }
+    },
+    "integration_apis": {
+      "siem": "Splunk/Sentinel API - Alert metrics, Investigation patterns, Analyst workload",
+      "pam_system": "CyberArk/BeyondTrust API - Access request volume, Approval patterns, Exception tracking",
+      "ticketing_system": "ServiceNow/Jira API - Decision timestamps, Queue depth, Assignment patterns",
+      "workload_analytics": "Custom API - Decision volume tracking, Quality metrics, Fatigue indicators"
+    }
+  },
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue Desensitization",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "L'affaticamento da alert aumenta il volume decisionale, accelerando l'insorgenza dell'affaticamento decisionale",
+        "formula": "P(5.2|5.1) = 0.75",
+        "evidence": "Alta correlazione (0.75) nella matrice di interdipendenza tra affaticamento da alert e decisionale"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.7,
+        "factor": 1.3,
+        "description": "Lo stress esaurisce le risorse cognitive più velocemente, riducendo la capacità decisionale",
+        "formula": "P(5.2|7.1) = 0.7"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.65,
+        "factor": 1.35,
+        "description": "La pressione temporale aumenta il volume decisionale e riduce la qualità decisionale simultaneamente",
+        "formula": "P(5.2|2.1) = 0.65"
+      },
+      {
+        "indicator": "5.4",
+        "name": "Multitasking Degradation",
+        "probability": 0.6,
+        "factor": 1.25,
+        "description": "La gestione simultanea di task aumenta il carico cognitivo e le richieste decisionali",
+        "formula": "P(5.2|5.4) = 0.6"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue Desensitization",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "L'affaticamento decisionale porta alla dismissione in blocco degli alert senza investigazione appropriata"
+      },
+      {
+        "indicator": "5.7",
+        "name": "Working Memory Overflow",
+        "probability": 0.65,
+        "factor": 1.3,
+        "description": "L'esaurimento cognitivo riduce la capacità della memoria di lavoro per decisioni di sicurezza complesse"
+      },
+      {
+        "indicator": "1.3",
+        "name": "Authority Impersonation Susceptibility",
+        "probability": 0.7,
+        "factor": 1.3,
+        "description": "I decision-maker affaticati sono più propensi a conformarsi all'apparente autorità senza verifica"
+      },
+      {
+        "indicator": "2.3",
+        "name": "Deadline-Driven Risk Acceptance",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "L'affaticamento decisionale rende la pressione delle scadenze più efficace nel bypassare la sicurezza"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": [
+        "5.2",
+        "5.1",
+        "7.1"
+      ],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 2.8,
+      "threshold_critical": 3.5,
+      "description": "Tempesta perfetta: Affaticamento decisionale + Affaticamento da alert + Stress acuto = 280% di aumento della probabilità di errori che portano a eventi di sicurezza critici mancati",
+      "real_world_esempio": "Violazione Target 2013 - Gli analisti di sicurezza che sperimentavano affaticamento da alert e sovraccarico decisionale durante il traffico di picco delle festività hanno mancato gli indicatori di violazione"
+    },
+    "bayesian_network": {
+      "parent_nodes": [
+        "5.1",
+        "7.1",
+        "2.1",
+        "5.4"
+      ],
+      "child_nodes": [
+        "5.7",
+        "1.3",
+        "2.3"
+      ],
+      "conditional_probability_table": {
+        "P_5.2_base": 0.2,
+        "P_5.2_given_alert_fatigue": 0.48,
+        "P_5.2_given_stress": 0.45,
+        "P_5.2_given_urgency": 0.42,
+        "P_5.2_given_all": 0.78
+      }
+    }
+  },
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_decision_volume",
+          "weight": 0.18,
+          "title": "Security Decision Volume Per Shift",
+          "question": "Quante decisioni relative alla sicurezza prende il vostro team di sicurezza in un turno tipico di 8 ore? (Contare gli alert revisionati, le richieste di accesso elaborate, le eccezioni alle policy valutate, le classificazioni degli incidenti, ecc.)",
+          "options": [
+            {
+              "value": "low",
+              "score": 0,
+              "label": "Meno di 25 decisioni di sicurezza significative per turno di 8 ore con bilanciamento documentato del carico decisionale"
+            },
+            {
+              "value": "medium",
+              "score": 0.5,
+              "label": "25-50 decisioni di sicurezza significative per turno con una certa gestione del carico di lavoro"
+            },
+            {
+              "value": "high",
+              "score": 1,
+              "label": "Più di 50 decisioni di sicurezza significative per turno senza gestione formale del carico di lavoro"
+            }
+          ],
+          "evidence_required": "Decision log from recent shift, workload distribution records, team capacity documentazione",
+          "soc_mapping": "N_decisions metric from detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_peak_timing",
+          "weight": 0.15,
+          "title": "Peak Decision Period Identification",
+          "question": "A che ora del giorno vedete tipicamente il volume più alto di alert di sicurezza o richieste che richiedono decisioni?",
+          "options": [
+            {
+              "value": "distributed",
+              "score": 0,
+              "label": "Il carico decisionale è distribuito equamente durante la giornata attraverso gestione del carico di lavoro e raggruppamento"
+            },
+            {
+              "value": "concentrated",
+              "score": 0.5,
+              "label": "Esistono alcuni periodi di picco ma sono gestiti con personale aggiuntivo"
+            },
+            {
+              "value": "unmanaged_peaks",
+              "score": 1,
+              "label": "Periodi di picco chiari (tardo pomeriggio, fine settimana) senza supporto aggiuntivo durante i periodi ad alto volume"
+            }
+          ],
+          "evidence_required": "24-hour decision volume chart, peak period procedures, staffing schedules",
+          "soc_mapping": "temporal pattern analysis from decision_tracking_system log"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_overload_frequency",
+          "weight": 0.14,
+          "title": "Decision Overload Frequency",
+          "question": "Con quale frequenza il vostro personale di sicurezza riferisce di sentirsi sopraffatto dal numero di decisioni di sicurezza che deve prendere?",
+          "options": [
+            {
+              "value": "rarely",
+              "score": 0,
+              "label": "Raramente o mai - Il team ha margine di capacità e procedure di escalation per situazioni di sovraccarico"
+            },
+            {
+              "value": "occasionally",
+              "score": 0.5,
+              "label": "Occasionalmente durante i periodi di picco - Alcuni membri del team riferiscono sovraccarico decisionale mensilmente"
+            },
+            {
+              "value": "frequently",
+              "score": 1,
+              "label": "Frequentemente - Report settimanali o giornalieri di sovraccarico decisionale, riunioni cancellate, risposte ritardate, personale frustrato"
+            }
+          ],
+          "evidence_required": "Team survey results, one-on-one interview feedback, observed stress indicators",
+          "soc_mapping": "workload_telemetry decision_queue_depth and response_latency patterns"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_complex_decisions",
+          "weight": 0.13,
+          "title": "Complex Decision Timing Procedures",
+          "question": "Qual è il vostro processo quando il personale di sicurezza deve prendere decisioni complesse a fine turno o alla fine di una settimana intensa?",
+          "options": [
+            {
+              "value": "yes",
+              "score": 0,
+              "label": "Esistono procedure documentate per differire decisioni complesse a personale riposato o richiedere revisione secondaria durante periodi di alta affaticamento"
+            },
+            {
+              "value": "informal",
+              "score": 0.5,
+              "label": "Pratica informale di chiedere aiuto ma senza procedure scritte o requisiti di revisione obbligatori"
+            },
+            {
+              "value": "no",
+              "score": 1,
+              "label": "Nessuna procedura speciale - Si prevede che il personale prenda tutte le decisioni assegnate indipendentemente da tempistica o stato cognitivo"
+            }
+          ],
+          "evidence_required": "Policy di delegazione decisionale, esempio recente di decisione complessa differita, documentazione workflow di escalation",
+          "soc_mapping": "decision_quality correlation with time-of-day and day-of-week patterns"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_tool_count",
+          "weight": 0.12,
+          "title": "Security Tool Decision Fragmentation",
+          "question": "Quanti strumenti o sistemi di sicurezza diversi richiedono processo decisionale separato da parte dei membri del vostro team quotidianamente?",
+          "options": [
+            {
+              "value": "consolidated",
+              "score": 0,
+              "label": "Meno di 3 sistemi primari con dashboard integrate e correlazione automatizzata che riduce la frammentazione decisionale"
+            },
+            {
+              "value": "moderate",
+              "score": 0.5,
+              "label": "3-5 strumenti di sicurezza separati che richiedono attenzione e processo decisionale individuali"
+            },
+            {
+              "value": "fragmented",
+              "score": 1,
+              "label": "Più di 5 strumenti di sicurezza separati che richiedono decisioni indipendenti senza integrazione o correlazione"
+            }
+          ],
+          "evidence_required": "List of security tools generating alerts, integration architecture diagram, analyst workflow documentazione",
+          "soc_mapping": "context switching frequency from workload_telemetry"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_simultaneous_decisions",
+          "weight": 0.12,
+          "title": "Simultaneous Decision Management",
+          "question": "Cosa succede quando il vostro team di sicurezza riceve più decisioni di sicurezza urgenti simultaneamente?",
+          "options": [
+            {
+              "value": "managed",
+              "score": 0,
+              "label": "Framework di prioritizzazione chiaro e sistema di bilanciamento del carico distribuisce decisioni simultanee tra i membri del team"
+            },
+            {
+              "value": "ad_hoc",
+              "score": 0.5,
+              "label": "Prioritizzazione ad-hoc da parte del personale senior ma senza sistema formale di distribuzione delle decisioni"
+            },
+            {
+              "value": "unmanaged",
+              "score": 1,
+              "label": "Chi arriva prima o chi è disponibile gestisce le decisioni, spesso risultando in sovraccarico decisionale parallelo"
+            }
+          ],
+          "evidence_required": "Log di risposta agli incidenti che mostrano eventi simultanei, policy di prioritizzazione decisioni, esempio recente multi-incidente",
+          "soc_mapping": "concurrent_tasks metric from workload_telemetry"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_peak_periods",
+          "weight": 0.1,
+          "title": "Peak Business Period Decision Quality",
+          "question": "Come gestite il processo decisionale di sicurezza durante i periodi di picco aziendale (fine trimestre, lanci importanti, ecc.)?",
+          "options": [
+            {
+              "value": "planned",
+              "score": 0,
+              "label": "Procedure documentate incluso personale aggiuntivo, supporto decisionale automatizzato e checkpoint di revisione obbligatori durante i periodi di picco noti"
+            },
+            {
+              "value": "reactive",
+              "score": 0.5,
+              "label": "Consapevolezza generale dei periodi di picco ma risposta reattiva senza procedure formali"
+            },
+            {
+              "value": "no_change",
+              "score": 1,
+              "label": "Nessuna procedura speciale per i periodi di picco - Le decisioni di sicurezza gestite allo stesso modo indipendentemente dalla pressione del ciclo aziendale"
+            }
+          ],
+          "evidence_required": "Peak period security procedures, staffing plans for busy periods, decision quality metrics during last peak period",
+          "soc_mapping": "error_rate temporal correlation with business cycle events"
+        },
+        {
+          "type": "radio-list",
+          "number": 8,
+          "id": "q8_automation_level",
+          "weight": 0.06,
+          "title": "Decision Automation Implementation",
+          "question": "Quale percentuale di decisioni di sicurezza di routine sono automatizzate rispetto a quelle che richiedono giudizio umano?",
+          "options": [
+            {
+              "value": "high_automation",
+              "score": 0,
+              "label": "Più del 70% delle decisioni di routine automatizzate, gli umani si concentrano su giudizi complessi che richiedono competenza"
+            },
+            {
+              "value": "moderate_automation",
+              "score": 0.5,
+              "label": "30-70% delle decisioni automatizzate, rimane un carico decisionale umano significativo"
+            },
+            {
+              "value": "low_automation",
+              "score": 1,
+              "label": "Meno del 30% automatizzato, la maggior parte delle decisioni di sicurezza richiede giudizio umano anche per scenari di routine"
+            }
+          ],
+          "evidence_required": "Automation configuration documentazione, manual vs. automated decision ratio reports, SOAR/automation platform metrics",
+          "soc_mapping": "ratio of automated to manual dispositions in security_alert_log"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Selezionare UNA opzione per ciascuna domanda. Ogni risposta contribuisce al punteggio finale ponderato. Le evidenze dovrebbero essere documentate per la traccia di audit.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Opening Questions - Decision Volume Assessment",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Guidatemi attraverso come appare il carico decisionale del vostro team di sicurezza dalle 9 alle 17 in una giornata tipica. Che tipi di decisioni stanno prendenfate e quante?",
+              "scoring_guidance": {
+                "green": "Conteggi decisionali specifici con tracciamento documentato, distribuzione chiara del carico di lavoro, riconoscimento dei pattern di affaticamento con mitigazione",
+                "yellow": "Consapevolezza generale del volume decisionale ma senza tracciamento formale o gestione dell'affaticamento",
+                "red": "Nessuna visibilità sul volume decisionale o sui pattern, risposta 'gestiamo semplicemente ciò che arriva'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Cosa costituisce una 'decisione di sicurezza' nel vostro ambiente rispetto ai compiti di routine?",
+                  "evidence_type": "definition_clarity"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come tracciate il volume e la qualità delle decisioni nel tempo?",
+                  "evidence_type": "measurement_system"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "Parlatemi dell'ultima volta che il vostro team di sicurezza ha sperimentato sovraccarico decisionale. Cosa è successo e come ha influenzato la qualità delle decisioni di sicurezza?",
+              "scoring_guidance": {
+                "green": "Incidente specifico con risposta documentata, analisi post-incidente che mostra lezioni apprese e miglioramenti di processo",
+                "yellow": "Può descrivere situazioni di sovraccarico ma senza analisi formale o processo di miglioramento",
+                "red": "Non può identificare incidenti di sovraccarico specifici o nega che si verifichino"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Quali indicatori vi hanno detto che il team stava sperimentanfate sovraccarico decisionale?",
+                  "evidence_type": "fatigue_detection"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quali decisioni sono state ritardate, affrettate o prese incorrettamente durante quel periofate?",
+                  "evidence_type": "impact_assessment"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "Quanfate il vostro team di sicurezza sperimenta volume decisionale di picco e quali procedure sono in atto per quei periodi?",
+              "scoring_guidance": {
+                "green": "Identificazione chiara dei pattern di picco con procedure documentate, risorse aggiuntive e checkpoint di qualità",
+                "yellow": "Consapevolezza dei picchi ma gestione informale o reattiva",
+                "red": "Nessun riconoscimento dei pattern di volume decisionale o risposta 'le decisioni sono sempre alte'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mostratemi i dati del volume decisionale dal vostro ultimo periofate di picco e le metriche di qualità di quel periofate.",
+                  "evidence_type": "data_evidence"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come vi assicurate che la qualità decisionale non si degradi durante i periodi ad alto volume?",
+                  "evidence_type": "quality_assurance"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Decision Process & Automation",
+          "weight": 0.25,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "Quale percentuale delle vostre decisioni di sicurezza è automatizzata rispetto a quelle che richiefateno giudizio umano e come avete determinato quell'equilibrio?",
+              "scoring_guidance": {
+                "green": "Approccio strategico all'automazione con criteri documentati per quando è richiesto giudizio umano, revisione e ottimizzazione regolari",
+                "yellow": "Qualche automazione ma implementazione ad-hoc senza analisi strategica",
+                "red": "Automazione minimale o politica generale 'abbiamo bisogno di umani per prendere decisioni di sicurezza'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Guidatemi attraverso un tipo di decisione specifico che avete automatizzato - perché era sicuro automatizzarlo?",
+                  "evidence_type": "automation_rationale"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quali decisioni avete specificamente scelto di NON automatizzare e perché?",
+                  "evidence_type": "automation_boundaries"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Quanti strumenti di sicurezza diversi richiefateno elaboranoo decisionale separato da parte del vostro team e come gestiscono il passaggio tra di essi?",
+              "scoring_guidance": {
+                "green": "Operazioni di sicurezza integrate con interfaccia decisionale unificata, cambio di contesto minimale, flusso di lavoro chiaro",
+                "yellow": "Strumenti multipli ma con una certa integrazione o standardizzazione del flusso di lavoro",
+                "red": "Strumenti frammentati che richiedono decisioni indipendenti, risposta 'gli analisti sanno semplicemente cosa verificare'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mostratemi come un analista si muove da un alert nello Strumento A al prendere una decisione nello Strumento B - qual è il elaboranoo?",
+                  "evidence_type": "workflow_observation"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Con quale frequenza gli analisti perfateno qualcosa perché è in uno strumento diverso da quello su cui sono attualmente concentrati?",
+                  "evidence_type": "fragmentation_impact"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cognitive Load Management",
+          "weight": 0.4,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "Cosa succede quanfate un analista di sicurezza deve prendere una decisione complessa e ad alto rischio a fine turno fatepo aver già gestito molte altre decisioni quel giorno?",
+              "scoring_guidance": {
+                "green": "Procedure documentate per revisione secondaria, differimento della decisione a personale riposato o periodi di pausa obbligatori prima di decisioni complesse",
+                "yellow": "Cultura informale di 'chiedi aiuto' ma senza procedure o requisiti formali",
+                "red": "Aspettativa che gli analisti prendano tutte le decisioni assegnate indipendentemente da tempistica o stato di affaticamento"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Descrivete una situazione recente in cui era necessaria una decisione di sicurezza complessa durante un periofate di alta affaticamento - cosa è successo?",
+                  "evidence_type": "specific_incident"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Come date potere agli analisti di dire 'Ho bisogno di qualcun altro per revisionare questa decisione perché sono troppo affaticato'?",
+                  "evidence_type": "psychological_safety"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q7",
+              "text": "Durante i periodi di picco aziendale come fine trimestre o lanci importanti, come cambia la qualità delle decisioni di sicurezza e cosa fate al riguarfate?",
+              "scoring_guidance": {
+                "green": "Analisi di correlazione documentata tra cicli aziendali e qualità decisionale con strategie di mitigazione proattive",
+                "yellow": "Consapevolezza generale della pressione durante i picchi ma gestione reattiva",
+                "red": "Nessun riconoscimento dell'impatto del ciclo aziendale sulle decisioni di sicurezza o risposta 'la sicurezza è sempre la stessa'"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Mostratemi le metriche di sicurezza dal vostro ultimo picco aziendale importante - cosa è successo alla qualità decisionale?",
+                  "evidence_type": "data_evidence"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Quali risorse o procedure aggiuntive attivate durante i periodi di picco noti?",
+                  "evidence_type": "preparedness_plan"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Il nostro team di sicurezza semplicemente affronta qualunque cosa gli capiti...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"Non tracciamo il volume decisionale - gli analisti di sicurezza sanno cosa fare...\"",
+              "severity": "high",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Le decisioni di sicurezza necessitano giudizio umano, quindi non possiamo automatizzare molto...\"",
+              "severity": "medium",
+              "score_impact": 0.1,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"Ci si aspetta che gli analisti gestiscano tutte le decisioni assegnate indipendentemente dal carico di lavoro...\"",
+              "severity": "critical",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Vediamo più incidenti di sicurezza il venerdì e nel tardo pomeriggio ma non abbiamo analizzato il perché...\"",
+              "severity": "medium",
+              "score_impact": 0.08,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"I nostri analisti passano costantemente tra 7-10 strumenti di sicurezza diversi...\"",
+              "severity": "high",
+              "score_impact": 0.1,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"Durante la fine del trimestre, tutti sono occupati quindi la sicurezza deve semplicemente tenere il passo...\"",
+              "severity": "high",
+              "score_impact": 0.11,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "\"Gli analisti iniziano a dismissere gli alert in blocco quando sono sopraffatti...\"",
+              "severity": "critical",
+              "score_impact": 0.13,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Iniettare scenari di sovraccarico decisionale simulati mensilmente per testare la sensibilità del rilevamento",
+      "correlation_analysis": "Confrontare i punteggi di audit manuale con i punteggi di rilevamento SOC (correlazione target > 0.85)",
+      "drift_detection": "Test di Kolmogorov-Smirnov sulle distribuzioni di qualità decisionale, ricalibrare se p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Assicurare che i punteggi di affaticamento decisionale previsti corrispondano ai tassi di degradazione della qualità osservati",
+      "baseline_period": "30_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Decision Quality Consistency",
+        "formula": "Varianza nei risultati delle decisioni di sicurezza durante il giorno e la settimana",
+        "baseline": "audit degli ultimi 90 giorni recenti",
+        "target": "ridurre la degradazione della qualità decisionale del 40% tra le decisioni del mattino e del pomeriggio entro 90 giorni",
+        "measurement": "tracciamento decisionale automatizzato + campionamento di revisione della qualità"
+      },
+      {
+        "metric": "Alert Processing Efficiency",
+        "formula": "Rapporto tra alert di sicurezza investigati correttamente vs. dismissi senza analisi",
+        "baseline": "tasso di investigazione attuale per ora del giorno",
+        "target": "mantenere un tasso di investigazione corretta del 95% anche durante i periodi di picco degli alert entro 60 giorni",
+        "measurement": "log di disposizione degli alert SIEM + audit di qualità dell'investigazione"
+      },
+      {
+        "metric": "Team Fatigue Indicators",
+        "formula": "Livelli di confidenza decisionale auto-riferiti e ore di straordinario relative agli arretrati decisionali di sicurezza",
+        "baseline": "dati attuali del sondaggio del team e degli straordinari",
+        "target": "ridurre gli straordinari del team di sicurezza del 25% e aumentare i punteggi di confidenza decisionale del 30% entro 90 giorni",
+        "measurement": "sondaggi settimanali del team + tracciamento straordinari HR"
+      }
+    ]
+  },
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Sistema di Bilanciamento del Carico Decisionale",
+        "description": "Implementare rotazione automatizzata delle decisioni di sicurezza tra i membri del team e stabilire quote decisionali giornaliere",
+        "implementation": "Utilizzare strumenti di gestione del flusso di lavoro per distribuire le decisioni di sicurezza in arrivo in base al carico di lavoro attuale e alle competenze. Includere procedure di escalation quando vengono raggiunti i limiti decisionali individuali. Tracciare il volume decisionale per analista con alert automatizzati al 70% e 90% dei limiti giornalieri raccomandati.",
+        "technical_controls": "Workflow orchestration platform, decision queue management system, workload monitoring dashboard, automated routing rules",
+        "roi": "350% average within 12 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Automazione Intelligente degli Alert",
+        "description": "Implementare strumenti di sicurezza basati su machine learning che gestiscono automaticamente le decisioni di routine",
+        "implementation": "Implementare piattaforma SOAR per automatizzare il blocco di IP malevoli noti, la quarantena di malware ovvi, l'approvazione di pattern di accesso standard. Riservare il processo decisionale umano per situazioni complesse ad alto impatto che richiedono giudizio. Iniziare con i tipi di decisione a volume più alto e complessità più bassa ed espandere l'automazione in modo iterativo.",
+        "technical_controls": "SOAR platform, machine learning models, automated playbooks, exception handling workflow, continuous feedback loop",
+        "roi": "420% average within 18 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Checkpoint di Qualità Decisionale",
+        "description": "Stabilire processi di revisione obbligatori per le decisioni di sicurezza prese durante periodi di alta affaticamento",
+        "implementation": "Implementare sistema buddy dove le decisioni di sicurezza critiche prese dopo le 15:00, di venerdì o durante la risposta agli incidenti richiedono approvazione secondaria. Creare segnalazione automatizzata di decisioni ad alto rischio durante i periodi di picco decisionale. Costruire periodi di pausa obbligatori prima di decisioni complesse.",
+        "technical_controls": "Decision tracking system with time-of-day awareness, automated revisione routing, approval workflow engine, quality audit sampling",
+        "roi": "280% average within 12 months",
+        "effort": "medium",
+        "timeline": "30-45 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Procedure di Gestione del Carico Cognitivo",
+        "description": "Creare alberi decisionali standardizzati e checklist per scenari di sicurezza comuni per ridurre il carico cognitivo",
+        "implementation": "Raggruppare decisioni di sicurezza simili in blocchi temporali dedicati piuttosto che elaborarle durante la giornata. Stabilire periodi 'senza decisioni' per il recupero del team di sicurezza. Implementare template decisionali per scenari di routine. Fornire strumenti di aiuto cognitivo (checklist, matrici decisionali) per decisioni complesse.",
+        "technical_controls": "Decision support system, standardized runbooks, batching scheduler, cognitive load monitoring, rest period enforcement",
+        "roi": "310% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days initial, ongoing refinement"
+      },
+      {
+        "id": "sol_5",
+        "title": "Protocolli Decisionali di Emergenza",
+        "description": "Sviluppare template di risposta pre-approvati per situazioni di sicurezza comuni per minimizzare i requisiti decisionali in tempo reale durante le crisi",
+        "implementation": "Creare matrici di escalation che instradano automaticamente decisioni complesse a membri del team riposati o personale senior durante periodi di alta affaticamento. Costruire playbook decisionali per la risposta agli incidenti che riducono il carico cognitivo. Implementare supporto decisionale automatizzato durante situazioni di crisi.",
+        "technical_controls": "Pre-approved response library, escalation automation, incident playbooks with embedded decision support, fatigue-aware routing",
+        "roi": "270% average within 12 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Dashboard di Monitoraggio del Carico di Lavoro",
+        "description": "Implementare tracciamento in tempo reale del volume decisionale per membro del team con alert automatizzati quando le soglie di affaticamento vengono avvicinate",
+        "implementation": "Implementare piattaforma di analytics che traccia le decisioni per analista per ora/turno. Includere metriche sui pattern di velocità e qualità decisionale per identificare quando il carico cognitivo impatta le prestazioni. Fornire visibilità sia agli analisti che al management. Attivare redistribuzione automatica del carico di lavoro quando vengono superate le soglie.",
+        "technical_controls": "Workload analytics platform, real-time decision tracking, automated alerting system, quality pattern detection, management dashboard",
+        "roi": "250% average within 18 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      }
+    ],
+    "prioritization": {
+      "critical_first": [
+        "sol_3",
+        "sol_4"
+      ],
+      "high_value": [
+        "sol_1",
+        "sol_2"
+      ],
+      "operational_foundation": [
+        "sol_6"
+      ],
+      "crisis_management": [
+        "sol_5"
+      ]
+    }
+  },
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Social Engineering Basato sul Timing",
+      "description": "Gli attaccanti monitorano i pattern della vostra organizzazione e inviano email di phishing sofisticate alle 16:00 di venerdì quando i team di sicurezza stanno sperimentando picco di affaticamento decisionale. L'analista affaticato approva rapidamente quella che appare essere una richiesta di whitelist email di routine, permettendo email malevole di raggiungere tutti i dipendenti.",
+      "attack_vector": "Social engineering temporizzato per sfruttare periodi prevedibili di affaticamento decisionale",
+      "psychological_mechanism": "L'affaticamento decisionale causa il passaggio dall'elaborazione di Sistema 2 (analitica) a Sistema 1 (automatica), aumentando l'affidamento su euristiche e scorciatoie",
+      "historical_esempio": "Le statistiche FBI mostrano tassi di successo del 60% più alti per attacchi BEC inviati dopo le 15:00, correlando con i pattern di timing dell'affaticamento decisionale",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": [
+        "high_decision_volume_preceding_approval",
+        "approval_time_matches_fatigue_period",
+        "approval_speed_faster_than_baseline",
+        "no_secondary_verification"
+      ]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Attacco di Flooding degli Alert",
+      "description": "I criminali informatici generano centinaia di alert di sicurezza a bassa priorità per esaurire la capacità decisionale del vostro team di sicurezza, poi lanciano il loro attacco reale. Gli analisti sopraffatti iniziano a dismissere gli alert in blocco e perdono gli indicatori di violazione reali nascosti nel rumore.",
+      "attack_vector": "Flooding di alert deliberato per indurre affaticamento decisionale seguito da attacco mirato",
+      "psychological_mechanism": "Esaurimento delle risorse cognitive che porta all'evitamento decisionale e all'elaborazione in blocco senza analisi appropriata",
+      "historical_esempio": "Violazione Target Corporation (2013) - L'analisi suggerisce che l'affaticamento decisionale ha contribuito al ritardo nella risposta alla minaccia mentre i team di sicurezza affrontavano volumi crescenti di alert durante il traffico di picco delle festività",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": [
+        "sudden_alert_volume_spike",
+        "decreasing_investigation_thoroughness",
+        "bulk_dismissal_patterns",
+        "critical_alert_dismissed_without_investigation"
+      ]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Business Email Compromise Durante il Periodo Intenso",
+      "description": "Durante la chiusura finanziaria di fine trimestre, quando il team finanziario sta prendendo numerose decisioni urgenti, gli attaccanti inviano una richiesta di pagamento di fattura perfettamente costruita. Il CFO affaticato dalle decisioni, avendo già elaborato dozzine di approvazioni di pagamento quel giorno, autorizza il bonifico fraudolento senza le normali procedure di verifica.",
+      "attack_vector": "Email di impersonation esecutiva temporizzata per coincidere con periodi di picco decisionale aziendale",
+      "psychological_mechanism": "L'affaticamento decisionale combinato con la pressione temporale porta all'accettazione di default e al bypass della verifica",
+      "historical_esempio": "Casi BEC multipli documentati che mostrano tassi di successo più alti durante i periodi di fine trimestre quando i team finanziari sperimentano volumi decisionali di picco",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": [
+        "high_decision_volume_day",
+        "business_cycle_peak_period",
+        "approval_without_verification",
+        "urgency_markers_in_request"
+      ]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Escalation di Privilegi via Richieste di Eccezione",
+      "description": "L'insider malevolo o l'account compromesso invia richieste di accesso durante i periodi di picco quando gli amministratori IT stanno elaborando alti volumi di cambi di accesso legittimi. L'amministratore affaticato approva privilegi eccessivi per svuotare più velocemente la propria coda, creando il percorso per l'esfiltrazione dei dati.",
+      "attack_vector": "Sfruttamento del timing delle richieste di accesso durante periodi ad alto volume",
+      "psychological_mechanism": "L'affaticamento decisionale causa standard abbassati per le eccezioni alle policy di sicurezza e ridotto scrutinio delle richieste di accesso",
+      "historical_esempio": "Casi di minaccia insider che mostrano correlazione tra qualità di approvazione dell'accesso e periodi di volume decisionale",
+      "likelihood": "medium",
+      "impact": "high",
+      "detection_indicators": [
+        "high_exception_approval_rate",
+        "approval_during_peak_volume",
+        "insufficient_justification_accepted",
+        "excessive_privileges_granted"
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "it-IT",
+    "language_name": "Italiano (Italia)",
+    "is_translation": true,
+    "translated_from": "en-US",
+    "translation_date": "2025-11-09",
+    "translator": "Claude (Anthropic)",
+    "research_basis": [
+      "Baumeister, R. F., et al. (1998). Ego depletion: Is the active self a limited resource?",
+      "Kahneman, D. (2011). Thinking, Fast and Slow - System 1/System 2 framework",
+      "Iyengar, S. S., & Lepper, M. R. (2000). When choice is demotivating: Can one desire too much of a good thing?",
+      "Danziger, S., Levav, J., & Avnaim-Pesso, L. (2011). Extraneous factors in judicial decisions",
+      "Beautement, A., et al. (2008). Compliance budget concept in security decision-making"
+    ],
+    "validation_status": "production_ready",
+    "deployment_status": "production_ready"
+  }
+}

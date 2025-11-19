@@ -1,0 +1,909 @@
+{
+  "indicator": "1.7",
+  "title": "INDICATOR 1.7 FIELD KIT",
+  "subtitle": "Technical Authority Deference",
+  "category": "Authority-Based Vulnerabilities",
+  "version": "1.0",
+  "cpf_reference": "CPF v1.0 - Category 1.x",
+
+  "description": {
+    "short": "Measures vulnerability to attackers who leverage technical expertise claims to bypass security controls",
+    "context": "When employees encounter complex technical problems beyond their knowledge, they often bypass normal security protocols and defer to anyone who sounds technically competent. Attackers exploit this by impersonating IT support, vendors, or technical consultants to gain system access, credentials, or sensitive information.",
+    "impact": "Organizations with high susceptibility experience successful social engineering through fake IT support, malicious software installation, credential harvesting, and data exfiltration. Historical incidents include Kevin Mitnick's extensive use of technical impersonation, RSA SecurID breach (2011), Target breach (2013), and Anthem breach (2015) where technical authority claims facilitated initial compromise and credential theft.",
+    "psychological_basis": "Cognitive offloading - when individuals encounter technical complexity exceeding their expertise, they automatically transfer decision-making authority to perceived experts, bypassing normal verification protocols. This mechanism operates through epistemic dependence (reliance on others for specialized knowledge) combined with Dunning-Kruger effects where limited technical knowledge prevents evaluation of technical claims. Cognitive Load Theory explains why technical jargon overwhelms processing capacity, forcing reliance on source credibility rather than content evaluation."
+  },
+
+  "scoring": {
+    "method": "bayesian_weighted",
+    "formula": "Final_Score = (w1 × Quick_Assessment + w2 × Conversation_Depth + w3 × Red_Flags) × Interdependency_Multiplier",
+    "weights": {
+      "quick_assessment": 0.4,
+      "conversation_depth": 0.35,
+      "red_flags": 0.25
+    },
+    "maturity_levels": {
+      "green": {
+        "score_range": [0, 0.33],
+        "label": "Low Vulnerability - Resilient",
+        "description": "Mandatory verification protocols for all technical support contacts exist and are consistently followed. Employees use callback verification to known numbers. Documented evidence of refused suspicious technical requests within last 6 months.",
+        "risk_level": "low",
+        "color": "#22c55e"
+      },
+      "yellow": {
+        "score_range": [0.34, 0.66],
+        "label": "Moderate Vulnerability - Developing",
+        "description": "Basic verification procedures exist but aren't consistently followed. Some employees bypass verification under time pressure. Verification protocols only apply to certain types of technical requests but not others.",
+        "risk_level": "medium",
+        "color": "#eab308"
+      },
+      "red": {
+        "score_range": [0.67, 1.0],
+        "label": "High Vulnerability - Critical",
+        "description": "No formal verification process for technical support contacts. Employees routinely comply with technical requests without verification. Recent incidents show successful social engineering through technical impersonation.",
+        "risk_level": "high",
+        "color": "#ef4444"
+      }
+    },
+    "question_weights": {
+      "q1_verification_protocol": 0.20,
+      "q2_callback_system": 0.18,
+      "q3_vendor_authentication": 0.16,
+      "q4_training_frequency": 0.14,
+      "q5_central_logging": 0.12,
+      "q6_urgency_policy": 0.10,
+      "q7_documentation_standard": 0.10
+    }
+  },
+
+  "detection_formula": {
+    "type": "composite_detection",
+    "mathematical_model": {
+      "primary": "D_1.7(t) = w1·R_1.7(t) + w2·A_1.7(t) + w3·B_1.7(t)",
+      "components": {
+        "rule_based": {
+          "formula": "R_1.7(t) = 1 if TJD(t) > θ_high AND verification_attempted = false, else 0",
+          "description": "Binary detection when technical jargon density exceeds threshold without verification",
+          "threshold": {
+            "TJD_high": 0.4,
+            "verification_required": true
+          }
+        },
+        "anomaly_score": {
+          "formula": "A_1.7(t) = (TJD(t) - μ_domain) / σ_domain",
+          "description": "Z-score of technical jargon density compared to domain baseline",
+          "variables": {
+            "TJD(t)": "Technical jargon density at time t",
+            "μ_domain": "Mean jargon density for legitimate technical communications",
+            "σ_domain": "Standard deviation accounting for normal technical variation"
+          }
+        },
+        "bayesian_inference": {
+          "formula": "B_1.7(t) = P(legitimate|technical_claim) = [P(technical_claim|legitimate) × P(legitimate)] / P(technical_claim)",
+          "factors": [
+            "technical_jargon_density",
+            "sender_verification_status",
+            "request_urgency",
+            "system_access_requested",
+            "credential_disclosure_requested"
+          ],
+          "priors": {
+            "P_legitimate": 0.75,
+            "P_malicious": 0.25
+          }
+        }
+      },
+      "default_weights": {
+        "w1_rule": 0.35,
+        "w2_anomaly": 0.40,
+        "w3_bayesian": 0.25
+      },
+      "temporal_decay": {
+        "formula": "T_1.7(t) = α·D_1.7(t) + (1-α)·T_1.7(t-1)",
+        "alpha": "e^(-Δt/τ)",
+        "tau": 7200,
+        "description": "Exponential smoothing with 2-hour time constant for technical support patterns"
+      }
+    },
+    "technical_jargon_model": {
+      "formula": "TJD(m) = [Σ(I_technical(w)) / |m|] · log(1 + Σ Rarity(w))",
+      "description": "Technical jargon density combining frequency of technical terms with rarity weighting",
+      "interpretation": "Higher TJD values indicate greater use of technical language that may overwhelm non-technical recipients"
+    },
+    "acceptance_correlation": {
+      "formula": "P_accept(m) = σ(α·TJD(m) + β·Authority(sender) + γ·Urgency(m))",
+      "components": {
+        "TJD": "Technical jargon density score",
+        "Authority": "Perceived authority level of sender (0-1)",
+        "Urgency": "Urgency markers in message (0-1)"
+      },
+      "sigmoid": "σ(x) = 1/(1+e^(-x))",
+      "weights": {
+        "α_jargon": 2.5,
+        "β_authority": 1.8,
+        "γ_urgency": 1.2
+      }
+    }
+  },
+
+  "data_sources": {
+    "manual_assessment": {
+      "primary": [
+        "employee_interviews",
+        "technical_support_contact_logs",
+        "verification_procedure_documentation",
+        "training_records",
+        "incident_history_technical_impersonation"
+      ],
+      "evidence_required": [
+        "written_verification_protocols",
+        "callback_verification_procedure",
+        "vendor_authentication_database",
+        "technical_support_simulation_results",
+        "central_logging_system_access"
+      ]
+    },
+    "automated_soc": {
+      "required": [
+        {
+          "source": "email_gateway_logs",
+          "fields": ["sender_domain", "message_content", "technical_terms_count", "recipient_action", "verification_flag", "timestamp"],
+          "retention": "90_days"
+        },
+        {
+          "source": "helpdesk_ticket_system",
+          "fields": ["ticket_id", "requester_identity", "verification_method", "access_granted", "approver", "timestamp"],
+          "retention": "180_days"
+        },
+        {
+          "source": "phone_system_logs",
+          "fields": ["caller_id", "caller_claims", "callback_performed", "access_granted", "duration", "timestamp"],
+          "retention": "90_days"
+        },
+        {
+          "source": "authentication_logs",
+          "fields": ["user_id", "authentication_method", "password_reset_requested", "authorization_source", "timestamp"],
+          "retention": "90_days"
+        }
+      ],
+      "optional": [
+        {
+          "source": "privilege_access_management",
+          "fields": ["elevated_access_grants", "technical_justification", "approver", "verification_status"],
+          "retention": "180_days"
+        },
+        {
+          "source": "incident_response_tickets",
+          "fields": ["ticket_id", "technical_authority_involved", "verification_performed", "outcome", "lessons_learned"],
+          "retention": "365_days"
+        },
+        {
+          "source": "nlp_analysis_system",
+          "fields": ["message_id", "technical_jargon_density", "complexity_score", "urgency_markers", "authority_claims"],
+          "retention": "30_days"
+        }
+      ],
+      "telemetry_mapping": {
+        "TJD": {
+          "calculation": "Technical jargon density from NLP analysis",
+          "query": "SELECT AVG(technical_terms_count / total_words) as TJD FROM email_logs WHERE sender_claims_technical_role=true AND time_window='24h'"
+        },
+        "verification_rate": {
+          "calculation": "Percentage of technical contacts with completed verification",
+          "query": "SELECT (COUNT(verification_flag=true) / COUNT(*)) FROM helpdesk_logs WHERE contact_type='technical_support' AND timestamp > NOW() - INTERVAL '7 days'"
+        },
+        "acceptance_without_verification": {
+          "calculation": "Technical requests fulfilled without verification",
+          "query": "SELECT (COUNT(access_granted=true AND verification_performed=false) / COUNT(*)) FROM ticket_system WHERE technical_request=true AND time_window='30d'"
+        }
+      }
+    },
+    "integration_apis": {
+      "email_gateway": "Email Security Gateway API - Content Analysis, Sender Verification",
+      "helpdesk_system": "ServiceNow/Jira API - Ticket Data, Approval Workflows",
+      "phone_system": "PBX/VoIP API - Call Logs, Caller ID, Recording Metadata",
+      "active_directory": "LDAP - IT Role Verification, Organizational Structure",
+      "nlp_platform": "Natural Language Processing API - Technical Term Extraction, Complexity Analysis"
+    }
+  },
+
+  "interdependencies": {
+    "amplified_by": [
+      {
+        "indicator": "5.2",
+        "name": "Decision Fatigue",
+        "probability": 0.75,
+        "factor": 1.4,
+        "description": "Cognitive depletion increases reliance on technical authority claims without verification",
+        "formula": "P(1.7|5.2) = 0.75",
+        "evidence": "Cognitive Load Theory - depleted resources increase heuristic processing"
+      },
+      {
+        "indicator": "7.1",
+        "name": "Acute Stress Response",
+        "probability": 0.70,
+        "factor": 1.35,
+        "description": "Stress reduces capacity for technical claim evaluation, increasing deference",
+        "formula": "P(1.7|7.1) = 0.70"
+      },
+      {
+        "indicator": "2.1",
+        "name": "Urgency-Induced Bypass",
+        "probability": 0.82,
+        "factor": 1.6,
+        "description": "Time pressure combined with technical complexity creates perfect storm for bypassing verification",
+        "formula": "P(1.7|2.1) = 0.82"
+      },
+      {
+        "indicator": "5.1",
+        "name": "Alert Fatigue",
+        "probability": 0.65,
+        "factor": 1.25,
+        "description": "Alert overload reduces scrutiny of technical support contacts",
+        "formula": "P(1.7|5.1) = 0.65"
+      }
+    ],
+    "amplifies": [
+      {
+        "indicator": "1.1",
+        "name": "Unquestioning Compliance",
+        "probability": 0.55,
+        "factor": 1.2,
+        "description": "Successful technical impersonation normalizes authority compliance patterns"
+      },
+      {
+        "indicator": "1.3",
+        "name": "Authority Figure Impersonation",
+        "probability": 0.60,
+        "factor": 1.3,
+        "description": "Technical authority deference enables broader authority impersonation attacks"
+      }
+    ],
+    "convergent_risk": {
+      "critical_combination": ["1.7", "2.1", "7.1"],
+      "convergence_formula": "CI = ∏(1 + v_i) where v_i = normalized vulnerability score",
+      "convergence_multiplier": 3.0,
+      "threshold_critical": 4.0,
+      "description": "Perfect storm: Technical authority deference + Time urgency + Acute stress = 400% increased breach probability via fake IT support during crisis",
+      "real_world_example": "Target 2013 breach - Compromised HVAC vendor credentials used with technical authority claims during high-pressure holiday season"
+    },
+    "bayesian_network": {
+      "parent_nodes": ["5.2", "7.1", "2.1", "5.1"],
+      "child_nodes": ["1.1", "1.3"],
+      "conditional_probability_table": {
+        "P_1.7_base": 0.20,
+        "P_1.7_given_fatigue": 0.50,
+        "P_1.7_given_stress": 0.48,
+        "P_1.7_given_urgency": 0.58,
+        "P_1.7_given_all": 0.85
+      }
+    }
+  },
+
+  "sections": [
+    {
+      "id": "quick-assessment",
+      "icon": "⚡",
+      "title": "QUICK ASSESSMENT",
+      "time": 5,
+      "type": "radio-questions",
+      "scoring_method": "weighted_average",
+      "items": [
+        {
+          "type": "radio-list",
+          "number": 1,
+          "id": "q1_verification_protocol",
+          "weight": 0.20,
+          "title": "Technical Support Verification Protocol",
+          "question": "What is your mandatory verification procedure when someone claiming to be technical support contacts an employee requesting passwords, system access, or permission to install software?",
+          "options": [
+            {
+              "value": "comprehensive",
+              "score": 0,
+              "label": "Mandatory callback verification to known numbers required for all technical support contacts, with documented procedure accessible to all employees"
+            },
+            {
+              "value": "partial",
+              "score": 0.5,
+              "label": "Some verification steps exist but not consistently enforced or only apply to certain types of requests"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No formal verification process - employees expected to comply with technical support requests"
+            }
+          ],
+          "evidence_required": "Written verification protocol, laminated reference cards at workstations, recent verification example",
+          "soc_mapping": "verification_rate metric from detection_formula"
+        },
+        {
+          "type": "radio-list",
+          "number": 2,
+          "id": "q2_callback_system",
+          "weight": 0.18,
+          "title": "Callback Verification System Implementation",
+          "question": "Do you have a system where employees can verify technical support claims by calling back to known, verified phone numbers?",
+          "options": [
+            {
+              "value": "yes_used",
+              "score": 0,
+              "label": "Yes - Callback verification system exists, is regularly used, and recent examples show successful verification"
+            },
+            {
+              "value": "yes_unused",
+              "score": 0.5,
+              "label": "System exists but rarely used or employees don't know how to access verified contact numbers"
+            },
+            {
+              "value": "no",
+              "score": 1,
+              "label": "No callback verification system or verified contact database"
+            }
+          ],
+          "evidence_required": "Verified contact database, callback usage logs, specific recent example",
+          "soc_mapping": "callback_completion_rate from phone system logs"
+        },
+        {
+          "type": "radio-list",
+          "number": 3,
+          "id": "q3_vendor_authentication",
+          "weight": 0.16,
+          "title": "External Technical Vendor Authentication",
+          "question": "When external technical consultants or vendors request system access or sensitive information, what authentication process is required?",
+          "options": [
+            {
+              "value": "rigorous",
+              "score": 0,
+              "label": "Multi-step authentication including verified vendor database, pre-authorized contact list, and documented approval workflow"
+            },
+            {
+              "value": "basic",
+              "score": 0.5,
+              "label": "Basic checks performed but no formal vendor database or standardized authentication process"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "Technical credentials accepted at face value without formal authentication process"
+            }
+          ],
+          "evidence_required": "Vendor authentication database, approval workflow documentation, recent vendor access example",
+          "soc_mapping": "external_access_grant_logs with authentication_method field"
+        },
+        {
+          "type": "radio-list",
+          "number": 4,
+          "id": "q4_training_frequency",
+          "weight": 0.14,
+          "title": "Technical Impersonation Training and Simulation",
+          "question": "What training and simulation exercises do employees receive on recognizing and responding to fake technical support scams?",
+          "options": [
+            {
+              "value": "regular",
+              "score": 0,
+              "label": "Quarterly simulated technical support calls/emails with immediate feedback and declining success rates over time"
+            },
+            {
+              "value": "annual",
+              "score": 0.5,
+              "label": "Annual awareness training mentions technical impersonation but no hands-on simulation exercises"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No specific training on technical authority verification or impersonation scenarios"
+            }
+          ],
+          "evidence_required": "Training curriculum with technical scenarios, simulation exercise results, trend data showing improvement",
+          "soc_mapping": "phishing_simulation_success_rate for technical authority scenarios"
+        },
+        {
+          "type": "radio-list",
+          "number": 5,
+          "id": "q5_central_logging",
+          "weight": 0.12,
+          "title": "Centralized Technical Contact Logging",
+          "question": "Is there a centralized system where all unsolicited technical support contacts must be immediately reported and logged?",
+          "options": [
+            {
+              "value": "yes_enforced",
+              "score": 0,
+              "label": "Yes - Central logging required with evidence of consistent use and regular audit of logged contacts"
+            },
+            {
+              "value": "yes_inconsistent",
+              "score": 0.5,
+              "label": "Logging system exists but inconsistently used or no regular audit of entries"
+            },
+            {
+              "value": "no",
+              "score": 1,
+              "label": "No centralized logging system for technical support contacts"
+            }
+          ],
+          "evidence_required": "Access to central logging system, recent log entries, audit schedule and results",
+          "soc_mapping": "helpdesk_ticket_system logs with technical_support_flag"
+        },
+        {
+          "type": "radio-list",
+          "number": 6,
+          "id": "q6_urgency_policy",
+          "weight": 0.10,
+          "title": "Urgent Technical Request Policy",
+          "question": "How does your organization balance speed with security verification when technical requests seem urgent or time-sensitive?",
+          "options": [
+            {
+              "value": "verification_first",
+              "score": 0,
+              "label": "Verification remains required even for urgent requests with documented escalation paths that maintain security"
+            },
+            {
+              "value": "flexible",
+              "score": 0.5,
+              "label": "Urgency sometimes justifies reduced verification with supervisor approval"
+            },
+            {
+              "value": "speed_priority",
+              "score": 1,
+              "label": "Urgent technical requests processed immediately without verification delays"
+            }
+          ],
+          "evidence_required": "Written policy on urgent technical requests, recent urgent request examples with verification status",
+          "soc_mapping": "urgency_bypass_frequency from ticket system"
+        },
+        {
+          "type": "radio-list",
+          "number": 7,
+          "id": "q7_documentation_standard",
+          "weight": 0.10,
+          "title": "Technical Support Interaction Documentation",
+          "question": "Are employees required to document all technical support interactions including verification steps taken?",
+          "options": [
+            {
+              "value": "mandatory",
+              "score": 0,
+              "label": "Mandatory documentation with monthly audits showing consistent compliance and verification details"
+            },
+            {
+              "value": "encouraged",
+              "score": 0.5,
+              "label": "Documentation encouraged but not mandatory or not regularly audited"
+            },
+            {
+              "value": "none",
+              "score": 1,
+              "label": "No documentation requirement for technical support interactions"
+            }
+          ],
+          "evidence_required": "Documentation standard policy, recent documented interactions, audit results",
+          "soc_mapping": "documentation_compliance_rate from ticket system audit"
+        }
+      ],
+      "subsections": [],
+      "instructions": "Select ONE option for each question. Each answer contributes to the weighted final score. Evidence should be documented for audit trail.",
+      "calculation": "Quick_Score = Σ(question_score × question_weight) / Σ(question_weight)"
+    },
+    {
+      "id": "client-conversation",
+      "icon": "💬",
+      "title": "CLIENT CONVERSATION",
+      "time": 15,
+      "type": "conversation",
+      "scoring_method": "qualitative_depth",
+      "items": [],
+      "subsections": [
+        {
+          "title": "Opening Questions",
+          "weight": 0.30,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q1",
+              "text": "Walk us through what happens when an employee receives an unsolicited technical support call or email. What are the exact verification steps they're supposed to follow?",
+              "scoring_guidance": {
+                "green": "Detailed multi-step procedure with callback verification, recent successful verification example, employees can recite the steps",
+                "yellow": "General awareness of verification need but vague process, inconsistent application, or no recent examples",
+                "red": "No specific procedure, 'we trust IT when they call' response, or recent compliance without verification"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Tell us about the last time someone claiming to be IT support contacted your organization - what exactly happened and what verification was performed?",
+                  "evidence_type": "specific_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Where do employees find the verified contact numbers to call back? Can you show us this resource right now?",
+                  "evidence_type": "technical_control"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q2",
+              "text": "How often do your employees receive unsolicited technical support calls, emails, or visits from people claiming to be from IT vendors, consultants, or support services? What's your current monthly average?",
+              "scoring_guidance": {
+                "green": "Tracked metrics show frequency, examples of both legitimate and suspicious contacts identified, clear pattern recognition",
+                "yellow": "General awareness of frequency but no tracking, or inability to distinguish legitimate from suspicious patterns",
+                "red": "No awareness of contact frequency, no tracking system, or assumption that all technical contacts are legitimate"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Of those contacts, how many turned out to be suspicious or were rejected after verification?",
+                  "evidence_type": "detection_effectiveness"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you track and analyze these technical support contacts?",
+                  "evidence_type": "monitoring_system"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Technical Verification Procedures",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q3",
+              "text": "What's your standard procedure when someone claiming to be technical support contacts an employee directly requesting passwords, system access, or permission to install software?",
+              "scoring_guidance": {
+                "green": "Never provide passwords, always callback verification, secondary approval required, documented examples of refused requests",
+                "yellow": "General policy against sharing passwords but exceptions made, informal callback process, inconsistent enforcement",
+                "red": "Employees provide credentials to apparent IT support, help desk resets passwords on request, 'helpful' culture overrides security"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Has an employee ever provided their password to someone claiming to be IT support? What happened?",
+                  "evidence_type": "incident_example"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "What would happen if an employee insisted on verification before complying with an urgent technical request?",
+                  "evidence_type": "cultural_attitude"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q4",
+              "text": "When legitimate external technical support needs access to your systems, what approval workflow do they go through? Who authorizes access and how quickly?",
+              "scoring_guidance": {
+                "green": "Multi-party approval required, documented vendor verification, mandatory delay period for non-emergency access, audit trail",
+                "yellow": "Single approver required but no verification database, expedited approvals common, informal documentation",
+                "red": "External technical experts granted access on request, no formal approval workflow, speed prioritized over verification"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Show us the most recent external technical vendor access request - who approved it and what verification was performed?",
+                  "evidence_type": "approval_artifact"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "How do you distinguish between legitimate vendor technical support and potential impersonators?",
+                  "evidence_type": "decision_framework"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Training and Cultural Factors",
+          "weight": 0.35,
+          "items": [
+            {
+              "type": "question",
+              "id": "conv_q5",
+              "text": "Tell us about your employee training on recognizing fake technical support scams. When was the last training and what specific scenarios did it cover?",
+              "scoring_guidance": {
+                "green": "Quarterly simulation exercises with fake IT support calls/emails, scenario-based practice, metrics showing improved detection over time",
+                "yellow": "Annual awareness training mentions topic but no hands-on practice, or outdated last training date",
+                "red": "No specific training on technical impersonation, or training focuses on 'being helpful to IT' without verification emphasis"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "What would a non-technical employee (admin staff, HR, executive assistant) do if someone claiming to be IT called asking for sensitive information?",
+                  "evidence_type": "scenario_response"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Show us the results from your most recent technical impersonation simulation exercise.",
+                  "evidence_type": "training_effectiveness"
+                }
+              ]
+            },
+            {
+              "type": "question",
+              "id": "conv_q6",
+              "text": "How do your non-technical employees (admin staff, executives, HR) feel about verifying technical claims? Do they feel confident questioning someone who sounds technically knowledgeable?",
+              "scoring_guidance": {
+                "green": "Employees express comfort verifying technical claims, organizational culture celebrates appropriate skepticism, examples of employees who questioned technical authorities with positive outcomes",
+                "yellow": "Mixed comfort levels, some employees hesitant to question technical expertise, concerns about appearing incompetent",
+                "red": "Strong reluctance to question technical authorities, fear of appearing non-technical, 'imposter syndrome' prevents verification"
+              },
+              "followups": [
+                {
+                  "type": "Follow-up",
+                  "text": "Has anyone in your organization ever reported a suspicious technical support contact? What happened to them?",
+                  "evidence_type": "cultural_indicator"
+                },
+                {
+                  "type": "Follow-up",
+                  "text": "Are there explicit policies protecting employees who insist on verification even when technical authorities pressure for immediate compliance?",
+                  "evidence_type": "policy_protection"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Probing for Red Flags",
+          "weight": 0,
+          "description": "Observable indicators that increase vulnerability score regardless of stated policies",
+          "items": [
+            {
+              "type": "checkbox",
+              "id": "red_flag_1",
+              "label": "\"Our IT team can access whatever they need without verification procedures...\"",
+              "severity": "critical",
+              "score_impact": 0.18,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_2",
+              "label": "\"We trust people who sound technical and know the right terminology...\"",
+              "severity": "critical",
+              "score_impact": 0.15,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_3",
+              "label": "\"Employees are afraid to question technical experts because they don't want to look incompetent...\"",
+              "severity": "high",
+              "score_impact": 0.13,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_4",
+              "label": "\"When technical problems need urgent fixing, we skip the verification steps...\"",
+              "severity": "high",
+              "score_impact": 0.12,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_5",
+              "label": "\"Our help desk resets passwords over the phone if the caller knows enough details about the account...\"",
+              "severity": "critical",
+              "score_impact": 0.14,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_6",
+              "label": "\"External consultants are vetted by management, so employees don't need to verify them...\"",
+              "severity": "medium",
+              "score_impact": 0.10,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_7",
+              "label": "\"We've never had a problem with fake IT support, so we don't worry about it...\"",
+              "severity": "medium",
+              "score_impact": 0.08,
+              "subitems": []
+            },
+            {
+              "type": "checkbox",
+              "id": "red_flag_8",
+              "label": "\"Verification procedures would slow down technical support and frustrate legitimate IT staff...\"",
+              "severity": "high",
+              "score_impact": 0.10,
+              "subitems": []
+            }
+          ]
+        }
+      ],
+      "calculation": "Conversation_Score = Weighted_Average(subsection_scores) + Σ(red_flag_impacts)"
+    }
+  ],
+
+  "validation": {
+    "method": "matthews_correlation_coefficient",
+    "formula": "V = (TP·TN - FP·FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))",
+    "continuous_validation": {
+      "synthetic_testing": "Inject simulated technical support impersonation scenarios monthly",
+      "correlation_analysis": "Compare manual audit scores with SOC detection scores (target correlation > 0.85)",
+      "drift_detection": "Kolmogorov-Smirnov test, recalibrate if p < 0.05"
+    },
+    "calibration": {
+      "method": "isotonic_regression",
+      "description": "Ensure predicted probabilities match observed frequencies",
+      "baseline_period": "30_days",
+      "recalibration_trigger": "Drift detected or validation score < 0.75"
+    },
+    "success_metrics": [
+      {
+        "metric": "Technical Verification Compliance Rate",
+        "formula": "% of technical support contacts that go through proper verification protocols",
+        "baseline": "audit recent 90 days",
+        "target": "95% within 90 days",
+        "measurement": "monthly audit of help desk logs and employee incident reports"
+      },
+      {
+        "metric": "Suspicious Contact Reporting Frequency",
+        "formula": "Number of reported suspicious technical support contacts per month",
+        "baseline": "previous 6 months average",
+        "target": "20% increase in reported suspicious contacts within 60 days",
+        "measurement": "monthly count from central logging system"
+      },
+      {
+        "metric": "Technical Authority Simulation Success Rate",
+        "formula": "% of employees who fall for simulated technical impersonation attempts",
+        "baseline": "initial simulation campaign",
+        "target": "reduce from baseline to under 10% within 90 days",
+        "measurement": "quarterly simulation testing"
+      }
+    ]
+  },
+
+  "remediation": {
+    "solutions": [
+      {
+        "id": "sol_1",
+        "title": "Technical Authority Verification Protocol",
+        "description": "Implement mandatory callback verification system for all unsolicited technical support contacts",
+        "implementation": "Deploy callback verification requiring employees to call claimed organization's main number and request transfer to specific person. Create laminated reference cards with verification steps for all employee workstations. Include verified contact database accessible via company intranet.",
+        "technical_controls": "Verified vendor contact database, callback procedure automation, helpdesk ticketing system integration, verification checklist pop-ups",
+        "roi": "450% average within 18 months",
+        "effort": "medium",
+        "timeline": "30-60 days"
+      },
+      {
+        "id": "sol_2",
+        "title": "Technical Request Authorization Workflow",
+        "description": "Deploy digital approval system requiring supervisor and IT security approval for external technical support requests",
+        "implementation": "Implement automated approval workflow with mandatory 24-hour delay for non-emergency technical access requests. Include multi-party authorization, automated notifications, approval tracking, and audit trail. Exception process requires CISO approval.",
+        "technical_controls": "Workflow automation platform, approval tracking database, automated notifications, audit logging",
+        "roi": "380% average within 12 months",
+        "effort": "high",
+        "timeline": "60-90 days"
+      },
+      {
+        "id": "sol_3",
+        "title": "Centralized Technical Support Log",
+        "description": "Establish single point of contact that logs all external technical support interactions",
+        "implementation": "Create IT helpdesk or security team as mandatory reporting point for all unsolicited technical contacts. Require immediate reporting with central team performing verification and response coordination. Weekly audit of logs to identify patterns.",
+        "technical_controls": "Central logging system, real-time alerting, pattern analysis tools, weekly audit reports",
+        "roi": "320% average within 18 months",
+        "effort": "medium",
+        "timeline": "45 days"
+      },
+      {
+        "id": "sol_4",
+        "title": "Technical Impersonation Simulation Training",
+        "description": "Conduct quarterly simulated technical support calls and emails targeting different employee groups",
+        "implementation": "Deploy phishing simulation platform with technical authority scenarios. Track compliance with verification protocols and provide immediate feedback. Focus on pressure tactics, urgency claims, and technical jargon. Measure improvement over time.",
+        "technical_controls": "Phishing simulation platform, tracking dashboard, automated feedback system, competency assessments",
+        "roi": "340% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days initial, ongoing quarterly"
+      },
+      {
+        "id": "sol_5",
+        "title": "Vendor Authentication Database",
+        "description": "Create secure, searchable database of legitimate technical vendors and authorized personnel",
+        "implementation": "Build and maintain database including legitimate vendor names, support contact numbers, authorized personnel with photos, and verification questions only real support would know. Make accessible to all employees through company intranet with mobile access.",
+        "technical_controls": "Secure database system, intranet integration, mobile app, regular update workflow",
+        "roi": "290% average within 18 months",
+        "effort": "medium",
+        "timeline": "45-60 days"
+      },
+      {
+        "id": "sol_6",
+        "title": "Technical Request Documentation Standard",
+        "description": "Require written documentation for all technical support interactions",
+        "implementation": "Mandate documentation via email or ticket system for all technical support interactions including verification steps taken, approvals received, and actions performed. Implement monthly audit of technical support logs to identify patterns and improve procedures.",
+        "technical_controls": "Ticketing system, documentation templates, automated compliance checking, monthly audit reports",
+        "roi": "260% average within 12 months",
+        "effort": "low",
+        "timeline": "30 days"
+      },
+      {
+        "id": "sol_7",
+        "title": "Non-Technical Employee Empowerment Program",
+        "description": "Develop programs specifically for non-technical staff to confidently verify technical claims",
+        "implementation": "Create simple verification scripts that feel professional rather than questioning competence. Provide decision trees that don't require technical knowledge. Establish organizational culture celebrating appropriate technical verification. Train on recognizing pressure tactics.",
+        "technical_controls": "Verification script cards, decision tree tools, employee recognition system, cultural communication campaign",
+        "roi": "280% average within 18 months",
+        "effort": "low",
+        "timeline": "ongoing cultural program"
+      }
+    ],
+    "prioritization": {
+      "critical_first": ["sol_1", "sol_4"],
+      "high_value": ["sol_2", "sol_3", "sol_5"],
+      "cultural_foundation": ["sol_7"],
+      "governance": ["sol_6"]
+    }
+  },
+
+  "risk_scenarios": [
+    {
+      "id": "scenario_1",
+      "title": "Fake IT Support Credential Harvesting",
+      "description": "Attacker calls employees claiming to be IT support needing to verify passwords for system update. Without verification protocols, employees provide credentials giving attackers immediate network access and lateral movement capability.",
+      "attack_vector": "Phone call or email impersonating internal IT support with technical terminology and apparent system knowledge",
+      "psychological_mechanism": "Cognitive offloading to technical authority combined with helpfulness compliance and imposter syndrome preventing questioning",
+      "historical_example": "Kevin Mitnick campaigns - Extensively used technical support impersonation to harvest credentials across multiple organizations",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["TJD > 0.4", "credential_disclosure_requested", "no_callback_verification", "urgency_markers_present"]
+    },
+    {
+      "id": "scenario_2",
+      "title": "Malicious Software Installation",
+      "description": "Scammer poses as software vendor offering urgent security patch via email or phone. Employees with technical deference install malware disguised as legitimate software, creating persistent backdoors and data exfiltration capabilities.",
+      "attack_vector": "Email with technical-sounding software update or phone call claiming critical patch needed",
+      "psychological_mechanism": "Fear of security consequences combined with technical authority trust and complexity overwhelm",
+      "historical_example": "RSA SecurID Breach 2011 - Spear-phishing with technical attachments appearing as legitimate system documentation exploited technical authority deference",
+      "likelihood": "high",
+      "impact": "critical",
+      "detection_indicators": ["software_installation_requested", "external_source_unverified", "urgency_language", "technical_jargon_density_high"]
+    },
+    {
+      "id": "scenario_3",
+      "title": "Help Desk Social Engineering",
+      "description": "Attacker calls internal help desk claiming to be employee who forgot password and needs urgent system access for client deadline. Help desk staff, wanting to provide good service, reset credentials without proper identity verification.",
+      "attack_vector": "Internal help desk contact with technical problem claims and apparent knowledge of systems",
+      "psychological_mechanism": "Service orientation combined with technical problem pressure and time constraints",
+      "historical_example": "Target Breach 2013 - Compromised vendor credentials likely obtained through help desk social engineering with technical authority claims",
+      "likelihood": "high",
+      "impact": "high",
+      "detection_indicators": ["password_reset_requested", "identity_verification_insufficient", "deadline_pressure_claimed", "after_hours_contact"]
+    },
+    {
+      "id": "scenario_4",
+      "title": "Vendor Impersonation Data Theft",
+      "description": "Fraudster contacts organization claiming to be from known technology vendor conducting security audit or compliance check. Employees provide sensitive system information, network diagrams, or database access enabling sophisticated targeted attacks.",
+      "attack_vector": "Email or call claiming vendor audit/compliance requirements with technical terminology",
+      "psychological_mechanism": "Compliance anxiety combined with technical authority deference and fear of regulatory consequences",
+      "historical_example": "Anthem Breach 2015 - Social engineering included technical authority impersonation to gather system architecture information",
+      "likelihood": "medium",
+      "impact": "critical",
+      "detection_indicators": ["sensitive_information_requested", "vendor_verification_not_performed", "compliance_language_used", "external_unverified_contact"]
+    }
+  ],
+
+  "metadata": {
+    "created": "2025-11-08",
+    "version": "1.0",
+    "author": "Giuseppe Canale, CISSP",
+    "cpf_version": "1.0",
+    "last_updated": "2025-11-08",
+    "language": "en-US",
+    "language_name": "English (United States)",
+    "is_translation": false,
+    "translated_from": null,
+    "translation_date": null,
+    "translator": null,
+    "research_basis": [
+      "Milgram, S. (1974). Obedience to Authority - Expertise-based authority extension",
+      "Cialdini, R. (2007). Influence: The Psychology of Persuasion - Authority principle in technical contexts",
+      "Kruger, J. & Dunning, D. (1999). Unskilled and unaware - Technical knowledge gaps",
+      "Miller, G. (1956). The Magical Number Seven - Cognitive Load Theory foundations",
+      "Klein, M. (1946). Object Relations Theory - Idealization of technical experts"
+    ],
+    "validation_status": "peer_reviewed",
+    "deployment_status": "production_ready"
+  }
+}
