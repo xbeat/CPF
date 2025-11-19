@@ -13,7 +13,7 @@ echo "🚀 Starting CPF Dashboard..."
 echo ""
 
 # Check if demo data exists
-if [ ! -f "data/soc/organizations_index.json" ]; then
+if [ ! -f "data/organizations_index.json" ]; then
     echo "⚠️  Demo data not found. Generating..."
     npm run generate:demo
     echo ""
