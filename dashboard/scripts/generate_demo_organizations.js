@@ -7,9 +7,17 @@ const DATA_DIR = path.join(__dirname, '..', 'data');
 const ORGS_DIR = path.join(DATA_DIR, 'organizations');
 const INDEX_FILE = path.join(DATA_DIR, 'organizations_index.json');
 
+// Helper function to normalize organization name for ID
+function normalizeOrgName(name) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')  // Replace non-alphanumeric with dash
+    .replace(/^-|-$/g, '');        // Remove leading/trailing dashes
+}
+
 const DEMO_ORGANIZATIONS = [
   {
-    id: 'org-demo-001',
+    id: 'techcorp-global', // normalized from "TechCorp Global"
     name: 'TechCorp Global',
     industry: 'Technology',
     size: 'enterprise',
@@ -21,7 +29,7 @@ const DEMO_ORGANIZATIONS = [
     partita_iva: 'US12-3456789'
   },
   {
-    id: 'org-demo-002',
+    id: 'financefirst-bank', // normalized from "FinanceFirst Bank"
     name: 'FinanceFirst Bank',
     industry: 'Finance',
     size: 'enterprise',
@@ -33,7 +41,7 @@ const DEMO_ORGANIZATIONS = [
     partita_iva: 'GB123456789'
   },
   {
-    id: 'org-demo-003',
+    id: 'healthplus-clinic', // normalized from "HealthPlus Clinic"
     name: 'HealthPlus Clinic',
     industry: 'Healthcare',
     size: 'medium',
@@ -45,7 +53,7 @@ const DEMO_ORGANIZATIONS = [
     partita_iva: 'IT12345678901'
   },
   {
-    id: 'org-demo-004',
+    id: 'retailmax-store', // normalized from "RetailMax Store"
     name: 'RetailMax Store',
     industry: 'Retail',
     size: 'small',
@@ -57,7 +65,7 @@ const DEMO_ORGANIZATIONS = [
     partita_iva: 'DE123456789'
   },
   {
-    id: 'org-demo-005',
+    id: 'edulearn-academy', // normalized from "EduLearn Academy"
     name: 'EduLearn Academy',
     industry: 'Education',
     size: 'medium',
@@ -267,7 +275,11 @@ async function generateDemoOrganizations() {
     }
     console.log('✅ Files ready in:');
     console.log(`   ${DATA_DIR}/organizations_index.json`);
-    console.log(`   ${ORGS_DIR}/org-demo-*.json`);
+    console.log(`   ${ORGS_DIR}/techcorp-global.json`);
+    console.log(`   ${ORGS_DIR}/financefirst-bank.json`);
+    console.log(`   ${ORGS_DIR}/healthplus-clinic.json`);
+    console.log(`   ${ORGS_DIR}/retailmax-store.json`);
+    console.log(`   ${ORGS_DIR}/edulearn-academy.json`);
     console.log();
   }
 

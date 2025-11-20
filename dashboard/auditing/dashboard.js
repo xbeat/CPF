@@ -2408,21 +2408,32 @@ function renderMaturityTab() {
     const industry = organizationData.industry || 'General';
 
     // Calculate overall maturity level (1-5 scale)
-    const overallScore = aggregates.overall_avg || 0;
+    // Use overall_risk (inverse: lower risk = higher maturity)
+    const overallRisk = aggregates.overall_risk || 0;
+    const overallScore = 1 - overallRisk; // Convert risk to score (0-1 scale)
     const maturityLevel = calculateMaturityLevel(overallScore);
 
-    // Get maturity by category
-    const categoryMaturity = {};
-    Object.keys(aggregates).forEach(key => {
-        if (key.endsWith('_avg') && !key.startsWith('overall')) {
-            const categoryName = key.replace('_avg', '').replace(/_/g, ' ');
-            const score = aggregates[key];
-            categoryMaturity[categoryName] = {
-                score: score,
-                level: calculateMaturityLevel(score)
-            };
-        }
+    console.log('✅ Maturity calculation:', {
+        overallRisk,
+        overallScore,
+        maturityLevel,
+        assessmentCount
     });
+
+    // Get maturity by category from by_category object
+    const categoryMaturity = {};
+    if (aggregates.by_category) {
+        Object.entries(aggregates.by_category).forEach(([categoryName, data]) => {
+            // Convert risk to score (inverse)
+            const categoryRisk = data.risk || 0;
+            const categoryScore = 1 - categoryRisk;
+            categoryMaturity[categoryName] = {
+                score: categoryScore,
+                level: calculateMaturityLevel(categoryScore),
+                confidence: data.confidence || 0
+            };
+        });
+    }
 
     // Render maturity content
     container.innerHTML = `
