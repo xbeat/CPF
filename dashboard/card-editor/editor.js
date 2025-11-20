@@ -249,26 +249,153 @@ async function loadCard(cardId) {
 }
 
 function renderEditor(cardData) {
-    const sections = groupFieldsBySection(cardData);
-    let html = '';
-
-    for (const [sectionName, fields] of Object.entries(sections)) {
-        html += `<div class="form-section">`;
-        html += `<div class="form-section-title">📋 ${sectionName}</div>`;
-
-        for (const [key, value] of Object.entries(fields)) {
-            html += renderFormField(key, value);
-        }
-
-        html += `</div>`;
+    // Only edit the 'sections' array (assessment, conversation, red flags)
+    if (!cardData.sections || !Array.isArray(cardData.sections)) {
+        cardEditorForm.innerHTML = `
+            <div class="form-section">
+                <div class="form-section-title">⚠️ No Sections Found</div>
+                <p>This card doesn't have editable sections. Use the "Raw JSON" tab to edit manually.</p>
+            </div>
+        `;
+        return;
     }
+
+    let html = `
+        <div style="padding: 20px; background: #eff6ff; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 10px 0; color: var(--primary);">📝 Card Editor</h3>
+            <p style="margin: 0; font-size: 14px; color: var(--text-light);">
+                Edit assessment questions, client conversation questions, and red flags below.
+                <br><strong>Note:</strong> Card metadata (indicator ID, title, etc.) cannot be changed here - use Raw JSON tab if needed.
+            </p>
+        </div>
+    `;
+
+    // Render each section
+    cardData.sections.forEach((section, sectionIndex) => {
+        html += renderSection(section, sectionIndex);
+    });
 
     cardEditorForm.innerHTML = html;
 
-    // Add event listeners for inputs
+    // Add event listeners
     cardEditorForm.querySelectorAll('input, textarea, select').forEach(input => {
-        input.addEventListener('input', updateFromEditor);
+        input.addEventListener('input', updateFromSectionsEditor);
     });
+}
+
+function renderSection(section, sectionIndex) {
+    let html = `
+        <div class="form-section" data-section-index="${sectionIndex}">
+            <div class="form-section-title">${section.icon || '📋'} ${section.title || 'Section'}</div>
+            <p style="font-size: 13px; color: var(--text-light); margin-bottom: 15px;">
+                ${section.type || ''} • ${section.time || ''} min
+            </p>
+    `;
+
+    // Render items (for quick-assessment)
+    if (section.items && Array.isArray(section.items)) {
+        section.items.forEach((item, itemIndex) => {
+            html += renderSectionItem(item, sectionIndex, itemIndex);
+        });
+    }
+
+    // Render subsections (for client-conversation)
+    if (section.subsections && Array.isArray(section.subsections)) {
+        section.subsections.forEach((subsection, subIndex) => {
+            html += renderSubsection(subsection, sectionIndex, subIndex);
+        });
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+function renderSectionItem(item, sectionIndex, itemIndex) {
+    let html = `
+        <div class="form-group" style="background: var(--bg-gray); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 8px;">
+                Question ${item.number || itemIndex + 1}: ${item.title || 'Untitled'}
+            </label>
+            <textarea
+                data-section="${sectionIndex}"
+                data-item="${itemIndex}"
+                data-field="question"
+                rows="2"
+                style="width: 100%; margin-bottom: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 6px;"
+            >${escapeHtml(item.question || '')}</textarea>
+    `;
+
+    // Render options for radio-list
+    if (item.type === 'radio-list' && item.options && Array.isArray(item.options)) {
+        html += `<div style="margin-top: 10px;"><strong style="font-size: 13px;">Options:</strong></div>`;
+        item.options.forEach((option, optIndex) => {
+            html += `
+                <div style="background: white; padding: 10px; margin: 8px 0; border-radius: 6px; border: 1px solid var(--border);">
+                    <label style="font-size: 12px; color: var(--text-light); display: block; margin-bottom: 4px;">Option ${optIndex + 1} (Score: ${option.score || 0})</label>
+                    <textarea
+                        data-section="${sectionIndex}"
+                        data-item="${itemIndex}"
+                        data-option="${optIndex}"
+                        data-field="label"
+                        rows="2"
+                        style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px;"
+                    >${escapeHtml(option.label || '')}</textarea>
+                </div>
+            `;
+        });
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+function renderSubsection(subsection, sectionIndex, subIndex) {
+    let html = `
+        <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <h4 style="color: var(--primary); margin-bottom: 10px;">${subsection.title || 'Subsection'}</h4>
+    `;
+
+    // Render conversation items (questions)
+    if (subsection.items && Array.isArray(subsection.items)) {
+        subsection.items.forEach((item, itemIndex) => {
+            if (item.type === 'question') {
+                html += `
+                    <div class="form-group" style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                        <label style="font-weight: 600; font-size: 13px;">Question: ${item.id || ''}</label>
+                        <textarea
+                            data-section="${sectionIndex}"
+                            data-subsection="${subIndex}"
+                            data-item="${itemIndex}"
+                            data-field="text"
+                            rows="3"
+                            style="width: 100%; margin-top: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 4px;"
+                        >${escapeHtml(item.text || '')}</textarea>
+                    </div>
+                `;
+            } else if (item.type === 'checkbox') {
+                // Red flag checkbox
+                html += `
+                    <div class="form-group" style="background: #fee; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid var(--danger);">
+                        <label style="font-weight: 600; font-size: 13px; color: var(--danger);">🚩 Red Flag: ${item.id || ''}</label>
+                        <textarea
+                            data-section="${sectionIndex}"
+                            data-subsection="${subIndex}"
+                            data-item="${itemIndex}"
+                            data-field="label"
+                            rows="2"
+                            style="width: 100%; margin-top: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 4px;"
+                        >${escapeHtml(item.label || '')}</textarea>
+                        <div style="margin-top: 8px; font-size: 12px; color: var(--text-light);">
+                            Severity: <strong>${item.severity || 'N/A'}</strong> | Score Impact: <strong>${item.score_impact || 0}</strong>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    html += `</div>`;
+    return html;
 }
 
 function groupFieldsBySection(cardData) {
@@ -362,40 +489,64 @@ window.removeArrayItem = function(arrayKey, index) {
     updateFromEditor();
 };
 
-function updateFromEditor() {
-    const updatedData = getEditorData();
-    currentCard.data = updatedData;
-    renderPreview(updatedData);
-    jsonEditor.value = JSON.stringify(updatedData, null, 2);
-}
+function updateFromSectionsEditor() {
+    // Update currentCard.data.sections based on form inputs
+    const textareas = cardEditorForm.querySelectorAll('textarea[data-section]');
 
-function getEditorData() {
-    const data = {};
+    textareas.forEach(textarea => {
+        const sectionIdx = parseInt(textarea.dataset.section);
+        const field = textarea.dataset.field;
+        const value = textarea.value;
 
-    // Regular inputs
-    cardEditorForm.querySelectorAll('input[data-key], textarea[data-key]').forEach(input => {
-        try {
-            const value = input.value;
-            data[input.dataset.key] = input.tagName === 'TEXTAREA' && value.trim().startsWith('{') ?
-                JSON.parse(value) : value;
-        } catch (e) {
-            data[input.dataset.key] = input.value;
+        if (!currentCard.data.sections[sectionIdx]) return;
+
+        // Handle quick-assessment items
+        if (textarea.dataset.item !== undefined && textarea.dataset.subsection === undefined) {
+            const itemIdx = parseInt(textarea.dataset.item);
+            const section = currentCard.data.sections[sectionIdx];
+
+            if (section.items && section.items[itemIdx]) {
+                if (textarea.dataset.option !== undefined) {
+                    // Update option label
+                    const optionIdx = parseInt(textarea.dataset.option);
+                    if (section.items[itemIdx].options && section.items[itemIdx].options[optionIdx]) {
+                        section.items[itemIdx].options[optionIdx][field] = value;
+                    }
+                } else {
+                    // Update question
+                    section.items[itemIdx][field] = value;
+                }
+            }
+        }
+
+        // Handle conversation subsection items
+        if (textarea.dataset.subsection !== undefined) {
+            const subIdx = parseInt(textarea.dataset.subsection);
+            const itemIdx = parseInt(textarea.dataset.item);
+            const section = currentCard.data.sections[sectionIdx];
+
+            if (section.subsections && section.subsections[subIdx]) {
+                const subsection = section.subsections[subIdx];
+                if (subsection.items && subsection.items[itemIdx]) {
+                    subsection.items[itemIdx][field] = value;
+                }
+            }
         }
     });
 
-    // Array inputs
-    cardEditorForm.querySelectorAll('.array-container').forEach(container => {
-        const key = container.id.replace('array-', '');
-        data[key] = Array.from(container.querySelectorAll('input')).map(input => {
-            try {
-                return input.value.trim().startsWith('{') ? JSON.parse(input.value) : input.value;
-            } catch (e) {
-                return input.value;
-            }
-        });
-    });
+    // Update preview and JSON
+    renderPreview(currentCard.data);
+    jsonEditor.value = JSON.stringify(currentCard.data, null, 2);
+}
 
-    return data;
+function updateFromEditor() {
+    // Legacy function - redirect to new sections editor
+    updateFromSectionsEditor();
+}
+
+function getEditorData() {
+    // Return current card data (already updated by updateFromSectionsEditor)
+    return currentCard.data;
 }
 
 function renderPreview(cardData) {
