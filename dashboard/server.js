@@ -13,6 +13,20 @@
  * Version: 2.1 - GitHub Integration for Card Editor
  */
 
+// Error handlers for uncaught errors
+process.on('uncaughtException', (error) => {
+  console.error('\n❌ [FATAL] Uncaught Exception:', error.message);
+  console.error(error.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('\n❌ [FATAL] Unhandled Promise Rejection:', reason);
+  console.error('Promise:', promise);
+  process.exit(1);
+});
+
+console.log('[Server] Starting CPF Dashboard Server...');
 // Load environment variables from .env.github file
 require('dotenv').config({ path: './.env.github' });
 
@@ -32,8 +46,12 @@ const GITHUB_REPO = process.env.GITHUB_REPO;
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
+console.log('[Server] Core modules loaded');
+
 // Import data manager
+console.log('[Server] Loading data manager...');
 const dataManager = require('./lib/dataManager');
+console.log('[Server] Data manager loaded successfully');
 
 // SOC (lazy-loaded on first use)
 let simulator = null;
@@ -244,3 +262,942 @@ app.get('/dashboard/dashboard.html', (req, res) => {
 
 // ... (rest of the server.js file remains the same)
 
+  } catch (error) {
+    console.error(`[API] Error generating XLSX export for ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/organizations/:orgId/export/pdf
+ * Export organization's entire matrix as PDF file
+ */
+app.get('/api/organizations/:orgId/export/pdf', async (req, res) => {
+  try {
+    const { orgId } = req.params;
+    const user = req.query.user || 'Dashboard User';
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const doc = await dataManager.generatePDFExport(orgId, user);
+    const orgData = dataManager.readOrganization(orgId);
+
+    console.log(`\n📄 [API] Generating PDF export for: ${orgId}\n`);
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="CPF_Audit_${orgData.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf"`);
+
+    // Pipe PDF to response
+    doc.pipe(res);
+    doc.end();
+
+    console.log(`\n✅ [API] PDF export completed: ${orgId}\n`);
+
+  } catch (error) {
+    console.error(`[API] Error generating PDF export for ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/organizations/:orgId/export/zip
+ * Export all organization's assessment cards (schede) as ZIP file
+ */
+app.get('/api/organizations/:orgId/export/zip', async (req, res) => {
+  try {
+    const { orgId } = req.params;
+    const user = req.query.user || 'Dashboard User';
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const { stream } = await dataManager.generateZIPExport(orgId, user);
+    const orgData = dataManager.readOrganization(orgId);
+
+    console.log(`\n📦 [API] Generating ZIP export for: ${orgId}\n`);
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="CPF_Audit_${orgData.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.zip"`);
+
+    // Pipe ZIP stream to response
+    stream.pipe(res);
+
+    stream.on('end', () => {
+      console.log(`\n✅ [API] ZIP export completed: ${orgId}\n`);
+    });
+
+  } catch (error) {
+    console.error(`[API] Error generating ZIP export for ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// API ENDPOINTS - SOC DATA
+// ============================================
+
+/**
+ * GET /api/soc/:orgId
+ * Get SOC indicator data from {org-name}-soc.json file
+ */
+app.get('/api/soc/:orgId', (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    // Prima ottieni i dati dell'organizzazione per il nome
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const orgData = dataManager.readOrganization(orgId);
+
+    // Normalizza il nome dell'organizzazione per il file SOC
+    const normalizedOrgName = orgData.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    const socFilePath = path.join(__dirname, 'data', 'organizations', `${normalizedOrgName}-soc.json`);
+
+    // Verifica se il file SOC esiste
+    if (!fs.existsSync(socFilePath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'SOC data file not found',
+        message: 'No SOC data available for this organization',
+        orgId,
+        expectedFile: `${normalizedOrgName}-soc.json`
+      });
+    }
+
+    // Leggi il file SOC
+    const socData = JSON.parse(fs.readFileSync(socFilePath, 'utf8'));
+
+    res.json({
+      success: true,
+      data: socData
+    });
+
+  } catch (error) {
+    console.error(`[API] Error reading SOC data for ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/indicators/:indicatorId/metadata/:lang
+ * Get indicator metadata from GitHub (auditor field kit interactive)
+ */
+app.get('/api/indicators/:indicatorId/metadata/:lang', (req, res) => {
+  try {
+    const { indicatorId, lang } = req.params;
+
+    // Parse indicator ID (es. "1.1" -> category=1, indicator=1)
+    const parts = indicatorId.split('.');
+    if (parts.length !== 2) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid indicator ID format. Expected format: X.Y'
+      });
+    }
+
+    const category = parts[0];
+    const indicator = parts[1];
+
+    // Map category to folder name
+    const categoryMap = {
+      '1': '1.x-authority',
+      '2': '2.x-temporal',
+      '3': '3.x-social',
+      '4': '4.x-affective',
+      '5': '5.x-cognitive',
+      '6': '6.x-group',
+      '7': '7.x-stress',
+      '8': '8.x-unconscious',
+      '9': '9.x-ai',
+      '10': '10.x-convergent'
+    };
+
+    const categoryFolder = categoryMap[category];
+    if (!categoryFolder) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid category: ${category}`
+      });
+    }
+
+    // Costruisci il path al file JSON
+    const metadataPath = path.join(
+      __dirname,
+      '..',
+      'auditor field kit',
+      'interactive',
+      lang,
+      categoryFolder,
+      `indicator_${indicatorId}.json`
+    );
+
+    // Verifica se il file esiste
+    if (!fs.existsSync(metadataPath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Indicator metadata not found',
+        indicatorId,
+        lang,
+        expectedPath: `auditor field kit/interactive/${lang}/${categoryFolder}/indicator_${indicatorId}.json`
+      });
+    }
+
+    // Leggi il file JSON
+    const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+
+    res.json({
+      success: true,
+      data: metadata
+    });
+
+  } catch (error) {
+    console.error(`[API] Error reading indicator metadata:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// API ENDPOINTS - LEGACY (BACKWARD COMPATIBILITY)
+// ============================================
+
+/**
+ * GET /api/auditing-results
+ * LEGACY: Returns auditing_results.json data (if exists)
+ */
+app.get('/api/auditing-results', (req, res) => {
+  try {
+    const dataPath = path.join(__dirname, 'data/auditing_results.json');
+
+    if (!fs.existsSync(dataPath)) {
+      return res.status(404).json({
+        error: 'Auditing results not found',
+        message: 'Legacy auditing_results.json not available. Use /api/organizations instead.'
+      });
+    }
+
+    const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/list-exports
+ * LEGACY: Lists available export files in field_kit_exports folder
+ */
+app.get('/api/list-exports', (req, res) => {
+  try {
+    const exportsPath = path.join(__dirname, '../field_kit_exports');
+
+    if (!fs.existsSync(exportsPath)) {
+      return res.json({ files: [], count: 0 });
+    }
+
+    const files = fs.readdirSync(exportsPath)
+      .filter(f => f.startsWith('dashboard_export_') && f.endsWith('.json'))
+      .map(f => ({
+        filename: f,
+        path: path.join(exportsPath, f),
+        size: fs.statSync(path.join(exportsPath, f)).size,
+        modified: fs.statSync(path.join(exportsPath, f)).mtime
+      }));
+
+    res.json({
+      files: files,
+      count: files.length,
+      totalSize: files.reduce((sum, f) => sum + f.size, 0)
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/get-export
+ * Retrieves a specific assessment for an organization and indicator
+ * Query params: org_id, indicator_id
+ */
+app.get('/api/get-export', (req, res) => {
+  try {
+    const { org_id, indicator_id } = req.query;
+
+    if (!org_id || !indicator_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required query parameters: org_id, indicator_id'
+      });
+    }
+
+    console.log(`\n🔍 [API] Looking for assessment: org_id=${org_id}, indicator_id=${indicator_id}`);
+
+    // Check if organization exists
+    if (!dataManager.organizationExists(org_id)) {
+      console.log(`   ❌ Organization not found: ${org_id}\n`);
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        org_id,
+        indicator_id
+      });
+    }
+
+    // Read organization data
+    const orgData = dataManager.readOrganization(org_id);
+
+    // Check if assessment exists for this indicator
+    if (!orgData.assessments || !orgData.assessments[indicator_id]) {
+      console.log(`   ❌ Assessment not found for indicator: ${indicator_id}\n`);
+      return res.status(404).json({
+        success: false,
+        error: 'Assessment not found',
+        org_id,
+        indicator_id
+      });
+    }
+
+    const assessment = orgData.assessments[indicator_id];
+
+    console.log(`   ✅ Assessment loaded for ${indicator_id}\n`);
+
+    // Format response to match expected structure from client
+    const exportData = {
+      organization_name: orgData.name,
+      organization_id: org_id,
+      indicator_id: indicator_id,
+      metadata: orgData.metadata,
+      full_assessment: assessment
+    };
+
+    res.json({
+      success: true,
+      data: exportData
+    });
+
+  } catch (error) {
+    console.error(`   ❌ Error: ${error.message}\n`);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/batch-import
+ * LEGACY: Executes batch import of Field Kit exports
+ */
+app.post('/api/batch-import', (req, res) => {
+  try {
+    const folderPath = req.body.folderPath || path.join(__dirname, '../field_kit_exports');
+
+    console.log(`\n🔧 [API] Batch import requested for: ${folderPath}`);
+
+    if (!fs.existsSync(folderPath)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Folder not found',
+        path: folderPath
+      });
+    }
+
+    const files = fs.readdirSync(folderPath)
+      .filter(f => f.startsWith('dashboard_export_') && f.endsWith('.json'));
+
+    if (files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No export files found',
+        path: folderPath
+      });
+    }
+
+    console.log(`   Found ${files.length} export files`);
+
+    const scriptPath = path.join(__dirname, 'scripts/batch_import.js');
+    const command = `node "${scriptPath}" "${folderPath}"`;
+
+    console.log(`   Executing: ${command}`);
+
+    const output = execSync(command, {
+      encoding: 'utf8',
+      cwd: __dirname
+    });
+
+    console.log(`   ✅ Import completed successfully\n`);
+
+    res.json({
+      success: true,
+      message: 'Batch import completed successfully',
+      filesProcessed: files.length,
+      folderPath: folderPath,
+      output: output
+    });
+
+  } catch (error) {
+    console.error(`   ❌ Import failed: ${error.message}\n`);
+
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      stderr: error.stderr ? error.stderr.toString() : null,
+      stdout: error.stdout ? error.stdout.toString() : null
+    });
+  }
+});
+
+/**
+ * POST /api/save-export
+ * LEGACY: Saves Field Kit export directly to field_kit_exports folder
+ */
+app.post('/api/save-export', (req, res) => {
+  try {
+    const exportData = req.body.exportData;
+
+    if (!exportData) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing exportData in request body'
+      });
+    }
+
+    if (!exportData.organization_id || !exportData.indicator_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Export data must include organization_id and indicator_id'
+      });
+    }
+
+    const exportsPath = path.join(__dirname, '../field_kit_exports');
+    if (!fs.existsSync(exportsPath)) {
+      fs.mkdirSync(exportsPath, { recursive: true });
+      console.log(`✅ Created field_kit_exports directory`);
+    }
+
+    const timestamp = Date.now();
+    const filename = `dashboard_export_${exportData.organization_id}_${exportData.indicator_id}_${timestamp}.json`;
+    const filePath = path.join(exportsPath, filename);
+
+    fs.writeFileSync(filePath, JSON.stringify(exportData, null, 2), 'utf8');
+
+    console.log(`\n📥 [API] Saved export: ${filename}`);
+    console.log(`   Organization: ${exportData.organization_name || exportData.organization_id}`);
+    console.log(`   Indicator: ${exportData.indicator_id}\n`);
+
+    res.json({
+      success: true,
+      message: 'Export saved successfully',
+      filename: filename,
+      path: filePath,
+      organization: exportData.organization_name || exportData.organization_id,
+      indicator: exportData.indicator_id
+    });
+
+  } catch (error) {
+    console.error(`   ❌ Save failed: ${error.message}\n`);
+
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/generate-synthetic
+ * LEGACY: Generates synthetic Field Kit export files
+ */
+app.post('/api/generate-synthetic', (req, res) => {
+  try {
+    console.log('\n🔧 [API] Generating synthetic Field Kit assessments...');
+
+    const scriptPath = path.join(__dirname, 'scripts/generate_field_kit_assessments.js');
+
+    const output = execSync(`node "${scriptPath}"`, {
+      encoding: 'utf8',
+      cwd: __dirname
+    });
+
+    console.log('   ✅ Synthetic data generated\n');
+
+    res.json({
+      success: true,
+      message: 'Synthetic Field Kit assessments generated successfully',
+      output: output
+    });
+
+  } catch (error) {
+    console.error(`   ❌ Generation failed: ${error.message}\n`);
+
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      stderr: error.stderr ? error.stderr.toString() : null
+    });
+  }
+});
+
+// ============================================
+// SIMULATOR API ENDPOINTS
+// ============================================
+
+/**
+ * GET /api/simulator/status
+ * Get simulator status
+ */
+app.get('/api/simulator/status', (req, res) => {
+  try {
+    const sim = getSimulator();
+    const status = sim.getStatus();
+
+      // Load sources config
+      const sourcesPath = path.join(__dirname, 'simulator/config/sources.json');
+      const sourcesData = JSON.parse(fs.readFileSync(sourcesPath, 'utf8'));
+      const availableSources = sourcesData.sources
+        .filter(s => s.enabled)
+        .map(s => s.id);
+
+      res.json({
+        enabled: true,
+        ...status,
+        availableSources
+      });
+    } catch (error) {
+      console.error('[SOC] Error getting status:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * POST /api/simulator/start
+   * Start SOC for organization
+   * Body: { orgId, sources?, scenario?, rate? }
+   */
+  app.post('/api/simulator/start', async (req, res) => {
+    try {
+      const { orgId, sources, scenario, rate, duration } = req.body;
+
+      if (!orgId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field: orgId'
+        });
+      }
+
+      // Verify organization exists
+      if (!dataManager.organizationExists(orgId)) {
+        return res.status(404).json({
+          success: false,
+          error: 'Organization not found',
+          orgId
+        });
+      }
+
+      // Setup callback per salvare assessments generati nel file SOC
+      const sim = getSimulator();
+      sim.setAssessmentsCallback(async (orgId, assessments) => {
+        for (const assessment of assessments) {
+          try {
+            await dataManager.saveSocIndicator(orgId, assessment);
+          } catch (error) {
+            console.error(`Failed to save SOC indicator for ${orgId}:`, error.message);
+          }
+        }
+      });
+
+      // Start simulator
+      const result = sim.start(orgId, {
+        sources,
+        scenario: scenario || 'normal',
+        rate: rate || 10,
+        duration: duration || 0
+      });
+
+      console.log(`\n✅ [API] SOC started for ${orgId}\n`);
+
+      res.json({
+        success: true,
+        message: 'SOC started',
+        ...result
+      });
+
+    } catch (error) {
+      console.error('[SOC] Error starting:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * POST /api/simulator/stop
+   * Stop SOC for organization
+   * Body: { orgId }
+   */
+  app.post('/api/simulator/stop', (req, res) => {
+    try {
+      const { orgId } = req.body;
+
+      if (!orgId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field: orgId'
+        });
+      }
+
+      const sim = getSimulator();
+      const result = sim.stop(orgId);
+
+      console.log(`\n✅ [API] SOC stopped for ${orgId}\n`);
+
+      res.json(result);
+
+    } catch (error) {
+      console.error('[SOC] Error stopping:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/simulator/sources
+   * List available SIEM/SOC/EDR sources
+   */
+  app.get('/api/simulator/sources', (req, res) => {
+    try {
+      const sourcesPath = path.join(__dirname, 'simulator/config/sources.json');
+      const data = JSON.parse(fs.readFileSync(sourcesPath, 'utf8'));
+
+      res.json({
+        success: true,
+        sources: data.sources.map(s => ({
+          id: s.id,
+          name: s.name,
+          type: s.type,
+          vendor: s.vendor,
+          version: s.version,
+          enabled: s.enabled,
+          description: s.description
+        })),
+        metadata: data.metadata
+      });
+
+    } catch (error) {
+      console.error('[SOC] Error reading sources:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/simulator/scenarios
+   * List available attack scenarios
+   */
+  app.get('/api/simulator/scenarios', (req, res) => {
+    try {
+      const sim = getSimulator();
+      const scenarios = sim.getAvailableScenarios();
+
+      res.json({
+        success: true,
+        scenarios,
+        count: scenarios.length
+      });
+
+    } catch (error) {
+      console.error('[Simulator] Error reading scenarios:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * POST /api/simulator/scenario
+   * Execute specific scenario
+   * Body: { orgId, scenario, duration?, intensity? }
+   */
+  app.post('/api/simulator/scenario', async (req, res) => {
+    try {
+      const { orgId, scenario, duration, intensity } = req.body;
+
+      if (!orgId || !scenario) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: orgId, scenario'
+        });
+      }
+
+      // Verify organization exists
+      if (!dataManager.organizationExists(orgId)) {
+        return res.status(404).json({
+          success: false,
+          error: 'Organization not found',
+          orgId
+        });
+      }
+
+      // Start simulator with scenario
+      const sim = getSimulator();
+      sim.setAssessmentsCallback(async (orgId, assessments) => {
+        for (const assessment of assessments) {
+          try {
+            await dataManager.saveAssessment(orgId, assessment, 'SIEM-Simulator');
+          } catch (error) {
+            console.error(`Failed to save assessment for ${orgId}:`, error.message);
+          }
+        }
+      });
+
+      const result = sim.start(orgId, {
+        scenario,
+        duration: duration || 3600,
+        intensity: intensity || 'high'
+      });
+
+      console.log(`\n🎬 [API] Scenario "${scenario}" started for ${orgId}\n`);
+
+      res.json({
+        success: true,
+        message: `Scenario "${scenario}" started`,
+        ...result
+      });
+
+    } catch (error) {
+      console.error('[Simulator] Error executing scenario:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * GET /api/simulator/scenario/:orgId
+   * Get scenario report for organization
+   */
+  app.get('/api/simulator/scenario/:orgId', (req, res) => {
+    try {
+      const { orgId } = req.params;
+
+      const sim = getSimulator();
+      const report = sim.getScenarioReport(orgId);
+
+      if (!report) {
+        return res.status(404).json({
+          success: false,
+          error: 'No active scenario for this organization',
+          orgId
+        });
+      }
+
+      res.json({
+        success: true,
+        report
+      });
+
+    } catch (error) {
+      console.error('[Simulator] Error getting scenario report:', error.message);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+/**
+ * POST /api/simulator/emit
+ * Emit manual events
+ * Body: { orgId, eventType, severity, count, sources }
+ */
+app.post('/api/simulator/emit', async (req, res) => {
+  try {
+    const { orgId, eventType, severity, count, sources } = req.body;
+
+    if (!orgId || !eventType) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: orgId, eventType'
+      });
+    }
+
+    // Verify organization exists
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const sim = getSimulator();
+    const SIEMDataGenerator = require('./simulator/generators/siem-data-generator');
+    const CPFAdapter = require('./simulator/adapters/cpf-adapter');
+    const { getInstance: getDenseLoader } = require('./simulator/generators/dense-loader');
+
+    const siemGenerator = new SIEMDataGenerator();
+    const denseLoader = getDenseLoader();
+    const cpfAdapter = new CPFAdapter(denseLoader);
+
+    // Generate events
+    const eventSources = sources && sources.length > 0 ? sources : ['splunk'];
+    const events = [];
+
+    for (let i = 0; i < (count || 1); i++) {
+      const source = eventSources[Math.floor(Math.random() * eventSources.length)];
+      const event = siemGenerator.generateEvent(source, eventType, 'manual', severity || 'medium');
+      events.push(event);
+    }
+
+    // Convert to assessments
+    const assessments = await cpfAdapter.convertEventsToAssessments(events, orgId, 'manual');
+
+    // Save assessments
+    for (const assessment of assessments) {
+      try {
+        await dataManager.saveAssessment(orgId, assessment, 'Manual-Simulator');
+      } catch (error) {
+        console.error(`Failed to save assessment:`, error.message);
+      }
+    }
+
+    console.log(`\n⚡ [API] Emitted ${events.length} manual event(s) for ${orgId}\n`);
+
+    res.json({
+      success: true,
+      message: `Emitted ${events.length} event(s)`,
+      eventsGenerated: events.length,
+      assessmentsCreated: assessments.length
+    });
+
+  } catch (error) {
+    console.error('[Simulator] Error emitting event:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// SERVER START
+// ============================================
+
+console.log('[Server] Initializing HTTP server on port', PORT);
+
+server.listen(PORT, () => {
+  console.log('\n╔════════════════════════════════════════════════════════════╗');
+  console.log('║          🛡️  CPF Dashboard Server v2.0 - RUNNING            ║');
+  console.log('╚════════════════════════════════════════════════════════════╝\n');
+  console.log(`📡 Server listening on: http://localhost:${PORT}`);
+  console.log(`🔌 WebSocket server ready\n`);
+  console.log('📂 Available endpoints:\n');
+  console.log('   🌐 Dashboards:');
+  console.log(`      → http://localhost:${PORT}/dashboard/auditing/`);
+  console.log(`        (Auditing Progress + Risk Analysis Dashboard - with integrated client)`);
+  console.log(`      → http://localhost:${PORT}/dashboard/soc/`);
+  console.log(`        (SOC + Bayesian Analysis Dashboard)`);
+  console.log(`      → http://localhost:${PORT}/dashboard/simulator/`);
+  console.log(`        (SIEM/SOC Simulator Control Dashboard)\n`);
+  console.log('   📝 Legacy URLs (auto-redirect):');
+  console.log(`      → /dashboard/dashboard_auditing.html → /dashboard/auditing/`);
+  console.log(`      → /dashboard/dashboard.html → /dashboard/soc/\n`);
+  console.log('   🔌 API Endpoints (v2.0 - JSON Storage):');
+  console.log(`      Organizations:`);
+  console.log(`        GET    /api/organizations`);
+  console.log(`        GET    /api/organizations/:orgId`);
+  console.log(`        POST   /api/organizations`);
+  console.log(`        PUT    /api/organizations/:orgId`);
+  console.log(`        DELETE /api/organizations/:orgId`);
+  console.log(`      Assessments:`);
+  console.log(`        GET    /api/organizations/:orgId/assessments`);
+  console.log(`        GET    /api/organizations/:orgId/assessments/:indicatorId`);
+  console.log(`        POST   /api/organizations/:orgId/assessments`);
+  console.log(`        DELETE /api/organizations/:orgId/assessments/:indicatorId`);
+  console.log(`      Aggregates:`);
+  console.log(`        GET    /api/organizations/:orgId/aggregates`);
+  console.log(`        GET    /api/organizations/:orgId/missing`);
+  console.log(`        POST   /api/organizations/:orgId/recalculate`);
+  console.log(`      Legacy (backward compatibility):`);
+  console.log(`        GET    /api/auditing-results`);
+  console.log(`        GET    /api/list-exports`);
+  console.log(`        POST   /api/save-export`);
+  console.log(`        POST   /api/batch-import`);
+  console.log(`        POST   /api/generate-synthetic`);
+  console.log(`\n   🎭 Simulator (Lazy-loaded on first use):`);
+  console.log(`        GET    /api/simulator/status`);
+  console.log(`        POST   /api/simulator/start`);
+  console.log(`        POST   /api/simulator/stop`);
+  console.log(`        POST   /api/simulator/emit`);
+  console.log(`        GET    /api/simulator/sources`);
+  console.log(`        GET    /api/simulator/scenarios`);
+  console.log(`        POST   /api/simulator/scenario`);
+  console.log(`        GET    /api/simulator/scenario/:orgId`);
+
+  console.log('\n⚙️  Press CTRL+C to stop the server\n');
+});
+
+// Handle server listen errors
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`\n❌ [FATAL] Port ${PORT} is already in use`);
+    console.error('   Please stop the other process or use a different port\n');
+  } else {
+    console.error('\n❌ [FATAL] Server error:', error.message);
+    console.error(error.stack);
+  }
+  process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('\n\n👋 Server shutting down gracefully...\n');
+  process.exit(0);
+});
