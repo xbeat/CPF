@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # Servizio di database PostgreSQL dedicato per l'app Dashboard
+  postgres_db:
+    # Immagine ufficiale di PostgreSQL, versione 15. È buona norma bloccare la major version.
+    image: postgres:15-alpine
+    container_name: cpf_dashboard_db # Nome chiaro e univoco
+    restart: unless-stopped
+    
+    # Mappiamo la porta del container (5432) sulla stessa porta del nostro host
+    # Se avessi già postgres in locale, potresti cambiarla in "5433:5432"
+    ports:
+      - "5432:5432"
+      
+    # Variabili d'ambiente per configurare il database al primo avvio
+    environment:
+      POSTGRES_DB: cpf_dashboard_db     # Nome del database
+      POSTGRES_USER: dashboard_user     # Nome utente
+      POSTGRES_PASSWORD: strong_dev_password  # Password per lo sviluppo
+      
+    # Volume per rendere persistenti i dati anche se il container viene rimosso
+    # Il nome 'postgres-dashboard-data' è gestito da Docker
+    volumes:
+      - postgres-dashboard-data:/var/lib/postgresql/data
+      
+    # Controllo per verificare che il database sia pronto ad accettare connessioni
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dashboard_user -d cpf_dashboard_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  # Definizione del volume per la persistenza
+  postgres-dashboard-data:
