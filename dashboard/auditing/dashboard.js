@@ -2405,7 +2405,7 @@ function renderMaturityTab() {
 
     const aggregates = selectedOrgData.aggregates;
     const assessmentCount = Object.keys(selectedOrgData.assessments || {}).length;
-    const industry = selectedOrgData.industry || 'General';
+    const industry = selectedOrgData.metadata?.industry || 'General';
 
     // Calculate overall maturity level (1-5 scale)
     // Use overall_risk (inverse: lower risk = higher maturity)
@@ -2624,13 +2624,9 @@ async function loadIndicatorForCompile() {
         document.getElementById('compile-date').valueAsDate = new Date();
 
         // Check if there's an existing assessment for this indicator
-        if (selectedOrgData && selectedOrgData.assessments) {
-            const existingAssessment = selectedOrgData.assessments[indicatorId];
-            // Check for responses in either raw_data.responses OR raw_data.client_conversation.responses
-            const hasResponses = existingAssessment && existingAssessment.raw_data &&
-                                (existingAssessment.raw_data.responses ||
-                                 (existingAssessment.raw_data.client_conversation && existingAssessment.raw_data.client_conversation.responses));
-            if (hasResponses) {
+        if (selectedOrganization && organizationData && organizationData.assessments) {
+            const existingAssessment = organizationData.assessments[indicatorId];
+            if (existingAssessment && existingAssessment.raw_data && existingAssessment.raw_data.responses) {
                 // Populate form with existing responses
                 console.log(`Loading existing assessment for ${indicatorId}`, existingAssessment);
                 populateFormWithAssessment(existingAssessment);
@@ -2797,10 +2793,7 @@ async function saveAssessmentToOrg() {
         }
     });
 
-    // Prepare assessment data for API (using same format as demo data for consistency)
-    const assessor = document.getElementById('compile-assessor').value || 'Anonymous';
-    const assessmentDate = document.getElementById('compile-date').value || new Date().toISOString().split('T')[0];
-
+    // Prepare assessment data for API
     const assessmentData = {
         indicator_id: currentIndicatorId,
         title: currentIndicatorData.title || `Indicator ${currentIndicatorId}`,
@@ -2808,20 +2801,10 @@ async function saveAssessmentToOrg() {
         bayesian_score: scoreResult.score,
         confidence: scoreResult.confidence,
         maturity_level: getMaturityLevel(scoreResult.score),
-        assessor: assessor,
-        assessment_date: assessmentDate,
+        assessor: document.getElementById('compile-assessor').value || 'Anonymous',
+        assessment_date: document.getElementById('compile-date').value || new Date().toISOString().split('T')[0],
         raw_data: {
-            client_conversation: {
-                metadata: {
-                    date: assessmentDate,
-                    auditor: assessor,
-                    status: 'completed'
-                },
-                responses: responses,
-                notes: '',
-                red_flags_identified: 0,
-                red_flags: []
-            },
+            responses: responses,
             field_kit_version: '2.0',
             source: 'dashboard_auditing'
         }
@@ -2862,17 +2845,11 @@ async function saveAssessmentToOrg() {
 
 // Populate form with existing assessment data
 function populateFormWithAssessment(assessment) {
-    if (!assessment || !assessment.raw_data) {
+    if (!assessment || !assessment.raw_data || !assessment.raw_data.responses) {
         return;
     }
 
-    // Support both raw_data.responses AND raw_data.client_conversation.responses formats
-    const responses = assessment.raw_data.responses ||
-                     (assessment.raw_data.client_conversation && assessment.raw_data.client_conversation.responses);
-
-    if (!responses) {
-        return;
-    }
+    const responses = assessment.raw_data.responses;
 
     // Populate each response
     Object.keys(responses).forEach(questionKey => {
