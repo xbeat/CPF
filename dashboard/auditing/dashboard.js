@@ -348,8 +348,8 @@ function renderAssessmentDetails() {
 
     // CRITICAL: Auto-refresh maturity model when organization changes
     // Check if maturity tab is currently active and refresh it
-    const maturityTabBtn = document.querySelector('.tab[data-tab="maturity"]');
-    const isMaturityTabActive = maturityTabBtn && maturityTabBtn.classList.contains('active');
+    const maturityTabContent = document.getElementById('maturityTab');
+    const isMaturityTabActive = maturityTabContent && maturityTabContent.classList.contains('active');
     if (isMaturityTabActive) {
         renderMaturityTab();
     }

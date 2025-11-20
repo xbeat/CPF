@@ -155,8 +155,28 @@ function loadFieldKitForIndicator(indicatorId, language) {
       return fieldKitCache[cacheKey];
     }
   } catch (err) {
-    // No fallback - return null if Field Kit doesn't exist for this language
+    // Error reading file, try fallback
   }
+
+  // Fallback to en-US if requested language not available
+  if (language !== 'en-US') {
+    const fallbackCacheKey = `${indicatorId}_en-US`;
+    if (fieldKitCache[fallbackCacheKey]) return fieldKitCache[fallbackCacheKey];
+
+    const fallbackPath = path.join(__dirname, '..', '..', 'auditor field kit', 'interactive', 'en-US', `${categoryNum}.x-${categoryName}`, `indicator_${indicatorId}.json`);
+
+    try {
+      if (fs.existsSync(fallbackPath)) {
+        fieldKitCache[fallbackCacheKey] = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
+        // Cache under both keys (original language and en-US)
+        fieldKitCache[cacheKey] = fieldKitCache[fallbackCacheKey];
+        return fieldKitCache[fallbackCacheKey];
+      }
+    } catch (err) {
+      // Fallback also failed
+    }
+  }
+
   return null;
 }
 
