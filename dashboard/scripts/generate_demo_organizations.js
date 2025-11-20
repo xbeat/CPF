@@ -3,6 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 
+// Import calculateAggregates from db_json.js (includes maturity model calculation)
+const { calculateAggregates } = require('../lib/db_json');
+
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const ORGS_DIR = path.join(DATA_DIR, 'organizations');
 const INDEX_FILE = path.join(DATA_DIR, 'organizations_index.json');
@@ -156,33 +159,16 @@ function generateAssessment(indicatorId) {
   return { indicator_id: indicatorId, title: `Indicator ${indicatorId} Title`, category: CATEGORY_NAMES[category], bayesian_score: parseFloat(bayesianScore.toFixed(4)), confidence: parseFloat(confidence.toFixed(4)), maturity_level: maturityLevel, assessor: assessor, assessment_date: assessmentDate, raw_data: rawData };
 }
 
-function calculateAggregates(assessments) {
-  const assessmentArray = Object.values(assessments);
-  if (assessmentArray.length === 0) return { overall_risk: 0.5, overall_confidence: 0.0, trend: 'stable', by_category: {}, completion: { total_indicators: 100, assessed_indicators: 0, percentage: 0.0, missing_indicators: generateAllIndicatorIds() }, last_calculated: new Date().toISOString() };
-  const overallRisk = assessmentArray.reduce((sum, a) => sum + a.bayesian_score, 0) / assessmentArray.length;
-  const overallConfidence = assessmentArray.reduce((sum, a) => sum + a.confidence, 0) / assessmentArray.length;
-  const byCategory = {};
-  for (let cat = 1; cat <= 10; cat++) {
-    const catKey = cat.toString();
-    const catAssessments = assessmentArray.filter(a => a.indicator_id.startsWith(`${cat}.`));
-    if (catAssessments.length > 0) {
-      const avgScore = catAssessments.reduce((sum, a) => sum + a.bayesian_score, 0) / catAssessments.length;
-      const avgConfidence = catAssessments.reduce((sum, a) => sum + a.confidence, 0) / catAssessments.length;
-      byCategory[catKey] = { category_name: CATEGORY_NAMES[catKey], avg_score: parseFloat(avgScore.toFixed(4)), avg_confidence: parseFloat(avgConfidence.toFixed(4)), total_assessments: catAssessments.length, completion_percentage: parseFloat((catAssessments.length / 10 * 100).toFixed(2)) };
-    }
-  }
-  const allIndicators = generateAllIndicatorIds();
-  const assessedIndicators = Object.keys(assessments);
-  const missingIndicators = allIndicators.filter(id => !assessedIndicators.includes(id));
-  return { overall_risk: parseFloat(overallRisk.toFixed(4)), overall_confidence: parseFloat(overallConfidence.toFixed(4)), trend: 'stable', by_category: byCategory, completion: { total_indicators: 100, assessed_indicators: assessedIndicators.length, percentage: parseFloat((assessedIndicators.length / 100 * 100).toFixed(2)), missing_indicators: missingIndicators }, last_calculated: new Date().toISOString() };
-}
+// calculateAggregates function removed - now imported from db_json.js
+// This ensures maturity model is calculated properly
 
 function generateOrganization(orgConfig) {
   const createdAt = new Date().toISOString();
   const indicatorsToAssess = generateRandomIndicatorSubset();
   const assessments = {};
   for (const indicatorId of indicatorsToAssess) { assessments[indicatorId] = generateAssessment(indicatorId); }
-  const aggregates = calculateAggregates(assessments);
+  // Use calculateAggregates from db_json.js which includes maturity model calculation
+  const aggregates = calculateAggregates(assessments, orgConfig.industry);
   const orgData = { id: orgConfig.id, name: orgConfig.name, metadata: { industry: orgConfig.industry, size: orgConfig.size, country: orgConfig.country, language: orgConfig.language, created_at: createdAt, updated_at: createdAt, created_by: orgConfig.created_by, notes: orgConfig.notes }, assessments: assessments, aggregates: aggregates };
   return orgData;
 }
@@ -304,4 +290,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { generateDemoOrganizations, generateOrganization, calculateAggregates };
+module.exports = { generateDemoOrganizations, generateOrganization };
