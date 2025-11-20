@@ -152,6 +152,9 @@
                 <button class="tab" data-action="switch-tab" data-tab="risk">
                     🔥 Risk Analysis
                 </button>
+                <button class="tab" data-action="switch-tab" data-tab="maturity">
+                    🎖️ Maturity Model
+                </button>
                 <!-- Compile Assessment tab removed - use matrix to create/edit assessments -->
                 <button class="tab" data-action="switch-tab" data-tab="compile" style="display: none;">
                     ✏️ Compile Assessment
@@ -243,6 +246,203 @@
                                 <!-- Populated by JS -->
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maturity Model Tab -->
+            <div id="maturityTab" class="tab-content">
+                <!-- Maturity Level Overview -->
+                <div class="heatmap-container">
+                    <div class="matrix-header">
+                        <h3 class="matrix-title">🎖️ CPF Maturity Model Assessment</h3>
+                        <p style="font-size: 14px; color: var(--text-light); margin-top: 10px;">
+                            Overall organizational maturity based on CPF Score (0-100) and Convergence Index
+                        </p>
+                    </div>
+
+                    <!-- Maturity Level Badge (Large) -->
+                    <div style="background: white; padding: 30px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                        <div style="display: flex; justify-content: center; align-items: center; gap: 40px; flex-wrap: wrap;">
+                            <!-- Current Level Badge -->
+                            <div style="flex: 1; min-width: 250px; max-width: 400px;">
+                                <div style="font-size: 14px; color: var(--text-light); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Current Maturity Level</div>
+                                <div id="maturityLevelBadge" style="font-size: 64px; font-weight: 700; margin: 15px 0;">-</div>
+                                <div id="maturityLevelName" style="font-size: 28px; font-weight: 600; margin-bottom: 10px;">Loading...</div>
+                                <div id="maturityLevelDescription" style="font-size: 14px; color: var(--text-light); line-height: 1.6;">-</div>
+                            </div>
+
+                            <!-- CPF Score Gauge -->
+                            <div style="flex: 1; min-width: 250px; max-width: 400px;">
+                                <div style="font-size: 14px; color: var(--text-light); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">CPF Score</div>
+                                <div style="position: relative; width: 200px; height: 200px; margin: 0 auto;">
+                                    <svg viewBox="0 0 200 200" style="transform: rotate(-90deg);">
+                                        <!-- Background circle -->
+                                        <circle cx="100" cy="100" r="80" fill="none" stroke="#e0e0e0" stroke-width="20"></circle>
+                                        <!-- Progress circle -->
+                                        <circle id="cpfScoreCircle" cx="100" cy="100" r="80" fill="none" stroke="var(--success)" stroke-width="20" stroke-dasharray="502.4" stroke-dashoffset="502.4" stroke-linecap="round"></circle>
+                                    </svg>
+                                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                                        <div id="cpfScoreValue" style="font-size: 42px; font-weight: 700; color: var(--primary);">--</div>
+                                        <div style="font-size: 14px; color: var(--text-light);">/ 100</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar to Next Level -->
+                        <div id="progressToNextLevel" style="margin-top: 30px; padding-top: 30px; border-top: 2px solid var(--border);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-size: 14px; font-weight: 600;">Progress to Next Level</span>
+                                <span id="nextLevelName" style="font-size: 14px; color: var(--text-light);">-</span>
+                            </div>
+                            <div style="width: 100%; height: 30px; background: var(--bg-gray); border-radius: 15px; overflow: hidden; position: relative;">
+                                <div id="progressBar" style="height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 15px; width: 0%; transition: width 0.5s ease;"></div>
+                                <div id="progressText" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: 600; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">0%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Metrics -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <!-- Convergence Index -->
+                    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="font-size: 12px; color: var(--text-light); margin-bottom: 5px; text-transform: uppercase;">Convergence Index</div>
+                        <div id="convergenceIndexValue" style="font-size: 32px; font-weight: 700; color: var(--primary);">-</div>
+                        <div id="convergenceIndexStatus" style="font-size: 13px; margin-top: 5px;">-</div>
+                    </div>
+
+                    <!-- Domain Distribution -->
+                    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="font-size: 12px; color: var(--text-light); margin-bottom: 5px; text-transform: uppercase;">Domain Distribution</div>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <div style="flex: 1; text-align: center;">
+                                <div id="greenDomainsCount" style="font-size: 24px; font-weight: 700; color: var(--success);">0</div>
+                                <div style="font-size: 11px; color: var(--text-light);">GREEN</div>
+                            </div>
+                            <div style="flex: 1; text-align: center;">
+                                <div id="yellowDomainsCount" style="font-size: 24px; font-weight: 700; color: var(--warning);">0</div>
+                                <div style="font-size: 11px; color: var(--text-light);">YELLOW</div>
+                            </div>
+                            <div style="flex: 1; text-align: center;">
+                                <div id="redDomainsCount" style="font-size: 24px; font-weight: 700; color: var(--danger);">0</div>
+                                <div style="font-size: 11px; color: var(--text-light);">RED</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sector Percentile -->
+                    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="font-size: 12px; color: var(--text-light); margin-bottom: 5px; text-transform: uppercase;">Sector Percentile</div>
+                        <div id="sectorPercentileValue" style="font-size: 32px; font-weight: 700; color: var(--primary);">-</div>
+                        <div id="sectorComparison" style="font-size: 13px; margin-top: 5px;">-</div>
+                    </div>
+                </div>
+
+                <!-- Regulatory Compliance -->
+                <div class="heatmap-container" style="margin-top: 20px;">
+                    <div class="matrix-header">
+                        <h3 class="matrix-title">📋 Regulatory Compliance Status</h3>
+                        <p style="font-size: 14px; color: var(--text-light); margin-top: 10px;">Compliance status with major cybersecurity and privacy regulations</p>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table id="complianceTable" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                            <thead>
+                                <tr style="background: var(--bg-gray); border-bottom: 2px solid var(--border);">
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Regulation</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 600;">Status</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 600;">Min. Level Required</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 600;">Recommended Level</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 600;">Your Level</th>
+                                </tr>
+                            </thead>
+                            <tbody id="complianceTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Sector Benchmark -->
+                <div class="heatmap-container" style="margin-top: 20px;">
+                    <div class="matrix-header">
+                        <h3 class="matrix-title">📊 Sector Benchmark Comparison</h3>
+                        <p style="font-size: 14px; color: var(--text-light); margin-top: 10px;">How your organization compares to industry peers</p>
+                    </div>
+                    <div style="background: white; padding: 30px; border-radius: 12px; margin-top: 15px;">
+                        <div style="display: flex; gap: 40px; flex-wrap: wrap; align-items: center;">
+                            <!-- Benchmark Chart -->
+                            <div style="flex: 1; min-width: 300px;">
+                                <div style="position: relative; height: 100px;">
+                                    <!-- Sector Mean Line -->
+                                    <div style="position: absolute; width: 100%; height: 2px; background: var(--text-light); top: 50%; opacity: 0.3;"></div>
+                                    <div id="sectorMeanMarker" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 3px; height: 60px; background: var(--text-light); opacity: 0.5;"></div>
+                                    <div id="sectorMeanLabel" style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); font-size: 12px; color: var(--text-light); white-space: nowrap;">Sector Mean: --</div>
+
+                                    <!-- Your Score Marker -->
+                                    <div id="yourScoreMarker" style="position: absolute; top: 50%; left: 0%; transform: translate(-50%, -50%); width: 20px; height: 20px; background: var(--primary); border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.2);"></div>
+                                    <div id="yourScoreLabel" style="position: absolute; bottom: 0; left: 0%; transform: translateX(-50%); font-size: 13px; font-weight: 600; color: var(--primary); white-space: nowrap;">Your Score: --</div>
+
+                                    <!-- Scale -->
+                                    <div style="position: absolute; bottom: -25px; width: 100%; display: flex; justify-content: space-between; font-size: 11px; color: var(--text-light);">
+                                        <span>0</span>
+                                        <span>25</span>
+                                        <span>50</span>
+                                        <span>75</span>
+                                        <span>100</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Benchmark Stats -->
+                            <div style="flex: 1; min-width: 250px;">
+                                <div id="benchmarkStats" style="display: grid; gap: 10px;">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certification Path -->
+                <div class="heatmap-container" style="margin-top: 20px;">
+                    <div class="matrix-header">
+                        <h3 class="matrix-title">🏆 CPF Certification Pathway</h3>
+                        <p style="font-size: 14px; color: var(--text-light); margin-top: 10px;">Track your progress toward CPF certifications</p>
+                    </div>
+                    <div style="background: white; padding: 30px; border-radius: 12px; margin-top: 15px;">
+                        <div id="certificationPath" style="display: flex; gap: 15px; align-items: center; justify-content: space-around; flex-wrap: wrap;">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ROI Analysis -->
+                <div class="heatmap-container" style="margin-top: 20px;" id="roiAnalysisContainer">
+                    <div class="matrix-header">
+                        <h3 class="matrix-title">💰 ROI Analysis - Next Level Investment</h3>
+                        <p style="font-size: 14px; color: var(--text-light); margin-top: 10px;">Estimated investment and returns for advancing to the next maturity level</p>
+                    </div>
+                    <div style="background: white; padding: 30px; border-radius: 12px; margin-top: 15px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 12px; color: var(--text-light); margin-bottom: 5px;">Investment Required</div>
+                                <div id="roiInvestment" style="font-size: 28px; font-weight: 700; color: var(--primary);">-</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 12px; color: var(--text-light); margin-bottom: 5px;">Annual Benefit</div>
+                                <div id="roiAnnualBenefit" style="font-size: 28px; font-weight: 700; color: var(--success);">-</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 12px; color: var(--text-light); margin-bottom: 5px;">Payback Period</div>
+                                <div id="roiPayback" style="font-size: 28px; font-weight: 700; color: var(--accent);">-</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 12px; color: var(--text-light); margin-bottom: 5px;">5-Year NPV</div>
+                                <div id="roiNPV" style="font-size: 28px; font-weight: 700; color: var(--primary);">-</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
