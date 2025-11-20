@@ -139,35 +139,36 @@ function generateMaturityLevel(score) {
 // Cache for loaded Field Kit JSONs
 const fieldKitCache = {};
 
-function loadFieldKitForIndicator(indicatorId) {
-  if (fieldKitCache[indicatorId]) return fieldKitCache[indicatorId];
+function loadFieldKitForIndicator(indicatorId, language) {
+  const cacheKey = `${indicatorId}_${language}`;
+  if (fieldKitCache[cacheKey]) return fieldKitCache[cacheKey];
 
   const [categoryNum] = indicatorId.split('.');
   const categoryMap = {'1':'authority','2':'temporal','3':'social','4':'affective','5':'cognitive','6':'group','7':'stress','8':'unconscious','9':'ai','10':'convergent'};
   const categoryName = categoryMap[categoryNum];
 
-  const fieldKitPath = path.join(__dirname, '..', '..', 'auditor field kit', 'interactive', 'en-US', `${categoryNum}.x-${categoryName}`, `indicator_${indicatorId}.json`);
+  const fieldKitPath = path.join(__dirname, '..', '..', 'auditor field kit', 'interactive', language, `${categoryNum}.x-${categoryName}`, `indicator_${indicatorId}.json`);
 
   try {
     if (fs.existsSync(fieldKitPath)) {
-      fieldKitCache[indicatorId] = JSON.parse(fs.readFileSync(fieldKitPath, 'utf8'));
-      return fieldKitCache[indicatorId];
+      fieldKitCache[cacheKey] = JSON.parse(fs.readFileSync(fieldKitPath, 'utf8'));
+      return fieldKitCache[cacheKey];
     }
   } catch (err) {
-    // Fallback: use indicator 1.1 as template
-    const fallbackPath = path.join(__dirname, '..', '..', 'auditor field kit', 'interactive', 'en-US', '1.x-authority', 'indicator_1.1.json');
-    if (fs.existsSync(fallbackPath) && !fieldKitCache['1.1']) {
-      fieldKitCache['1.1'] = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
-    }
-    return fieldKitCache['1.1'];
+    // No fallback - return null if Field Kit doesn't exist for this language
   }
   return null;
 }
 
-function generateRawData(indicatorId, bayesianScore) {
-  const fieldKit = loadFieldKitForIndicator(indicatorId);
+function generateRawData(indicatorId, bayesianScore, language) {
+  const fieldKit = loadFieldKitForIndicator(indicatorId, language);
   const responses = {};
   const quickAssessmentBreakdown = [];
+
+  // If Field Kit doesn't exist for this language, return null
+  if (!fieldKit) {
+    return null;
+  }
 
   // Generate responses from actual Field Kit structure
   if (fieldKit && fieldKit.sections) {
@@ -257,13 +258,18 @@ function generateRawData(indicatorId, bayesianScore) {
   };
 }
 
-function generateAssessment(indicatorId) {
+function generateAssessment(indicatorId, language) {
   const bayesianScore = generateBayesianScore();
   const confidence = generateConfidence();
   const maturityLevel = generateMaturityLevel(bayesianScore);
   const assessor = randomChoice(ASSESSORS);
   const assessmentDate = randomDateLastNDays(90);
-  const rawData = generateRawData(indicatorId, bayesianScore);
+  const rawData = generateRawData(indicatorId, bayesianScore, language);
+
+  // Skip this assessment if Field Kit doesn't exist for language
+  if (!rawData) {
+    return null;
+  }
 
   const [category] = indicatorId.split('.');
   return { indicator_id: indicatorId, title: `Indicator ${indicatorId} Title`, category: CATEGORY_NAMES[category], bayesian_score: parseFloat(bayesianScore.toFixed(4)), confidence: parseFloat(confidence.toFixed(4)), maturity_level: maturityLevel, assessor: assessor, assessment_date: assessmentDate, raw_data: rawData };
@@ -276,7 +282,16 @@ function generateOrganization(orgConfig) {
   const createdAt = new Date().toISOString();
   const indicatorsToAssess = generateRandomIndicatorSubset();
   const assessments = {};
-  for (const indicatorId of indicatorsToAssess) { assessments[indicatorId] = generateAssessment(indicatorId); }
+
+  // Generate assessments using organization's language
+  for (const indicatorId of indicatorsToAssess) {
+    const assessment = generateAssessment(indicatorId, orgConfig.language);
+    if (assessment) {
+      assessments[indicatorId] = assessment;
+    }
+    // Skip if Field Kit doesn't exist for this language
+  }
+
   // Use calculateAggregates from db_json.js which includes maturity model calculation
   const aggregates = calculateAggregates(assessments, orgConfig.industry);
   const orgData = { id: orgConfig.id, name: orgConfig.name, metadata: { industry: orgConfig.industry, size: orgConfig.size, country: orgConfig.country, language: orgConfig.language, created_at: createdAt, updated_at: createdAt, created_by: orgConfig.created_by, notes: orgConfig.notes }, assessments: assessments, aggregates: aggregates };
