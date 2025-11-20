@@ -312,10 +312,25 @@ function renderSection(section, sectionIndex) {
 
 function renderSectionItem(item, sectionIndex, itemIndex) {
     let html = `
-        <div class="form-group" style="background: var(--bg-gray); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-            <label style="display: block; font-weight: 600; margin-bottom: 8px;">
-                Question ${item.number || itemIndex + 1}: ${item.title || 'Untitled'}
-            </label>
+        <div class="form-group" style="background: var(--bg-gray); padding: 15px; border-radius: 8px; margin-bottom: 15px; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <label style="font-weight: 600; margin: 0;">Question ${item.number || itemIndex + 1}</label>
+                <button onclick="removeQuestion(${sectionIndex}, ${itemIndex})"
+                    style="background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                    🗑️ Remove
+                </button>
+            </div>
+
+            <label style="display: block; font-size: 12px; color: var(--text-light); margin-bottom: 4px;">Title</label>
+            <input type="text"
+                data-section="${sectionIndex}"
+                data-item="${itemIndex}"
+                data-field="title"
+                value="${escapeHtml(item.title || '')}"
+                style="width: 100%; margin-bottom: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px;"
+            />
+
+            <label style="display: block; font-size: 12px; color: var(--text-light); margin-bottom: 4px;">Question Text</label>
             <textarea
                 data-section="${sectionIndex}"
                 data-item="${itemIndex}"
@@ -330,19 +345,31 @@ function renderSectionItem(item, sectionIndex, itemIndex) {
         html += `<div style="margin-top: 10px;"><strong style="font-size: 13px;">Options:</strong></div>`;
         item.options.forEach((option, optIndex) => {
             html += `
-                <div style="background: white; padding: 10px; margin: 8px 0; border-radius: 6px; border: 1px solid var(--border);">
-                    <label style="font-size: 12px; color: var(--text-light); display: block; margin-bottom: 4px;">Option ${optIndex + 1} (Score: ${option.score || 0})</label>
-                    <textarea
-                        data-section="${sectionIndex}"
-                        data-item="${itemIndex}"
-                        data-option="${optIndex}"
-                        data-field="label"
-                        rows="2"
-                        style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px;"
-                    >${escapeHtml(option.label || '')}</textarea>
+                <div style="background: white; padding: 10px; margin: 8px 0; border-radius: 6px; border: 1px solid var(--border); display: flex; gap: 10px; align-items: start;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; color: var(--text-light); display: block; margin-bottom: 4px;">Option ${optIndex + 1} (Score: ${option.score || 0})</label>
+                        <textarea
+                            data-section="${sectionIndex}"
+                            data-item="${itemIndex}"
+                            data-option="${optIndex}"
+                            data-field="label"
+                            rows="2"
+                            style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px;"
+                        >${escapeHtml(option.label || '')}</textarea>
+                    </div>
+                    <button onclick="removeOption(${sectionIndex}, ${itemIndex}, ${optIndex})"
+                        style="background: var(--danger); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap;">
+                        🗑️
+                    </button>
                 </div>
             `;
         });
+        html += `
+            <button onclick="addOption(${sectionIndex}, ${itemIndex})"
+                style="margin-top: 10px; padding: 8px 16px; background: var(--success); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                ➕ Add Option
+            </button>
+        `;
     }
 
     html += `</div>`;
@@ -352,7 +379,19 @@ function renderSectionItem(item, sectionIndex, itemIndex) {
 function renderSubsection(subsection, sectionIndex, subIndex) {
     let html = `
         <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-            <h4 style="color: var(--primary); margin-bottom: 10px;">${subsection.title || 'Subsection'}</h4>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h4 style="color: var(--primary); margin: 0;">${subsection.title || 'Subsection'}</h4>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="addSubsectionItem(${sectionIndex}, ${subIndex}, 'question')"
+                        style="padding: 6px 12px; background: var(--success); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        ➕ Question
+                    </button>
+                    <button onclick="addSubsectionItem(${sectionIndex}, ${subIndex}, 'checkbox')"
+                        style="padding: 6px 12px; background: var(--warning); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        ➕ Red Flag
+                    </button>
+                </div>
+            </div>
     `;
 
     // Render conversation items (questions)
@@ -360,30 +399,42 @@ function renderSubsection(subsection, sectionIndex, subIndex) {
         subsection.items.forEach((item, itemIndex) => {
             if (item.type === 'question') {
                 html += `
-                    <div class="form-group" style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                        <label style="font-weight: 600; font-size: 13px;">Question: ${item.id || ''}</label>
+                    <div class="form-group" style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 12px; position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label style="font-weight: 600; font-size: 13px; margin: 0;">Question: ${item.id || ''}</label>
+                            <button onclick="removeSubsectionItem(${sectionIndex}, ${subIndex}, ${itemIndex})"
+                                style="background: var(--danger); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                                🗑️
+                            </button>
+                        </div>
                         <textarea
                             data-section="${sectionIndex}"
                             data-subsection="${subIndex}"
                             data-item="${itemIndex}"
                             data-field="text"
                             rows="3"
-                            style="width: 100%; margin-top: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 4px;"
+                            style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px;"
                         >${escapeHtml(item.text || '')}</textarea>
                     </div>
                 `;
             } else if (item.type === 'checkbox') {
                 // Red flag checkbox
                 html += `
-                    <div class="form-group" style="background: #fee; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid var(--danger);">
-                        <label style="font-weight: 600; font-size: 13px; color: var(--danger);">🚩 Red Flag: ${item.id || ''}</label>
+                    <div class="form-group" style="background: #fee; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid var(--danger); position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label style="font-weight: 600; font-size: 13px; color: var(--danger); margin: 0;">🚩 Red Flag: ${item.id || ''}</label>
+                            <button onclick="removeSubsectionItem(${sectionIndex}, ${subIndex}, ${itemIndex})"
+                                style="background: var(--danger); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                                🗑️
+                            </button>
+                        </div>
                         <textarea
                             data-section="${sectionIndex}"
                             data-subsection="${subIndex}"
                             data-item="${itemIndex}"
                             data-field="label"
                             rows="2"
-                            style="width: 100%; margin-top: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 4px;"
+                            style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px;"
                         >${escapeHtml(item.label || '')}</textarea>
                         <div style="margin-top: 8px; font-size: 12px; color: var(--text-light);">
                             Severity: <strong>${item.severity || 'N/A'}</strong> | Score Impact: <strong>${item.score_impact || 0}</strong>
@@ -491,38 +542,38 @@ window.removeArrayItem = function(arrayKey, index) {
 
 function updateFromSectionsEditor() {
     // Update currentCard.data.sections based on form inputs
-    const textareas = cardEditorForm.querySelectorAll('textarea[data-section]');
+    const inputs = cardEditorForm.querySelectorAll('textarea[data-section], input[data-section]');
 
-    textareas.forEach(textarea => {
-        const sectionIdx = parseInt(textarea.dataset.section);
-        const field = textarea.dataset.field;
-        const value = textarea.value;
+    inputs.forEach(input => {
+        const sectionIdx = parseInt(input.dataset.section);
+        const field = input.dataset.field;
+        const value = input.value;
 
         if (!currentCard.data.sections[sectionIdx]) return;
 
         // Handle quick-assessment items
-        if (textarea.dataset.item !== undefined && textarea.dataset.subsection === undefined) {
-            const itemIdx = parseInt(textarea.dataset.item);
+        if (input.dataset.item !== undefined && input.dataset.subsection === undefined) {
+            const itemIdx = parseInt(input.dataset.item);
             const section = currentCard.data.sections[sectionIdx];
 
             if (section.items && section.items[itemIdx]) {
-                if (textarea.dataset.option !== undefined) {
+                if (input.dataset.option !== undefined) {
                     // Update option label
-                    const optionIdx = parseInt(textarea.dataset.option);
+                    const optionIdx = parseInt(input.dataset.option);
                     if (section.items[itemIdx].options && section.items[itemIdx].options[optionIdx]) {
                         section.items[itemIdx].options[optionIdx][field] = value;
                     }
                 } else {
-                    // Update question
+                    // Update question (title or question text)
                     section.items[itemIdx][field] = value;
                 }
             }
         }
 
         // Handle conversation subsection items
-        if (textarea.dataset.subsection !== undefined) {
-            const subIdx = parseInt(textarea.dataset.subsection);
-            const itemIdx = parseInt(textarea.dataset.item);
+        if (input.dataset.subsection !== undefined) {
+            const subIdx = parseInt(input.dataset.subsection);
+            const itemIdx = parseInt(input.dataset.item);
             const section = currentCard.data.sections[sectionIdx];
 
             if (section.subsections && section.subsections[subIdx]) {
@@ -555,28 +606,53 @@ function renderPreview(cardData) {
         <p><span class="badge">${cardData.category || 'Unknown Category'}</span></p>
     `;
 
-    if (cardData.description) {
-        html += `<h3>Description</h3><p>${cardData.description}</p>`;
-    }
+    // Render sections if they exist
+    if (cardData.sections && Array.isArray(cardData.sections)) {
+        cardData.sections.forEach(section => {
+            html += `<h3>${section.icon || '📋'} ${section.title || 'Section'}</h3>`;
 
-    if (cardData.psychological_basis) {
-        html += `<h3>Psychological Basis</h3><p>${cardData.psychological_basis}</p>`;
-    }
+            // Render items (quick assessment questions)
+            if (section.items && Array.isArray(section.items)) {
+                section.items.forEach((item, idx) => {
+                    html += `<div style="background: var(--bg-gray); padding: 15px; border-radius: 8px; margin: 10px 0;">`;
+                    html += `<strong>Q${item.number || idx + 1}: ${item.title || 'Untitled'}</strong><br>`;
+                    html += `<p style="margin: 8px 0;">${item.question || ''}</p>`;
 
-    if (cardData.behavioral_indicators && Array.isArray(cardData.behavioral_indicators)) {
-        html += `<h3>Behavioral Indicators</h3><ul>`;
-        cardData.behavioral_indicators.forEach(indicator => {
-            html += `<li>${indicator}</li>`;
+                    if (item.options && Array.isArray(item.options)) {
+                        html += `<ul style="margin-top: 8px;">`;
+                        item.options.forEach(opt => {
+                            html += `<li>${opt.label || ''} <em>(score: ${opt.score})</em></li>`;
+                        });
+                        html += `</ul>`;
+                    }
+                    html += `</div>`;
+                });
+            }
+
+            // Render subsections (conversation questions & red flags)
+            if (section.subsections && Array.isArray(section.subsections)) {
+                section.subsections.forEach(subsection => {
+                    html += `<h4 style="margin-top: 20px; color: var(--secondary);">${subsection.title || 'Subsection'}</h4>`;
+
+                    if (subsection.items && Array.isArray(subsection.items)) {
+                        subsection.items.forEach(item => {
+                            if (item.type === 'question') {
+                                html += `<div style="background: white; padding: 12px; border-radius: 6px; margin: 8px 0; border-left: 3px solid var(--primary);">`;
+                                html += `<strong>${item.id || ''}</strong><br>`;
+                                html += `<p style="margin: 4px 0;">${item.text || ''}</p>`;
+                                html += `</div>`;
+                            } else if (item.type === 'checkbox') {
+                                html += `<div style="background: #fee; padding: 12px; border-radius: 6px; margin: 8px 0; border-left: 3px solid var(--danger);">`;
+                                html += `<strong>🚩 ${item.id || ''}</strong><br>`;
+                                html += `<p style="margin: 4px 0;">${item.label || ''}</p>`;
+                                html += `<small>Severity: ${item.severity || 'N/A'} | Impact: ${item.score_impact || 0}</small>`;
+                                html += `</div>`;
+                            }
+                        });
+                    }
+                });
+            }
         });
-        html += `</ul>`;
-    }
-
-    if (cardData.questions && Array.isArray(cardData.questions)) {
-        html += `<h3>Assessment Questions</h3><ul>`;
-        cardData.questions.forEach(q => {
-            html += `<li>${typeof q === 'object' ? q.question || JSON.stringify(q) : q}</li>`;
-        });
-        html += `</ul>`;
     }
 
     cardPreview.innerHTML = html;
@@ -716,6 +792,98 @@ async function saveToGitHub() {
         saveGithubBtn.textContent = '📤 Commit to GitHub';
     }
 }
+
+// Add/Remove handlers
+window.removeQuestion = function(sectionIndex, itemIndex) {
+    if (!currentCard || !currentCard.data) return;
+    const section = currentCard.data.sections[sectionIndex];
+    if (section && section.items) {
+        if (confirm(`Remove question ${itemIndex + 1}?`)) {
+            section.items.splice(itemIndex, 1);
+            renderEditor(currentCard.data);
+            renderPreview(currentCard.data);
+            jsonEditor.value = JSON.stringify(currentCard.data, null, 2);
+        }
+    }
+};
+
+window.addOption = function(sectionIndex, itemIndex) {
+    if (!currentCard || !currentCard.data) return;
+    const section = currentCard.data.sections[sectionIndex];
+    if (section && section.items && section.items[itemIndex]) {
+        const item = section.items[itemIndex];
+        if (!item.options) item.options = [];
+        item.options.push({
+            value: `option_${item.options.length + 1}`,
+            score: 0.5,
+            label: "New option - edit me"
+        });
+        renderEditor(currentCard.data);
+        renderPreview(currentCard.data);
+        jsonEditor.value = JSON.stringify(currentCard.data, null, 2);
+    }
+};
+
+window.removeOption = function(sectionIndex, itemIndex, optionIndex) {
+    if (!currentCard || !currentCard.data) return;
+    const section = currentCard.data.sections[sectionIndex];
+    if (section && section.items && section.items[itemIndex]) {
+        const item = section.items[itemIndex];
+        if (item.options && confirm(`Remove option ${optionIndex + 1}?`)) {
+            item.options.splice(optionIndex, 1);
+            renderEditor(currentCard.data);
+            renderPreview(currentCard.data);
+            jsonEditor.value = JSON.stringify(currentCard.data, null, 2);
+        }
+    }
+};
+
+window.addSubsectionItem = function(sectionIndex, subIndex, type) {
+    if (!currentCard || !currentCard.data) return;
+    const section = currentCard.data.sections[sectionIndex];
+    if (section && section.subsections && section.subsections[subIndex]) {
+        const subsection = section.subsections[subIndex];
+        if (!subsection.items) subsection.items = [];
+
+        const newItem = type === 'question' ? {
+            type: 'question',
+            id: `conv_q${subsection.items.filter(i => i.type === 'question').length + 1}`,
+            text: 'New question - edit me',
+            scoring_guidance: {
+                green: '',
+                yellow: '',
+                red: ''
+            },
+            followups: []
+        } : {
+            type: 'checkbox',
+            id: `red_flag_${subsection.items.filter(i => i.type === 'checkbox').length + 1}`,
+            label: 'New red flag - edit me',
+            severity: 'medium',
+            score_impact: 0.1,
+            subitems: []
+        };
+
+        subsection.items.push(newItem);
+        renderEditor(currentCard.data);
+        renderPreview(currentCard.data);
+        jsonEditor.value = JSON.stringify(currentCard.data, null, 2);
+    }
+};
+
+window.removeSubsectionItem = function(sectionIndex, subIndex, itemIndex) {
+    if (!currentCard || !currentCard.data) return;
+    const section = currentCard.data.sections[sectionIndex];
+    if (section && section.subsections && section.subsections[subIndex]) {
+        const subsection = section.subsections[subIndex];
+        if (subsection.items && confirm('Remove this item?')) {
+            subsection.items.splice(itemIndex, 1);
+            renderEditor(currentCard.data);
+            renderPreview(currentCard.data);
+            jsonEditor.value = JSON.stringify(currentCard.data, null, 2);
+        }
+    }
+};
 
 function showAlert(message, type) {
     if (typeof window.showAlert === 'function') {
