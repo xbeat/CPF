@@ -12,6 +12,21 @@
  * Version: 2.0 - JSON file-based storage
  */
 
+// Error handlers for uncaught errors
+process.on('uncaughtException', (error) => {
+  console.error('\n❌ [FATAL] Uncaught Exception:', error.message);
+  console.error(error.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('\n❌ [FATAL] Unhandled Promise Rejection:', reason);
+  console.error('Promise:', promise);
+  process.exit(1);
+});
+
+console.log('[Server] Starting CPF Dashboard Server...');
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -20,8 +35,12 @@ const { execSync } = require('child_process');
 const http = require('http');
 const { Server } = require('socket.io');
 
+console.log('[Server] Core modules loaded');
+
 // Import data manager
+console.log('[Server] Loading data manager...');
 const dataManager = require('./lib/dataManager');
+console.log('[Server] Data manager loaded successfully');
 
 // SOC (lazy-loaded on first use)
 let simulator = null;
@@ -1754,6 +1773,8 @@ app.post('/api/simulator/emit', async (req, res) => {
 // SERVER START
 // ============================================
 
+console.log('[Server] Initializing HTTP server on port', PORT);
+
 server.listen(PORT, () => {
   console.log('\n╔════════════════════════════════════════════════════════════╗');
   console.log('║          🛡️  CPF Dashboard Server v2.0 - RUNNING            ║');
@@ -1804,6 +1825,18 @@ server.listen(PORT, () => {
   console.log(`        GET    /api/simulator/scenario/:orgId`);
 
   console.log('\n⚙️  Press CTRL+C to stop the server\n');
+});
+
+// Handle server listen errors
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`\n❌ [FATAL] Port ${PORT} is already in use`);
+    console.error('   Please stop the other process or use a different port\n');
+  } else {
+    console.error('\n❌ [FATAL] Server error:', error.message);
+    console.error(error.stack);
+  }
+  process.exit(1);
 });
 
 // Graceful shutdown
