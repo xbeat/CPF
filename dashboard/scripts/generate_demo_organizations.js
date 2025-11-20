@@ -138,9 +138,12 @@ function generateMaturityLevel(score) {
 
 function generateRawData(indicatorId, bayesianScore) {
   const quickAssessment = [];
+  // IMPORTANT: Leave responses empty for demo data since we don't know
+  // the actual Field Kit structure (section/item IDs vary by indicator)
+  // The form will work with quick_assessment data for score display
   const responses = {};
 
-  // Generate quick assessment questions AND populate responses
+  // Generate quick assessment questions (for scoring, not for form population)
   for (let i = 1; i <= 7; i++) {
     const answer = randomChoice(['option_a', 'option_b', 'option_c', 'option_d']);
     quickAssessment.push({
@@ -149,8 +152,6 @@ function generateRawData(indicatorId, bayesianScore) {
       answer: answer,
       weight: randomBetween(0.1, 0.3)
     });
-    // Populate responses in format expected by form
-    responses[`q${i}`] = answer;
   }
 
   const possibleFlags = ['No formal policy documented', 'Staff unaware of procedures', 'Inconsistent enforcement', 'Recent security incidents', 'Lack of training', 'Insufficient resources', 'Management oversight gaps', 'Third-party dependencies'];

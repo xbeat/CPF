@@ -120,11 +120,17 @@ function handleFileSelect(event) {
         reader.onload = (e) => {
             try {
                 const data = JSON.parse(e.target.result);
+
+                // IMPORTANT: Don't validate id/title here - accept any valid JSON
+                // The editor can work with any card structure
+                // Use data.indicator or data.id or fallback to filename
+                const cardId = data.indicator || data.id || file.name.replace('.json', '');
+
                 cards.push({
                     path: file.name,
-                    id: file.name.replace('.json', ''),
+                    id: cardId,
                     category: data.category || 'Unknown',
-                    language: 'en-US', // Default
+                    language: data.language || 'en-US',
                     data: data,
                     file: file
                 });
