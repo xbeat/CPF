@@ -30,25 +30,23 @@ const CATEGORY_NAMES = {
   '10': 'Convergent Vulnerabilities'
 };
 
-/**
- * CPF Domain Weights (from CPF Maturity Model documentation)
- */
+// ============================================================================
+// CPF Maturity Model Constants
+// ============================================================================
+
 const CPF_DOMAIN_WEIGHTS = {
-  '1': 0.15,  // Authority-Based
-  '2': 0.12,  // Temporal-Based
-  '3': 0.11,  // Social Influence
-  '4': 0.10,  // Affective
-  '5': 0.11,  // Cognitive Overload
-  '6': 0.09,  // Group Dynamics
-  '7': 0.10,  // Stress Response
-  '8': 0.08,  // Unconscious Process
-  '9': 0.07,  // AI-Specific
+  '1': 0.15, // Authority-Based
+  '2': 0.12, // Temporal-Based
+  '3': 0.11, // Social Influence
+  '4': 0.10, // Affective
+  '5': 0.11, // Cognitive Overload
+  '6': 0.09, // Group Dynamics
+  '7': 0.10, // Stress Response
+  '8': 0.08, // Unconscious Process
+  '9': 0.07, // AI-Specific
   '10': 0.07  // Convergent States
 };
 
-/**
- * Sector Benchmarks (from CPF Maturity Model documentation)
- */
 const SECTOR_BENCHMARKS = {
   'Technology': { mean: 71, std_dev: 11 },
   'Finance': { mean: 68, std_dev: 12 },
@@ -62,9 +60,6 @@ const SECTOR_BENCHMARKS = {
   'Other': { mean: 58, std_dev: 15 }
 };
 
-/**
- * ROI Data for maturity level transitions
- */
 const ROI_TRANSITIONS = {
   '0_to_1': { investment: 50000, annual_benefit: 200000, payback_months: 3, npv_5yr: 850000 },
   '1_to_2': { investment: 250000, annual_benefit: 600000, payback_months: 5, npv_5yr: 2500000 },
@@ -73,9 +68,10 @@ const ROI_TRANSITIONS = {
   '4_to_5': { investment: 2500000, annual_benefit: 5000000, payback_months: 6, npv_5yr: 20000000 }
 };
 
-/**
- * Calculate overall CPF Score (0-100)
- */
+// ============================================================================
+// Maturity Model Calculation Functions
+// ============================================================================
+
 function calculateCPFScore(assessments, byCategory) {
   let weightedSum = 0;
   for (let cat = 1; cat <= 10; cat++) {
@@ -90,9 +86,6 @@ function calculateCPFScore(assessments, byCategory) {
   return Math.max(0, Math.min(100, parseFloat(cpfScore.toFixed(2))));
 }
 
-/**
- * Calculate Convergence Index
- */
 function calculateConvergenceIndex(byCategory) {
   const categories = Object.keys(byCategory);
   let convergenceIndex = 0;
@@ -107,32 +100,16 @@ function calculateConvergenceIndex(byCategory) {
   return parseFloat(convergenceIndex.toFixed(4));
 }
 
-/**
- * Determine maturity level (0-5)
- */
 function determineMaturityLevel(cpfScore, convergenceIndex, redDomainsCount) {
   const levelNames = ['Unaware', 'Initial', 'Developing', 'Defined', 'Managed', 'Optimizing'];
-  if (cpfScore >= 90 && redDomainsCount === 0 && convergenceIndex < 2) {
-    return { level: 5, name: levelNames[5] };
-  }
-  if (cpfScore >= 80 && redDomainsCount === 0 && convergenceIndex < 3) {
-    return { level: 4, name: levelNames[4] };
-  }
-  if (cpfScore >= 60 && redDomainsCount <= 2 && convergenceIndex < 5) {
-    return { level: 3, name: levelNames[3] };
-  }
-  if (cpfScore >= 40 && redDomainsCount <= 5 && convergenceIndex < 8) {
-    return { level: 2, name: levelNames[2] };
-  }
-  if (cpfScore >= 20 && redDomainsCount <= 8 && convergenceIndex < 10) {
-    return { level: 1, name: levelNames[1] };
-  }
+  if (cpfScore >= 90 && redDomainsCount === 0 && convergenceIndex < 2) return { level: 5, name: levelNames[5] };
+  if (cpfScore >= 80 && redDomainsCount === 0 && convergenceIndex < 3) return { level: 4, name: levelNames[4] };
+  if (cpfScore >= 60 && redDomainsCount <= 2 && convergenceIndex < 5) return { level: 3, name: levelNames[3] };
+  if (cpfScore >= 40 && redDomainsCount <= 5 && convergenceIndex < 8) return { level: 2, name: levelNames[2] };
+  if (cpfScore >= 20 && redDomainsCount <= 8 && convergenceIndex < 10) return { level: 1, name: levelNames[1] };
   return { level: 0, name: levelNames[0] };
 }
 
-/**
- * Count domains by maturity level
- */
 function countDomainsByMaturity(byCategory) {
   let greenCount = 0, yellowCount = 0, redCount = 0;
   Object.values(byCategory).forEach(cat => {
@@ -144,9 +121,6 @@ function countDomainsByMaturity(byCategory) {
   return { greenCount, yellowCount, redCount };
 }
 
-/**
- * Check regulatory compliance
- */
 function checkCompliance(maturityLevel) {
   return {
     gdpr: {
@@ -172,16 +146,11 @@ function checkCompliance(maturityLevel) {
   };
 }
 
-/**
- * Get sector benchmark comparison
- */
 function getSectorBenchmark(industry, cpfScore) {
   const benchmark = SECTOR_BENCHMARKS[industry] || SECTOR_BENCHMARKS['Other'];
   const gap = cpfScore - benchmark.mean;
   const zScore = gap / benchmark.std_dev;
-  let percentile = 50;
-  if (zScore > 0) percentile = 50 + (zScore * 19.1);
-  else if (zScore < 0) percentile = 50 + (zScore * 19.1);
+  let percentile = 50 + (zScore * 19.1);
   percentile = Math.max(0, Math.min(100, percentile));
   return {
     industry: industry,
@@ -193,9 +162,6 @@ function getSectorBenchmark(industry, cpfScore) {
   };
 }
 
-/**
- * Determine certification eligibility
- */
 function determineCertificationPath(maturityLevel) {
   const eligibleFor = [];
   const requiredImprovements = [];
@@ -212,18 +178,13 @@ function determineCertificationPath(maturityLevel) {
   if (maturityLevel >= 5) eligibleFor.push('CPF-M');
   else if (maturityLevel >= 4) requiredImprovements.push({ cert: 'CPF-M', required_level: 5 });
 
-  const currentCertification = eligibleFor.length > 0 ? eligibleFor[eligibleFor.length - 1] : 'none';
-
   return {
-    current_certification: currentCertification,
+    current_certification: eligibleFor.length > 0 ? eligibleFor[eligibleFor.length - 1] : 'none',
     eligible: eligibleFor,
     required_improvements: requiredImprovements
   };
 }
 
-/**
- * Calculate ROI for next level
- */
 function calculateROI(currentLevel) {
   if (currentLevel >= 5) return null;
   const transitionKey = `${currentLevel}_to_${currentLevel + 1}`;
@@ -241,9 +202,6 @@ function calculateROI(currentLevel) {
   };
 }
 
-/**
- * Calculate complete maturity model
- */
 function calculateMaturityModel(assessments, byCategory, industry) {
   try {
     const cpfScore = calculateCPFScore(assessments, byCategory);
@@ -269,7 +227,6 @@ function calculateMaturityModel(assessments, byCategory, industry) {
     };
   } catch (error) {
     console.error('Error calculating maturity model:', error);
-    // Return a basic maturity model with safe defaults
     return {
       cpf_score: 50,
       maturity_level: 0,
@@ -1068,7 +1025,7 @@ function calculateAggregates(assessments, industry = 'Other') {
   );
   const missingIndicators = allIndicators.filter(id => !assessedIndicators.includes(id));
 
-  // Maturity model - only calculate if we have category data
+  // Calculate maturity model if we have category data
   const maturityModel = Object.keys(byCategory).length > 0
     ? calculateMaturityModel(assessments, byCategory, industry || 'Other')
     : null;
