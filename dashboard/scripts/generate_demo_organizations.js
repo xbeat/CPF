@@ -138,14 +138,47 @@ function generateMaturityLevel(score) {
 
 function generateRawData(indicatorId) {
   const quickAssessment = [];
+  const responses = {};
+
+  // Generate quick assessment questions AND populate responses
   for (let i = 1; i <= 7; i++) {
-    quickAssessment.push({ question_id: `q${i}`, question: `Question ${i} for indicator ${indicatorId}`, answer: randomChoice(['option_a', 'option_b', 'option_c', 'option_d']), weight: randomBetween(0.1, 0.3) });
+    const answer = randomChoice(['option_a', 'option_b', 'option_c', 'option_d']);
+    quickAssessment.push({
+      question_id: `q${i}`,
+      question: `Question ${i} for indicator ${indicatorId}`,
+      answer: answer,
+      weight: randomBetween(0.1, 0.3)
+    });
+    // Populate responses in format expected by form
+    responses[`q${i}`] = answer;
   }
+
   const possibleFlags = ['No formal policy documented', 'Staff unaware of procedures', 'Inconsistent enforcement', 'Recent security incidents', 'Lack of training', 'Insufficient resources', 'Management oversight gaps', 'Third-party dependencies'];
   const redFlagsCount = randomInt(0, 3);
   const redFlags = [];
-  for (let i = 0; i < redFlagsCount; i++) { redFlags.push(randomChoice(possibleFlags)); }
-  return { quick_assessment: quickAssessment, client_conversation: { notes: `Assessment notes for indicator ${indicatorId}. Organization shows ${randomChoice(['strong', 'moderate', 'weak'])} controls.`, red_flags_identified: redFlagsCount, red_flags: redFlags }, timestamp: new Date().toISOString() };
+  for (let i = 0; i < redFlagsCount; i++) {
+    redFlags.push(randomChoice(possibleFlags));
+  }
+
+  const notes = `Assessment notes for indicator ${indicatorId}. Organization shows ${randomChoice(['strong', 'moderate', 'weak'])} controls.`;
+  const assessmentDate = randomDateLastNDays(90);
+
+  // Return in correct format for form loading
+  return {
+    quick_assessment: quickAssessment,
+    client_conversation: {
+      metadata: {
+        date: assessmentDate.split('T')[0],
+        auditor: randomChoice(ASSESSORS),
+        status: 'completed'
+      },
+      responses: responses,  // Add responses here!
+      notes: notes,
+      red_flags_identified: redFlagsCount,
+      red_flags: redFlags
+    },
+    timestamp: new Date().toISOString()
+  };
 }
 
 function generateAssessment(indicatorId) {
