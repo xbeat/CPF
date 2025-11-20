@@ -252,15 +252,70 @@ function generateRawData(indicatorId, language, targetMaturityLevel = null) {
   // Calculate quick_assessment as WEIGHTED AVERAGE (like client does)
   const quickAssessmentScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
 
-  const possibleFlags = ['No formal policy documented', 'Staff unaware of procedures', 'Inconsistent enforcement', 'Recent security incidents', 'Lack of training', 'Insufficient resources', 'Management oversight gaps', 'Third-party dependencies'];
-  const redFlagsCount = randomInt(0, 3);
+  // GENERATE RED FLAGS from Field Kit (like client does - client-integrated.js:1156-1207)
   const redFlags = [];
   let redFlagsScore = 0;
 
-  for (let i = 0; i < redFlagsCount; i++) {
-    redFlags.push(randomChoice(possibleFlags));
-    redFlagsScore += 0.1; // Each flag adds 0.1 to score
+  // Determine red flag probability based on target maturity level
+  let redFlagProbability = 0.30; // default
+  if (targetMaturityLevel === 'green') {
+    redFlagProbability = 0.10; // Very low chance of red flags for green
+  } else if (targetMaturityLevel === 'yellow') {
+    redFlagProbability = 0.30; // Medium chance for yellow
+  } else if (targetMaturityLevel === 'red') {
+    redFlagProbability = 0.60; // High chance for red
   }
+
+  // Scan ALL sections and subsections to find items with severity
+  if (fieldKit && fieldKit.sections) {
+    fieldKit.sections.forEach((section) => {
+      // Check direct items
+      if (section.items && Array.isArray(section.items)) {
+        section.items.forEach((item) => {
+          if (item.severity && item.id) {
+            // Check based on target maturity level
+            const isChecked = Math.random() < redFlagProbability;
+            responses[item.id] = isChecked;
+
+            if (isChecked) {
+              const impact = item.score_impact || item.weight || 0.1;
+              redFlagsScore += impact;
+              redFlags.push({
+                flag: item.label || item.title || item.description,
+                impact: impact
+              });
+            }
+          }
+        });
+      }
+
+      // Check subsection items
+      if (section.subsections && Array.isArray(section.subsections)) {
+        section.subsections.forEach((subsection) => {
+          if (subsection.items && Array.isArray(subsection.items)) {
+            subsection.items.forEach((item) => {
+              if (item.severity && item.id) {
+                const isChecked = Math.random() < redFlagProbability;
+                responses[item.id] = isChecked;
+
+                if (isChecked) {
+                  const impact = item.score_impact || item.weight || 0.1;
+                  redFlagsScore += impact;
+                  redFlags.push({
+                    flag: item.label || item.title || item.description,
+                    impact: impact
+                  });
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+  // Cap red flags score at 1.0 (like client does)
+  redFlagsScore = Math.min(redFlagsScore, 1.0);
 
   // Use FIXED weights like client does (NOT Field Kit weights!)
   const QUICK_WEIGHT = 0.70;
