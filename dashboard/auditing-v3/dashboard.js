@@ -2398,13 +2398,23 @@ function renderMaturityTab() {
         return;
     }
     if (!selectedOrgData.aggregates.maturity_model) {
+        // Check if we have any assessments at all
+        const assessmentCount = selectedOrgData.assessments ? Object.keys(selectedOrgData.assessments).length : 0;
+
         console.warn('Maturity model not calculated. Debug info:', {
             hasAggregates: !!selectedOrgData.aggregates,
-            assessmentCount: selectedOrgData.assessments ? Object.keys(selectedOrgData.assessments).length : 0,
+            assessmentCount: assessmentCount,
             industry: selectedOrgData.metadata?.industry,
+            language: selectedOrgData.metadata?.language,
             aggregates: selectedOrgData.aggregates
         });
-        document.getElementById('maturityTab').innerHTML = '<div style="padding: 40px; text-align: center;"><h3>⚠️ Maturity model not calculated</h3><p>Assessment data exists but maturity model was not calculated.</p><p style="margin-top: 10px;">Please re-save an assessment to trigger recalculation.</p></div>';
+
+        // Different messages based on whether we have assessments or not
+        if (assessmentCount === 0) {
+            document.getElementById('maturityTab').innerHTML = '<div style="padding: 40px; text-align: center;"><h3>⚠️ No Field Kits available</h3><p>No assessment data found for this organization.</p><p style="margin-top: 10px; color: var(--text-light);">This may occur if Field Kit JSON files are not available in the organization\'s language (' + (selectedOrgData.metadata?.language || 'unknown') + ').</p></div>';
+        } else {
+            document.getElementById('maturityTab').innerHTML = '<div style="padding: 40px; text-align: center;"><h3>⚠️ Maturity model not calculated</h3><p>Assessment data exists but maturity model was not calculated.</p><p style="margin-top: 10px;">Please re-save an assessment to trigger recalculation.</p></div>';
+        }
         return;
     }
 
@@ -2431,76 +2441,124 @@ function renderMaturityTab() {
     };
 
     // 1. Update Maturity Level Badge
-    document.getElementById('maturityLevelBadge').textContent = mm.maturity_level;
-    document.getElementById('maturityLevelBadge').style.color = levelColors[mm.maturity_level];
-    document.getElementById('maturityLevelName').textContent = mm.level_name;
-    document.getElementById('maturityLevelName').style.color = levelColors[mm.maturity_level];
-    document.getElementById('maturityLevelDescription').textContent = levelDescriptions[mm.maturity_level];
+    const maturityLevelBadge = document.getElementById('maturityLevelBadge');
+    const maturityLevelName = document.getElementById('maturityLevelName');
+    const maturityLevelDescription = document.getElementById('maturityLevelDescription');
+
+    if (maturityLevelBadge) {
+        maturityLevelBadge.textContent = mm.maturity_level;
+        maturityLevelBadge.style.color = levelColors[mm.maturity_level];
+    }
+    if (maturityLevelName) {
+        maturityLevelName.textContent = mm.level_name;
+        maturityLevelName.style.color = levelColors[mm.maturity_level];
+    }
+    if (maturityLevelDescription) {
+        maturityLevelDescription.textContent = levelDescriptions[mm.maturity_level];
+    }
 
     // 2. Update CPF Score Gauge
     const cpfScore = mm.cpf_score;
-    document.getElementById('cpfScoreValue').textContent = Math.round(cpfScore);
+    const cpfScoreValue = document.getElementById('cpfScoreValue');
+    if (cpfScoreValue) {
+        cpfScoreValue.textContent = Math.round(cpfScore);
+    }
 
     // Animate circular progress
     const circle = document.getElementById('cpfScoreCircle');
-    const circumference = 2 * Math.PI * 80; // r=80
-    const offset = circumference - (cpfScore / 100) * circumference;
-    circle.style.strokeDashoffset = offset;
+    if (circle) {
+        const circumference = 2 * Math.PI * 80; // r=80
+        const offset = circumference - (cpfScore / 100) * circumference;
+        circle.style.strokeDashoffset = offset;
 
-    // Color based on score
-    if (cpfScore >= 80) {
-        circle.style.stroke = 'var(--success)';
-    } else if (cpfScore >= 60) {
-        circle.style.stroke = 'var(--warning)';
-    } else {
-        circle.style.stroke = 'var(--danger)';
+        // Color based on score
+        if (cpfScore >= 80) {
+            circle.style.stroke = 'var(--success)';
+        } else if (cpfScore >= 60) {
+            circle.style.stroke = 'var(--warning)';
+        } else {
+            circle.style.stroke = 'var(--danger)';
+        }
     }
 
     // 3. Progress to Next Level
-    if (mm.maturity_level < 5) {
-        const currentLevelMin = mm.maturity_level * 20;
-        const nextLevelMin = (mm.maturity_level + 1) * 20;
-        const progress = ((cpfScore - currentLevelMin) / (nextLevelMin - currentLevelMin)) * 100;
-        const progressClamped = Math.max(0, Math.min(100, progress));
+    const progressToNextLevel = document.getElementById('progressToNextLevel');
+    if (progressToNextLevel) {
+        if (mm.maturity_level < 5) {
+            const currentLevelMin = mm.maturity_level * 20;
+            const nextLevelMin = (mm.maturity_level + 1) * 20;
+            const progress = ((cpfScore - currentLevelMin) / (nextLevelMin - currentLevelMin)) * 100;
+            const progressClamped = Math.max(0, Math.min(100, progress));
 
-        const levelNames = ['Unaware', 'Initial', 'Developing', 'Defined', 'Managed', 'Optimizing'];
-        document.getElementById('nextLevelName').textContent = `Level ${mm.maturity_level + 1}: ${levelNames[mm.maturity_level + 1]}`;
-        document.getElementById('progressBar').style.width = progressClamped + '%';
-        document.getElementById('progressText').textContent = Math.round(progressClamped) + '%';
-        document.getElementById('progressToNextLevel').style.display = 'block';
-    } else {
-        document.getElementById('progressToNextLevel').style.display = 'none';
+            const levelNames = ['Unaware', 'Initial', 'Developing', 'Defined', 'Managed', 'Optimizing'];
+            const nextLevelName = document.getElementById('nextLevelName');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+
+            if (nextLevelName) {
+                nextLevelName.textContent = `Level ${mm.maturity_level + 1}: ${levelNames[mm.maturity_level + 1]}`;
+            }
+            if (progressBar) {
+                progressBar.style.width = progressClamped + '%';
+            }
+            if (progressText) {
+                progressText.textContent = Math.round(progressClamped) + '%';
+            }
+            progressToNextLevel.style.display = 'block';
+        } else {
+            progressToNextLevel.style.display = 'none';
+        }
     }
 
     // 4. Convergence Index
-    document.getElementById('convergenceIndexValue').textContent = mm.convergence_index.toFixed(2);
-    let ciStatus = '';
-    if (mm.convergence_index < 2) {
-        ciStatus = '✅ Excellent - Low compound risk';
-    } else if (mm.convergence_index < 5) {
-        ciStatus = '⚠️ Moderate - Monitor closely';
-    } else if (mm.convergence_index < 10) {
-        ciStatus = '🔴 High - Remediation needed';
-    } else {
-        ciStatus = '🚨 Critical - Immediate action required';
+    const convergenceIndexValue = document.getElementById('convergenceIndexValue');
+    const convergenceIndexStatus = document.getElementById('convergenceIndexStatus');
+
+    if (convergenceIndexValue) {
+        convergenceIndexValue.textContent = mm.convergence_index.toFixed(2);
     }
-    document.getElementById('convergenceIndexStatus').textContent = ciStatus;
-    document.getElementById('convergenceIndexStatus').style.color = mm.convergence_index < 2 ? 'var(--success)' :
-        mm.convergence_index < 5 ? 'var(--warning)' : 'var(--danger)';
+
+    if (convergenceIndexStatus) {
+        let ciStatus = '';
+        if (mm.convergence_index < 2) {
+            ciStatus = '✅ Excellent - Low compound risk';
+        } else if (mm.convergence_index < 5) {
+            ciStatus = '⚠️ Moderate - Monitor closely';
+        } else if (mm.convergence_index < 10) {
+            ciStatus = '🔴 High - Remediation needed';
+        } else {
+            ciStatus = '🚨 Critical - Immediate action required';
+        }
+        convergenceIndexStatus.textContent = ciStatus;
+        convergenceIndexStatus.style.color = mm.convergence_index < 2 ? 'var(--success)' :
+            mm.convergence_index < 5 ? 'var(--warning)' : 'var(--danger)';
+    }
 
     // 5. Domain Distribution
-    document.getElementById('greenDomainsCount').textContent = mm.green_domains_count;
-    document.getElementById('yellowDomainsCount').textContent = mm.yellow_domains_count;
-    document.getElementById('redDomainsCount').textContent = mm.red_domains_count;
+    const greenDomainsCount = document.getElementById('greenDomainsCount');
+    const yellowDomainsCount = document.getElementById('yellowDomainsCount');
+    const redDomainsCount = document.getElementById('redDomainsCount');
+
+    if (greenDomainsCount) greenDomainsCount.textContent = mm.green_domains_count;
+    if (yellowDomainsCount) yellowDomainsCount.textContent = mm.yellow_domains_count;
+    if (redDomainsCount) redDomainsCount.textContent = mm.red_domains_count;
 
     // 6. Sector Percentile
-    document.getElementById('sectorPercentileValue').textContent = mm.sector_benchmark.percentile.toFixed(0) + '%';
-    const gap = mm.sector_benchmark.gap;
-    const gapText = gap >= 0 ?
-        `+${gap.toFixed(1)} points above sector average` :
-        `${gap.toFixed(1)} points below sector average`;
-    document.getElementById('sectorComparison').textContent = gapText;
-    document.getElementById('sectorComparison').style.color = gap >= 0 ? 'var(--success)' : 'var(--danger)';
+    const sectorPercentileValue = document.getElementById('sectorPercentileValue');
+    const sectorComparison = document.getElementById('sectorComparison');
+
+    if (sectorPercentileValue) {
+        sectorPercentileValue.textContent = mm.sector_benchmark.percentile.toFixed(0) + '%';
+    }
+
+    if (sectorComparison) {
+        const gap = mm.sector_benchmark.gap;
+        const gapText = gap >= 0 ?
+            `+${gap.toFixed(1)} points above sector average` :
+            `${gap.toFixed(1)} points below sector average`;
+        sectorComparison.textContent = gapText;
+        sectorComparison.style.color = gap >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
 
     // 7. Regulatory Compliance Table
     const complianceTableBody = document.getElementById('complianceTableBody');
@@ -2536,7 +2594,9 @@ function renderMaturityTab() {
             </tr>
         `;
     });
-    complianceTableBody.innerHTML = complianceHTML;
+    if (complianceTableBody) {
+        complianceTableBody.innerHTML = complianceHTML;
+    }
 
     // 8. Sector Benchmark Visualization
     const sectorMean = mm.sector_benchmark.sector_mean;
