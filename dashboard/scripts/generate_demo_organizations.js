@@ -164,7 +164,8 @@ function generateRawData(indicatorId, language) {
   const fieldKit = loadFieldKitForIndicator(indicatorId, language);
   const responses = {};
   const quickAssessmentBreakdown = [];
-  let calculatedQuickScore = 0;
+  let totalWeightedScore = 0;
+  let totalWeight = 0;
 
   // If Field Kit doesn't exist for this language, return null
   if (!fieldKit) {
@@ -191,8 +192,9 @@ function generateRawData(indicatorId, language) {
             weighted_score: parseFloat(weightedScore.toFixed(4))
           });
 
-          // Accumulate real score
-          calculatedQuickScore += weightedScore;
+          // Accumulate for weighted average (like client does)
+          totalWeightedScore += weightedScore;
+          totalWeight += weight;
         }
       });
     }
@@ -226,6 +228,9 @@ function generateRawData(indicatorId, language) {
     }
   }
 
+  // Calculate quick_assessment as WEIGHTED AVERAGE (like client does)
+  const quickAssessmentScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+
   const possibleFlags = ['No formal policy documented', 'Staff unaware of procedures', 'Inconsistent enforcement', 'Recent security incidents', 'Lack of training', 'Insufficient resources', 'Management oversight gaps', 'Third-party dependencies'];
   const redFlagsCount = randomInt(0, 3);
   const redFlags = [];
@@ -236,24 +241,25 @@ function generateRawData(indicatorId, language) {
     redFlagsScore += 0.1; // Each flag adds 0.1 to score
   }
 
-  // Use Field Kit weights if available, otherwise default
-  const weights = fieldKit.scoring?.weights || {
-    quick_assessment: 0.70,
-    red_flags: 0.30,
-    conversation_depth: 0
-  };
+  // Use FIXED weights like client does (NOT Field Kit weights!)
+  const QUICK_WEIGHT = 0.70;
+  const RED_FLAGS_WEIGHT = 0.30;
 
-  // Calculate FINAL score using real formula
-  const finalScore = (calculatedQuickScore * weights.quick_assessment) + (redFlagsScore * weights.red_flags);
+  // Calculate FINAL score using client formula
+  const finalScore = (quickAssessmentScore * QUICK_WEIGHT) + (redFlagsScore * RED_FLAGS_WEIGHT);
   const maturityLevel = generateMaturityLevel(finalScore);
 
   const scores = {
-    quick_assessment: parseFloat(calculatedQuickScore.toFixed(4)),
+    quick_assessment: parseFloat(quickAssessmentScore.toFixed(4)),
     conversation_depth: 0,
     red_flags: parseFloat(redFlagsScore.toFixed(4)),
     final_score: parseFloat(finalScore.toFixed(4)),
     maturity_level: maturityLevel,
-    weights_used: weights
+    weights_used: {
+      quick_assessment: QUICK_WEIGHT,
+      red_flags: RED_FLAGS_WEIGHT,
+      conversation_depth: 0
+    }
   };
 
   const metadata = {
