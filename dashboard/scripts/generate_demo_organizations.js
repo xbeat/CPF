@@ -158,17 +158,6 @@ function generateRawData(indicatorId, bayesianScore) {
     redFlags.push(randomChoice(possibleFlags));
   }
 
-  // Generate synthetic responses (matches client form structure)
-  const responses = {};
-  responses[`s0_i0`] = randomChoice(['low', 'medium', 'high']);
-  responses[`s0_i1`] = randomChoice(['low', 'medium', 'high']);
-  responses[`s0_i2`] = randomChoice(['low', 'medium', 'high']);
-
-  // Add some conversation responses
-  for (let i = 0; i < randomInt(5, 10); i++) {
-    responses[`s1_i${i}_f0`] = `Sample response for conversation question ${i}`;
-  }
-
   // Generate scores object (matches currentScore structure)
   const scores = {
     quick_assessment: parseFloat((bayesianScore * 0.8).toFixed(4)),
@@ -195,7 +184,6 @@ function generateRawData(indicatorId, bayesianScore) {
   return {
     quick_assessment: quickAssessmentBreakdown,
     client_conversation: {
-      responses: responses,
       scores: scores,
       metadata: metadata,
       notes: metadata.notes,
