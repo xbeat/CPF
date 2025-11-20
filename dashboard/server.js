@@ -8,9 +8,8 @@
  * - Dashboard Auditing (dashboard_auditing.html)
  * - Client Field Kit (cpf_client_json.html)
  * - API endpoints for organization and assessment management
- * - Card Editor
  *
- * Version: 2.1 - GitHub Integration for Card Editor
+ * Version: 2.0 - JSON file-based storage
  */
 
 // Error handlers for uncaught errors
@@ -122,6 +121,19 @@ app.get('/', (req, res) => {
 });
 
 // ============================================
+// BACKWARD COMPATIBILITY REDIRECTS
+// ============================================
+
+// Redirect old dashboard URLs to new organized structure
+app.get('/dashboard/dashboard_auditing.html', (req, res) => {
+  res.redirect(301, '/dashboard/auditing/index.html');
+});
+
+app.get('/dashboard/dashboard.html', (req, res) => {
+  res.redirect(301, '/dashboard/soc/index.html');
+});
+
+// ============================================
 // CARD EDITOR API
 // ============================================
 
@@ -139,9 +151,9 @@ app.get('/api/cards', async (req, res) => {
 
         const cardFiles = data.tree
             .map(item => item.path)
-            .filter(path => 
-                path.startsWith('auditor field kit/interactive/') && 
-                path.endsWith('.json') && 
+            .filter(path =>
+                path.startsWith('auditor field kit/interactive/') &&
+                path.endsWith('.json') &&
                 !path.includes('/proposals/')
             );
 
@@ -208,10 +220,10 @@ app.post('/api/cards/propose', async (req, res) => {
             branch: newBranchName,
         });
 
-        res.status(201).json({ 
-            success: true, 
-            message: 'Proposal branch created successfully!', 
-            branch: newBranchName 
+        res.status(201).json({
+            success: true,
+            message: 'Proposal branch created successfully!',
+            branch: newBranchName
         });
 
     } catch (error) {
@@ -221,48 +233,798 @@ app.post('/api/cards/propose', async (req, res) => {
 });
 
 // ============================================
-// ORGANIZATION MANAGEMENT API
+// API ENDPOINTS - ORGANIZATIONS
 // ============================================
 
-// Recalculate aggregates for a specific organization
-app.post('/api/organizations/:orgId/recalculate', async (req, res) => {
+/**
+ * GET /api/organizations
+ * Returns organizations index with stats
+ */
+app.get('/api/organizations', (req, res) => {
+  try {
+    const index = dataManager.readOrganizationsIndex();
+    res.json(index);
+  } catch (error) {
+    console.error('[API] Error reading organizations index:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/organizations/:orgId
+ * Returns complete organization data (metadata + assessments + aggregates)
+ */
+app.get('/api/organizations/:orgId', (req, res) => {
   try {
     const { orgId } = req.params;
-    const result = await dataManager.recalculateAggregates(orgId);
-    res.json({ success: true, message: 'Aggregates recalculated successfully', data: result });
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const orgData = dataManager.readOrganization(orgId);
+    res.json({
+      success: true,
+      data: orgData
+    });
   } catch (error) {
-    console.error('[API] Error recalculating aggregates:', error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error(`[API] Error reading organization ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 
-// Recalculate aggregates for all organizations
-app.post('/api/organizations/recalculate-all', async (req, res) => {
+/**
+ * POST /api/organizations
+ * Create new organization
+ * Body: { id, name, industry, size, country, language, created_by, notes, sede_sociale, partita_iva, fetch_indicators }
+ */
+app.post('/api/organizations', async (req, res) => {
   try {
-    const results = await dataManager.recalculateAllAggregates();
-    res.json({ success: true, message: 'All aggregates recalculated', results });
+    const { id, name, industry, size, country, language, created_by, notes, sede_sociale, partita_iva, fetch_indicators } = req.body;
+
+    // Validate required fields
+    if (!id || !name || !industry || !size || !country) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: id, name, industry, size, country'
+      });
+    }
+
+    // Check if organization already exists
+    if (dataManager.organizationExists(id)) {
+      return res.status(409).json({
+        success: false,
+        error: 'Organization already exists',
+        orgId: id
+      });
+    }
+
+    // Create organization
+    const orgData = dataManager.createOrganization({
+      id,
+      name,
+      industry,
+      size,
+      country,
+      language: language || 'en-US',
+      created_by: created_by || 'System',
+      notes: notes || '',
+      sede_sociale: sede_sociale || '',
+      partita_iva: partita_iva || ''
+    });
+
+    console.log(`\n✅ [API] Created organization: ${id} (${name})`);
+
+    // Fetch indicators if requested
+    if (fetch_indicators) {
+      console.log(`📥 [API] Fetching 100 indicators for ${id}...`);
+      // This will be done asynchronously - return success immediately
+      fetchIndicatorsForOrganization(id, language || 'en-US').catch(err => {
+        console.error(`❌ [API] Failed to fetch indicators for ${id}:`, err.message);
+      });
+    }
+
+    console.log('');
+
+    res.status(201).json({
+      success: true,
+      message: 'Organization created successfully',
+      data: orgData,
+      indicators_fetching: fetch_indicators || false
+    });
   } catch (error) {
-    console.error('[API] Error recalculating all aggregates:', error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error('[API] Error creating organization:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Background task: Fetch all 100 indicators for organization
+ */
+async function fetchIndicatorsForOrganization(orgId, language) {
+  const allIndicators = dataManager.generateAllIndicatorIds();
+  let fetched = 0;
+  let failed = 0;
+
+  for (const indicatorId of allIndicators) {
+    try {
+      const indicatorData = await dataManager.fetchIndicatorFromGitHub(indicatorId, language);
+      // Successfully fetched - could store metadata if needed
+      fetched++;
+
+      if (fetched % 10 === 0) {
+        console.log(`   Progress: ${fetched}/100 indicators fetched`);
+      }
+
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 50));
+    } catch (error) {
+      failed++;
+      console.warn(`   ⚠️ Failed to fetch ${indicatorId}: ${error.message}`);
+    }
+  }
+
+  console.log(`\n✅ [API] Indicator fetch complete for ${orgId}: ${fetched} fetched, ${failed} failed\n`);
+}
+
+/**
+ * PUT /api/organizations/:orgId
+ * Update organization metadata
+ * Body: { name, industry, size, country, language, notes }
+ */
+app.put('/api/organizations/:orgId', (req, res) => {
+  try {
+    const { orgId } = req.params;
+    const updates = req.body;
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    // Read current org data
+    const orgData = dataManager.readOrganization(orgId);
+
+    // Update metadata fields
+    if (updates.name) orgData.name = updates.name;
+    if (updates.industry) orgData.metadata.industry = updates.industry;
+    if (updates.size) orgData.metadata.size = updates.size;
+    if (updates.country) orgData.metadata.country = updates.country;
+    if (updates.language) orgData.metadata.language = updates.language;
+    if (updates.notes !== undefined) orgData.metadata.notes = updates.notes;
+    if (updates.sede_sociale !== undefined) orgData.metadata.sede_sociale = updates.sede_sociale;
+    if (updates.partita_iva !== undefined) orgData.metadata.partita_iva = updates.partita_iva;
+
+    // Save
+    dataManager.writeOrganization(orgData);
+
+    console.log(`\n✅ [API] Updated organization: ${orgId}\n`);
+
+    res.json({
+      success: true,
+      message: 'Organization updated successfully',
+      data: orgData
+    });
+  } catch (error) {
+    console.error(`[API] Error updating organization ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/organizations/:orgId
+ * Soft delete organization (moves to trash)
+ * Query: ?user=username (optional)
+ */
+app.delete('/api/organizations/:orgId', (req, res) => {
+  try {
+    const { orgId } = req.params;
+    const user = req.query.user || req.body.user || 'System';
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    // Soft delete organization (moves to trash, logs audit)
+    const orgData = dataManager.deleteOrganization(orgId, user);
+
+    console.log(`\n🗑️  [API] Moved to trash: ${orgId}\n`);
+
+    res.json({
+      success: true,
+      message: 'Organization moved to trash (recoverable for 30 days)',
+      orgId,
+      deleted_at: orgData.metadata.deleted_at
+    });
+  } catch (error) {
+    console.error(`[API] Error deleting organization ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 
 // ============================================
-// BACKWARD COMPATIBILITY REDIRECTS
+// API ENDPOINTS - ASSESSMENTS
 // ============================================
 
-// Redirect old dashboard URLs to new organized structure
-app.get('/dashboard/dashboard_auditing.html', (req, res) => {
-  res.redirect(301, '/dashboard/auditing/index.html');
+/**
+ * GET /api/organizations/:orgId/assessments
+ * Get all assessments for organization
+ */
+app.get('/api/organizations/:orgId/assessments', (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const orgData = dataManager.readOrganization(orgId);
+
+    res.json({
+      success: true,
+      orgId,
+      assessments: orgData.assessments,
+      count: Object.keys(orgData.assessments).length
+    });
+  } catch (error) {
+    console.error(`[API] Error reading assessments for ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
-app.get('/dashboard/dashboard.html', (req, res) => {
-  res.redirect(301, '/dashboard/soc/index.html');
+/**
+ * GET /api/organizations/:orgId/assessments/:indicatorId
+ * Get specific assessment
+ */
+app.get('/api/organizations/:orgId/assessments/:indicatorId', (req, res) => {
+  try {
+    const { orgId, indicatorId } = req.params;
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const assessment = dataManager.getAssessment(orgId, indicatorId);
+
+    if (!assessment) {
+      return res.status(404).json({
+        success: false,
+        error: 'Assessment not found',
+        orgId,
+        indicatorId
+      });
+    }
+
+    res.json({
+      success: true,
+      data: assessment
+    });
+  } catch (error) {
+    console.error(`[API] Error reading assessment ${req.params.indicatorId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/organizations/:orgId/assessments
+ * Save or update assessment
+ * Body: { indicator_id, title, category, bayesian_score, confidence, maturity_level, assessor, assessment_date, raw_data, user }
+ */
+app.post('/api/organizations/:orgId/assessments', (req, res) => {
+  try {
+    const { orgId } = req.params;
+    const assessmentData = req.body;
+    const user = assessmentData.assessor || req.body.user || 'System';
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    // Validate required fields
+    if (!assessmentData.indicator_id || assessmentData.bayesian_score === undefined || assessmentData.confidence === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: indicator_id, bayesian_score, confidence'
+      });
+    }
+
+    // Save assessment (this also recalculates aggregates, saves version, and logs)
+    const orgData = dataManager.saveAssessment(orgId, assessmentData, user);
+
+    console.log(`\n✅ [API] Saved assessment: ${orgId} / ${assessmentData.indicator_id}\n`);
+
+    res.json({
+      success: true,
+      message: 'Assessment saved successfully',
+      orgId,
+      indicator_id: assessmentData.indicator_id,
+      aggregates: orgData.aggregates
+    });
+  } catch (error) {
+    console.error(`[API] Error saving assessment for ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/organizations/:orgId/assessments/:indicatorId
+ * Delete assessment
+ * Query: ?user=username (optional)
+ */
+app.delete('/api/organizations/:orgId/assessments/:indicatorId', (req, res) => {
+  try {
+    const { orgId, indicatorId } = req.params;
+    const user = req.query.user || req.body.user || 'System';
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    // Delete assessment (this also recalculates aggregates, saves version, and logs)
+    const orgData = dataManager.deleteAssessment(orgId, indicatorId, user);
+
+    console.log(`\n🗑️  [API] Deleted assessment: ${orgId} / ${indicatorId}\n`);
+
+    res.json({
+      success: true,
+      message: 'Assessment deleted successfully',
+      orgId,
+      indicatorId,
+      aggregates: orgData.aggregates
+    });
+  } catch (error) {
+    console.error(`[API] Error deleting assessment ${req.params.indicatorId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// API ENDPOINTS - AGGREGATES
+// ============================================
+
+/**
+ * GET /api/organizations/:orgId/aggregates
+ * Get organization aggregates (risk scores, completion, etc.)
+ */
+app.get('/api/organizations/:orgId/aggregates', (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const orgData = dataManager.readOrganization(orgId);
+
+    res.json({
+      success: true,
+      orgId,
+      aggregates: orgData.aggregates
+    });
+  } catch (error) {
+    console.error(`[API] Error reading aggregates for ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/organizations/:orgId/recalculate
+ * Recalculate aggregates for organization
+ */
+app.post('/api/organizations/:orgId/recalculate', (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const orgData = dataManager.recalculateAggregates(orgId);
+
+    console.log(`\n🔄 [API] Recalculated aggregates: ${orgId}\n`);
+
+    res.json({
+      success: true,
+      message: 'Aggregates recalculated successfully',
+      orgId,
+      aggregates: orgData.aggregates
+    });
+  } catch (error) {
+    console.error(`[API] Error recalculating aggregates for ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/organizations/:orgId/missing
+ * Get list of missing indicators
+ */
+app.get('/api/organizations/:orgId/missing', (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const orgData = dataManager.readOrganization(orgId);
+
+    res.json({
+      success: true,
+      orgId,
+      missing_indicators: orgData.aggregates.completion.missing_indicators,
+      count: orgData.aggregates.completion.missing_indicators.length
+    });
+  } catch (error) {
+    console.error(`[API] Error reading missing indicators for ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// API ENDPOINTS - TRASH & RESTORE
+// ============================================
+
+/**
+ * GET /api/trash
+ * Get all organizations in trash
+ */
+app.get('/api/trash', (req, res) => {
+  try {
+    const trashOrgs = dataManager.getTrash();
+
+    res.json({
+      success: true,
+      count: trashOrgs.length,
+      organizations: trashOrgs
+    });
+  } catch (error) {
+    console.error('[API] Error reading trash:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/organizations/:orgId/restore
+ * Restore organization from trash
+ * Body: { user } (optional)
+ */
+app.post('/api/organizations/:orgId/restore', (req, res) => {
+  try {
+    const { orgId } = req.params;
+    const user = req.body.user || 'System';
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const orgData = dataManager.restoreOrganization(orgId, user);
+
+    console.log(`\n♻️  [API] Restored from trash: ${orgId}\n`);
+
+    res.json({
+      success: true,
+      message: 'Organization restored successfully',
+      orgId,
+      data: orgData
+    });
+  } catch (error) {
+    console.error(`[API] Error restoring organization ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/organizations/:orgId/permanent
+ * Permanently delete organization (cannot be undone)
+ * Query: ?user=username (optional)
+ */
+app.delete('/api/organizations/:orgId/permanent', (req, res) => {
+  try {
+    const { orgId } = req.params;
+    const user = req.query.user || req.body.user || 'System';
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const result = dataManager.permanentlyDeleteOrganization(orgId, user);
+
+    console.log(`\n🔥 [API] Permanently deleted: ${orgId}\n`);
+
+    res.json({
+      success: true,
+      message: 'Organization permanently deleted',
+      orgId
+    });
+  } catch (error) {
+    console.error(`[API] Error permanently deleting organization ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/trash/cleanup
+ * Auto-delete organizations in trash older than 30 days
+ */
+app.post('/api/trash/cleanup', (req, res) => {
+  try {
+    const user = req.body.user || 'System';
+    const result = dataManager.cleanupTrash(user);
+
+    console.log(`\n🧹 [API] Trash cleanup: ${result.deletedCount} organizations permanently deleted\n`);
+
+    res.json({
+      success: true,
+      message: `Cleaned up ${result.deletedCount} expired organizations`,
+      deleted_count: result.deletedCount
+    });
+  } catch (error) {
+    console.error('[API] Error cleaning up trash:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// API ENDPOINTS - AUDIT LOG
+// ============================================
+
+/**
+ * GET /api/audit-log
+ * Get audit log entries
+ * Query params: entity_type, entity_id, action, user, from_date, to_date, limit
+ */
+app.get('/api/audit-log', (req, res) => {
+  try {
+    const filters = {
+      entity_type: req.query.entity_type,
+      entity_id: req.query.entity_id,
+      action: req.query.action,
+      user: req.query.user,
+      from_date: req.query.from_date,
+      to_date: req.query.to_date,
+      limit: req.query.limit ? parseInt(req.query.limit) : 100
+    };
+
+    const entries = dataManager.getAuditLog(filters);
+
+    res.json({
+      success: true,
+      count: entries.length,
+      entries: entries
+    });
+  } catch (error) {
+    console.error('[API] Error reading audit log:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// API ENDPOINTS - ASSESSMENT VERSIONING
+// ============================================
+
+/**
+ * GET /api/organizations/:orgId/assessments/:indicatorId/history
+ * Get version history for assessment
+ */
+app.get('/api/organizations/:orgId/assessments/:indicatorId/history', (req, res) => {
+  try {
+    const { orgId, indicatorId } = req.params;
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const history = dataManager.getAssessmentHistory(orgId, indicatorId);
+
+    res.json({
+      success: true,
+      orgId,
+      indicator_id: indicatorId,
+      version_count: history.versions.length,
+      history: history
+    });
+  } catch (error) {
+    console.error(`[API] Error reading assessment history ${req.params.indicatorId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/organizations/:orgId/assessments/:indicatorId/revert
+ * Revert assessment to specific version
+ * Body: { version, user } (version is required)
+ */
+app.post('/api/organizations/:orgId/assessments/:indicatorId/revert', (req, res) => {
+  try {
+    const { orgId, indicatorId } = req.params;
+    const { version, user } = req.body;
+
+    if (!version) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: version'
+      });
+    }
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const orgData = dataManager.revertAssessment(orgId, indicatorId, parseInt(version), user || 'System');
+
+    console.log(`\n↩️  [API] Reverted assessment: ${orgId} / ${indicatorId} to version ${version}\n`);
+
+    res.json({
+      success: true,
+      message: `Assessment reverted to version ${version}`,
+      orgId,
+      indicator_id: indicatorId,
+      reverted_to_version: version,
+      aggregates: orgData.aggregates
+    });
+  } catch (error) {
+    console.error(`[API] Error reverting assessment ${req.params.indicatorId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 // ============================================
 // API ENDPOINTS - EXPORTS (XLSX & PDF)
 // ============================================
+
+/**
+ * GET /api/organizations/:orgId/export/xlsx
+ * Export organization's entire matrix as XLSX file
+ */
+app.get('/api/organizations/:orgId/export/xlsx', async (req, res) => {
+  try {
+    const { orgId } = req.params;
+    const user = req.query.user || 'Dashboard User';
+
+    if (!dataManager.organizationExists(orgId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found',
+        orgId
+      });
+    }
+
+    const workbook = await dataManager.generateXLSXExport(orgId, user);
+    const orgData = dataManager.readOrganization(orgId);
+
+    console.log(`\n📊 [API] Generating XLSX export for: ${orgId}\n`);
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="CPF_Audit_${orgData.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx"`);
+
+    // Write to response
+    await workbook.xlsx.write(res);
+    res.end();
+
+    console.log(`\n✅ [API] XLSX export completed: ${orgId}\n`);
+
+  } catch (error) {
+    console.error(`[API] Error generating XLSX export for ${req.params.orgId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 /**
  * GET /api/organizations/:orgId/export/pdf
