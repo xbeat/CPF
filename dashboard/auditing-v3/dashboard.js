@@ -2849,7 +2849,10 @@ async function saveAssessmentToOrg() {
         }
     });
 
-    // Prepare assessment data for API
+    // Prepare assessment data for API (using same format as demo data for consistency)
+    const assessor = document.getElementById('compile-assessor').value || 'Anonymous';
+    const assessmentDate = document.getElementById('compile-date').value || new Date().toISOString().split('T')[0];
+
     const assessmentData = {
         indicator_id: currentIndicatorId,
         title: currentIndicatorData.title || `Indicator ${currentIndicatorId}`,
@@ -2857,12 +2860,22 @@ async function saveAssessmentToOrg() {
         bayesian_score: scoreResult.score,
         confidence: scoreResult.confidence,
         maturity_level: getMaturityLevel(scoreResult.score),
-        assessor: document.getElementById('compile-assessor').value || 'Anonymous',
-        assessment_date: document.getElementById('compile-date').value || new Date().toISOString().split('T')[0],
+        assessor: assessor,
+        assessment_date: assessmentDate,
         raw_data: {
-            responses: responses,
+            client_conversation: {
+                metadata: {
+                    date: assessmentDate,
+                    auditor: assessor,
+                    status: 'completed'
+                },
+                responses: responses,
+                notes: '',
+                red_flags_identified: 0,
+                red_flags: []
+            },
             field_kit_version: '2.0',
-            source: 'dashboard_auditing'
+            source: 'dashboard_auditing_v3'
         }
     };
 

@@ -2394,7 +2394,7 @@ function switchTab(tabName) {
 function renderMaturityTab() {
     const container = document.getElementById('maturityContent');
 
-    if (!organizationData || !organizationData.aggregates) {
+    if (!selectedOrgData || !selectedOrgData.aggregates) {
         container.innerHTML = `
             <div style="padding: 40px; text-align: center; background: white; border-radius: 12px;">
                 <p style="color: var(--text-light); margin: 0;">No assessment data available. Complete assessments to see the maturity model.</p>
@@ -2403,9 +2403,9 @@ function renderMaturityTab() {
         return;
     }
 
-    const aggregates = organizationData.aggregates;
-    const assessmentCount = Object.keys(organizationData.assessments || {}).length;
-    const industry = organizationData.industry || 'General';
+    const aggregates = selectedOrgData.aggregates;
+    const assessmentCount = Object.keys(selectedOrgData.assessments || {}).length;
+    const industry = selectedOrgData.industry || 'General';
 
     // Calculate overall maturity level (1-5 scale)
     // Use overall_risk (inverse: lower risk = higher maturity)
@@ -2624,9 +2624,13 @@ async function loadIndicatorForCompile() {
         document.getElementById('compile-date').valueAsDate = new Date();
 
         // Check if there's an existing assessment for this indicator
-        if (selectedOrganization && organizationData && organizationData.assessments) {
-            const existingAssessment = organizationData.assessments[indicatorId];
-            if (existingAssessment && existingAssessment.raw_data && existingAssessment.raw_data.responses) {
+        if (selectedOrgData && selectedOrgData.assessments) {
+            const existingAssessment = selectedOrgData.assessments[indicatorId];
+            // Check for responses in either raw_data.responses OR raw_data.client_conversation.responses
+            const hasResponses = existingAssessment && existingAssessment.raw_data &&
+                                (existingAssessment.raw_data.responses ||
+                                 (existingAssessment.raw_data.client_conversation && existingAssessment.raw_data.client_conversation.responses));
+            if (hasResponses) {
                 // Populate form with existing responses
                 console.log(`Loading existing assessment for ${indicatorId}`, existingAssessment);
                 populateFormWithAssessment(existingAssessment);
@@ -2793,7 +2797,10 @@ async function saveAssessmentToOrg() {
         }
     });
 
-    // Prepare assessment data for API
+    // Prepare assessment data for API (using same format as demo data for consistency)
+    const assessor = document.getElementById('compile-assessor').value || 'Anonymous';
+    const assessmentDate = document.getElementById('compile-date').value || new Date().toISOString().split('T')[0];
+
     const assessmentData = {
         indicator_id: currentIndicatorId,
         title: currentIndicatorData.title || `Indicator ${currentIndicatorId}`,
@@ -2801,10 +2808,20 @@ async function saveAssessmentToOrg() {
         bayesian_score: scoreResult.score,
         confidence: scoreResult.confidence,
         maturity_level: getMaturityLevel(scoreResult.score),
-        assessor: document.getElementById('compile-assessor').value || 'Anonymous',
-        assessment_date: document.getElementById('compile-date').value || new Date().toISOString().split('T')[0],
+        assessor: assessor,
+        assessment_date: assessmentDate,
         raw_data: {
-            responses: responses,
+            client_conversation: {
+                metadata: {
+                    date: assessmentDate,
+                    auditor: assessor,
+                    status: 'completed'
+                },
+                responses: responses,
+                notes: '',
+                red_flags_identified: 0,
+                red_flags: []
+            },
             field_kit_version: '2.0',
             source: 'dashboard_auditing'
         }
@@ -2845,11 +2862,17 @@ async function saveAssessmentToOrg() {
 
 // Populate form with existing assessment data
 function populateFormWithAssessment(assessment) {
-    if (!assessment || !assessment.raw_data || !assessment.raw_data.responses) {
+    if (!assessment || !assessment.raw_data) {
         return;
     }
 
-    const responses = assessment.raw_data.responses;
+    // Support both raw_data.responses AND raw_data.client_conversation.responses formats
+    const responses = assessment.raw_data.responses ||
+                     (assessment.raw_data.client_conversation && assessment.raw_data.client_conversation.responses);
+
+    if (!responses) {
+        return;
+    }
 
     // Populate each response
     Object.keys(responses).forEach(questionKey => {
