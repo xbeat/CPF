@@ -138,8 +138,10 @@ app.get('/dashboard/dashboard.html', (req, res) => {
 // ============================================
 
 app.get('/api/cards', async (req, res) => {
+    // Return empty array if GitHub is not configured (local mode)
     if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
-        return res.status(500).json({ error: 'GitHub integration is not configured on the server.' });
+        console.log('[Card Editor] GitHub not configured, returning empty list');
+        return res.json([]);
     }
     try {
         const { data } = await octokit.git.getTree({
