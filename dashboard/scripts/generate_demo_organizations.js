@@ -136,19 +136,85 @@ function generateMaturityLevel(score) {
   return 'red';
 }
 
+// Cache for loaded Field Kit JSONs
+const fieldKitCache = {};
+
+function loadFieldKitForIndicator(indicatorId) {
+  if (fieldKitCache[indicatorId]) return fieldKitCache[indicatorId];
+
+  const [categoryNum] = indicatorId.split('.');
+  const categoryMap = {'1':'authority','2':'temporal','3':'social','4':'affective','5':'cognitive','6':'group','7':'stress','8':'unconscious','9':'ai','10':'convergent'};
+  const categoryName = categoryMap[categoryNum];
+
+  const fieldKitPath = path.join(__dirname, '..', '..', 'auditor field kit', 'interactive', 'en-US', `${categoryNum}.x-${categoryName}`, `indicator_${indicatorId}.json`);
+
+  try {
+    if (fs.existsSync(fieldKitPath)) {
+      fieldKitCache[indicatorId] = JSON.parse(fs.readFileSync(fieldKitPath, 'utf8'));
+      return fieldKitCache[indicatorId];
+    }
+  } catch (err) {
+    // Fallback: use indicator 1.1 as template
+    const fallbackPath = path.join(__dirname, '..', '..', 'auditor field kit', 'interactive', 'en-US', '1.x-authority', 'indicator_1.1.json');
+    if (fs.existsSync(fallbackPath) && !fieldKitCache['1.1']) {
+      fieldKitCache['1.1'] = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
+    }
+    return fieldKitCache['1.1'];
+  }
+  return null;
+}
+
 function generateRawData(indicatorId, bayesianScore) {
-  // Generate quick_assessment_breakdown (matches client-integrated.js format)
+  const fieldKit = loadFieldKitForIndicator(indicatorId);
+  const responses = {};
   const quickAssessmentBreakdown = [];
-  for (let i = 1; i <= 7; i++) {
-    const score = randomBetween(0, 1);
-    const weight = 1 / 7; // Equal weight
-    quickAssessmentBreakdown.push({
-      question: `Question ${i} for indicator ${indicatorId}`,
-      response: randomChoice(['Yes', 'No', 'Partially', 'N/A']),
-      score: parseFloat(score.toFixed(4)),
-      weight: parseFloat(weight.toFixed(4)),
-      weighted_score: parseFloat((score * weight).toFixed(4))
-    });
+
+  // Generate responses from actual Field Kit structure
+  if (fieldKit && fieldKit.sections) {
+    const quickSection = fieldKit.sections.find(s => s.id === 'quick-assessment');
+    if (quickSection && quickSection.items) {
+      quickSection.items.forEach(item => {
+        if (item.options && item.options.length > 0) {
+          const selectedOption = randomChoice(item.options);
+          responses[item.id] = selectedOption.value;
+          quickAssessmentBreakdown.push({
+            question: item.title,
+            response: selectedOption.label,
+            score: parseFloat(selectedOption.score.toFixed(4)),
+            weight: item.weight || (1 / quickSection.items.length),
+            weighted_score: parseFloat((selectedOption.score * (item.weight || (1 / quickSection.items.length))).toFixed(4))
+          });
+        }
+      });
+    }
+
+    // Generate some conversation responses
+    const convSection = fieldKit.sections.find(s => s.id === 'client-conversation' || s.title.toLowerCase().includes('conversation'));
+    if (convSection) {
+      if (convSection.subsections) {
+        convSection.subsections.forEach((sub, subIdx) => {
+          if (sub.items) {
+            sub.items.forEach((item, iIdx) => {
+              if (item.type === 'question' && item.followups) {
+                item.followups.forEach((followup, fIdx) => {
+                  const followupId = `${item.id}_f${fIdx}`;
+                  responses[followupId] = `Sample answer for: ${followup.text.substring(0, 50)}...`;
+                });
+              }
+            });
+          }
+        });
+      } else if (convSection.items) {
+        convSection.items.forEach((item, iIdx) => {
+          if (item.type === 'question' && item.followups) {
+            item.followups.forEach((followup, fIdx) => {
+              const followupId = `${item.id}_f${fIdx}`;
+              responses[followupId] = `Sample answer for: ${followup.text.substring(0, 50)}...`;
+            });
+          }
+        });
+      }
+    }
   }
 
   const possibleFlags = ['No formal policy documented', 'Staff unaware of procedures', 'Inconsistent enforcement', 'Recent security incidents', 'Lack of training', 'Insufficient resources', 'Management oversight gaps', 'Third-party dependencies'];
@@ -158,7 +224,6 @@ function generateRawData(indicatorId, bayesianScore) {
     redFlags.push(randomChoice(possibleFlags));
   }
 
-  // Generate scores object (matches currentScore structure)
   const scores = {
     quick_assessment: parseFloat((bayesianScore * 0.8).toFixed(4)),
     conversation_depth: 0,
@@ -172,7 +237,6 @@ function generateRawData(indicatorId, bayesianScore) {
     }
   };
 
-  // Generate metadata
   const metadata = {
     date: randomDateLastNDays(90).split('T')[0],
     auditor: randomChoice(ASSESSORS),
@@ -184,6 +248,7 @@ function generateRawData(indicatorId, bayesianScore) {
   return {
     quick_assessment: quickAssessmentBreakdown,
     client_conversation: {
+      responses: responses,
       scores: scores,
       metadata: metadata,
       notes: metadata.notes,
