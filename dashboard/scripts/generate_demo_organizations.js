@@ -160,7 +160,7 @@ function loadFieldKitForIndicator(indicatorId, language) {
   return null;
 }
 
-function generateRawData(indicatorId, language) {
+function generateRawData(indicatorId, language, targetMaturityLevel = null) {
   const fieldKit = loadFieldKitForIndicator(indicatorId, language);
   const responses = {};
   const quickAssessmentBreakdown = [];
@@ -172,13 +172,34 @@ function generateRawData(indicatorId, language) {
     return null;
   }
 
+  // Determine target score range based on maturity level
+  let targetScoreRange = [0, 1]; // default: any score
+  if (targetMaturityLevel === 'green') {
+    targetScoreRange = [0, 0.3];
+  } else if (targetMaturityLevel === 'yellow') {
+    targetScoreRange = [0.3, 0.7];
+  } else if (targetMaturityLevel === 'red') {
+    targetScoreRange = [0.7, 1.0];
+  }
+
   // Generate responses from actual Field Kit structure and CALCULATE real score
   if (fieldKit && fieldKit.sections) {
     const quickSection = fieldKit.sections.find(s => s.id === 'quick-assessment');
     if (quickSection && quickSection.items) {
       quickSection.items.forEach(item => {
         if (item.options && item.options.length > 0) {
-          const selectedOption = randomChoice(item.options);
+          // Choose option based on target maturity level
+          let selectedOption;
+          if (targetMaturityLevel) {
+            // Filter options within target range and pick one
+            const targetOptions = item.options.filter(opt =>
+              opt.score >= targetScoreRange[0] && opt.score <= targetScoreRange[1]
+            );
+            selectedOption = targetOptions.length > 0 ? randomChoice(targetOptions) : randomChoice(item.options);
+          } else {
+            selectedOption = randomChoice(item.options);
+          }
+
           responses[item.id] = selectedOption.value;
 
           const weight = item.weight || (1 / quickSection.items.length);
@@ -284,7 +305,18 @@ function generateRawData(indicatorId, language) {
 }
 
 function generateAssessment(indicatorId, language) {
-  const rawData = generateRawData(indicatorId, language);
+  // Choose target maturity level for balanced distribution (33% each)
+  const rand = Math.random();
+  let targetMaturityLevel;
+  if (rand < 0.33) {
+    targetMaturityLevel = 'green';
+  } else if (rand < 0.66) {
+    targetMaturityLevel = 'yellow';
+  } else {
+    targetMaturityLevel = 'red';
+  }
+
+  const rawData = generateRawData(indicatorId, language, targetMaturityLevel);
 
   // Skip this assessment if Field Kit doesn't exist for language
   if (!rawData) {
