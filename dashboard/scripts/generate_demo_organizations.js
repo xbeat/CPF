@@ -136,7 +136,7 @@ function generateMaturityLevel(score) {
   return 'red';
 }
 
-function generateRawData(indicatorId) {
+function generateRawData(indicatorId, bayesianScore) {
   const quickAssessment = [];
   const responses = {};
 
@@ -163,7 +163,28 @@ function generateRawData(indicatorId) {
   const notes = `Assessment notes for indicator ${indicatorId}. Organization shows ${randomChoice(['strong', 'moderate', 'weak'])} controls.`;
   const assessmentDate = randomDateLastNDays(90);
 
-  // Return in correct format for form loading
+  // Generate maturity level based on score
+  let maturity_level = 'green';
+  if (bayesianScore >= 0.7) maturity_level = 'red';
+  else if (bayesianScore >= 0.3) maturity_level = 'yellow';
+
+  // Create scores object compatible with client-integrated format
+  const scores = {
+    quick_assessment: bayesianScore * 0.7, // Approximate breakdown
+    conversation_depth: bayesianScore * 0.3,
+    red_flags: redFlagsCount * 0.1,
+    final_score: bayesianScore,
+    maturity_level: maturity_level,
+    confidence: randomBetween(0.7, 0.95),
+    details: {
+      quick_assessment_breakdown: quickAssessment.reduce((acc, qa) => {
+        acc[qa.question_id] = { answer: qa.answer, weight: qa.weight };
+        return acc;
+      }, {})
+    }
+  };
+
+  // Return in correct format matching client-integrated
   return {
     quick_assessment: quickAssessment,
     client_conversation: {
@@ -172,7 +193,8 @@ function generateRawData(indicatorId) {
         auditor: randomChoice(ASSESSORS),
         status: 'completed'
       },
-      responses: responses,  // Add responses here!
+      responses: responses,
+      scores: scores,  // ADD SCORES HERE - compatible with client-integrated!
       notes: notes,
       red_flags_identified: redFlagsCount,
       red_flags: redFlags
@@ -187,7 +209,7 @@ function generateAssessment(indicatorId) {
   const maturityLevel = generateMaturityLevel(bayesianScore);
   const assessor = randomChoice(ASSESSORS);
   const assessmentDate = randomDateLastNDays(90);
-  const rawData = generateRawData(indicatorId);
+  const rawData = generateRawData(indicatorId, bayesianScore); // Pass score to generateRawData
   const [category] = indicatorId.split('.');
   return { indicator_id: indicatorId, title: `Indicator ${indicatorId} Title`, category: CATEGORY_NAMES[category], bayesian_score: parseFloat(bayesianScore.toFixed(4)), confidence: parseFloat(confidence.toFixed(4)), maturity_level: maturityLevel, assessor: assessor, assessment_date: assessmentDate, raw_data: rawData };
 }

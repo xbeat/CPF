@@ -2394,7 +2394,7 @@ function switchTab(tabName) {
 function renderMaturityTab() {
     const container = document.getElementById('maturityContent');
 
-    if (!organizationData || !organizationData.aggregates) {
+    if (!selectedOrgData || !selectedOrgData.aggregates) {
         container.innerHTML = `
             <div style="padding: 40px; text-align: center; background: white; border-radius: 12px;">
                 <p style="color: var(--text-light); margin: 0;">No assessment data available. Complete assessments to see the maturity model.</p>
@@ -2403,9 +2403,9 @@ function renderMaturityTab() {
         return;
     }
 
-    const aggregates = organizationData.aggregates;
-    const assessmentCount = Object.keys(organizationData.assessments || {}).length;
-    const industry = organizationData.industry || 'General';
+    const aggregates = selectedOrgData.aggregates;
+    const assessmentCount = Object.keys(selectedOrgData.assessments || {}).length;
+    const industry = selectedOrgData.metadata?.industry || 'General';
 
     // Calculate overall maturity level (1-5 scale)
     // Use overall_risk (inverse: lower risk = higher maturity)
