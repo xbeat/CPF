@@ -17,6 +17,8 @@ const editorSection = document.getElementById('editorSection');
 const cardEditorForm = document.getElementById('cardEditorForm');
 const cardPreview = document.getElementById('cardPreview');
 const jsonEditor = document.getElementById('jsonEditor');
+const loadJsonBtn = document.getElementById('load-json-btn');
+const loadJsonInput = document.getElementById('load-json-input');
 const saveLocalBtn = document.getElementById('save-local-btn');
 const saveGithubBtn = document.getElementById('save-github-btn');
 const githubStatus = document.getElementById('github-status');
@@ -35,6 +37,8 @@ async function init() {
 function setupEventListeners() {
     cardSearch.addEventListener('input', filterCards);
     categoryFilter.addEventListener('change', filterCards);
+    loadJsonBtn.addEventListener('click', () => loadJsonInput.click());
+    loadJsonInput.addEventListener('change', handleFileLoad);
     saveLocalBtn.addEventListener('click', saveToLocal);
     saveGithubBtn.addEventListener('click', saveToGitHub);
 
@@ -449,6 +453,51 @@ function applyJSON() {
     } catch (e) {
         showAlert('Invalid JSON: ' + e.message, 'error');
     }
+}
+
+// Load JSON file from local computer
+async function handleFileLoad(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        // Validate it's a valid card JSON
+        if (!data.id || !data.title) {
+            throw new Error('Invalid card format: missing id or title');
+        }
+
+        // Create a card object
+        const loadedCard = {
+            id: data.id,
+            path: file.name,
+            data: data,
+            category: data.category || 'unknown',
+            language: data.language || 'en-US'
+        };
+
+        // Add to cards list if not already there
+        const existingIndex = cards.findIndex(c => c.id === loadedCard.id);
+        if (existingIndex >= 0) {
+            cards[existingIndex] = loadedCard;
+        } else {
+            cards.push(loadedCard);
+        }
+
+        // Render card list and select the loaded card
+        renderCardList();
+        selectCard(loadedCard.id);
+
+        showAlert(`Loaded card: ${data.title}`, 'success');
+    } catch (error) {
+        showAlert(`Failed to load JSON file: ${error.message}`, 'error');
+        console.error('File load error:', error);
+    }
+
+    // Reset input so the same file can be loaded again
+    event.target.value = '';
 }
 
 function saveToLocal() {
