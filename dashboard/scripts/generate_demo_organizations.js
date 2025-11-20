@@ -181,14 +181,18 @@ function generateMaturityLevel(score) {
   return 'red';
 }
 
-function generateRawData(indicatorId) {
-  const quickAssessment = [];
+function generateRawData(indicatorId, bayesianScore) {
+  // Generate quick_assessment_breakdown (matches client-integrated.js format)
+  const quickAssessmentBreakdown = [];
   for (let i = 1; i <= 7; i++) {
-    quickAssessment.push({
-      question_id: `q${i}`,
+    const score = randomBetween(0, 1);
+    const weight = 1 / 7; // Equal weight
+    quickAssessmentBreakdown.push({
       question: `Question ${i} for indicator ${indicatorId}`,
-      answer: randomChoice(['option_a', 'option_b', 'option_c', 'option_d']),
-      weight: randomBetween(0.1, 0.3)
+      response: randomChoice(['Yes', 'No', 'Partially', 'N/A']),
+      score: parseFloat(score.toFixed(4)),
+      weight: parseFloat(weight.toFixed(4)),
+      weighted_score: parseFloat((score * weight).toFixed(4))
     });
   }
 
@@ -209,14 +213,49 @@ function generateRawData(indicatorId) {
     redFlags.push(randomChoice(possibleFlags));
   }
 
+  // Generate synthetic responses (matches client form structure)
+  const responses = {};
+  responses[`s0_i0`] = randomChoice(['low', 'medium', 'high']);
+  responses[`s0_i1`] = randomChoice(['low', 'medium', 'high']);
+  responses[`s0_i2`] = randomChoice(['low', 'medium', 'high']);
+
+  // Add some conversation responses
+  for (let i = 0; i < randomInt(5, 10); i++) {
+    responses[`s1_i${i}_f0`] = `Sample response for conversation question ${i}`;
+  }
+
+  // Generate scores object (matches currentScore structure)
+  const scores = {
+    quick_assessment: parseFloat((bayesianScore * 0.8).toFixed(4)),
+    conversation_depth: 0,
+    red_flags: parseFloat((bayesianScore * 0.2).toFixed(4)),
+    final_score: bayesianScore,
+    maturity_level: generateMaturityLevel(bayesianScore),
+    weights_used: {
+      quick_assessment: 0.70,
+      red_flags: 0.30,
+      conversation_depth: 0
+    }
+  };
+
+  // Generate metadata
+  const metadata = {
+    date: randomDateLastNDays(90).split('T')[0],
+    auditor: randomChoice(ASSESSORS),
+    client: '',
+    status: randomChoice(['completed', 'in-progress', 'review']),
+    notes: `Assessment notes for indicator ${indicatorId}. Organization shows ${randomChoice(['strong', 'moderate', 'weak'])} controls.`
+  };
+
   return {
-    quick_assessment: quickAssessment,
+    quick_assessment: quickAssessmentBreakdown,
     client_conversation: {
-      notes: `Assessment notes for indicator ${indicatorId}. Organization shows ${randomChoice(['strong', 'moderate', 'weak'])} controls.`,
-      red_flags_identified: redFlagsCount,
+      responses: responses,
+      scores: scores,
+      metadata: metadata,
+      notes: metadata.notes,
       red_flags: redFlags
-    },
-    timestamp: new Date().toISOString()
+    }
   };
 }
 
@@ -230,7 +269,7 @@ function generateAssessment(indicatorId) {
   const maturityLevel = generateMaturityLevel(bayesianScore);
   const assessor = randomChoice(ASSESSORS);
   const assessmentDate = randomDateLastNDays(90);
-  const rawData = generateRawData(indicatorId);
+  const rawData = generateRawData(indicatorId, bayesianScore);
 
   const [category] = indicatorId.split('.');
 
