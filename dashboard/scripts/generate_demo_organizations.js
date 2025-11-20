@@ -292,6 +292,7 @@ function generateRawData(indicatorId, language, targetMaturityLevel = null) {
   };
 
   return {
+    fieldKit: fieldKit, // Include FULL Field Kit structure for card editing
     quick_assessment: quickAssessmentBreakdown,
     client_conversation: {
       responses: responses,
