@@ -260,16 +260,9 @@ app.get('/dashboard/dashboard.html', (req, res) => {
   res.redirect(301, '/dashboard/soc/index.html');
 });
 
-// ... (rest of the server.js file remains the same)
-
-  } catch (error) {
-    console.error(`[API] Error generating XLSX export for ${req.params.orgId}:`, error.message);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
+// ============================================
+// API ENDPOINTS - EXPORTS (XLSX & PDF)
+// ============================================
 
 /**
  * GET /api/organizations/:orgId/export/pdf
