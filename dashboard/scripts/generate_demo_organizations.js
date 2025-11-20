@@ -160,17 +160,18 @@ function loadFieldKitForIndicator(indicatorId, language) {
   return null;
 }
 
-function generateRawData(indicatorId, bayesianScore, language) {
+function generateRawData(indicatorId, language) {
   const fieldKit = loadFieldKitForIndicator(indicatorId, language);
   const responses = {};
   const quickAssessmentBreakdown = [];
+  let calculatedQuickScore = 0;
 
   // If Field Kit doesn't exist for this language, return null
   if (!fieldKit) {
     return null;
   }
 
-  // Generate responses from actual Field Kit structure
+  // Generate responses from actual Field Kit structure and CALCULATE real score
   if (fieldKit && fieldKit.sections) {
     const quickSection = fieldKit.sections.find(s => s.id === 'quick-assessment');
     if (quickSection && quickSection.items) {
@@ -178,13 +179,20 @@ function generateRawData(indicatorId, bayesianScore, language) {
         if (item.options && item.options.length > 0) {
           const selectedOption = randomChoice(item.options);
           responses[item.id] = selectedOption.value;
+
+          const weight = item.weight || (1 / quickSection.items.length);
+          const weightedScore = selectedOption.score * weight;
+
           quickAssessmentBreakdown.push({
             question: item.title,
             response: selectedOption.label,
             score: parseFloat(selectedOption.score.toFixed(4)),
-            weight: item.weight || (1 / quickSection.items.length),
-            weighted_score: parseFloat((selectedOption.score * (item.weight || (1 / quickSection.items.length))).toFixed(4))
+            weight: parseFloat(weight.toFixed(4)),
+            weighted_score: parseFloat(weightedScore.toFixed(4))
           });
+
+          // Accumulate real score
+          calculatedQuickScore += weightedScore;
         }
       });
     }
@@ -221,21 +229,31 @@ function generateRawData(indicatorId, bayesianScore, language) {
   const possibleFlags = ['No formal policy documented', 'Staff unaware of procedures', 'Inconsistent enforcement', 'Recent security incidents', 'Lack of training', 'Insufficient resources', 'Management oversight gaps', 'Third-party dependencies'];
   const redFlagsCount = randomInt(0, 3);
   const redFlags = [];
+  let redFlagsScore = 0;
+
   for (let i = 0; i < redFlagsCount; i++) {
     redFlags.push(randomChoice(possibleFlags));
+    redFlagsScore += 0.1; // Each flag adds 0.1 to score
   }
 
+  // Use Field Kit weights if available, otherwise default
+  const weights = fieldKit.scoring?.weights || {
+    quick_assessment: 0.70,
+    red_flags: 0.30,
+    conversation_depth: 0
+  };
+
+  // Calculate FINAL score using real formula
+  const finalScore = (calculatedQuickScore * weights.quick_assessment) + (redFlagsScore * weights.red_flags);
+  const maturityLevel = generateMaturityLevel(finalScore);
+
   const scores = {
-    quick_assessment: parseFloat((bayesianScore * 0.8).toFixed(4)),
+    quick_assessment: parseFloat(calculatedQuickScore.toFixed(4)),
     conversation_depth: 0,
-    red_flags: parseFloat((bayesianScore * 0.2).toFixed(4)),
-    final_score: bayesianScore,
-    maturity_level: generateMaturityLevel(bayesianScore),
-    weights_used: {
-      quick_assessment: 0.70,
-      red_flags: 0.30,
-      conversation_depth: 0
-    }
+    red_flags: parseFloat(redFlagsScore.toFixed(4)),
+    final_score: parseFloat(finalScore.toFixed(4)),
+    maturity_level: maturityLevel,
+    weights_used: weights
   };
 
   const metadata = {
@@ -254,25 +272,41 @@ function generateRawData(indicatorId, bayesianScore, language) {
       metadata: metadata,
       notes: metadata.notes,
       red_flags: redFlags
-    }
+    },
+    calculatedScore: finalScore // Return calculated score for assessment
   };
 }
 
 function generateAssessment(indicatorId, language) {
-  const bayesianScore = generateBayesianScore();
-  const confidence = generateConfidence();
-  const maturityLevel = generateMaturityLevel(bayesianScore);
-  const assessor = randomChoice(ASSESSORS);
-  const assessmentDate = randomDateLastNDays(90);
-  const rawData = generateRawData(indicatorId, bayesianScore, language);
+  const rawData = generateRawData(indicatorId, language);
 
   // Skip this assessment if Field Kit doesn't exist for language
   if (!rawData) {
     return null;
   }
 
+  // Use CALCULATED score from raw_data
+  const bayesianScore = rawData.calculatedScore;
+  const confidence = generateConfidence();
+  const maturityLevel = generateMaturityLevel(bayesianScore);
+  const assessor = randomChoice(ASSESSORS);
+  const assessmentDate = randomDateLastNDays(90);
+
+  // Remove calculatedScore from raw_data before saving
+  const { calculatedScore, ...cleanRawData } = rawData;
+
   const [category] = indicatorId.split('.');
-  return { indicator_id: indicatorId, title: `Indicator ${indicatorId} Title`, category: CATEGORY_NAMES[category], bayesian_score: parseFloat(bayesianScore.toFixed(4)), confidence: parseFloat(confidence.toFixed(4)), maturity_level: maturityLevel, assessor: assessor, assessment_date: assessmentDate, raw_data: rawData };
+  return {
+    indicator_id: indicatorId,
+    title: `Indicator ${indicatorId} Title`,
+    category: CATEGORY_NAMES[category],
+    bayesian_score: parseFloat(bayesianScore.toFixed(4)),
+    confidence: parseFloat(confidence.toFixed(4)),
+    maturity_level: maturityLevel,
+    assessor: assessor,
+    assessment_date: assessmentDate,
+    raw_data: cleanRawData
+  };
 }
 
 // calculateAggregates function removed - now imported from db_json.js
