@@ -14,7 +14,7 @@ const pool = new Pool(config.database.postgres);
 let isInitialized = false;
 
 /**
- * Inizializza il database creando le tabelle se non esistono.
+ * Inizializza il database creando le tabelle se non esistono e aggiungendo le colonne necessarie.
  * Questa funzione viene eseguita una sola volta all'avvio dell'applicazione.
  */
 async function initialize() {
@@ -26,54 +26,42 @@ async function initialize() {
   const client = await pool.connect();
 
   try {
-    const createOrganizationsTable = `
-      CREATE TABLE IF NOT EXISTS organizations (
-        id VARCHAR(50) PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        industry VARCHAR(100),
-        size VARCHAR(50),
-        country VARCHAR(2),
-        is_deleted BOOLEAN DEFAULT false,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-      );
-    `;
+    // Creazione delle tabelle base se non esistono
+    await client.query(`CREATE TABLE IF NOT EXISTS organizations (
+      id VARCHAR(50) PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      industry VARCHAR(100),
+      size VARCHAR(50),
+      country VARCHAR(2),
+      is_deleted BOOLEAN DEFAULT false,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );`);
 
-    const createAssessmentsTable = `
-      CREATE TABLE IF NOT EXISTS assessments (
-        id SERIAL PRIMARY KEY,
-        org_id VARCHAR(50) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-        indicator_id VARCHAR(10) NOT NULL,
-        bayesian_score DECIMAL(5, 4),
-        confidence DECIMAL(5, 4),
-        assessor VARCHAR(255),
-        assessment_date TIMESTAMPTZ,
-        raw_data JSONB,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(org_id, indicator_id)
-      );
-    `;
+    await client.query(`CREATE TABLE IF NOT EXISTS assessments (
+      id SERIAL PRIMARY KEY,
+      org_id VARCHAR(50) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      indicator_id VARCHAR(10) NOT NULL,
+      bayesian_score DECIMAL(5, 4),
+      confidence DECIMAL(5, 4),
+      assessor VARCHAR(255),
+      assessment_date TIMESTAMPTZ,
+      raw_data JSONB,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(org_id, indicator_id)
+    );`);
 
-    const createIndicatorsMetadataTable = `
-      CREATE TABLE IF NOT EXISTS indicators_metadata (
-        id SERIAL PRIMARY KEY,
-        org_id VARCHAR(50) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-        indicator_id VARCHAR(10) NOT NULL,
-        category VARCHAR(100),
-        title TEXT,
-        language VARCHAR(5) DEFAULT 'en-US',
-        full_data JSONB,
-        snapshot_date TIMESTAMPTZ,
-        UNIQUE(org_id, indicator_id)
-      );
-    `;
-    
-    await client.query(createOrganizationsTable);
-    await client.query(createAssessmentsTable);
-    await client.query(createIndicatorsMetadataTable);
+    console.log('[DB-PG] Tabelle base assicurate.');
 
-    console.log('[DB-PG] Tabelle assicurate: organizations, assessments, indicators_metadata.');
+    // Aggiunta delle nuove colonne alla tabella 'organizations' in modo idempotente
+    console.log('[DB-PG] Verifica e aggiunta delle colonne mancanti a `organizations`...');
+    await client.query(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS language VARCHAR(10);`);
+    await client.query(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS created_by VARCHAR(255);`);
+    await client.query(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS notes TEXT;`);
+    await client.query(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS aggregates JSONB;`);
+    console.log('[DB-PG] Colonne della tabella `organizations` aggiornate.');
+
     isInitialized = true;
   } catch (error) {
     console.error('[DB-PG] Errore durante l\'inizializzazione del database:', error);
@@ -83,21 +71,86 @@ async function initialize() {
   }
 }
 
-// Implementazione delle funzioni dell'interfaccia...
+/**
+ * Sovrascrive completamente la funzione createOrganization per gestire l'intero oggetto orgData,
+ * comprese le valutazioni, in un'unica transazione.
+ * Questo rende lo script di seeding robusto e idempotente.
+ */
+async function createOrganization(orgData) {
+  await initialize();
+
+  const { id: orgId, name, metadata, assessments, aggregates } = orgData;
+  const { industry, size, country, language, created_by, notes, created_at, updated_at } = metadata;
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // 1. Inserisce o aggiorna l'organizzazione
+    const orgQuery = `
+      INSERT INTO organizations (id, name, industry, size, country, language, created_by, notes, aggregates, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        industry = EXCLUDED.industry,
+        size = EXCLUDED.size,
+        country = EXCLUDED.country,
+        language = EXCLUDED.language,
+        created_by = EXCLUDED.created_by,
+        notes = EXCLUDED.notes,
+        aggregates = EXCLUDED.aggregates,
+        updated_at = CURRENT_TIMESTAMP;
+    `;
+    await client.query(orgQuery, [orgId, name, industry, size, country, language, created_by, notes, aggregates, created_at, updated_at]);
+
+    // 2. Inserisce o aggiorna tutte le valutazioni associate
+    if (assessments) {
+      for (const indicatorId in assessments) {
+        const assessment = assessments[indicatorId];
+        const assessmentQuery = `
+          INSERT INTO assessments (org_id, indicator_id, bayesian_score, confidence, assessor, assessment_date, raw_data, updated_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+          ON CONFLICT (org_id, indicator_id) DO UPDATE SET
+            bayesian_score = EXCLUDED.bayesian_score,
+            confidence = EXCLUDED.confidence,
+            assessor = EXCLUDED.assessor,
+            assessment_date = EXCLUDED.assessment_date,
+            raw_data = EXCLUDED.raw_data,
+            updated_at = CURRENT_TIMESTAMP;
+        `;
+        await client.query(assessmentQuery, [
+          orgId,
+          indicatorId,
+          assessment.bayesian_score,
+          assessment.confidence,
+          assessment.assessor,
+          assessment.assessment_date,
+          assessment.raw_data
+        ]);
+      }
+    }
+
+    await client.query('COMMIT');
+    return orgData;
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error(`[DB-PG] Errore durante il salvataggio dell'organizzazione ${orgId}. Transazione annullata.`, error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+
+// --- Funzioni Esistenti (mantenute per compatibilità dove necessario) ---
 
 async function readOrganizationsIndex() {
   await initialize();
-  const { rows } = await pool.query('SELECT id, name, industry, size, country, updated_at FROM organizations WHERE is_deleted = false ORDER BY name ASC');
+  // Query aggiornata per includere le nuove colonne utili nell'indice
+  const { rows } = await pool.query('SELECT id, name, industry, size, country, language, aggregates, updated_at FROM organizations WHERE is_deleted = false ORDER BY name ASC');
   return rows;
-}
-
-async function createOrganization(data) {
-  await initialize();
-  const orgId = `org-${uuidv4()}`;
-  const { name, industry, size, country } = data;
-  const query = 'INSERT INTO organizations (id, name, industry, size, country, updated_at) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP) RETURNING id;';
-  const { rows } = await pool.query(query, [orgId, name, industry, size, country]);
-  return { id: rows[0].id, ...data };
 }
 
 async function readOrganization(orgId) {
@@ -110,24 +163,22 @@ async function readOrganization(orgId) {
   const assessRes = await pool.query('SELECT * FROM assessments WHERE org_id = $1', [orgId]);
   org.assessments = assessRes.rows.reduce((acc, a) => ({ ...acc, [a.indicator_id]: a }), {});
 
-  const metaRes = await pool.query('SELECT * FROM indicators_metadata WHERE org_id = $1', [orgId]);
-  org.indicators_metadata = metaRes.rows.reduce((acc, m) => ({ ...acc, [m.indicator_id]: m }), {});
-
   return org;
 }
 
 async function updateOrganization(orgId, data) {
   await initialize();
-  const { name, industry, size, country } = data;
-  const query = 'UPDATE organizations SET name = $1, industry = $2, size = $3, country = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5;';
-  await pool.query(query, [name, industry, size, country, orgId]);
+  const { name, industry, size, country, language, notes } = data; // Aggiunti nuovi campi
+  const query = `UPDATE organizations SET 
+    name = $1, industry = $2, size = $3, country = $4, language = $5, notes = $6, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $7;`;
+  await pool.query(query, [name, industry, size, country, language, notes, orgId]);
   return { id: orgId, ...data };
 }
 
 async function deleteOrganization(orgId) {
   await initialize();
-  const query = 'UPDATE organizations SET is_deleted = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1;';
-  await pool.query(query, [orgId]);
+  await pool.query('UPDATE organizations SET is_deleted = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1;', [orgId]);
   return { success: true };
 }
 
@@ -157,34 +208,21 @@ async function deleteAssessment(orgId, indicatorId) {
     return { success: true };
 }
 
-async function saveIndicatorMetadata(orgId, indicatorId, data) {
-  await initialize();
-  const { category, title, language, full_data, snapshot_date } = data;
-  const query = `
-    INSERT INTO indicators_metadata (org_id, indicator_id, category, title, language, full_data, snapshot_date)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    ON CONFLICT (org_id, indicator_id) DO UPDATE SET
-      category = EXCLUDED.category, title = EXCLUDED.title, language = EXCLUDED.language,
-      full_data = EXCLUDED.full_data, snapshot_date = EXCLUDED.snapshot_date;
-  `;
-  await pool.query(query, [orgId, indicatorId, category, title, language, full_data, snapshot_date]);
-  return { success: true };
-}
 
 module.exports = {
   initialize,
-  readOrganizationsIndex,
   createOrganization,
+  readOrganizationsIndex,
   readOrganization,
   updateOrganization,
   deleteOrganization,
-  writeOrganization: updateOrganization, // Alias
   saveAssessment,
   getAssessment,
   deleteAssessment,
-  saveIndicatorMetadata,
-  saveSocIndicator: saveIndicatorMetadata, // Alias
-  // Funzioni non più necessarie in un'implementazione DB
+  // Funzioni alias o non più necessarie mantenute per retrocompatibilità
+  writeOrganization: updateOrganization, 
+  saveIndicatorMetadata: async () => { console.warn('[DB-PG] saveIndicatorMetadata non è implementata in modo granulare, i dati vengono salvati con l\'intera organizzazione.'); },
+  saveSocIndicator: async () => { console.warn('[DB-PG] saveSocIndicator non è implementata.'); },
   writeOrganizationsIndex: async () => {},
   updateOrganizationInIndex: async () => {},
   removeOrganizationFromIndex: async () => {},
