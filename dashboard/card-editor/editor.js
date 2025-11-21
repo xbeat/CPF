@@ -283,7 +283,7 @@ function renderEditor(cardData) {
 
     // Render each section
     cardData.sections.forEach((section, sectionIndex) => {
-        html += renderSection(section, sectionIndex);
+        html += renderSection(section, sectionIndex, false); // false = not preview, show all buttons
     });
 
     cardEditorForm.innerHTML = html;
