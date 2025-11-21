@@ -50,6 +50,17 @@ function setupEventListeners() {
     // JSON editor buttons
     document.getElementById('format-json-btn').addEventListener('click', formatJSON);
     document.getElementById('apply-json-btn').addEventListener('click', applyJSON);
+
+    // JSON search functionality
+    const jsonSearchInput = document.getElementById('jsonSearchInput');
+    const jsonSearchPrev = document.getElementById('jsonSearchPrev');
+    const jsonSearchNext = document.getElementById('jsonSearchNext');
+    const jsonSearchClear = document.getElementById('jsonSearchClear');
+
+    jsonSearchInput.addEventListener('input', handleJSONSearch);
+    jsonSearchPrev.addEventListener('click', () => navigateJSONSearch('prev'));
+    jsonSearchNext.addEventListener('click', () => navigateJSONSearch('next'));
+    jsonSearchClear.addEventListener('click', clearJSONSearch);
 }
 
 async function checkGitHubStatus() {
@@ -283,7 +294,7 @@ function renderEditor(cardData) {
     });
 }
 
-function renderSection(section, sectionIndex) {
+function renderSection(section, sectionIndex, isPreview = false) {
     const isQuickAssessment = section.type === 'quick-assessment';
     const isConversation = section.type === 'client-conversation';
 
@@ -298,11 +309,11 @@ function renderSection(section, sectionIndex) {
     // Render items (for quick-assessment)
     if (section.items && Array.isArray(section.items)) {
         section.items.forEach((item, itemIndex) => {
-            html += renderSectionItem(item, sectionIndex, itemIndex);
+            html += renderSectionItem(item, sectionIndex, itemIndex, isPreview);
         });
 
-        // Add "Add Question" button for quick-assessment
-        if (isQuickAssessment) {
+        // Add "Add Question" button for quick-assessment (not in preview)
+        if (isQuickAssessment && !isPreview) {
             html += `
                 <button onclick="addAssessmentQuestion(${sectionIndex})" class="add-btn" style="width: 100%; margin-top: 10px; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -318,19 +329,38 @@ function renderSection(section, sectionIndex) {
     // Render subsections (for client-conversation)
     if (section.subsections && Array.isArray(section.subsections)) {
         section.subsections.forEach((subsection, subIndex) => {
-            html += renderSubsection(subsection, sectionIndex, subIndex);
+            html += renderSubsection(subsection, sectionIndex, subIndex, isPreview);
         });
+
+        // Add "Add Subsection" button for client-conversation (not in preview)
+        if (isConversation && !isPreview) {
+            html += `
+                <button onclick="addConversationSubsection(${sectionIndex})" class="add-btn" style="width: 100%; margin-top: 10px; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="20" height="20" rx="4" fill="white" fill-opacity="0.2"/>
+                        <path d="M10 5V15M5 10H15" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Add Subsection Block
+                </button>
+            `;
+        }
     }
 
     html += `</div>`;
     return html;
 }
 
-function renderSectionItem(item, sectionIndex, itemIndex) {
+function renderSectionItem(item, sectionIndex, itemIndex, isPreview = false) {
+    const readonlyAttr = isPreview ? 'readonly' : '';
+    const readonlyStyle = isPreview ? 'background: #f9fafb; cursor: default;' : '';
+
     let html = `
         <div class="question-card" style="background: white; border: 2px solid #e5e7eb; padding: 20px; border-radius: 12px; margin-bottom: 20px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.3s;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <label style="font-weight: 700; margin: 0; color: var(--primary); font-size: 16px;">Question ${item.number || itemIndex + 1}</label>
+                <label style="font-weight: 700; margin: 0; color: var(--primary); font-size: 16px;">Question ${item.number || itemIndex + 1}</label>`;
+
+    if (!isPreview) {
+        html += `
                 <button onclick="removeQuestion(${sectionIndex}, ${itemIndex})" class="remove-btn"
                     style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.3s;">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -338,7 +368,10 @@ function renderSectionItem(item, sectionIndex, itemIndex) {
                         <path d="M4 4L12 12M12 4L4 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
                     </svg>
                     Remove
-                </button>
+                </button>`;
+    }
+
+    html += `
             </div>
 
             <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Title</label>
@@ -347,7 +380,8 @@ function renderSectionItem(item, sectionIndex, itemIndex) {
                 data-item="${itemIndex}"
                 data-field="title"
                 value="${escapeHtml(item.title || '')}"
-                style="width: 100%; margin-bottom: 14px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; transition: border-color 0.3s;"
+                ${readonlyAttr}
+                style="width: 100%; margin-bottom: 14px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; ${readonlyStyle}"
                 onfocus="this.style.borderColor='var(--primary)'"
                 onblur="this.style.borderColor='#e5e7eb'"
             />
@@ -358,7 +392,8 @@ function renderSectionItem(item, sectionIndex, itemIndex) {
                 data-item="${itemIndex}"
                 data-field="question"
                 rows="3"
-                style="width: 100%; margin-bottom: 14px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; transition: border-color 0.3s;"
+                ${readonlyAttr}
+                style="width: 100%; margin-bottom: 14px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; ${readonlyStyle}"
                 onfocus="this.style.borderColor='var(--primary)'"
                 onblur="this.style.borderColor='#e5e7eb'"
             >${escapeHtml(item.question || '')}</textarea>
@@ -378,74 +413,103 @@ function renderSectionItem(item, sectionIndex, itemIndex) {
                             data-option="${optIndex}"
                             data-field="label"
                             rows="2"
-                            style="width: 100%; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; transition: border-color 0.3s;"
+                            ${readonlyAttr}
+                            style="width: 100%; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; transition: border-color 0.3s; ${readonlyStyle}"
                             onfocus="this.style.borderColor='var(--primary)'"
                             onblur="this.style.borderColor='#e5e7eb'"
                         >${escapeHtml(option.label || '')}</textarea>
-                    </div>
+                    </div>`;
+
+            if (!isPreview) {
+                html += `
                     <button onclick="removeOption(${sectionIndex}, ${itemIndex}, ${optIndex})" class="remove-btn-small"
                         style="background: #ef4444; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; transition: all 0.3s; flex-shrink: 0;">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M4 4L12 12M12 4L4 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
                         </svg>
-                    </button>
+                    </button>`;
+            }
+
+            html += `
                 </div>
             `;
         });
-        html += `
-            <button onclick="addOption(${sectionIndex}, ${itemIndex})" class="add-btn-small"
-                style="margin-top: 12px; padding: 10px 16px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.3s;">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="16" height="16" rx="3" fill="white" fill-opacity="0.2"/>
-                    <path d="M8 3V13M3 8H13" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                Add Option
-            </button>
-        `;
+
+        if (!isPreview) {
+            html += `
+                <button onclick="addOption(${sectionIndex}, ${itemIndex})" class="add-btn-small"
+                    style="margin-top: 12px; padding: 10px 16px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.3s;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="16" height="16" rx="3" fill="white" fill-opacity="0.2"/>
+                        <path d="M8 3V13M3 8H13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Add Option
+                </button>
+            `;
+        }
     }
 
     html += `</div>`;
     return html;
 }
 
-function renderSubsection(subsection, sectionIndex, subIndex) {
+function renderSubsection(subsection, sectionIndex, subIndex, isPreview = false) {
     // Detect type: conversation questions or red flags
     const isRedFlagSection = subsection.title && subsection.title.toLowerCase().includes('red flag');
     const isConversationSection = !isRedFlagSection;
+    const readonlyAttr = isPreview ? 'readonly' : '';
+    const readonlyStyle = isPreview ? 'background: #f9fafb; cursor: default;' : '';
 
     let html = `
         <div style="background: #f3f4f6; padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e5e7eb;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h4 style="color: var(--primary); margin: 0; font-size: 16px; font-weight: 700;">${subsection.title || 'Subsection'}</h4>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Subsection Title</label>
+                <input type="text"
+                    data-section="${sectionIndex}"
+                    data-subsection="${subIndex}"
+                    data-field="title"
+                    value="${escapeHtml(subsection.title || '')}"
+                    ${readonlyAttr}
+                    style="width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 15px; font-weight: 600; transition: border-color 0.3s; ${readonlyStyle}"
+                    onfocus="this.style.borderColor='var(--primary)'"
+                    onblur="this.style.borderColor='#e5e7eb'"
+                />
+            </div>`;
+
+    if (!isPreview) {
+        html += `
+            <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 16px;">
                 <div style="display: flex; gap: 8px;">`;
 
-    // Show only appropriate button based on section type
-    if (isConversationSection) {
-        html += `
-            <button onclick="addSubsectionItem(${sectionIndex}, ${subIndex}, 'question')" class="add-btn-small"
-                style="padding: 8px 14px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.3s;">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="14" height="14" rx="2" fill="white" fill-opacity="0.2"/>
-                    <path d="M7 3V11M3 7H11" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                Add Question
-            </button>`;
-    } else if (isRedFlagSection) {
-        html += `
-            <button onclick="addSubsectionItem(${sectionIndex}, ${subIndex}, 'checkbox')" class="add-btn-small"
-                style="padding: 8px 14px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.3s;">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="14" height="14" rx="2" fill="white" fill-opacity="0.2"/>
-                    <path d="M7 3V11M3 7H11" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                Add Red Flag
-            </button>`;
-    }
+        // Show only appropriate button based on section type
+        if (isConversationSection) {
+            html += `
+                <button onclick="addSubsectionItem(${sectionIndex}, ${subIndex}, 'question')" class="add-btn-small"
+                    style="padding: 8px 14px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.3s;">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="14" height="14" rx="2" fill="white" fill-opacity="0.2"/>
+                        <path d="M7 3V11M3 7H11" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Add Question
+                </button>`;
+        } else if (isRedFlagSection) {
+            html += `
+                <button onclick="addSubsectionItem(${sectionIndex}, ${subIndex}, 'checkbox')" class="add-btn-small"
+                    style="padding: 8px 14px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.3s;">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="14" height="14" rx="2" fill="white" fill-opacity="0.2"/>
+                        <path d="M7 3V11M3 7H11" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Add Red Flag
+                </button>`;
+        }
 
-    html += `
+        html += `
                 </div>
             </div>
-    `;
+        `;
+    }
+
 
     // Render items
     if (subsection.items && Array.isArray(subsection.items)) {
@@ -454,14 +518,20 @@ function renderSubsection(subsection, sectionIndex, subIndex) {
                 html += `
                     <div class="conversation-item" style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 2px solid #e5e7eb; transition: all 0.3s;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <label style="font-weight: 700; font-size: 14px; margin: 0; color: var(--primary);">Question ID</label>
+                            <label style="font-weight: 700; font-size: 14px; margin: 0; color: var(--primary);">Question ID</label>`;
+
+                if (!isPreview) {
+                    html += `
                             <button onclick="removeSubsectionItem(${sectionIndex}, ${subIndex}, ${itemIndex})" class="remove-btn-small"
                                 style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px; transition: all 0.3s;">
                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M3 3L11 11M11 3L3 11" stroke="white" stroke-width="2" stroke-linecap="round"/>
                                 </svg>
                                 Remove
-                            </button>
+                            </button>`;
+                }
+
+                html += `
                         </div>
                         <input type="text"
                             data-section="${sectionIndex}"
@@ -469,7 +539,8 @@ function renderSubsection(subsection, sectionIndex, subIndex) {
                             data-item="${itemIndex}"
                             data-field="id"
                             value="${escapeHtml(item.id || '')}"
-                            style="width: 100%; margin-bottom: 10px; padding: 8px 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 13px; font-weight: 600; transition: border-color 0.3s;"
+                            ${readonlyAttr}
+                            style="width: 100%; margin-bottom: 10px; padding: 8px 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 13px; font-weight: 600; transition: border-color 0.3s; ${readonlyStyle}"
                             onfocus="this.style.borderColor='var(--primary)'"
                             onblur="this.style.borderColor='#e5e7eb'"
                         />
@@ -480,7 +551,8 @@ function renderSubsection(subsection, sectionIndex, subIndex) {
                             data-item="${itemIndex}"
                             data-field="text"
                             rows="3"
-                            style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; transition: border-color 0.3s;"
+                            ${readonlyAttr}
+                            style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; transition: border-color 0.3s; ${readonlyStyle}"
                             onfocus="this.style.borderColor='var(--primary)'"
                             onblur="this.style.borderColor='#e5e7eb'"
                         >${escapeHtml(item.text || '')}</textarea>
@@ -497,14 +569,20 @@ function renderSubsection(subsection, sectionIndex, subIndex) {
                                     <circle cx="12" cy="19" r="2" fill="#dc2626"/>
                                 </svg>
                                 Red Flag ID
-                            </label>
+                            </label>`;
+
+                if (!isPreview) {
+                    html += `
                             <button onclick="removeSubsectionItem(${sectionIndex}, ${subIndex}, ${itemIndex})" class="remove-btn-small"
                                 style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px; transition: all 0.3s;">
                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M3 3L11 11M11 3L3 11" stroke="white" stroke-width="2" stroke-linecap="round"/>
                                 </svg>
                                 Remove
-                            </button>
+                            </button>`;
+                }
+
+                html += `
                         </div>
                         <input type="text"
                             data-section="${sectionIndex}"
@@ -512,7 +590,8 @@ function renderSubsection(subsection, sectionIndex, subIndex) {
                             data-item="${itemIndex}"
                             data-field="id"
                             value="${escapeHtml(item.id || '')}"
-                            style="width: 100%; margin-bottom: 10px; padding: 8px 10px; border: 2px solid #fca5a5; border-radius: 6px; font-size: 13px; font-weight: 600; transition: border-color 0.3s;"
+                            ${readonlyAttr}
+                            style="width: 100%; margin-bottom: 10px; padding: 8px 10px; border: 2px solid #fca5a5; border-radius: 6px; font-size: 13px; font-weight: 600; transition: border-color 0.3s; ${readonlyStyle}"
                             onfocus="this.style.borderColor='#dc2626'"
                             onblur="this.style.borderColor='#fca5a5'"
                         />
@@ -523,7 +602,8 @@ function renderSubsection(subsection, sectionIndex, subIndex) {
                             data-item="${itemIndex}"
                             data-field="label"
                             rows="2"
-                            style="width: 100%; padding: 10px; border: 2px solid #fca5a5; border-radius: 6px; font-size: 14px; transition: border-color 0.3s;"
+                            ${readonlyAttr}
+                            style="width: 100%; padding: 10px; border: 2px solid #fca5a5; border-radius: 6px; font-size: 14px; transition: border-color 0.3s; ${readonlyStyle}"
                             onfocus="this.style.borderColor='#dc2626'"
                             onblur="this.style.borderColor='#fca5a5'"
                         >${escapeHtml(item.label || '')}</textarea>
@@ -662,16 +742,23 @@ function updateFromSectionsEditor() {
             }
         }
 
-        // Handle conversation subsection items
+        // Handle conversation subsection items and titles
         if (input.dataset.subsection !== undefined) {
             const subIdx = parseInt(input.dataset.subsection);
-            const itemIdx = parseInt(input.dataset.item);
             const section = currentCard.data.sections[sectionIdx];
 
             if (section.subsections && section.subsections[subIdx]) {
                 const subsection = section.subsections[subIdx];
-                if (subsection.items && subsection.items[itemIdx]) {
-                    subsection.items[itemIdx][field] = value;
+
+                // If no item specified, it's the subsection title
+                if (input.dataset.item === undefined) {
+                    subsection[field] = value;
+                } else {
+                    // Otherwise it's an item within the subsection
+                    const itemIdx = parseInt(input.dataset.item);
+                    if (subsection.items && subsection.items[itemIdx]) {
+                        subsection.items[itemIdx][field] = value;
+                    }
                 }
             }
         }
@@ -694,59 +781,19 @@ function getEditorData() {
 
 function renderPreview(cardData) {
     let html = `
-        <h2>${cardData.indicator || ''} - ${cardData.title || 'Untitled'}</h2>
-        <p><span class="badge">${cardData.category || 'Unknown Category'}</span></p>
+        <div style="padding: 10px;">
+            <h2 style="color: var(--primary); margin-bottom: 8px;">${cardData.indicator || ''} - ${cardData.title || 'Untitled'}</h2>
+            <p><span class="badge">${cardData.category || 'Unknown Category'}</span></p>
     `;
 
-    // Render sections if they exist
+    // Render sections using same structure as editor but in preview mode
     if (cardData.sections && Array.isArray(cardData.sections)) {
-        cardData.sections.forEach(section => {
-            html += `<h3>${section.icon || '📋'} ${section.title || 'Section'}</h3>`;
-
-            // Render items (quick assessment questions)
-            if (section.items && Array.isArray(section.items)) {
-                section.items.forEach((item, idx) => {
-                    html += `<div style="background: var(--bg-gray); padding: 15px; border-radius: 8px; margin: 10px 0;">`;
-                    html += `<strong>Q${item.number || idx + 1}: ${item.title || 'Untitled'}</strong><br>`;
-                    html += `<p style="margin: 8px 0;">${item.question || ''}</p>`;
-
-                    if (item.options && Array.isArray(item.options)) {
-                        html += `<ul style="margin-top: 8px;">`;
-                        item.options.forEach(opt => {
-                            html += `<li>${opt.label || ''} <em>(score: ${opt.score})</em></li>`;
-                        });
-                        html += `</ul>`;
-                    }
-                    html += `</div>`;
-                });
-            }
-
-            // Render subsections (conversation questions & red flags)
-            if (section.subsections && Array.isArray(section.subsections)) {
-                section.subsections.forEach(subsection => {
-                    html += `<h4 style="margin-top: 20px; color: var(--secondary);">${subsection.title || 'Subsection'}</h4>`;
-
-                    if (subsection.items && Array.isArray(subsection.items)) {
-                        subsection.items.forEach(item => {
-                            if (item.type === 'question') {
-                                html += `<div style="background: white; padding: 12px; border-radius: 6px; margin: 8px 0; border-left: 3px solid var(--primary);">`;
-                                html += `<strong>${item.id || ''}</strong><br>`;
-                                html += `<p style="margin: 4px 0;">${item.text || ''}</p>`;
-                                html += `</div>`;
-                            } else if (item.type === 'checkbox') {
-                                html += `<div style="background: #fee; padding: 12px; border-radius: 6px; margin: 8px 0; border-left: 3px solid var(--danger);">`;
-                                html += `<strong>🚩 ${item.id || ''}</strong><br>`;
-                                html += `<p style="margin: 4px 0;">${item.label || ''}</p>`;
-                                html += `<small>Severity: ${item.severity || 'N/A'} | Impact: ${item.score_impact || 0}</small>`;
-                                html += `</div>`;
-                            }
-                        });
-                    }
-                });
-            }
+        cardData.sections.forEach((section, sectionIndex) => {
+            html += renderSection(section, sectionIndex, true); // true = preview mode
         });
     }
 
+    html += `</div>`;
     cardPreview.innerHTML = html;
 }
 
@@ -778,6 +825,82 @@ function applyJSON() {
     } catch (e) {
         showAlert('Invalid JSON: ' + e.message, 'error');
     }
+}
+
+// JSON Search Functionality
+let jsonSearchMatches = [];
+let currentMatchIndex = -1;
+
+function handleJSONSearch() {
+    const searchInput = document.getElementById('jsonSearchInput');
+    const searchText = searchInput.value.toLowerCase();
+    const jsonText = jsonEditor.value;
+    const countDisplay = document.getElementById('jsonSearchCount');
+
+    // Clear previous highlights
+    jsonSearchMatches = [];
+    currentMatchIndex = -1;
+
+    if (!searchText) {
+        countDisplay.textContent = '';
+        return;
+    }
+
+    // Find all matches
+    let index = 0;
+    const lowerJson = jsonText.toLowerCase();
+    while ((index = lowerJson.indexOf(searchText, index)) !== -1) {
+        jsonSearchMatches.push(index);
+        index += searchText.length;
+    }
+
+    if (jsonSearchMatches.length > 0) {
+        currentMatchIndex = 0;
+        countDisplay.textContent = `${currentMatchIndex + 1} / ${jsonSearchMatches.length}`;
+        highlightMatch();
+    } else {
+        countDisplay.textContent = 'No matches';
+    }
+}
+
+function navigateJSONSearch(direction) {
+    if (jsonSearchMatches.length === 0) return;
+
+    if (direction === 'next') {
+        currentMatchIndex = (currentMatchIndex + 1) % jsonSearchMatches.length;
+    } else {
+        currentMatchIndex = (currentMatchIndex - 1 + jsonSearchMatches.length) % jsonSearchMatches.length;
+    }
+
+    const countDisplay = document.getElementById('jsonSearchCount');
+    countDisplay.textContent = `${currentMatchIndex + 1} / ${jsonSearchMatches.length}`;
+    highlightMatch();
+}
+
+function highlightMatch() {
+    if (currentMatchIndex === -1 || jsonSearchMatches.length === 0) return;
+
+    const matchPosition = jsonSearchMatches[currentMatchIndex];
+    const searchInput = document.getElementById('jsonSearchInput');
+    const searchLength = searchInput.value.length;
+
+    // Set selection to highlight the match
+    jsonEditor.focus();
+    jsonEditor.setSelectionRange(matchPosition, matchPosition + searchLength);
+
+    // Scroll to make the selection visible
+    const lineHeight = 20; // Approximate line height
+    const charsBeforeMatch = jsonEditor.value.substring(0, matchPosition);
+    const lineNumber = charsBeforeMatch.split('\n').length - 1;
+    const scrollPosition = lineNumber * lineHeight;
+    jsonEditor.scrollTop = scrollPosition - (jsonEditor.clientHeight / 2);
+}
+
+function clearJSONSearch() {
+    document.getElementById('jsonSearchInput').value = '';
+    document.getElementById('jsonSearchCount').textContent = '';
+    jsonSearchMatches = [];
+    currentMatchIndex = -1;
 }
 
 // Load JSON file from local computer
@@ -964,6 +1087,43 @@ window.removeOption = function(sectionIndex, itemIndex, optionIndex) {
             renderPreview(currentCard.data);
             jsonEditor.value = JSON.stringify(currentCard.data, null, 2);
         }
+    }
+};
+
+window.addConversationSubsection = function(sectionIndex) {
+    if (!currentCard || !currentCard.data) return;
+    const section = currentCard.data.sections[sectionIndex];
+    if (section && section.subsections) {
+        const newSubsection = {
+            title: "New Subsection - edit title",
+            items: [
+                {
+                    type: 'question',
+                    id: 'conv_q_new',
+                    text: 'New question - edit me',
+                    scoring_guidance: {
+                        green: '',
+                        yellow: '',
+                        red: ''
+                    },
+                    followups: []
+                }
+            ]
+        };
+        section.subsections.push(newSubsection);
+        renderEditor(currentCard.data);
+        renderPreview(currentCard.data);
+        jsonEditor.value = JSON.stringify(currentCard.data, null, 2);
+
+        // Scroll to new subsection with animation
+        setTimeout(() => {
+            const subsections = document.querySelectorAll('.form-section[data-section-index="' + sectionIndex + '"] > div[style*="background: #f3f4f6"]');
+            if (subsections.length > 0) {
+                const lastSubsection = subsections[subsections.length - 1];
+                lastSubsection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                lastSubsection.style.animation = 'slideIn 0.5s ease-out';
+            }
+        }, 100);
     }
 };
 
