@@ -295,8 +295,8 @@ function renderEditor(cardData) {
 }
 
 function renderSection(section, sectionIndex, isPreview = false) {
-    const isQuickAssessment = section.type === 'quick-assessment';
-    const isConversation = section.type === 'client-conversation';
+    const isQuickAssessment = section.type === 'radio-questions';
+    const isConversation = section.type === 'conversation';
 
     let html = `
         <div class="form-section" data-section-index="${sectionIndex}">
