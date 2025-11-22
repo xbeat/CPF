@@ -7,6 +7,64 @@ let currentCard = null;
 let currentCardPath = null;
 let githubEnabled = false;
 
+// LocalStorage key for persisting local cards
+const LOCAL_CARDS_STORAGE_KEY = 'cpf_card_editor_local_cards';
+
+// ==================== LocalStorage Functions ====================
+
+/**
+ * Save local cards to localStorage
+ * Only saves cards that were loaded from local files (have 'isLocal' flag)
+ */
+function saveCardsToLocalStorage() {
+    const localCards = cards.filter(card => card.isLocal);
+    const cardsToSave = localCards.map(card => ({
+        path: card.path,
+        id: card.id,
+        category: card.category,
+        language: card.language,
+        data: card.data,
+        isLocal: true
+    }));
+    localStorage.setItem(LOCAL_CARDS_STORAGE_KEY, JSON.stringify(cardsToSave));
+}
+
+/**
+ * Load local cards from localStorage
+ * @returns {Array} Array of card objects
+ */
+function loadCardsFromLocalStorage() {
+    try {
+        const stored = localStorage.getItem(LOCAL_CARDS_STORAGE_KEY);
+        if (stored) {
+            return JSON.parse(stored);
+        }
+    } catch (error) {
+        console.error('Error loading cards from localStorage:', error);
+    }
+    return [];
+}
+
+/**
+ * Remove a specific card from storage and memory
+ * @param {string} cardId - The ID of the card to remove
+ */
+function removeCardFromStorage(cardId) {
+    const index = cards.findIndex(c => c.id === cardId);
+    if (index !== -1) {
+        cards.splice(index, 1);
+        saveCardsToLocalStorage();
+
+        // If removed card was current, clear editor
+        if (currentCard && currentCard.id === cardId) {
+            currentCard = null;
+            currentCardPath = null;
+            emptyState.style.display = 'flex';
+            editorSection.classList.add('hidden');
+        }
+    }
+}
+
 // DOM Elements
 const cardList = document.getElementById('card-list');
 const cardSearch = document.getElementById('card-search');
@@ -87,21 +145,38 @@ async function checkGitHubStatus() {
 async function loadCards() {
     cardList.innerHTML = '<div class="loading"><div class="loading-spinner"></div><div>Loading cards...</div></div>';
 
+    // First, load any previously saved local cards from localStorage
+    const savedLocalCards = loadCardsFromLocalStorage();
+    if (savedLocalCards.length > 0) {
+        cards = [...savedLocalCards];
+    }
+
     try {
         // Try to load from GitHub first if enabled
         if (githubEnabled) {
             const response = await fetch('/api/cards');
             if (response.ok) {
                 const cardPaths = await response.json();
-                cards = cardPaths.map(path => ({
+                const githubCards = cardPaths.map(path => ({
                     path: path,
                     id: path.split('/').pop().replace('.json', ''),
                     category: path.split('/')[3], // e.g., "1.x-authority"
-                    language: path.includes('/en-US/') ? 'en-US' : 'it-IT'
+                    language: path.includes('/en-US/') ? 'en-US' : 'it-IT',
+                    isLocal: false
                 }));
+                // Merge GitHub cards with local cards (local cards take precedence)
+                const localCardIds = cards.map(c => c.id);
+                const newGithubCards = githubCards.filter(gc => !localCardIds.includes(gc.id));
+                cards = [...cards, ...newGithubCards];
                 renderCardList();
                 return;
             }
+        }
+
+        // If we have local cards from localStorage, show them
+        if (cards.length > 0) {
+            renderCardList();
+            return;
         }
 
         // Fallback: Show instructions for local loading
@@ -123,15 +198,22 @@ async function loadCards() {
 
         document.getElementById('file-input').addEventListener('change', handleFileSelect);
     } catch (error) {
+        // Even on error, show local cards if available
+        if (cards.length > 0) {
+            renderCardList();
+        }
         showAlert('Error loading cards: ' + error.message, 'error');
     }
 }
 
 function handleFileSelect(event) {
     const files = Array.from(event.target.files);
-    cards = [];
+    // Keep existing local cards, don't reset
+    const existingLocalCards = cards.filter(c => c.isLocal);
+    cards = [...existingLocalCards];
 
-    files.forEach((file, index) => {
+    let loadedCount = 0;
+    files.forEach((file) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
@@ -142,19 +224,30 @@ function handleFileSelect(event) {
                 // Use data.indicator or data.id or fallback to filename
                 const cardId = data.indicator || data.id || file.name.replace('.json', '');
 
-                cards.push({
+                // Check if card already exists
+                const existingIndex = cards.findIndex(c => c.id === cardId);
+                const newCard = {
                     path: file.name,
                     id: cardId,
                     category: data.category || 'Unknown',
                     language: data.language || 'en-US',
                     data: data,
-                    file: file
-                });
+                    isLocal: true // Mark as local card
+                };
 
-                if (index === files.length - 1) {
+                if (existingIndex >= 0) {
+                    cards[existingIndex] = newCard;
+                } else {
+                    cards.push(newCard);
+                }
+
+                loadedCount++;
+                if (loadedCount === files.length) {
+                    saveCardsToLocalStorage(); // Persist to localStorage
                     renderCardList();
                 }
             } catch (error) {
+                loadedCount++;
                 showAlert(`Error parsing ${file.name}: ` + error.message, 'error');
             }
         };
@@ -173,16 +266,45 @@ function renderCardList() {
 
     const html = filteredCards.map(card => `
         <div class="card-list-item" data-card-id="${card.id}">
-            <div class="card-list-item-title">${card.id}</div>
-            <div class="card-list-item-subtitle">${card.category || 'Unknown'}</div>
+            <div class="card-list-item-content">
+                <div class="card-list-item-title">${card.id}</div>
+                <div class="card-list-item-subtitle">
+                    ${card.category || 'Unknown'}
+                    ${card.isLocal ? '<span class="local-badge">LOCAL</span>' : ''}
+                </div>
+            </div>
+            ${card.isLocal ? `
+                <button class="card-delete-btn" data-card-id="${card.id}" title="Remove card">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            ` : ''}
         </div>
     `).join('');
 
     cardList.innerHTML = html;
 
-    // Add click listeners using event delegation
+    // Add click listeners for card selection
     document.querySelectorAll('.card-list-item').forEach(item => {
-        item.addEventListener('click', () => loadCard(item.dataset.cardId));
+        item.addEventListener('click', (e) => {
+            // Don't trigger if clicking delete button
+            if (e.target.closest('.card-delete-btn')) return;
+            loadCard(item.dataset.cardId);
+        });
+    });
+
+    // Add click listeners for delete buttons
+    document.querySelectorAll('.card-delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const cardId = btn.dataset.cardId;
+            if (confirm(`Remove "${cardId}" from the list?`)) {
+                removeCardFromStorage(cardId);
+                renderCardList();
+                showAlert(`Card "${cardId}" removed`, 'success');
+            }
+        });
     });
 }
 
@@ -211,16 +333,45 @@ function renderFilteredCards(filteredCards) {
 
     const html = filteredCards.map(card => `
         <div class="card-list-item ${currentCard && currentCard.id === card.id ? 'active' : ''}" data-card-id="${card.id}">
-            <div class="card-list-item-title">${card.id}</div>
-            <div class="card-list-item-subtitle">${card.category || 'Unknown'}</div>
+            <div class="card-list-item-content">
+                <div class="card-list-item-title">${card.id}</div>
+                <div class="card-list-item-subtitle">
+                    ${card.category || 'Unknown'}
+                    ${card.isLocal ? '<span class="local-badge">LOCAL</span>' : ''}
+                </div>
+            </div>
+            ${card.isLocal ? `
+                <button class="card-delete-btn" data-card-id="${card.id}" title="Remove card">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            ` : ''}
         </div>
     `).join('');
 
     cardList.innerHTML = html;
 
-    // Add click listeners using event delegation
+    // Add click listeners for card selection
     document.querySelectorAll('.card-list-item').forEach(item => {
-        item.addEventListener('click', () => loadCard(item.dataset.cardId));
+        item.addEventListener('click', (e) => {
+            // Don't trigger if clicking delete button
+            if (e.target.closest('.card-delete-btn')) return;
+            loadCard(item.dataset.cardId);
+        });
+    });
+
+    // Add click listeners for delete buttons
+    document.querySelectorAll('.card-delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const cardId = btn.dataset.cardId;
+            if (confirm(`Remove "${cardId}" from the list?`)) {
+                removeCardFromStorage(cardId);
+                filterCards(); // Re-apply filters after removal
+                showAlert(`Card "${cardId}" removed`, 'success');
+            }
+        });
     });
 }
 
@@ -917,18 +1068,17 @@ async function handleFileLoad(event) {
         const text = await file.text();
         const data = JSON.parse(text);
 
-        // Validate it's a valid card JSON
-        if (!data.id || !data.title) {
-            throw new Error('Invalid card format: missing id or title');
-        }
+        // Use indicator or id or filename as card ID
+        const cardId = data.indicator || data.id || file.name.replace('.json', '');
 
         // Create a card object
         const loadedCard = {
-            id: data.id,
+            id: cardId,
             path: file.name,
             data: data,
             category: data.category || 'unknown',
-            language: data.language || 'en-US'
+            language: data.language || 'en-US',
+            isLocal: true // Mark as local card
         };
 
         // Add to cards list if not already there
@@ -939,11 +1089,14 @@ async function handleFileLoad(event) {
             cards.push(loadedCard);
         }
 
+        // Persist to localStorage
+        saveCardsToLocalStorage();
+
         // Render card list and select the loaded card
         renderCardList();
-        selectCard(loadedCard.id);
+        loadCard(loadedCard.id);
 
-        showAlert(`Loaded card: ${data.title}`, 'success');
+        showAlert(`Loaded card: ${data.title || cardId}`, 'success');
     } catch (error) {
         showAlert(`Failed to load JSON file: ${error.message}`, 'error');
         console.error('File load error:', error);
