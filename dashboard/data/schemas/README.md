@@ -2,6 +2,11 @@
 
 Schema JSON per la validazione dei dati delle organizzazioni e degli assessment CPF.
 
+Questi schema sono utilizzati per:
+- **Validazione JSON** - Quando si usa storage mode `json`
+- **Documentazione** - Riferimento struttura dati per tutti gli storage
+- **Testing** - Validazione durante sviluppo e CI/CD
+
 ## Contenuto
 
 ### `organization_index_schema.json`
@@ -168,14 +173,42 @@ if (validate(data)) {
 - `stable` - Risk stabile
 - `deteriorating` - Risk in aumento
 
+## Multi-Storage Compatibility
+
+Questi JSON Schema sono **storage-agnostic** e definiscono la struttura dati utilizzata da:
+
+### Storage Mode: JSON
+- ✅ Validazione diretta dei file JSON
+- ✅ Schema applicato pre-write con AJV
+- File: `organizations_index.json`, `organizations/org-{id}.json`
+
+### Storage Mode: SQLite
+- ⚠️ Schema SQL mappato da JSON Schema
+- Validazione applicata pre-INSERT/UPDATE nel code
+- Tabelle: `organizations`, `assessments`
+
+### Storage Mode: PostgreSQL
+- ⚠️ Schema SQL mappato da JSON Schema
+- Validazione applicata pre-INSERT/UPDATE nel code
+- Supporto JSONB per `raw_data` e `aggregates`
+- Tabelle: `organizations`, `assessments`
+
+**Nota**: La validazione degli schema garantisce consistenza dati indipendentemente dallo storage backend.
+
+---
+
 ## Riferimenti
 
-- **Data Storage Guide**: `/dashboard/data/README.md`
+- **Data Storage Guide**: `/dashboard/data/README.md` - Guida completa multi-storage
+- **Storage Adapters**: `/dashboard/lib/` - db_json.js, db_sqlite.js, db_postgres.js
 - **API Documentation**: `/dashboard/docs/API_DOCUMENTATION.md`
-- **Implementation**: `/dashboard/lib/dataManager.js`
+- **Config**: `/dashboard/config.js` - Configurazione storage
+
+---
 
 ## Versione Schema
 
-- **Version**: 2.0
-- **Last Updated**: 2025-01-11
+- **Version**: 3.0 (Multi-Storage)
+- **Last Updated**: 2025-11-22
 - **JSON Schema Standard**: Draft-07
+- **Storage Support**: JSON, SQLite, PostgreSQL

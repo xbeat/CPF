@@ -1,10 +1,44 @@
-# CPF Data Storage - File JSON Structure
+# CPF Data Storage - Multi-Storage Architecture
 
-Sistema di storage basato su file JSON per massima portabilità e semplicità di deployment.
+Sistema di storage flessibile che supporta **3 modalità di persistenza dati** configurabili:
+- **JSON** - File-based storage (massima portabilità)
+- **SQLite** - Database locale leggero (bilanciamento performance/portabilità)
+- **PostgreSQL** - Database enterprise (scalabilità e produzione)
 
 ---
 
-## 📁 Struttura Cartelle
+## ⚙️ Configurazione Storage
+
+### Variabile d'Ambiente
+
+Il tipo di storage si configura nel file `.env`:
+
+```bash
+# Crea .env copiando .env.example
+cp dashboard/.env.example dashboard/.env
+
+# Imposta il tipo di storage (json | sqlite | postgres)
+DATABASE_TYPE=json
+```
+
+**Opzioni disponibili:**
+- `json` - **Default** - Nessuna configurazione aggiuntiva richiesta
+- `sqlite` - Database SQLite locale (file `data/cpf_dashboard.sqlite`)
+- `postgres` - PostgreSQL remoto (richiede `DATABASE_URL`)
+
+### Configurazione PostgreSQL
+
+Se `DATABASE_TYPE=postgres`, imposta anche:
+
+```bash
+DATABASE_URL="postgresql://user:password@localhost:5432/cpf_db"
+```
+
+---
+
+## 📁 Storage Mode: JSON
+
+### Struttura Cartelle
 
 ```
 /dashboard/data/
@@ -12,8 +46,12 @@ Sistema di storage basato su file JSON per massima portabilità e semplicità di
 ├── organizations/                    # Dati completi per ogni organizzazione
 │   ├── org-demo-001.json
 │   ├── org-demo-002.json
+│   ├── techcorp-global-soc.json     # File SOC (opzionale)
 │   └── ...
-└── schemas/                          # Schema di riferimento (questa cartella)
+├── trash/                            # Organizzazioni eliminate (soft delete)
+├── history/                          # Versioning assessments
+├── audit_log.json                    # Log audit eventi
+└── schemas/                          # Schema di riferimento
     ├── organization_index_schema.json
     └── organization_data_schema.json
 ```
@@ -184,6 +222,187 @@ Statistiche calcolate automaticamente:
 
 ---
 
+---
+
+## 💾 Storage Mode: SQLite
+
+### Descrizione
+
+SQLite è un database SQL leggero, serverless, self-contained ideale per:
+- Sviluppo locale
+- Deployment semplici
+- Performance migliori di JSON per query complesse
+- Transazioni ACID garantite
+
+### File Database
+
+```
+/dashboard/data/
+└── cpf_dashboard.sqlite              # Database SQLite (creato automaticamente)
+```
+
+### Schema Tabelle
+
+#### **organizations**
+```sql
+CREATE TABLE organizations (
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  industry VARCHAR(100),
+  size VARCHAR(50),
+  country VARCHAR(2),
+  language VARCHAR(10),
+  notes TEXT,
+  partita_iva VARCHAR(50),
+  sede_sociale VARCHAR(255),
+  created_by VARCHAR(255),
+  is_deleted BOOLEAN DEFAULT 0,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
+);
+```
+
+#### **assessments**
+```sql
+CREATE TABLE assessments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  org_id VARCHAR(50) NOT NULL,
+  indicator_id VARCHAR(10) NOT NULL,
+  title TEXT,
+  category VARCHAR(100),
+  maturity_level VARCHAR(20),
+  bayesian_score DECIMAL(5, 4),
+  confidence DECIMAL(5, 4),
+  assessor VARCHAR(255),
+  assessment_date TIMESTAMP,
+  raw_data TEXT,                        -- JSON serializzato
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  UNIQUE(org_id, indicator_id)
+);
+```
+
+### Setup
+
+1. **Imposta `.env`**:
+   ```bash
+   DATABASE_TYPE=sqlite
+   ```
+
+2. **Avvia server**: Il database viene creato automaticamente al primo avvio
+   ```bash
+   npm start
+   ```
+
+3. **Verifica database**:
+   ```bash
+   sqlite3 dashboard/data/cpf_dashboard.sqlite "SELECT count(*) FROM organizations;"
+   ```
+
+---
+
+## 🐘 Storage Mode: PostgreSQL
+
+### Descrizione
+
+PostgreSQL è un database relazionale enterprise-grade ideale per:
+- Ambienti di produzione
+- Multi-tenancy e scalabilità
+- Backup e replica avanzati
+- Concorrenza e transazioni complesse
+
+### Configurazione
+
+1. **Installa PostgreSQL** (se non presente):
+   ```bash
+   # Ubuntu/Debian
+   sudo apt install postgresql postgresql-contrib
+
+   # macOS
+   brew install postgresql
+   brew services start postgresql
+   ```
+
+2. **Crea database**:
+   ```bash
+   sudo -u postgres psql
+   CREATE DATABASE cpf_dashboard;
+   CREATE USER cpf_user WITH ENCRYPTED PASSWORD 'secure_password';
+   GRANT ALL PRIVILEGES ON DATABASE cpf_dashboard TO cpf_user;
+   \q
+   ```
+
+3. **Imposta `.env`**:
+   ```bash
+   DATABASE_TYPE=postgres
+   DATABASE_URL="postgresql://cpf_user:secure_password@localhost:5432/cpf_dashboard"
+   ```
+
+4. **Avvia server**: Le tabelle vengono create automaticamente
+   ```bash
+   npm start
+   ```
+
+### Schema Tabelle
+
+#### **organizations**
+```sql
+CREATE TABLE organizations (
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  industry VARCHAR(100),
+  size VARCHAR(50),
+  country VARCHAR(2),
+  language VARCHAR(10),
+  created_by VARCHAR(255),
+  notes TEXT,
+  sede_sociale TEXT,
+  partita_iva VARCHAR(50),
+  is_deleted BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### **assessments**
+```sql
+CREATE TABLE assessments (
+  id SERIAL PRIMARY KEY,
+  org_id VARCHAR(50) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  indicator_id VARCHAR(10) NOT NULL,
+  title TEXT,
+  category VARCHAR(100),
+  maturity_level VARCHAR(20),
+  bayesian_score DECIMAL(5, 4),
+  confidence DECIMAL(5, 4),
+  assessor VARCHAR(255),
+  assessment_date TIMESTAMPTZ,
+  raw_data JSONB,                       -- Tipo nativo JSONB
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(org_id, indicator_id)
+);
+```
+
+### Verifica Setup
+
+```bash
+# Connessione al database
+psql postgresql://cpf_user:secure_password@localhost:5432/cpf_dashboard
+
+# Lista tabelle
+\dt
+
+# Conta organizzazioni
+SELECT count(*) FROM organizations;
+
+# Esci
+\q
+```
+
+---
+
 ## 🔄 Workflow Dati
 
 ### 1. Creazione Nuova Organizzazione (da Dashboard)
@@ -294,26 +513,123 @@ else trend = "stable"
 
 ---
 
-## 🔒 Vantaggi Soluzione JSON
+---
 
-✅ **Zero configurazione**: Nessun database da installare
-✅ **Portabilità**: Copia cartella = backup completo
-✅ **Debug facile**: File leggibili da umano
-✅ **Versioning**: Git tracking dei cambiamenti
-✅ **Semplicità**: No query, solo `fs.readFile` / `fs.writeFile`
-✅ **Backup**: Copia file = disaster recovery
-✅ **Cross-platform**: Funziona ovunque (Mac, Linux, Windows)
+## 📊 Confronto Storage Types
+
+| Caratteristica | JSON | SQLite | PostgreSQL |
+|----------------|------|--------|------------|
+| **Setup** | ✅ Zero config | ✅ Automatico | ⚠️ Richiede installazione |
+| **Portabilità** | ✅ Copia cartella | ✅ File singolo | ⚠️ Dump/Restore |
+| **Performance (< 10 org)** | ✅ Veloce | ✅ Molto veloce | ⚠️ Overhead network |
+| **Performance (> 100 org)** | ❌ Degrada | ✅ Ottimo | ✅ Eccellente |
+| **Concorrenza** | ❌ Single-user | ⚠️ Limitata | ✅ Multi-user |
+| **Transazioni ACID** | ❌ No | ✅ Sì | ✅ Sì |
+| **Query complesse** | ❌ Parsing manuale | ✅ SQL completo | ✅ SQL avanzato + JSONB |
+| **Backup** | ✅ Copia file | ✅ Copia file | ✅ pg_dump + replica |
+| **Debug** | ✅ Human-readable | ⚠️ SQL tools | ⚠️ SQL tools |
+| **Git tracking** | ✅ Sì | ❌ File binario | ❌ N/A |
+| **Scaling** | ❌ Singola macchina | ❌ Singola macchina | ✅ Horizontal scaling |
+| **Best for** | Dev/Demo | Dev/Prod piccole | Prod enterprise |
 
 ---
 
-## ⚠️ Limitazioni
+## ✅ Vantaggi per Storage Type
 
-⚠️ **Concurrent access**: No lock mechanism (ok per single-user)
-⚠️ **Scale**: Performance degrada con >100 organizzazioni
-⚠️ **Transactions**: No garanzia atomicità (write potrebbe fallire a metà)
-⚠️ **Query complesse**: No SQL JOIN, serve parsing JSON manuale
+### JSON
+- ✅ Zero configurazione
+- ✅ Massima portabilità
+- ✅ Debug facile (human-readable)
+- ✅ Git versioning
+- ✅ Cross-platform
 
-**Soluzione futura**: Migrare a PostgreSQL quando necessario (vedi `/dashboard/postgres/`)
+### SQLite
+- ✅ Setup automatico
+- ✅ Performance eccellente
+- ✅ Transazioni ACID
+- ✅ SQL query standard
+- ✅ File singolo portabile
+- ✅ Zero dipendenze esterne
+
+### PostgreSQL
+- ✅ Enterprise-grade
+- ✅ Multi-user concurrency
+- ✅ Scalabilità orizzontale
+- ✅ Backup/Replica avanzati
+- ✅ JSONB nativo
+- ✅ Sicurezza avanzata
+
+---
+
+## ⚠️ Limitazioni per Storage Type
+
+### JSON
+- ⚠️ No concurrent access (single-user)
+- ⚠️ Performance degrada con >100 org
+- ⚠️ No transazioni ACID
+- ⚠️ Query complesse richiedono parsing manuale
+
+### SQLite
+- ⚠️ Concorrenza limitata (lock file)
+- ⚠️ File binario (no Git tracking)
+- ⚠️ No scaling orizzontale
+
+### PostgreSQL
+- ⚠️ Richiede installazione/configurazione
+- ⚠️ Overhead per deployment piccoli
+- ⚠️ Backup più complesso di file copy
+
+---
+
+## 🔀 Migrazione tra Storage Types
+
+### Da JSON a SQLite
+
+```bash
+# 1. Backup dati JSON
+cp -r dashboard/data dashboard/data_backup
+
+# 2. Cambia .env
+echo "DATABASE_TYPE=sqlite" > dashboard/.env
+
+# 3. Esegui script migrazione
+node dashboard/scripts/migrate_json_to_sqlite.js
+
+# 4. Verifica
+sqlite3 dashboard/data/cpf_dashboard.sqlite "SELECT count(*) FROM organizations;"
+```
+
+### Da SQLite a PostgreSQL
+
+```bash
+# 1. Setup PostgreSQL (vedi sezione sopra)
+
+# 2. Cambia .env
+DATABASE_TYPE=postgres
+DATABASE_URL="postgresql://cpf_user:password@localhost:5432/cpf_dashboard"
+
+# 3. Esegui script migrazione
+node dashboard/scripts/migrate_sqlite_to_postgres.js
+
+# 4. Verifica
+psql $DATABASE_URL -c "SELECT count(*) FROM organizations;"
+```
+
+### Da PostgreSQL a JSON (downgrade)
+
+```bash
+# 1. Backup database
+pg_dump $DATABASE_URL > dashboard/data/backup.sql
+
+# 2. Esporta a JSON
+node dashboard/scripts/export_postgres_to_json.js
+
+# 3. Cambia .env
+echo "DATABASE_TYPE=json" > dashboard/.env
+
+# 4. Riavvia server
+npm start
+```
 
 ---
 
@@ -327,17 +643,56 @@ else trend = "stable"
 
 ---
 
-## 🚀 Migration Path
+## 🛠️ Architettura Storage Layer
 
-Se in futuro vorrai migrare a PostgreSQL:
+```
+┌─────────────────────────────────────────────────────┐
+│  Dashboard API (server.js)                          │
+│  - REST Endpoints                                   │
+│  - WebSocket Real-time                              │
+└─────────────────┬───────────────────────────────────┘
+                  │
+                  ↓
+┌─────────────────────────────────────────────────────┐
+│  Data Manager (lib/dataManager.js)                  │
+│  - Business Logic                                   │
+│  - Aggregates Calculation                           │
+│  - Validation                                       │
+└─────────────────┬───────────────────────────────────┘
+                  │
+         ┌────────┼────────┐
+         ↓        ↓        ↓
+    ┌────────┬────────┬────────┐
+    │ JSON   │ SQLite │Postgres│
+    │Adapter │Adapter │Adapter │
+    └────────┴────────┴────────┘
+         ↓        ↓        ↓
+    ┌────────┬────────┬────────┐
+    │ Files  │ .sqlite│Database│
+    └────────┴────────┴────────┘
+```
 
-1. Lo schema è già pronto in `/dashboard/postgres/`
-2. Script di migrazione: leggere tutti i file JSON e INSERT nel DB
-3. Cambiare API endpoints per usare `pool.query()` invece di `fs.readFile()`
-4. Mantenere retrocompatibilità con export JSON
+**Interfaccia Unificata**: Tutti e 3 gli adapter implementano le stesse funzioni:
+- `createOrganization()`
+- `readOrganization()`
+- `writeOrganization()`
+- `saveAssessment()`
+- `getAssessment()`
+- `deleteOrganization()`
+- Etc.
 
 ---
 
-**Versione**: 2.0 (File JSON)
-**Data**: 2025-01-11
-**Status**: Attivo
+## 📚 Riferimenti
+
+- **Dashboard Main**: `/dashboard/README.md` - Guida completa CPF Dashboard
+- **Server API**: `/dashboard/server.js` - Endpoint RESTful
+- **Storage Adapters**: `/dashboard/lib/` - db_json.js, db_sqlite.js, db_postgres.js
+- **Config**: `/dashboard/config.js` - Configurazione storage
+- **Schema Validation**: `/dashboard/data/schemas/` - JSON Schema
+
+---
+
+**Versione**: 3.0 (Multi-Storage)
+**Data**: 2025-11-22
+**Storage Supportati**: JSON, SQLite, PostgreSQL
