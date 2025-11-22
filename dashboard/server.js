@@ -12,6 +12,23 @@
  * Version: 2.0 - JSON file-based storage
  */
 
+// Error handlers for uncaught errors
+process.on('uncaughtException', (error) => {
+  console.error('\n❌ [FATAL] Uncaught Exception:', error.message);
+  console.error(error.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('\n❌ [FATAL] Unhandled Promise Rejection:', reason);
+  console.error('Promise:', promise);
+  process.exit(1);
+});
+
+console.log('[Server] Starting CPF Dashboard Server...');
+// Load environment variables from .env.github file
+require('dotenv').config({ path: './.env.github' });
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -19,9 +36,21 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const http = require('http');
 const { Server } = require('socket.io');
+const { Octokit } = require('@octokit/rest');
+
+// --- GitHub Configuration ---
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_OWNER = process.env.GITHUB_OWNER;
+const GITHUB_REPO = process.env.GITHUB_REPO;
+
+const octokit = new Octokit({ auth: GITHUB_TOKEN });
+
+console.log('[Server] Core modules loaded');
 
 // Import data manager
+console.log('[Server] Loading data manager...');
 const dataManager = require('./lib/dataManager');
+console.log('[Server] Data manager loaded successfully');
 
 // SOC (lazy-loaded on first use)
 let simulator = null;
@@ -73,6 +102,9 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Serve static files from dashboard folder
 app.use('/dashboard', express.static(__dirname));
 
+// Serve Card Editor files
+app.use('/dashboard/card-editor', express.static(path.join(__dirname, 'card-editor')));
+
 // Serve data files for SOC dashboard (static JSON files)
 app.use('/data', express.static(path.join(__dirname, 'data')));
 
@@ -99,6 +131,107 @@ app.get('/dashboard/dashboard_auditing.html', (req, res) => {
 
 app.get('/dashboard/dashboard.html', (req, res) => {
   res.redirect(301, '/dashboard/soc/index.html');
+});
+
+// ============================================
+// CARD EDITOR API
+// ============================================
+
+app.get('/api/cards', async (req, res) => {
+    // Return empty array if GitHub is not configured (local mode)
+    if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
+        console.log('[Card Editor] GitHub not configured, returning empty list');
+        return res.json([]);
+    }
+    try {
+        const { data } = await octokit.git.getTree({
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
+            tree_sha: 'main', // or your default branch
+            recursive: '1'
+        });
+
+        const cardFiles = data.tree
+            .map(item => item.path)
+            .filter(path =>
+                path.startsWith('auditor field kit/interactive/') &&
+                path.endsWith('.json') &&
+                !path.includes('/proposals/')
+            );
+
+        res.json(cardFiles);
+    } catch (error) {
+        console.error('[Card Editor API] Error listing cards:', error);
+        res.status(500).json({ error: 'Failed to fetch card list from GitHub.' });
+    }
+});
+
+app.get('/api/cards/contents', async (req, res) => {
+    const { path } = req.query;
+    if (!path) {
+        return res.status(400).json({ error: 'Path query parameter is required.' });
+    }
+
+    try {
+        const { data } = await octokit.repos.getContent({
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
+            path: path,
+            ref: 'main'
+        });
+
+        const content = Buffer.from(data.content, 'base64').toString('utf8');
+        res.json(JSON.parse(content));
+
+    } catch (error) {
+        console.error(`[Card Editor API] Error fetching card content for ${path}:`, error);
+        res.status(500).json({ error: `Failed to fetch card content for ${path} from GitHub.` });
+    }
+});
+
+app.post('/api/cards/propose', async (req, res) => {
+    const { originalPath, newContent, user } = req.body;
+
+    if (!originalPath || !newContent || !user) {
+        return res.status(400).json({ error: 'Missing required fields: originalPath, newContent, user' });
+    }
+
+    try {
+        const mainBranch = await octokit.repos.getBranch({ owner: GITHUB_OWNER, repo: GITHUB_REPO, branch: 'main' });
+        const latestSha = mainBranch.data.commit.sha;
+
+        const timestamp = Date.now();
+        const cardId = originalPath.split('/').pop().replace('.json', '');
+        const newBranchName = `proposal-${cardId}-${user}-${timestamp}`.replace(/[^a-zA-Z0-9-]/g, '-');
+
+        await octokit.git.createRef({
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
+            ref: `refs/heads/${newBranchName}`,
+            sha: latestSha
+        });
+
+        const proposalPath = originalPath.replace('/interactive/', '/interactive/proposals/');
+
+        await octokit.repos.createOrUpdateFileContents({
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
+            path: proposalPath,
+            message: `Propose changes for ${cardId} by ${user}`,
+            content: Buffer.from(JSON.stringify(newContent, null, 2)).toString('base64'),
+            branch: newBranchName,
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Proposal branch created successfully!',
+            branch: newBranchName
+        });
+
+    } catch (error) {
+        console.error('[Card Editor API] Error creating proposal:', error);
+        res.status(500).json({ error: 'Failed to create proposal branch on GitHub.' });
+    }
 });
 
 // ============================================
@@ -1754,6 +1887,8 @@ app.post('/api/simulator/emit', async (req, res) => {
 // SERVER START
 // ============================================
 
+console.log('[Server] Initializing HTTP server on port', PORT);
+
 server.listen(PORT, () => {
   console.log('\n╔════════════════════════════════════════════════════════════╗');
   console.log('║          🛡️  CPF Dashboard Server v2.0 - RUNNING            ║');
@@ -1804,6 +1939,18 @@ server.listen(PORT, () => {
   console.log(`        GET    /api/simulator/scenario/:orgId`);
 
   console.log('\n⚙️  Press CTRL+C to stop the server\n');
+});
+
+// Handle server listen errors
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`\n❌ [FATAL] Port ${PORT} is already in use`);
+    console.error('   Please stop the other process or use a different port\n');
+  } else {
+    console.error('\n❌ [FATAL] Server error:', error.message);
+    console.error(error.stack);
+  }
+  process.exit(1);
 });
 
 // Graceful shutdown
