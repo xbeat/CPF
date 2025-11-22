@@ -65,7 +65,7 @@ function setupEventListeners() {
 
 async function checkGitHubStatus() {
     try {
-        const response = await fetch('/api/cards');
+        const response = await fetch('/api/github/status');
         if (response.ok) {
             githubEnabled = true;
             statusIcon.textContent = '🔗';
@@ -75,6 +75,11 @@ async function checkGitHubStatus() {
         }
     } catch (error) {
         // GitHub not available, keep local mode
+        githubEnabled = true;
+        statusIcon.textContent = '⚠️';
+        statusText.textContent = 'GitHub Not Connected';
+        saveGithubBtn.style.display = 'inline-flex';
+        githubStatus.style.background = 'rgba(255, 0, 0, 0.81)';
         console.log('GitHub integration not available, using local mode');
     }
 }
