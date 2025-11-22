@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     notes TEXT,
     sede_sociale TEXT,
     partita_iva VARCHAR(50),
+    is_deleted BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -40,6 +41,7 @@ CREATE TABLE IF NOT EXISTS assessments (
     assessment_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     raw_data TEXT, -- JSON stored as TEXT in SQLite
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
     -- Ensure one assessment per org+indicator combination
     UNIQUE(org_id, indicator_id)

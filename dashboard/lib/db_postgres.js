@@ -157,11 +157,12 @@ async function createOrganization(orgData) {
     }
 
     await client.query('COMMIT');
+    console.log(`[DB-PG] Organization ${orgId} saved successfully.`);
     return orgData;
 
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error(`[DB-PG] Errore durante il salvataggio dell'organizzazione ${orgId}. Transazione annullata.`, error);
+    console.error(`[DB-PG] Error saving organization ${orgId}. Transaction rolled back.`, error);
     throw error;
   } finally {
     client.release();
@@ -173,22 +174,43 @@ async function createOrganization(orgData) {
 
 async function readOrganizationsIndex() {
   await initialize();
-  // Query aggiornata per includere le nuove colonne utili nell'indice
-  const { rows } = await pool.query('SELECT id, name, industry, size, country, language, aggregates, updated_at FROM organizations WHERE is_deleted = false ORDER BY name ASC');
-  return rows;
+  try {
+    const { rows } = await pool.query('SELECT id, name, industry, size, country, language, aggregates, updated_at FROM organizations WHERE is_deleted = false ORDER BY name ASC');
+    return rows;
+  } catch (error) {
+    console.error('[DB-PG] Error reading organizations index:', error);
+    throw error;
+  }
 }
 
 async function readOrganization(orgId) {
   await initialize();
-  const orgRes = await pool.query('SELECT * FROM organizations WHERE id = $1 AND is_deleted = false', [orgId]);
-  const org = orgRes.rows[0];
+  try {
+    const orgRes = await pool.query('SELECT * FROM organizations WHERE id = $1 AND is_deleted = false', [orgId]);
+    const org = orgRes.rows[0];
 
-  if (!org) return null;
+    if (!org) return null;
 
-  const assessRes = await pool.query('SELECT * FROM assessments WHERE org_id = $1', [orgId]);
-  org.assessments = assessRes.rows.reduce((acc, a) => ({ ...acc, [a.indicator_id]: a }), {});
-
-  return org;
+    const assessRes = await pool.query('SELECT * FROM assessments WHERE org_id = $1', [orgId]);
+    
+    // Convert decimal fields from string to number for consistency
+    org.assessments = assessRes.rows.reduce((acc, a) => {
+      if (a.bayesian_score) {
+        a.bayesian_score = parseFloat(a.bayesian_score);
+      }
+      if (a.confidence) {
+        a.confidence = parseFloat(a.confidence);
+      }
+      acc[a.indicator_id] = a;
+      return acc;
+    }, {});
+    
+    console.log(`[DB-PG] Successfully read organization ${orgId}.`);
+    return org;
+  } catch (error) {
+    console.error(`[DB-PG] Error reading organization ${orgId}:`, error);
+    throw error;
+  }
 }
 
 async function updateOrganization(orgId, data) {
@@ -197,14 +219,26 @@ async function updateOrganization(orgId, data) {
   const query = `UPDATE organizations SET
     name = $1, industry = $2, size = $3, country = $4, language = $5, notes = $6, sede_sociale = $7, partita_iva = $8, updated_at = CURRENT_TIMESTAMP
     WHERE id = $9;`;
-  await pool.query(query, [name, industry, size, country, language, notes, sede_sociale, partita_iva, orgId]);
-  return { id: orgId, ...data };
+  try {
+    await pool.query(query, [name, industry, size, country, language, notes, sede_sociale, partita_iva, orgId]);
+    console.log(`[DB-PG] Successfully updated organization ${orgId}.`);
+    return { id: orgId, ...data };
+  } catch (error) {
+    console.error(`[DB-PG] Error updating organization ${orgId}:`, error);
+    throw error;
+  }
 }
 
 async function deleteOrganization(orgId) {
   await initialize();
-  await pool.query('UPDATE organizations SET is_deleted = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1;', [orgId]);
-  return { success: true };
+  try {
+    await pool.query('UPDATE organizations SET is_deleted = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1;', [orgId]);
+    console.log(`[DB-PG] Successfully marked organization ${orgId} as deleted.`);
+    return { success: true };
+  } catch (error) {
+    console.error(`[DB-PG] Error deleting organization ${orgId}:`, error);
+    throw error;
+  }
 }
 
 async function saveAssessment(orgId, indicatorId, data) {
@@ -218,20 +252,47 @@ async function saveAssessment(orgId, indicatorId, data) {
       bayesian_score = EXCLUDED.bayesian_score, confidence = EXCLUDED.confidence, assessor = EXCLUDED.assessor,
       assessment_date = EXCLUDED.assessment_date, raw_data = EXCLUDED.raw_data, updated_at = CURRENT_TIMESTAMP;
   `;
-  await pool.query(query, [orgId, indicatorId, title, category, maturity_level, bayesian_score, confidence, assessor, assessment_date, raw_data]);
-  return { success: true };
+  try {
+    await pool.query(query, [orgId, indicatorId, title, category, maturity_level, bayesian_score, confidence, assessor, assessment_date, raw_data]);
+    console.log(`[DB-PG] Successfully saved assessment for organization ${orgId}, indicator ${indicatorId}.`);
+    return { success: true };
+  } catch (error) {
+    console.error(`[DB-PG] Error saving assessment for organization ${orgId}, indicator ${indicatorId}:`, error);
+    throw error;
+  }
 }
 
 async function getAssessment(orgId, indicatorId) {
     await initialize();
-    const { rows } = await pool.query('SELECT * FROM assessments WHERE org_id = $1 AND indicator_id = $2', [orgId, indicatorId]);
-    return rows[0];
+    try {
+        const { rows } = await pool.query('SELECT * FROM assessments WHERE org_id = $1 AND indicator_id = $2', [orgId, indicatorId]);
+        if (rows.length > 0) {
+            const assessment = rows[0];
+            if (assessment.bayesian_score) {
+                assessment.bayesian_score = parseFloat(assessment.bayesian_score);
+            }
+            if (assessment.confidence) {
+                assessment.confidence = parseFloat(assessment.confidence);
+            }
+            return assessment;
+        }
+        return undefined;
+    } catch (error) {
+        console.error(`[DB-PG] Error getting assessment for organization ${orgId}, indicator ${indicatorId}:`, error);
+        throw error;
+    }
 }
 
 async function deleteAssessment(orgId, indicatorId) {
     await initialize();
-    await pool.query('DELETE FROM assessments WHERE org_id = $1 AND indicator_id = $2', [orgId, indicatorId]);
-    return { success: true };
+    try {
+        await pool.query('DELETE FROM assessments WHERE org_id = $1 AND indicator_id = $2', [orgId, indicatorId]);
+        console.log(`[DB-PG] Successfully deleted assessment for organization ${orgId}, indicator ${indicatorId}.`);
+        return { success: true };
+    } catch (error) {
+        console.error(`[DB-PG] Error deleting assessment for organization ${orgId}, indicator ${indicatorId}:`, error);
+        throw error;
+    }
 }
 
 
