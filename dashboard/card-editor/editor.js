@@ -428,12 +428,9 @@ function renderEditor(cardData) {
     }
 
     let html = `
-        <div style="padding: 20px; background: #eff6ff; border-radius: 8px; margin-bottom: 20px;">
-            <h3 style="margin: 0 0 10px 0; color: var(--primary);">📝 Card Editor</h3>
-            <p style="margin: 0; font-size: 14px; color: var(--text-light);">
-                Edit assessment questions, client conversation questions, and red flags below.
-                <br><strong>Note:</strong> Card metadata (indicator ID, title, etc.) cannot be changed here - use Raw JSON tab if needed.
-            </p>
+        <div style="padding: 10px; margin-bottom: 20px;">
+            <h2 style="color: var(--primary); margin-bottom: 8px;">${cardData.indicator || ''} - ${cardData.title || 'Untitled'}</h2>
+            <p><span class="badge">${cardData.category || 'Unknown Category'}</span></p>
         </div>
     `;
 
