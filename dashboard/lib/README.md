@@ -4,9 +4,40 @@ Libreria core per la gestione dati del sistema CPF Dashboard.
 
 ## Contenuto
 
-### `dataManager.js`
+### Storage Adapters
+
+#### `db_json.js`
+Storage adapter per file JSON. Implementa tutte le funzioni CRUD usando `fs.readFile` e `fs.writeFile`.
+
+**Caratteristiche:**
+- Zero configurazione
+- Massima portabilità
+- Human-readable
+- Storage predefinito
+
+#### `db_sqlite.js`
+Storage adapter per database SQLite. Implementa CRUD usando queries SQL su SQLite.
+
+**Caratteristiche:**
+- Setup automatico
+- Performance eccellente
+- Transazioni ACID
+- File singolo portabile
+
+#### `db_postgres.js`
+Storage adapter per PostgreSQL. Implementa CRUD usando pool di connessioni PostgreSQL.
+
+**Caratteristiche:**
+- Enterprise-grade
+- Multi-user concurrency
+- Scalabilità orizzontale
+- JSONB nativo
+
+### `dataManager.js` (Legacy)
 
 Modulo principale per la gestione centralizzata dei dati delle organizzazioni e degli assessment.
+
+**Nota:** Questo è il data manager legacy che funziona solo con storage JSON. Per progetti nuovi, usare direttamente gli storage adapter (`db_json.js`, `db_sqlite.js`, `db_postgres.js`) tramite `config.js`.
 
 ## Funzionalità
 
@@ -25,10 +56,12 @@ Il Data Manager fornisce un'interfaccia unificata per:
 - Calcolo statistiche completamento
 - Aggregazione dati per categoria
 
-### Storage
-- **File-based** - Sistema basato su file JSON
-- **PostgreSQL** - Supporto database (opzionale)
-- Astrazione layer storage per portabilità
+### Storage (Multi-Backend)
+- **JSON** (`db_json.js`) - File-based storage (massima portabilità)
+- **SQLite** (`db_sqlite.js`) - Database locale leggero
+- **PostgreSQL** (`db_postgres.js`) - Database enterprise
+- Astrazione layer storage per portabilità completa
+- Configurazione via `.env`: `DATABASE_TYPE=json|sqlite|postgres`
 
 ### Statistiche e Aggregati
 - Calcolo overall risk score
@@ -142,21 +175,31 @@ calculateCategoryStats(orgId) → Promise<Object>
 
 ## Configurazione
 
-Il Data Manager può essere configurato tramite variabili d'ambiente:
+Gli storage adapter sono configurabili tramite `.env`:
 
 ```bash
-# Storage type (json | postgres)
-STORAGE_TYPE=json
+# Storage type (json | sqlite | postgres) - Default: json
+DATABASE_TYPE=json
 
-# JSON storage path
-DATA_PATH=/dashboard/data
-
-# PostgreSQL connection (se STORAGE_TYPE=postgres)
-DATABASE_URL=postgresql://user:pass@localhost/cpf_db
+# PostgreSQL connection (richiesto solo se DATABASE_TYPE=postgres)
+DATABASE_URL=postgresql://user:pass@localhost:5432/cpf_dashboard
 ```
+
+**Storage Paths:**
+- **JSON**: `dashboard/data/organizations/*.json`
+- **SQLite**: `dashboard/data/cpf_dashboard.sqlite`
+- **PostgreSQL**: Database remoto (configurato via `DATABASE_URL`)
+
+**Migrazione tra storage:**
+Vedi script in `/dashboard/scripts/`:
+- `migrate_json_to_sqlite.js`
+- `migrate_sqlite_to_postgres.js`
+- `export_postgres_to_json.js`
 
 ## Riferimenti
 
-- Documentazione completa: `/dashboard/README.md`
-- Schema dati: `/dashboard/data/README.md`
-- PostgreSQL setup: `/dashboard/postgres/README.md`
+- **Documentazione completa**: `/dashboard/README.md`
+- **Multi-Storage Guide**: `/dashboard/data/README.md` - Guida completa storage JSON/SQLite/PostgreSQL
+- **Schema dati**: `/dashboard/data/schemas/README.md`
+- **Script migrazione**: `/dashboard/scripts/README.md`
+- **Config**: `/dashboard/config.js` - Configurazione storage type
