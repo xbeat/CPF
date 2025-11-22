@@ -11,7 +11,7 @@ Sistema unificato di dashboard per il **CPF** (Cognitive Persuasion Framework), 
 - **Client Field Kit v3** - Client di assessment refactorizzato (ES6+)
 - **Certificate Generator** - Generatore certificati PDF (Python + Node.js)
 - **RESTful API** - Backend services con WebSocket real-time
-- **PostgreSQL Integration** - Database schema e seed data
+- **Multi-Storage** - Supporto JSON, SQLite, PostgreSQL (configurabile via .env)
 
 ## 📁 Struttura Repository
 
@@ -174,6 +174,67 @@ node server.js
 ```
 
 Il server si avvierà su **http://localhost:3000**
+
+---
+
+## ⚙️ Configurazione Storage
+
+Il sistema supporta **3 tipi di storage** configurabili tramite file `.env`:
+
+### 1. JSON (Default) - File-based
+
+```bash
+# Crea .env copiando .env.example
+cp dashboard/.env.example dashboard/.env
+
+# Imposta storage type
+DATABASE_TYPE=json
+```
+
+**Caratteristiche**:
+- ✅ Zero configurazione
+- ✅ Massima portabilità
+- ✅ Ideale per sviluppo e demo
+- ⚠️ Limitato a single-user
+- File: `dashboard/data/organizations/*.json`
+
+### 2. SQLite - Database locale
+
+```bash
+# In .env
+DATABASE_TYPE=sqlite
+```
+
+**Caratteristiche**:
+- ✅ Setup automatico
+- ✅ Performance eccellente
+- ✅ Transazioni ACID
+- ✅ Ideale per produzione piccola/media
+- File: `dashboard/data/cpf_dashboard.sqlite`
+
+### 3. PostgreSQL - Enterprise database
+
+```bash
+# Setup database PostgreSQL prima
+sudo -u postgres psql
+CREATE DATABASE cpf_dashboard;
+CREATE USER cpf_user WITH ENCRYPTED PASSWORD 'password';
+GRANT ALL PRIVILEGES ON DATABASE cpf_dashboard TO cpf_user;
+\q
+
+# In .env
+DATABASE_TYPE=postgres
+DATABASE_URL="postgresql://cpf_user:password@localhost:5432/cpf_dashboard"
+```
+
+**Caratteristiche**:
+- ✅ Enterprise-grade
+- ✅ Multi-user concurrency
+- ✅ Scalabilità orizzontale
+- ✅ Ideale per produzione enterprise
+- ⚠️ Richiede installazione PostgreSQL
+
+**📚 Guida completa**: Vedi `/dashboard/data/README.md` per dettagli su setup, migrazione, e confronto storage.
 
 ---
 
@@ -546,14 +607,19 @@ node cert-gen.js
 
 ## 📁 File Dati e Formati
 
-### File Generati
+### File/Database generati (dipende da storage)
 
-| File | Location | Descrizione |
-|------|----------|-------------|
-| `organizations.json` | `/dashboard/data/` | Dati organizzazioni con 100 indicatori per org |
-| `{org-name}-soc.json` | `/dashboard/data/` | Dati SOC per organizzazione |
-| `auditing_results.json` | `/dashboard/data/` | Progress tracking e statistiche coverage |
-| `dashboard_export_*.json` | `/field_kit_exports/` | Export individuali Field Kit assessment |
+| Storage Type | Location | Descrizione |
+|--------------|----------|-------------|
+| **JSON** | `/dashboard/data/organizations_index.json` | Indice organizzazioni |
+| **JSON** | `/dashboard/data/organizations/org-{id}.json` | Dati org completi |
+| **JSON** | `/dashboard/data/organizations/{name}-soc.json` | Dati SOC (opzionale) |
+| **JSON** | `/dashboard/data/trash/` | Soft-deleted organizations |
+| **JSON** | `/dashboard/data/history/` | Assessment versioning |
+| **JSON** | `/dashboard/data/audit_log.json` | Audit log eventi |
+| **SQLite** | `/dashboard/data/cpf_dashboard.sqlite` | Database SQLite (tutto in 1 file) |
+| **PostgreSQL** | Database remoto | Tabelle: organizations, assessments |
+| **Legacy** | `/field_kit_exports/dashboard_export_*.json` | Export Field Kit (deprecati) |
 
 ### Formati Dati
 
@@ -810,17 +876,58 @@ node --version  # Richiede Node 14+
    sudo systemctl status postgresql
    ```
 
-2. Controlla credenziali in `server.js` o `.env`
-
-3. Verifica schema creato:
+2. Controlla variabili `.env`:
    ```bash
-   psql -U postgres -d cpf -c "\dt"
+   DATABASE_TYPE=postgres
+   DATABASE_URL="postgresql://user:pass@localhost:5432/cpf_dashboard"
    ```
 
-4. Re-run schema se necessario:
+3. Testa connessione:
    ```bash
-   psql -U postgres -f dashboard/postgres/db_schema.sql
+   psql $DATABASE_URL -c "\dt"
    ```
+
+4. Verifica tabelle create (auto-create al primo avvio):
+   ```bash
+   psql $DATABASE_URL -c "SELECT count(*) FROM organizations;"
+   ```
+
+### "Wrong storage type / Data not found"
+
+**Problema**: Cambiato `DATABASE_TYPE` ma dati non visibili
+
+**Soluzione:**
+1. Verifica `.env`:
+   ```bash
+   cat dashboard/.env | grep DATABASE_TYPE
+   ```
+
+2. Se cambiato storage, esegui migrazione:
+   ```bash
+   # Da JSON a SQLite
+   node dashboard/scripts/migrate_json_to_sqlite.js
+
+   # Da SQLite a PostgreSQL
+   node dashboard/scripts/migrate_sqlite_to_postgres.js
+   ```
+
+3. Oppure ripopola dati con seed:
+   ```bash
+   node dashboard/scripts/generate_demo_organizations.js
+   ```
+
+### "SQLite database is locked"
+
+**Problema**: Errore "database is locked" con SQLite
+
+**Soluzione:**
+1. Chiudi tutti i processi che accedono al DB:
+   ```bash
+   lsof dashboard/data/cpf_dashboard.sqlite
+   kill <pid>
+   ```
+
+2. SQLite ha concorrenza limitata - considera PostgreSQL per multi-user
 
 ### "Certificate Generator: errore font/logo"
 
@@ -886,21 +993,29 @@ docker exec -it <container-id> psql -U postgres
 | **Client v3** | `/dashboard/auditing/client-v3/README.md` | Guida completa refactoring |
 | **Client v3 Python** | `/dashboard/auditing/client-v3/README-PYTHON.md` | Setup backend Python |
 | **Certificate Gen** | `/dashboard/certificate/README.md` | Generazione certificati PDF |
-| **PostgreSQL** | `/dashboard/postgres/README.md` | Database setup |
-| **Data** | `/dashboard/data/README.md` | Schema dati |
+| **Data Storage** | `/dashboard/data/README.md` | **Multi-Storage: JSON, SQLite, PostgreSQL** |
+| **Data Schemas** | `/dashboard/data/schemas/README.md` | JSON Schema validazione |
+| **PostgreSQL Legacy** | `/dashboard/postgres/README.md` | Setup PostgreSQL (legacy - vedi data/) |
 | **Scripts** | `/dashboard/scripts/README.md` | Script utility |
 | **Shared** | `/dashboard/shared/README.md` | Componenti condivisi |
+| **Lib** | `/dashboard/lib/README.md` | Storage adapters e data manager |
 
 ### File Chiave
 
 | File | Descrizione |
 |------|-------------|
+| `/dashboard/server.js` | Server unificato con API e WebSocket |
+| `/dashboard/config.js` | **Configurazione storage (JSON/SQLite/PostgreSQL)** |
+| `/dashboard/lib/dataManager.js` | Data manager principal (legacy JSON) |
+| `/dashboard/lib/db_json.js` | **Storage adapter JSON** |
+| `/dashboard/lib/db_sqlite.js` | **Storage adapter SQLite** |
+| `/dashboard/lib/db_postgres.js` | **Storage adapter PostgreSQL** |
 | `/dashboard/soc/bayesian.js` | Motore inferenza Bayesiana |
 | `/dashboard/soc/visualizations.js` | Libreria chart e visualizzazioni |
 | `/dashboard/simulator/adapters/cpf-adapter.js` | Conversione eventi → indicatori |
 | `/dashboard/simulator/adapters/event-baseline.js` | Matrix 40+ eventi baseline |
-| `/dashboard/postgres/db_schema.sql` | Schema database completo |
-| `/dashboard/data/schemas/organization_data_schema.json` | Schema JSON organizzazioni |
+| `/dashboard/data/schemas/organization_data_schema.json` | JSON Schema organizzazioni |
+| `/dashboard/data/schemas/organization_index_schema.json` | JSON Schema indice |
 
 ### API e Integrazioni
 
