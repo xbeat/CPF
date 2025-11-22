@@ -29,7 +29,8 @@ async function initialize() {
     const createAssessmentsTable = `
       CREATE TABLE IF NOT EXISTS assessments (
         id INTEGER PRIMARY KEY AUTOINCREMENT, org_id VARCHAR(50) NOT NULL, indicator_id VARCHAR(10) NOT NULL,
-        bayesian_score DECIMAL(5, 4), confidence DECIMAL(5, 4), maturity_level VARCHAR(20), 
+        title TEXT, category VARCHAR(100), maturity_level VARCHAR(20),
+        bayesian_score DECIMAL(5, 4), confidence DECIMAL(5, 4),
         assessor VARCHAR(255), assessment_date TIMESTAMP, raw_data TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE,
@@ -104,11 +105,13 @@ async function readOrganization(orgId) {
 
 async function saveAssessment(orgId, indicatorId, data) {
   await initialize();
-  const { bayesian_score, confidence, maturity_level, assessor, assessment_date, raw_data } = data;
+  const { title, category, bayesian_score, confidence, maturity_level, assessor, assessment_date, raw_data } = data;
   const query = `
-    INSERT INTO assessments (org_id, indicator_id, bayesian_score, confidence, maturity_level, assessor, assessment_date, raw_data, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    INSERT INTO assessments (org_id, indicator_id, title, category, bayesian_score, confidence, maturity_level, assessor, assessment_date, raw_data, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(org_id, indicator_id) DO UPDATE SET
+      title = excluded.title,
+      category = excluded.category,
       bayesian_score = excluded.bayesian_score,
       confidence = excluded.confidence,
       maturity_level = excluded.maturity_level,
@@ -118,7 +121,7 @@ async function saveAssessment(orgId, indicatorId, data) {
       updated_at = CURRENT_TIMESTAMP;
   `;
   try {
-    await db.run(query, [orgId, indicatorId, bayesian_score, confidence, maturity_level, assessor, assessment_date, JSON.stringify(raw_data)]);
+    await db.run(query, [orgId, indicatorId, title, category, bayesian_score, confidence, maturity_level, assessor, assessment_date, JSON.stringify(raw_data)]);
     return { success: true };
   } catch (error) {
     console.error(`[DB-SQLITE] Errore in saveAssessment per org ${orgId}, indicatore ${indicatorId}:`, error);
