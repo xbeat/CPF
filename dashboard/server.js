@@ -26,8 +26,8 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 console.log('[Server] Starting CPF Dashboard Server...');
-// Load environment variables from .env.github file
-require('dotenv').config({ path: './.env.github' });
+// Load environment variables from .env file
+require('dotenv').config({ path: './.env' });
 
 const express = require('express');
 const cors = require('cors');
