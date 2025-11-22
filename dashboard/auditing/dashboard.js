@@ -346,6 +346,14 @@ function renderAssessmentDetails() {
     renderSecurityRadarChart(org);
     renderPrioritizationTable(org);
 
+    // CRITICAL: Auto-refresh maturity model when organization changes
+    // Check if maturity tab is currently active and refresh it
+    const maturityTabContent = document.getElementById('maturityTab');
+    const isMaturityTabActive = maturityTabContent && maturityTabContent.classList.contains('active');
+    if (isMaturityTabActive) {
+        renderMaturityTab();
+    }
+
     // Restore zoom preferences
     restoreMatrixZoom();
 }
@@ -2382,9 +2390,159 @@ function switchTab(tabName) {
         document.getElementById('progressTab').classList.add('active');
     } else if (tabName === 'risk') {
         document.getElementById('riskTab').classList.add('active');
+    } else if (tabName === 'maturity') {
+        document.getElementById('maturityTab').classList.add('active');
+        renderMaturityTab(); // Render maturity model when tab is opened
     } else if (tabName === 'compile') {
         document.getElementById('compileTab').classList.add('active');
     }
+}
+
+// ===== MATURITY MODEL TAB =====
+function renderMaturityTab() {
+    const container = document.getElementById('maturityContent');
+
+    if (!selectedOrgData || !selectedOrgData.aggregates) {
+        container.innerHTML = `
+            <div style="padding: 40px; text-align: center; background: white; border-radius: 12px;">
+                <p style="color: var(--text-light); margin: 0;">No assessment data available. Complete assessments to see the maturity model.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const aggregates = selectedOrgData.aggregates;
+    const assessmentCount = Object.keys(selectedOrgData.assessments || {}).length;
+    const industry = selectedOrgData.metadata?.industry || 'General';
+
+    // Calculate overall maturity level (1-5 scale)
+    // Use overall_risk (inverse: lower risk = higher maturity)
+    const overallRisk = aggregates.overall_risk || 0;
+    const overallScore = 1 - overallRisk; // Convert risk to score (0-1 scale)
+    const maturityLevel = calculateMaturityLevel(overallScore);
+
+    console.log('✅ Maturity calculation:', {
+        overallRisk,
+        overallScore,
+        maturityLevel,
+        assessmentCount
+    });
+
+    // Get maturity by category from by_category object
+    const categoryMaturity = {};
+    if (aggregates.by_category) {
+        Object.entries(aggregates.by_category).forEach(([categoryName, data]) => {
+            // Convert risk to score (inverse)
+            const categoryRisk = data.risk || 0;
+            const categoryScore = 1 - categoryRisk;
+            categoryMaturity[categoryName] = {
+                score: categoryScore,
+                level: calculateMaturityLevel(categoryScore),
+                confidence: data.confidence || 0
+            };
+        });
+    }
+
+    // Render maturity content
+    container.innerHTML = `
+        <div class="maturity-overview" style="background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                <div style="text-align: center; padding: 20px; background: var(--bg-gray); border-radius: 8px;">
+                    <div style="font-size: 14px; color: var(--text-light); margin-bottom: 5px;">Overall Maturity Level</div>
+                    <div style="font-size: 42px; font-weight: bold; color: ${getMaturityColor(maturityLevel)};">${maturityLevel}</div>
+                    <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">${getMaturityLabel(maturityLevel)}</div>
+                </div>
+                <div style="text-align: center; padding: 20px; background: var(--bg-gray); border-radius: 8px;">
+                    <div style="font-size: 14px; color: var(--text-light); margin-bottom: 5px;">Average Score</div>
+                    <div style="font-size: 42px; font-weight: bold; color: var(--primary);">${(overallScore * 100).toFixed(0)}%</div>
+                    <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Based on ${assessmentCount} assessments</div>
+                </div>
+                <div style="text-align: center; padding: 20px; background: var(--bg-gray); border-radius: 8px;">
+                    <div style="font-size: 14px; color: var(--text-light); margin-bottom: 5px;">Industry</div>
+                    <div style="font-size: 28px; font-weight: bold; color: var(--primary); margin-top: 10px;">${escapeHtml(industry)}</div>
+                    <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Benchmark context</div>
+                </div>
+            </div>
+
+            <h4 style="margin: 25px 0 15px 0; color: var(--primary);">Maturity by Category</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                ${Object.entries(categoryMaturity).map(([category, data]) => `
+                    <div style="padding: 15px; background: var(--bg-gray); border-radius: 8px; border-left: 4px solid ${getMaturityColor(data.level)};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <div style="font-weight: 600; color: var(--text-dark); text-transform: capitalize;">${escapeHtml(category)}</div>
+                            <div style="font-size: 24px; font-weight: bold; color: ${getMaturityColor(data.level)};">${data.level}</div>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-light);">
+                            Score: ${(data.score * 100).toFixed(0)}% • ${getMaturityLabel(data.level)}
+                        </div>
+                        <div style="margin-top: 8px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
+                            <div style="height: 100%; width: ${(data.score * 100).toFixed(0)}%; background: ${getMaturityColor(data.level)}; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <div class="maturity-levels-reference" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h4 style="margin: 0 0 20px 0; color: var(--primary);">Maturity Levels Reference</h4>
+            <div style="display: grid; gap: 12px;">
+                ${[5, 4, 3, 2, 1].map(level => `
+                    <div style="display: flex; align-items: center; padding: 12px; background: var(--bg-gray); border-radius: 8px; border-left: 4px solid ${getMaturityColor(level)};">
+                        <div style="font-size: 28px; font-weight: bold; color: ${getMaturityColor(level)}; width: 50px; text-align: center;">${level}</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-dark); margin-bottom: 3px;">${getMaturityLabel(level)}</div>
+                            <div style="font-size: 13px; color: var(--text-light);">${getMaturityDescription(level)}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+// Calculate maturity level (1-5) from score (0-1)
+function calculateMaturityLevel(score) {
+    if (score >= 0.8) return 5;
+    if (score >= 0.6) return 4;
+    if (score >= 0.4) return 3;
+    if (score >= 0.2) return 2;
+    return 1;
+}
+
+// Get color for maturity level
+function getMaturityColor(level) {
+    const colors = {
+        5: '#10b981', // green
+        4: '#3b82f6', // blue
+        3: '#f59e0b', // amber
+        2: '#f97316', // orange
+        1: '#ef4444'  // red
+    };
+    return colors[level] || '#6b7280';
+}
+
+// Get label for maturity level
+function getMaturityLabel(level) {
+    const labels = {
+        5: 'Optimizing',
+        4: 'Managed',
+        3: 'Defined',
+        2: 'Repeatable',
+        1: 'Initial'
+    };
+    return labels[level] || 'Unknown';
+}
+
+// Get description for maturity level
+function getMaturityDescription(level) {
+    const descriptions = {
+        5: 'Processes are continuously improving based on quantitative feedback and innovation',
+        4: 'Processes are measured, controlled and actively managed',
+        3: 'Processes are well characterized, documented and understood',
+        2: 'Processes are planned and executed in accordance with policy',
+        1: 'Processes are unpredictable, poorly controlled, and reactive'
+    };
+    return descriptions[level] || '';
 }
 
 // ===== UTILITIES =====
@@ -2473,7 +2631,20 @@ async function loadIndicatorForCompile() {
         // Set today's date
         document.getElementById('compile-date').valueAsDate = new Date();
 
-        showAlert(`Loaded indicator ${indicatorId} successfully!`, 'success');
+        // Check if there's an existing assessment for this indicator
+        if (selectedOrganization && organizationData && organizationData.assessments) {
+            const existingAssessment = organizationData.assessments[indicatorId];
+            if (existingAssessment && existingAssessment.raw_data && existingAssessment.raw_data.responses) {
+                // Populate form with existing responses
+                console.log(`Loading existing assessment for ${indicatorId}`, existingAssessment);
+                populateFormWithAssessment(existingAssessment);
+                showAlert(`Loaded indicator ${indicatorId} with existing assessment!`, 'success');
+            } else {
+                showAlert(`Loaded indicator ${indicatorId} successfully!`, 'success');
+            }
+        } else {
+            showAlert(`Loaded indicator ${indicatorId} successfully!`, 'success');
+        }
     } catch (error) {
         showAlert(`Failed to load indicator: ${error.message}`, 'error');
         console.error('Load indicator error:', error);
@@ -2678,6 +2849,61 @@ async function saveAssessmentToOrg() {
         showAlert(`Failed to save assessment: ${error.message}`, 'error');
         console.error('Save assessment error:', error);
     }
+}
+
+// Populate form with existing assessment data
+function populateFormWithAssessment(assessment) {
+    if (!assessment || !assessment.raw_data || !assessment.raw_data.responses) {
+        return;
+    }
+
+    const responses = assessment.raw_data.responses;
+
+    // Populate each response
+    Object.keys(responses).forEach(questionKey => {
+        const questionIndex = parseInt(questionKey.replace('q', '')) - 1;
+        const value = responses[questionKey];
+
+        // Check question type from currentIndicatorData
+        if (currentIndicatorData && currentIndicatorData.field_kit && currentIndicatorData.field_kit.questions[questionIndex]) {
+            const question = currentIndicatorData.field_kit.questions[questionIndex];
+
+            if (question.type === 'single_choice') {
+                // Set radio button
+                const radio = document.querySelector(`input[name="question_${questionIndex}"][value="${value}"]`);
+                if (radio) {
+                    radio.checked = true;
+                }
+            } else if (question.type === 'text' || question.type === 'number') {
+                // Set text/number input
+                const input = document.getElementById(`question_${questionIndex}`);
+                if (input) {
+                    input.value = value;
+                }
+            }
+        }
+    });
+
+    // Populate assessor if available
+    if (assessment.assessor) {
+        const assessorInput = document.getElementById('compile-assessor');
+        if (assessorInput) {
+            assessorInput.value = assessment.assessor;
+        }
+    }
+
+    // Populate date if available
+    if (assessment.assessment_date) {
+        const dateInput = document.getElementById('compile-date');
+        if (dateInput) {
+            dateInput.value = assessment.assessment_date;
+        }
+    }
+
+    // Auto-calculate score with populated data
+    setTimeout(() => {
+        calculateCPFScore();
+    }, 100);
 }
 
 // Get maturity level from score
