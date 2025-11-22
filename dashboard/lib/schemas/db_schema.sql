@@ -14,6 +14,11 @@ CREATE TABLE IF NOT EXISTS organizations (
     industry VARCHAR(100),
     size VARCHAR(50) CHECK (size IN ('small', 'medium', 'enterprise')),
     country VARCHAR(2),
+    language VARCHAR(10),
+    created_by VARCHAR(255),
+    notes TEXT,
+    sede_sociale TEXT,
+    partita_iva VARCHAR(50),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -26,6 +31,9 @@ CREATE TABLE IF NOT EXISTS assessments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     org_id VARCHAR(50) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     indicator_id VARCHAR(10) NOT NULL,
+    title TEXT,
+    category VARCHAR(100),
+    maturity_level VARCHAR(20),
     bayesian_score DECIMAL(5,4) CHECK (bayesian_score >= 0 AND bayesian_score <= 1),
     confidence DECIMAL(5,4) CHECK (confidence >= 0 AND confidence <= 1),
     assessor VARCHAR(255),
