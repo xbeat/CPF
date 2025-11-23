@@ -4,15 +4,16 @@ Questa directory contiene vari script di supporto per il pannello di controllo d
 
 ## Configurazione Database
 
-Il sistema supporta tre tipi di storage, configurabili tramite variabile d'ambiente `DATABASE_TYPE`:
+Il sistema supporta tre tipi di storage, configurabili tramite il file `dashboard/.env`:
 
 | Tipo | Variabile | Descrizione |
 |------|-----------|-------------|
 | **JSON** | `DATABASE_TYPE=json` | File JSON in `dashboard/data/organizations/` (default) |
 | **SQLite** | `DATABASE_TYPE=sqlite` | Database SQLite in `dashboard/data/cpf_dashboard.sqlite` |
-| **PostgreSQL** | `DATABASE_TYPE=postgres` | Richiede `DATABASE_URL` in `.env` |
+| **PostgreSQL** | `DATABASE_TYPE=postgres` | Richiede `DATABASE_URL` |
 
-**Esempio `.env`:**
+**File di configurazione:** `dashboard/.env`
+
 ```bash
 # Per JSON (default)
 DATABASE_TYPE=json
@@ -23,6 +24,11 @@ DATABASE_TYPE=sqlite
 # Per PostgreSQL
 DATABASE_TYPE=postgres
 DATABASE_URL=postgresql://user:password@localhost:5432/cpf_dashboard
+```
+
+**Nota:** Puoi anche passare la variabile direttamente da riga di comando:
+```bash
+DATABASE_TYPE=sqlite node dashboard/server.js
 ```
 
 ---
