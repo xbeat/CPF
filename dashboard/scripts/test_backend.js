@@ -1,12 +1,19 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const config = require('../config'); // Import config to check db type
+
+// Import sqlite libraries
+const sqlite = require('sqlite');
+const sqlite3 = require('sqlite3');
+
 const db = require('../db');
 const { generateDemoOrganizations } = require('./generate_demo_organizations');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const ORGS_DIR = path.join(DATA_DIR, 'organizations');
 const INDEX_FILE = path.join(DATA_DIR, 'organizations_index.json');
+const SQLITE_DB_PATH = config.database.sqlite.path;
 
 // Lista esplicita degli ID delle organizzazioni demo per una pulizia sicura
 const DEMO_ORG_IDS = [
@@ -17,17 +24,41 @@ const DEMO_ORG_IDS = [
   'org-demo-005'
 ];
 
+async function initializeSqliteDatabase() {
+  console.log('🔄 Initializing SQLite database for testing...');
+  
+  // 1. Delete old database file if it exists
+  if (fs.existsSync(SQLITE_DB_PATH)) {
+    fs.unlinkSync(SQLITE_DB_PATH);
+    console.log('  ✓ Removed old SQLite database file.');
+  }
+
+  // 2. Read schema
+  const schemaPath = path.join(__dirname, '..', 'lib', 'schemas', 'db_schema_sqlite.sql');
+  const schema = fs.readFileSync(schemaPath, 'utf8');
+
+  // 3. Create and initialize the database
+  const dbInstance = await sqlite.open({
+    filename: SQLITE_DB_PATH,
+    driver: sqlite3.Database
+  });
+  await dbInstance.exec(schema);
+  await dbInstance.close();
+  console.log('  ✓ SQLite database created and schema applied.');
+}
+
+
 function safeCleanup() {
   console.log('🧹 Performing safe cleanup of demo data...');
 
-  // 1. Rimuovi il file indice
-  if (fs.existsSync(INDEX_FILE)) {
+  // 1. Rimuovi il file indice (solo per JSON)
+  if (config.database.type === 'json' && fs.existsSync(INDEX_FILE)) {
     fs.unlinkSync(INDEX_FILE);
     console.log('  ✓ Removed organizations index file.');
   }
 
   // 2. Rimuovi i file JSON delle specifiche organizzazioni demo
-  if (fs.existsSync(ORGS_DIR)) {
+  if (config.database.type === 'json' && fs.existsSync(ORGS_DIR)) {
     let deletedCount = 0;
     DEMO_ORG_IDS.forEach(orgId => {
       const orgFile = path.join(ORGS_DIR, `${orgId}.json`);
@@ -41,7 +72,12 @@ function safeCleanup() {
 }
 
 async function runTest() {
-  safeCleanup(); // Usa la nuova funzione di pulizia sicura
+  // Initialize SQLite DB if needed
+  if (config.database.type === 'sqlite') {
+    await initializeSqliteDatabase();
+  }
+
+  safeCleanup(); 
 
   console.log('\nRunning backend test...');
 
