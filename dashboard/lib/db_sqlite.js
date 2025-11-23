@@ -49,17 +49,50 @@ async function initialize() {
 
 async function createOrganization(orgData) {
   await initialize();
-  const { id, name, metadata } = orgData;
+  const { id: orgId, name, metadata, assessments } = orgData;
   const { industry, size, country, language, notes, created_by, partita_iva, sede_sociale, created_at, updated_at } = metadata;
-  const query = `
-    INSERT INTO organizations (id, name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-  `;
+
   try {
-    await db.run(query, [id, name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, created_at, updated_at]);
-    return await readOrganization(id);
+    // Start transaction
+    await db.exec('BEGIN TRANSACTION');
+
+    // 1. Insert or replace the organization
+    const orgQuery = `
+      INSERT OR REPLACE INTO organizations (id, name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `;
+    await db.run(orgQuery, [orgId, name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, created_at, updated_at]);
+
+    // 2. Insert or replace all assessments
+    if (assessments) {
+      const assessmentQuery = `
+        INSERT OR REPLACE INTO assessments (org_id, indicator_id, title, category, bayesian_score, confidence, maturity_level, assessor, assessment_date, raw_data, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
+      `;
+      for (const indicatorId in assessments) {
+        const assessment = assessments[indicatorId];
+        await db.run(assessmentQuery, [
+          orgId,
+          indicatorId,
+          assessment.title,
+          assessment.category,
+          assessment.bayesian_score,
+          assessment.confidence,
+          assessment.maturity_level,
+          assessment.assessor,
+          assessment.assessment_date,
+          JSON.stringify(assessment.raw_data)
+        ]);
+      }
+    }
+
+    await db.exec('COMMIT');
+    console.log(`[DB-SQLITE] Organization ${orgId} created with ${assessments ? Object.keys(assessments).length : 0} assessments.`);
+    return orgData;
+
   } catch (error) {
-    console.error(`[DB-SQLITE] Errore in createOrganization per ID ${id}:`, error);
+    await db.exec('ROLLBACK');
+    console.error(`[DB-SQLITE] Errore in createOrganization per ID ${orgId}:`, error);
     throw error;
   }
 }
@@ -129,16 +162,126 @@ async function saveAssessment(orgId, indicatorId, data) {
   }
 }
 
+// Import calculateAggregates for computing aggregates from assessments
+const { calculateAggregates } = require('./db_json');
+
+async function readOrganizationsIndex() {
+  await initialize();
+  try {
+    const rows = await db.all('SELECT * FROM organizations WHERE is_deleted = 0 ORDER BY name ASC');
+    const organizations = [];
+
+    for (const row of rows) {
+      // Get assessments for this organization to calculate stats
+      const assessmentRows = await db.all('SELECT * FROM assessments WHERE org_id = ?', row.id);
+
+      // Convert assessments to object format
+      const assessments = assessmentRows.reduce((acc, a) => {
+        if (a.raw_data) a.raw_data = JSON.parse(a.raw_data);
+        acc[a.indicator_id] = a;
+        return acc;
+      }, {});
+
+      // Calculate aggregates
+      const aggregates = calculateAggregates(assessments, row.industry);
+
+      organizations.push({
+        id: row.id,
+        name: row.name,
+        industry: row.industry,
+        size: row.size,
+        country: row.country,
+        language: row.language,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        stats: {
+          total_assessments: aggregates.completion.assessed_indicators,
+          completion_percentage: aggregates.completion.percentage,
+          overall_risk: aggregates.overall_risk,
+          avg_confidence: aggregates.overall_confidence,
+          last_assessment_date: assessmentRows.length > 0
+            ? assessmentRows.sort((a, b) => new Date(b.assessment_date) - new Date(a.assessment_date))[0]?.assessment_date
+            : null
+        }
+      });
+    }
+
+    return { organizations };
+  } catch (error) {
+    console.error('[DB-SQLITE] Error in readOrganizationsIndex:', error);
+    return { organizations: [] };
+  }
+}
+
+async function updateOrganization(orgId, data) {
+  await initialize();
+  const { name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale } = data;
+  const query = `
+    UPDATE organizations SET
+      name = ?, industry = ?, size = ?, country = ?, language = ?,
+      notes = ?, created_by = ?, partita_iva = ?, sede_sociale = ?,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?;
+  `;
+  try {
+    await db.run(query, [name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, orgId]);
+    console.log(`[DB-SQLITE] Organization ${orgId} updated successfully.`);
+    return await readOrganization(orgId);
+  } catch (error) {
+    console.error(`[DB-SQLITE] Error in updateOrganization for ID ${orgId}:`, error);
+    throw error;
+  }
+}
+
+async function deleteOrganization(orgId) {
+  await initialize();
+  try {
+    await db.run('UPDATE organizations SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?', orgId);
+    console.log(`[DB-SQLITE] Organization ${orgId} marked as deleted.`);
+    return { success: true };
+  } catch (error) {
+    console.error(`[DB-SQLITE] Error in deleteOrganization for ID ${orgId}:`, error);
+    throw error;
+  }
+}
+
+async function getAssessment(orgId, indicatorId) {
+  await initialize();
+  try {
+    const row = await db.get('SELECT * FROM assessments WHERE org_id = ? AND indicator_id = ?', [orgId, indicatorId]);
+    if (row) {
+      if (row.raw_data) row.raw_data = JSON.parse(row.raw_data);
+      return row;
+    }
+    return null;
+  } catch (error) {
+    console.error(`[DB-SQLITE] Error in getAssessment for org ${orgId}, indicator ${indicatorId}:`, error);
+    return null;
+  }
+}
+
+async function deleteAssessment(orgId, indicatorId) {
+  await initialize();
+  try {
+    await db.run('DELETE FROM assessments WHERE org_id = ? AND indicator_id = ?', [orgId, indicatorId]);
+    console.log(`[DB-SQLITE] Assessment deleted for org ${orgId}, indicator ${indicatorId}.`);
+    return { success: true };
+  } catch (error) {
+    console.error(`[DB-SQLITE] Error in deleteAssessment for org ${orgId}, indicator ${indicatorId}:`, error);
+    throw error;
+  }
+}
+
 module.exports = {
   initialize,
   createOrganization,
   readOrganization,
+  readOrganizationsIndex,
   saveAssessment,
-  readOrganizationsIndex: async () => ({ organizations: [] }),
-  updateOrganization: async (orgId, data) => ({ success: true }),
-  deleteOrganization: async (orgId) => ({ success: true }),
-  getAssessment: async (orgId, indId) => (null),
-  deleteAssessment: async (orgId, indId) => ({ success: true }),
+  updateOrganization,
+  deleteOrganization,
+  getAssessment,
+  deleteAssessment,
   saveIndicatorMetadata: async () => ({ success: true }),
   writeOrganizationsIndex: async () => {},
   updateOrganizationInIndex: async () => {},

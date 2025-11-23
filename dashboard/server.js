@@ -50,6 +50,7 @@ console.log('[Server] Core modules loaded');
 // Import data manager
 console.log('[Server] Loading data manager...');
 const dataManager = require('./lib/dataManager');
+const db = require('./db'); // Dynamic database abstraction layer
 console.log('[Server] Data manager loaded successfully');
 
 // SOC (lazy-loaded on first use)
@@ -242,9 +243,9 @@ app.post('/api/cards/propose', async (req, res) => {
  * GET /api/organizations
  * Returns organizations index with stats
  */
-app.get('/api/organizations', (req, res) => {
+app.get('/api/organizations', async (req, res) => {
   try {
-    const index = dataManager.readOrganizationsIndex();
+    const index = await db.readOrganizationsIndex();
     res.json(index);
   } catch (error) {
     console.error('[API] Error reading organizations index:', error.message);
@@ -259,11 +260,12 @@ app.get('/api/organizations', (req, res) => {
  * GET /api/organizations/:orgId
  * Returns complete organization data (metadata + assessments + aggregates)
  */
-app.get('/api/organizations/:orgId', (req, res) => {
+app.get('/api/organizations/:orgId', async (req, res) => {
   try {
     const { orgId } = req.params;
 
-    if (!dataManager.organizationExists(orgId)) {
+    const orgData = await db.readOrganization(orgId);
+    if (!orgData) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -271,7 +273,6 @@ app.get('/api/organizations/:orgId', (req, res) => {
       });
     }
 
-    const orgData = dataManager.readOrganization(orgId);
     res.json({
       success: true,
       data: orgData
