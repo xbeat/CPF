@@ -206,10 +206,24 @@ async function readOrganizationsIndex() {
       });
     }
 
-    return { organizations };
+    return {
+      metadata: {
+        version: '2.0',
+        last_updated: new Date().toISOString(),
+        total_organizations: organizations.length
+      },
+      organizations
+    };
   } catch (error) {
     console.error('[DB-SQLITE] Error in readOrganizationsIndex:', error);
-    return { organizations: [] };
+    return {
+      metadata: {
+        version: '2.0',
+        last_updated: new Date().toISOString(),
+        total_organizations: 0
+      },
+      organizations: []
+    };
   }
 }
 
