@@ -58,7 +58,10 @@ async function loadOrganizationsData() {
         organizationsData = data;
 
         document.getElementById('loading').style.display = 'none';
-        renderOrganizationsList(data);
+
+        // Apply default filter and sort to ensure organizations are displayed
+        filterAndSortOrganizations();
+
         document.getElementById('empty-state').style.display = 'block';
 
     } catch (error) {
