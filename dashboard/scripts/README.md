@@ -2,7 +2,114 @@
 
 Questa directory contiene vari script di supporto per il pannello di controllo del CPF (Cybersecurity Posture Framework).
 
+## Configurazione Database
+
+Il sistema supporta tre tipi di storage, configurabili tramite variabile d'ambiente `DATABASE_TYPE`:
+
+| Tipo | Variabile | Descrizione |
+|------|-----------|-------------|
+| **JSON** | `DATABASE_TYPE=json` | File JSON in `dashboard/data/organizations/` (default) |
+| **SQLite** | `DATABASE_TYPE=sqlite` | Database SQLite in `dashboard/data/cpf_dashboard.sqlite` |
+| **PostgreSQL** | `DATABASE_TYPE=postgres` | Richiede `DATABASE_URL` in `.env` |
+
+**Esempio `.env`:**
+```bash
+# Per JSON (default)
+DATABASE_TYPE=json
+
+# Per SQLite
+DATABASE_TYPE=sqlite
+
+# Per PostgreSQL
+DATABASE_TYPE=postgres
+DATABASE_URL=postgresql://user:password@localhost:5432/cpf_dashboard
+```
+
+---
+
 ## Contenuti
+
+---
+
+## 🧪 Script di Testing e Generazione Dati
+
+### `test_backend.js`
+
+**Scopo:** Script principale per testare il backend e generare dati demo per qualsiasi store.
+
+**Funzionamento:**
+1. Utilizza `generate_demo_organizations.js` per creare dati di test
+2. Usa il driver del database configurato (`db.js`) per operazioni CRUD
+3. Verifica che creazione, lettura e salvataggio di assessment funzionino
+4. Salva TUTTI gli assessments generati nel database (30-70 per organizzazione)
+
+**Usage:**
+```bash
+# Test con JSON (default)
+DATABASE_TYPE=json node dashboard/scripts/test_backend.js
+
+# Test con SQLite
+DATABASE_TYPE=sqlite node dashboard/scripts/test_backend.js
+
+# Test con PostgreSQL
+DATABASE_TYPE=postgres node dashboard/scripts/test_backend.js
+```
+
+**Output:**
+- 5 organizzazioni demo con 30-70 assessments ciascuna
+- Per SQLite: crea automaticamente `dashboard/data/cpf_dashboard.sqlite`
+- Per JSON: file in `dashboard/data/organizations/*.json`
+
+---
+
+### `generate_demo_organizations.js`
+
+**Scopo:** Generatore di dati demo ad alta qualità.
+
+Questo script crea un set di dati di esempio che include:
+- 5 organizzazioni demo (TechCorp Global, FinanceFirst Bank, HealthPlus Clinic, RetailMax Store, EduLearn Academy)
+- Assessment randomici basati sui Field Kit reali
+- Punteggi calcolati con la stessa formula del client
+- Aggregati e maturity model calcolati automaticamente
+
+**Usage standalone (solo JSON):**
+```bash
+node dashboard/scripts/generate_demo_organizations.js
+```
+
+**Note:** Per generare dati demo per SQLite/PostgreSQL, usare `test_backend.js` con la variabile `DATABASE_TYPE` appropriata.
+
+---
+
+## 🔍 Script di Validazione
+
+### `validate-and-fix-indicators.js`
+
+**Scopo:** Validare e auto-correggere i file JSON degli indicatori (Field Kit).
+
+**Funzionamento:**
+1. Scansiona tutti gli indicatori in `auditor field kit/interactive/{language}/`
+2. Valida la struttura JSON di ogni indicatore
+3. Auto-corregge problemi comuni:
+   - Normalizza i pesi scoring che non sommano a 1.0
+   - Normalizza i pesi delle domande
+   - Scala gli impatti dei red flags se superano 1.0
+   - Corregge typo comuni
+4. Crea backup automatici prima di modificare
+
+**Usage:**
+```bash
+# Dry run (mostra cosa verrebbe modificato senza cambiare nulla)
+node dashboard/scripts/validate-and-fix-indicators.js en-US --dry-run
+
+# Applica le correzioni
+node dashboard/scripts/validate-and-fix-indicators.js en-US
+
+# Per altre lingue
+node dashboard/scripts/validate-and-fix-indicators.js it-IT --dry-run
+```
+
+**Lingue supportate:** `en-US`, `it-IT`, `es-ES`, `fr-FR`, `de-DE`
 
 ---
 
@@ -93,41 +200,39 @@ node dashboard/scripts/export_postgres_to_json.js
 
 ---
 
-## 🧪 Script di Testing e Sviluppo
+## Quick Start
 
-### `generate_demo_organizations.js`
+### 1. Generare dati demo e testare
 
-**Scopo:** Generare dati di organizzazione fittizi per scopi di sviluppo, test o dimostrazione.
-
-Questo script crea un set di dati di esempio che include informazioni sull'organizzazione, valutazioni di sicurezza pre-calcolate e aggregati statistici. È essenziale per popolare un ambiente di sviluppo pulito con dati coerenti.
-
-**Usage:**
 ```bash
-node dashboard/scripts/generate_demo_organizations.js
+# Per SQLite (consigliato per sviluppo)
+DATABASE_TYPE=sqlite node dashboard/scripts/test_backend.js
+
+# Avvia il server
+DATABASE_TYPE=sqlite node dashboard/server.js
 ```
 
-**Output:**
-- 5 organizzazioni demo (TechCorp Global, FinanceFirst Bank, HealthPlus Clinic, RetailMax Store, EduLearn Academy)
-- Assessment randomici per categoria
-- Aggregati calcolati automaticamente
+### 2. Verificare che tutto funzioni
 
-### `test_backend.js`
+```bash
+# API test
+curl http://localhost:3000/api/organizations
 
-**Scopo:** Eseguire un test di integrazione completo per il backend del pannello di controllo.
+# Apri dashboard nel browser
+open http://localhost:3000/dashboard/auditing/
+```
 
-**Funzionamento:**
-1.  Utilizza `generate_demo_organizations.js` per creare dati di test al volo.
-2.  Usa il driver del database configurato (es. JSON o SQLite) per eseguire operazioni CRUD (Create, Read, Update, Delete).
-3.  Verifica che la creazione di un'organizzazione, la lettura e il salvataggio di una valutazione funzionino come previsto.
+### 3. Cambiare store
 
-È lo script principale per verificare la salute e il corretto funzionamento dell'intero stack del backend.
+Semplicemente cambia `DATABASE_TYPE` e riavvia:
 
-### `test_generator.js`
+```bash
+# Passa a JSON
+DATABASE_TYPE=json node dashboard/server.js
 
-**Scopo:** Eseguire un test unitario per lo script `generate_demo_organizations.js`.
+# Passa a SQLite
+DATABASE_TYPE=sqlite node dashboard/server.js
 
-**Funzionamento:**
-1.  Esegue la funzione di generazione dei dati.
-2.  Controlla rigorosamente la struttura dei dati restituiti, verificando la presenza e il tipo corretto di tutte le proprietà chiave (ID, metadati, valutazioni, aggregati).
-
-Questo test garantisce che qualsiasi modifica al generatore di dati non produca dati malformati, che potrebbero causare errori in altre parti dell'applicazione.
+# Passa a PostgreSQL
+DATABASE_TYPE=postgres node dashboard/server.js
+```
