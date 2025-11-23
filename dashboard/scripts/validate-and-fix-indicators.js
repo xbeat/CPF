@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Import validator
-const { validateCPFJSON } = require('../client-standalone-reference/validator.js');
+const { validateCPFJSON } = require('../cpf-detection-engine/validation/cpf-json-validator.js');
 
 // Configuration
 const INDICATOR_BASE_PATH = path.join(__dirname, '../../auditor field kit/interactive');
