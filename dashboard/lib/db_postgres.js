@@ -172,14 +172,54 @@ async function createOrganization(orgData) {
 
 // --- Funzioni Esistenti (mantenute per compatibilità dove necessario) ---
 
+// Import calculateAggregates for computing aggregates from assessments
+const { calculateAggregates } = require('./db_json');
+
 async function readOrganizationsIndex() {
   await initialize();
   try {
-    const { rows } = await pool.query('SELECT id, name, industry, size, country, language, aggregates, updated_at FROM organizations WHERE is_deleted = false ORDER BY name ASC');
-    return rows;
+    const { rows } = await pool.query('SELECT * FROM organizations WHERE is_deleted = false ORDER BY name ASC');
+    const organizations = [];
+
+    for (const row of rows) {
+      // Get assessments for this organization to calculate stats
+      const assessRes = await pool.query('SELECT * FROM assessments WHERE org_id = $1', [row.id]);
+      const assessmentRows = assessRes.rows;
+
+      // Convert assessments to object format
+      const assessments = assessmentRows.reduce((acc, a) => {
+        acc[a.indicator_id] = a;
+        return acc;
+      }, {});
+
+      // Calculate aggregates
+      const aggregates = calculateAggregates(assessments, row.industry);
+
+      organizations.push({
+        id: row.id,
+        name: row.name,
+        industry: row.industry,
+        size: row.size,
+        country: row.country,
+        language: row.language,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        stats: {
+          total_assessments: aggregates.completion.assessed_indicators,
+          completion_percentage: aggregates.completion.percentage,
+          overall_risk: aggregates.overall_risk,
+          avg_confidence: aggregates.overall_confidence,
+          last_assessment_date: assessmentRows.length > 0
+            ? assessmentRows.sort((a, b) => new Date(b.assessment_date) - new Date(a.assessment_date))[0]?.assessment_date
+            : null
+        }
+      });
+    }
+
+    return { organizations };
   } catch (error) {
     console.error('[DB-PG] Error reading organizations index:', error);
-    throw error;
+    return { organizations: [] };
   }
 }
 
