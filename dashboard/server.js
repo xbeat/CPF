@@ -53,9 +53,12 @@ const dataManager = require('./lib/dataManager');
 const db = require('./db'); // Dynamic database abstraction layer
 console.log('[Server] Data manager loaded successfully');
 
-// Initialize data structure (directories, sample orgs)
+// Initialize data structure (directories, sample orgs) - async
 const { initialize } = require('./lib/init');
-initialize();
+initialize().catch(err => {
+  console.error('❌ [FATAL] Initialization failed:', err.message);
+  process.exit(1);
+});
 
 // SOC (lazy-loaded on first use)
 let simulator = null;
