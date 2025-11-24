@@ -517,11 +517,80 @@ async function recalculateAllAggregates() {
   return results;
 }
 
+/**
+ * Get SOC indicator data for an organization
+ * Returns all assessments in SOC format with indicator values
+ */
+async function getSocData(orgId) {
+  const organization = await readOrganization(orgId);
+  if (!organization) {
+    return null;
+  }
+
+  const indicators = {};
+  for (const [indicatorId, assessment] of Object.entries(organization.assessments)) {
+    indicators[indicatorId] = {
+      indicator_id: indicatorId,
+      value: assessment.bayesian_score,
+      previous_value: null, // We don't track previous values in JSON storage
+      last_updated: assessment.updated_at || new Date().toISOString()
+    };
+  }
+
+  return {
+    org_id: organization.id,
+    org_name: organization.name,
+    indicators
+  };
+}
+
+/**
+ * Save SOC indicator (wrapper around saveAssessment)
+ */
+async function saveSocIndicator(orgId, assessmentData) {
+  const indicatorId = assessmentData.indicator_id;
+
+  // Get previous value if exists
+  const organization = await readOrganization(orgId);
+  if (!organization) {
+    throw new Error(`Organization ${orgId} not found`);
+  }
+
+  const previousValue = organization.assessments[indicatorId]
+    ? organization.assessments[indicatorId].bayesian_score
+    : null;
+
+  // Save using saveAssessment
+  await saveAssessment(orgId, indicatorId, {
+    indicator_id: indicatorId,
+    title: assessmentData.title || null,
+    category: assessmentData.category || indicatorId.split('.')[0],
+    maturity_level: assessmentData.maturity_level || null,
+    bayesian_score: assessmentData.bayesian_score,
+    confidence: assessmentData.confidence || null,
+    assessor: assessmentData.assessor || 'SOC Simulator',
+    assessment_date: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    raw_data: assessmentData.raw_data || assessmentData
+  });
+
+  console.log(`[DB-JSON] Successfully saved SOC indicator ${indicatorId} for organization ${orgId}.`);
+
+  return {
+    orgId,
+    indicatorId,
+    previousValue,
+    newValue: assessmentData.bayesian_score
+  };
+}
+
 module.exports = {
   initialize,
   createOrganization,
   readOrganization,
   saveAssessment,
+  getSocData,
+  saveSocIndicator,
   calculateAggregates,
   recalculateAggregates,
   recalculateAllAggregates,

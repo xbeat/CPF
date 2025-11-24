@@ -289,12 +289,89 @@ async function deleteAssessment(orgId, indicatorId) {
   }
 }
 
+/**
+ * Get SOC indicator data for an organization
+ * Returns all assessments in SOC format with indicator values
+ */
+async function getSocData(orgId) {
+  await initialize();
+  try {
+    const orgRow = await db.get('SELECT id, name FROM organizations WHERE id = ? AND is_deleted = 0', [orgId]);
+    if (!orgRow) {
+      return null;
+    }
+
+    const assessmentRows = await db.all('SELECT indicator_id, bayesian_score, updated_at FROM assessments WHERE org_id = ? ORDER BY indicator_id', [orgId]);
+
+    const indicators = {};
+    for (const row of assessmentRows) {
+      indicators[row.indicator_id] = {
+        indicator_id: row.indicator_id,
+        value: row.bayesian_score,
+        previous_value: null, // We don't track previous values in this query
+        last_updated: row.updated_at
+      };
+    }
+
+    return {
+      org_id: orgRow.id,
+      org_name: orgRow.name,
+      indicators
+    };
+  } catch (error) {
+    console.error(`[DB-SQLITE] Error reading SOC data for ${orgId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Save SOC indicator (wrapper around saveAssessment)
+ */
+async function saveSocIndicator(orgId, assessmentData) {
+  await initialize();
+  const indicatorId = assessmentData.indicator_id;
+
+  // Get previous value if exists
+  let previousValue = null;
+  try {
+    const prevRow = await db.get('SELECT bayesian_score FROM assessments WHERE org_id = ? AND indicator_id = ?', [orgId, indicatorId]);
+    if (prevRow) {
+      previousValue = prevRow.bayesian_score;
+    }
+  } catch (error) {
+    console.warn(`[DB-SQLITE] Could not fetch previous value for ${orgId}/${indicatorId}:`, error.message);
+  }
+
+  // Save using saveAssessment
+  await saveAssessment(orgId, indicatorId, {
+    title: assessmentData.title || null,
+    category: assessmentData.category || indicatorId.split('.')[0],
+    maturity_level: assessmentData.maturity_level || null,
+    bayesian_score: assessmentData.bayesian_score,
+    confidence: assessmentData.confidence || null,
+    assessor: assessmentData.assessor || 'SOC Simulator',
+    assessment_date: new Date().toISOString(),
+    raw_data: assessmentData.raw_data || assessmentData
+  });
+
+  console.log(`[DB-SQLITE] Successfully saved SOC indicator ${indicatorId} for organization ${orgId}.`);
+
+  return {
+    orgId,
+    indicatorId,
+    previousValue,
+    newValue: assessmentData.bayesian_score
+  };
+}
+
 module.exports = {
   initialize,
   createOrganization,
   readOrganization,
   readOrganizationsIndex,
   saveAssessment,
+  getSocData,
+  saveSocIndicator,
   updateOrganization,
   deleteOrganization,
   getAssessment,

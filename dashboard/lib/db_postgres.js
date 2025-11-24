@@ -375,6 +375,83 @@ async function deleteAssessment(orgId, indicatorId) {
     }
 }
 
+/**
+ * Get SOC indicator data for an organization
+ * Returns all assessments in SOC format with indicator values
+ */
+async function getSocData(orgId) {
+    await initialize();
+    try {
+        const orgRes = await pool.query('SELECT id, name FROM organizations WHERE id = $1 AND is_deleted = false', [orgId]);
+        const orgRow = orgRes.rows[0];
+
+        if (!orgRow) {
+            return null;
+        }
+
+        const assessRes = await pool.query('SELECT indicator_id, bayesian_score, updated_at FROM assessments WHERE org_id = $1 ORDER BY indicator_id', [orgId]);
+
+        const indicators = {};
+        for (const row of assessRes.rows) {
+            indicators[row.indicator_id] = {
+                indicator_id: row.indicator_id,
+                value: parseFloat(row.bayesian_score),
+                previous_value: null, // We don't track previous values in this query
+                last_updated: row.updated_at
+            };
+        }
+
+        return {
+            org_id: orgRow.id,
+            org_name: orgRow.name,
+            indicators
+        };
+    } catch (error) {
+        console.error(`[DB-PG] Error reading SOC data for ${orgId}:`, error);
+        throw error;
+    }
+}
+
+/**
+ * Save SOC indicator (wrapper around saveAssessment)
+ */
+async function saveSocIndicator(orgId, assessmentData) {
+    await initialize();
+    const indicatorId = assessmentData.indicator_id;
+
+    // Get previous value if exists
+    let previousValue = null;
+    try {
+        const prevRes = await pool.query('SELECT bayesian_score FROM assessments WHERE org_id = $1 AND indicator_id = $2', [orgId, indicatorId]);
+        if (prevRes.rows.length > 0) {
+            previousValue = parseFloat(prevRes.rows[0].bayesian_score);
+        }
+    } catch (error) {
+        console.warn(`[DB-PG] Could not fetch previous value for ${orgId}/${indicatorId}:`, error.message);
+    }
+
+    // Save using saveAssessment
+    await saveAssessment(orgId, indicatorId, {
+        title: assessmentData.title || null,
+        category: assessmentData.category || indicatorId.split('.')[0],
+        maturity_level: assessmentData.maturity_level || null,
+        bayesian_score: assessmentData.bayesian_score,
+        confidence: assessmentData.confidence || null,
+        assessor: assessmentData.assessor || 'SOC Simulator',
+        assessment_date: new Date().toISOString(),
+        raw_data: assessmentData.raw_data || assessmentData
+    });
+
+    console.log(`[DB-PG] Successfully saved SOC indicator ${indicatorId} for organization ${orgId}.`);
+
+    return {
+        orgId,
+        indicatorId,
+        previousValue,
+        newValue: assessmentData.bayesian_score
+    };
+}
+
 
 module.exports = {
   initialize,
@@ -386,10 +463,11 @@ module.exports = {
   saveAssessment,
   getAssessment,
   deleteAssessment,
+  getSocData,
+  saveSocIndicator,
   // Funzioni alias o non più necessarie mantenute per retrocompatibilità
-  writeOrganization: updateOrganization, 
+  writeOrganization: updateOrganization,
   saveIndicatorMetadata: async () => { console.warn('[DB-PG] saveIndicatorMetadata non è implementata in modo granulare, i dati vengono salvati con l\'intera organizzazione.'); },
-  saveSocIndicator: async () => { console.warn('[DB-PG] saveSocIndicator non è implementata.'); },
   writeOrganizationsIndex: async () => {},
   updateOrganizationInIndex: async () => {},
   removeOrganizationFromIndex: async () => {},
