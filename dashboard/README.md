@@ -250,9 +250,11 @@ DATABASE_URL="postgresql://cpf_user:password@localhost:5432/cpf_dashboard"
 2. **Builder**: Seleziona `Buildpack`
 3. **Configurazione Build**:
    ```
-   Work directory: dashboard
-   Run command: node server.js
+   Work directory: (lascia vuoto - usa la root del progetto)
+   Run command: npm start
    ```
+
+**Importante**: Lasciando vuota la work directory, Koyeb userà la root del progetto dove si trova il `package.json` wrapper che gestisce l'installazione e l'avvio corretto.
 
 #### Variabili d'Ambiente (Koyeb)
 
@@ -263,9 +265,6 @@ Configura le seguenti variabili nella sezione "Environment" di Koyeb:
 DATABASE_TYPE=postgres
 DATABASE_URL=postgresql://user:password@host:5432/database
 
-# Auditor Field Kit Path (opzionale, solo se auto-detection fallisce)
-AUDITOR_KIT_PATH=/workspace/auditor field kit
-
 # GitHub Integration (opzionale, per card editor)
 GITHUB_TOKEN=your_github_token
 GITHUB_OWNER=your_github_username
@@ -274,17 +273,20 @@ GITHUB_REPO=your_repo_name
 
 #### Note Importanti
 
-- ⚠️ **Auditor Field Kit Path**: Il server rileva automaticamente il path della cartella `auditor field kit` che contiene i file JSON degli indicatori. Non è necessario impostare `AUDITOR_KIT_PATH` a meno che l'auto-detection non funzioni.
+- ✅ **Auto-detection**: Il server rileva automaticamente il path della cartella `auditor field kit`
+- ✅ **Nessuna configurazione extra**: Non serve impostare `AUDITOR_KIT_PATH` su Koyeb
+- ✅ **Struttura preservata**: Il deployment mantiene l'intera struttura del repository
 
-- 📁 **Struttura Repository**: Il progetto deve mantenere questa struttura:
+- 📁 **Struttura Repository Richiesta**:
   ```
   /
+  ├── package.json              # Wrapper per deployment
   ├── auditor field kit/
   │   └── interactive/
   │       ├── en-US/
   │       └── it-IT/
   └── dashboard/
-      ├── package.json
+      ├── package.json          # Dipendenze applicazione
       └── server.js
   ```
 
