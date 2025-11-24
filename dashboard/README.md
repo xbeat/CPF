@@ -238,6 +238,151 @@ DATABASE_URL="postgresql://cpf_user:password@localhost:5432/cpf_dashboard"
 
 ---
 
+## 🚢 Deployment in Produzione
+
+### Deployment su Koyeb
+
+**Koyeb** è una piattaforma cloud PaaS che supporta il deployment automatico da repository GitHub.
+
+#### Configurazione Koyeb
+
+1. **Repository**: Collega il tuo repository GitHub a Koyeb
+2. **Builder**: Seleziona `Buildpack`
+3. **Configurazione Build**:
+   ```
+   Work directory: dashboard
+   Run command: node server.js
+   ```
+
+#### Variabili d'Ambiente (Koyeb)
+
+Configura le seguenti variabili nella sezione "Environment" di Koyeb:
+
+```bash
+# Database (obbligatorio)
+DATABASE_TYPE=postgres
+DATABASE_URL=postgresql://user:password@host:5432/database
+
+# Auditor Field Kit Path (opzionale, solo se auto-detection fallisce)
+AUDITOR_KIT_PATH=/workspace/auditor field kit
+
+# GitHub Integration (opzionale, per card editor)
+GITHUB_TOKEN=your_github_token
+GITHUB_OWNER=your_github_username
+GITHUB_REPO=your_repo_name
+```
+
+#### Note Importanti
+
+- ⚠️ **Auditor Field Kit Path**: Il server rileva automaticamente il path della cartella `auditor field kit` che contiene i file JSON degli indicatori. Non è necessario impostare `AUDITOR_KIT_PATH` a meno che l'auto-detection non funzioni.
+
+- 📁 **Struttura Repository**: Il progetto deve mantenere questa struttura:
+  ```
+  /
+  ├── auditor field kit/
+  │   └── interactive/
+  │       ├── en-US/
+  │       └── it-IT/
+  └── dashboard/
+      ├── package.json
+      └── server.js
+  ```
+
+- 🔍 **Verifica Path**: All'avvio del server, controlla i log per confermare che il path sia stato rilevato correttamente:
+  ```
+  📁 Auditor Field Kit path: /workspace/auditor field kit
+  ```
+
+### Deployment su Altre Piattaforme
+
+#### Heroku
+
+```bash
+# Procfile
+web: cd dashboard && node server.js
+
+# Variabili d'ambiente
+heroku config:set DATABASE_TYPE=postgres
+heroku config:set DATABASE_URL=your_postgres_url
+```
+
+#### Docker
+
+```dockerfile
+# Dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY . .
+RUN cd dashboard && npm install
+EXPOSE 3000
+CMD ["node", "dashboard/server.js"]
+```
+
+```bash
+# Build e run
+docker build -t cpf-dashboard .
+docker run -p 3000:3000 \
+  -e DATABASE_TYPE=postgres \
+  -e DATABASE_URL=your_postgres_url \
+  cpf-dashboard
+```
+
+#### VPS (Ubuntu/Debian)
+
+```bash
+# Setup Node.js
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Clone repository
+git clone https://github.com/your/repo.git
+cd repo/dashboard
+
+# Install dependencies
+npm install
+
+# Setup systemd service
+sudo nano /etc/systemd/system/cpf-dashboard.service
+```
+
+```ini
+[Unit]
+Description=CPF Dashboard Server
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/path/to/repo/dashboard
+Environment="NODE_ENV=production"
+Environment="DATABASE_TYPE=postgres"
+Environment="DATABASE_URL=your_postgres_url"
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+# Start service
+sudo systemctl enable cpf-dashboard
+sudo systemctl start cpf-dashboard
+sudo systemctl status cpf-dashboard
+```
+
+### Considerazioni di Sicurezza per Produzione
+
+- 🔒 **HTTPS**: Usa sempre HTTPS in produzione (certificato SSL/TLS)
+- 🔐 **Authentication**: Implementa autenticazione e autorizzazione
+- 🛡️ **Firewall**: Limita l'accesso solo a porte necessarie
+- 📊 **Monitoring**: Setup logging e monitoring (PM2, Prometheus, etc.)
+- 🔄 **Backup**: Backup regolari del database
+- 🚫 **Rate Limiting**: Implementa rate limiting per API
+- 🔑 **Environment Variables**: Non committare mai credenziali nel codice
+
+---
+
 ## 🌐 Dashboard e Interfacce
 
 ### Dashboard Principali
