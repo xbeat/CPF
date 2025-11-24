@@ -1892,7 +1892,7 @@ console.log('[Server] Initializing HTTP server on port', PORT);
 
 server.listen(PORT, () => {
   console.log('\n╔════════════════════════════════════════════════════════════╗');
-  console.log('║          🛡️  CPF Dashboard Server v2.0 - RUNNING            ║');
+  console.log('║          🛡️  CPF Dashboard Server v3.0 - RUNNING           ║');
   console.log('╚════════════════════════════════════════════════════════════╝\n');
   console.log(`📡 Server listening on: http://localhost:${PORT}`);
   console.log(`🔌 WebSocket server ready\n`);
