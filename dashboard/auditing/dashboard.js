@@ -360,8 +360,8 @@ function renderAssessmentDetails() {
 
 function renderProgressSummary(org) {
     const el = document.getElementById('progressSummary');
-    const completion = org.aggregates.completion.percentage;
-    const assessed = org.aggregates.completion.assessed_indicators;
+    const completion = org.aggregates?.completion?.percentage ?? 0;
+    const assessed = org.aggregates?.completion?.assessed_indicators ?? 0;
     const lang = getCategoryLanguage(currentOrgLanguage);
     const t = getTranslations(lang);
 
@@ -386,7 +386,7 @@ function renderProgressSummary(org) {
 
 function renderRiskSummary(org) {
     const el = document.getElementById('riskSummary');
-    const risk = org.aggregates.overall_risk;
+    const risk = org.aggregates?.overall_risk ?? 0.5;
     const riskPercent = (risk * 100).toFixed(1);
     const riskClass = risk < 0.3 ? 'risk-low' : risk < 0.7 ? 'risk-medium' : 'risk-high';
     const lang = getCategoryLanguage(currentOrgLanguage);
