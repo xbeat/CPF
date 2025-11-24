@@ -273,6 +273,14 @@ app.get('/api/organizations/:orgId', async (req, res) => {
       });
     }
 
+    // DEBUG: Log aggregates structure
+    console.log(`📊 [API GET] Organization ${orgId}:`, {
+      name: orgData.name,
+      hasAggregates: !!orgData.aggregates,
+      aggregatesKeys: orgData.aggregates ? Object.keys(orgData.aggregates) : [],
+      aggregates: orgData.aggregates
+    });
+
     res.json({
       success: true,
       data: orgData
