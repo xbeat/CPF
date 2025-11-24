@@ -519,7 +519,7 @@ async function recalculateAllAggregates() {
 
 /**
  * Get SOC indicator data for an organization
- * Returns all assessments in SOC format with indicator values
+ * Returns SOC indicators from {org-name}-soc.json file (NOT assessments)
  */
 async function getSocData(orgId) {
   const organization = await readOrganization(orgId);
@@ -527,60 +527,90 @@ async function getSocData(orgId) {
     return null;
   }
 
-  const indicators = {};
-  for (const [indicatorId, assessment] of Object.entries(organization.assessments)) {
-    indicators[indicatorId] = {
-      indicator_id: indicatorId,
-      value: assessment.bayesian_score,
-      previous_value: null, // We don't track previous values in JSON storage
-      last_updated: assessment.updated_at || new Date().toISOString()
+  // Normalize organization name for SOC filename
+  const normalizedOrgName = organization.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  const socFilePath = path.join(orgsDir, `${normalizedOrgName}-soc.json`);
+
+  // Read SOC file (separate from organization.json)
+  let socData = readJsonFile(socFilePath);
+
+  if (!socData) {
+    // Return empty structure if no SOC data yet
+    return {
+      org_id: organization.id,
+      org_name: organization.name,
+      indicators: {}
     };
   }
 
-  return {
-    org_id: organization.id,
-    org_name: organization.name,
-    indicators
-  };
+  return socData;
 }
 
 /**
- * Save SOC indicator (wrapper around saveAssessment)
+ * Save SOC indicator to {org-name}-soc.json file (SEPARATE from assessments)
  */
 async function saveSocIndicator(orgId, assessmentData) {
   const indicatorId = assessmentData.indicator_id;
+  const value = assessmentData.bayesian_score;
 
-  // Get previous value if exists
   const organization = await readOrganization(orgId);
   if (!organization) {
     throw new Error(`Organization ${orgId} not found`);
   }
 
-  const previousValue = organization.assessments[indicatorId]
-    ? organization.assessments[indicatorId].bayesian_score
+  // Normalize organization name for SOC filename
+  const normalizedOrgName = organization.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  const socFilePath = path.join(orgsDir, `${normalizedOrgName}-soc.json`);
+
+  // Read existing SOC file or create new one
+  let socData = readJsonFile(socFilePath);
+  if (!socData) {
+    socData = {
+      org_id: organization.id,
+      org_name: organization.name,
+      indicators: {}
+    };
+  }
+
+  // Get previous value
+  const previousValue = socData.indicators[indicatorId]
+    ? socData.indicators[indicatorId].value
     : null;
 
-  // Save using saveAssessment
-  await saveAssessment(orgId, indicatorId, {
-    indicator_id: indicatorId,
-    title: assessmentData.title || null,
-    category: assessmentData.category || indicatorId.split('.')[0],
-    maturity_level: assessmentData.maturity_level || null,
-    bayesian_score: assessmentData.bayesian_score,
-    confidence: assessmentData.confidence || null,
-    assessor: assessmentData.assessor || 'SOC Simulator',
-    assessment_date: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    raw_data: assessmentData.raw_data || assessmentData
-  });
+  const eventCount = socData.indicators[indicatorId]
+    ? (socData.indicators[indicatorId].event_count || 0) + 1
+    : 1;
 
-  console.log(`[DB-JSON] Successfully saved SOC indicator ${indicatorId} for organization ${orgId}.`);
+  // Update indicator value
+  socData.indicators[indicatorId] = {
+    indicator_id: indicatorId,
+    value: value,
+    previous_value: previousValue,
+    event_count: eventCount,
+    last_event_type: assessmentData.event_type || assessmentData.raw_data?.event_type || null,
+    last_event_severity: assessmentData.severity || assessmentData.raw_data?.severity || null,
+    last_updated: new Date().toISOString()
+  };
+
+  // Write SOC file (separate from organization.json!)
+  writeJsonFile(socFilePath, socData);
+
+  console.log(`[DB-JSON] Successfully saved SOC indicator ${indicatorId} for organization ${orgId} (value: ${value}, previous: ${previousValue}).`);
 
   return {
     orgId,
     indicatorId,
     previousValue,
-    newValue: assessmentData.bayesian_score
+    newValue: value,
+    eventCount
   };
 }
 

@@ -38,9 +38,22 @@ async function initialize() {
       );
     `;
 
+    const createSocIndicatorsTable = `
+      CREATE TABLE IF NOT EXISTS soc_indicators (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, org_id VARCHAR(50) NOT NULL, indicator_id VARCHAR(10) NOT NULL,
+        value DECIMAL(5, 4), previous_value DECIMAL(5, 4),
+        event_count INTEGER DEFAULT 0, last_event_type VARCHAR(100), last_event_severity VARCHAR(20),
+        source VARCHAR(50) DEFAULT 'simulator',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+        UNIQUE(org_id, indicator_id)
+      );
+    `;
+
     await db.exec(createOrganizationsTable);
     await db.exec(createAssessmentsTable);
-    console.log('[DB-SQLITE] Tabelle assicurate: organizations, assessments.');
+    await db.exec(createSocIndicatorsTable);
+    console.log('[DB-SQLITE] Tabelle assicurate: organizations, assessments, soc_indicators.');
   } catch (error) {
     console.error('[DB-SQLITE] Errore di inizializzazione DB:', error);
     throw error;
@@ -291,7 +304,7 @@ async function deleteAssessment(orgId, indicatorId) {
 
 /**
  * Get SOC indicator data for an organization
- * Returns all assessments in SOC format with indicator values
+ * Returns SOC indicators (NOT assessments/auditing data)
  */
 async function getSocData(orgId) {
   await initialize();
@@ -301,14 +314,18 @@ async function getSocData(orgId) {
       return null;
     }
 
-    const assessmentRows = await db.all('SELECT indicator_id, bayesian_score, updated_at FROM assessments WHERE org_id = ? ORDER BY indicator_id', [orgId]);
+    // Read from soc_indicators table (NOT assessments table)
+    const socRows = await db.all('SELECT indicator_id, value, previous_value, event_count, last_event_type, last_event_severity, updated_at FROM soc_indicators WHERE org_id = ? ORDER BY indicator_id', [orgId]);
 
     const indicators = {};
-    for (const row of assessmentRows) {
+    for (const row of socRows) {
       indicators[row.indicator_id] = {
         indicator_id: row.indicator_id,
-        value: row.bayesian_score,
-        previous_value: null, // We don't track previous values in this query
+        value: row.value,
+        previous_value: row.previous_value,
+        event_count: row.event_count,
+        last_event_type: row.last_event_type,
+        last_event_severity: row.last_event_severity,
         last_updated: row.updated_at
       };
     }
@@ -325,42 +342,46 @@ async function getSocData(orgId) {
 }
 
 /**
- * Save SOC indicator (wrapper around saveAssessment)
+ * Save SOC indicator to soc_indicators table (SEPARATE from assessments/auditing)
  */
 async function saveSocIndicator(orgId, assessmentData) {
   await initialize();
   const indicatorId = assessmentData.indicator_id;
+  const value = assessmentData.bayesian_score;
 
   // Get previous value if exists
   let previousValue = null;
+  let eventCount = 1;
   try {
-    const prevRow = await db.get('SELECT bayesian_score FROM assessments WHERE org_id = ? AND indicator_id = ?', [orgId, indicatorId]);
+    const prevRow = await db.get('SELECT value, event_count FROM soc_indicators WHERE org_id = ? AND indicator_id = ?', [orgId, indicatorId]);
     if (prevRow) {
-      previousValue = prevRow.bayesian_score;
+      previousValue = prevRow.value;
+      eventCount = (prevRow.event_count || 0) + 1;
     }
   } catch (error) {
-    console.warn(`[DB-SQLITE] Could not fetch previous value for ${orgId}/${indicatorId}:`, error.message);
+    console.warn(`[DB-SQLITE] Could not fetch previous SOC value for ${orgId}/${indicatorId}:`, error.message);
   }
 
-  // Save using saveAssessment
-  await saveAssessment(orgId, indicatorId, {
-    title: assessmentData.title || null,
-    category: assessmentData.category || indicatorId.split('.')[0],
-    maturity_level: assessmentData.maturity_level || null,
-    bayesian_score: assessmentData.bayesian_score,
-    confidence: assessmentData.confidence || null,
-    assessor: assessmentData.assessor || 'SOC Simulator',
-    assessment_date: new Date().toISOString(),
-    raw_data: assessmentData.raw_data || assessmentData
-  });
+  // Save to soc_indicators table (NOT assessments!)
+  const query = `
+    INSERT OR REPLACE INTO soc_indicators (org_id, indicator_id, value, previous_value, event_count, last_event_type, last_event_severity, source, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'));
+  `;
 
-  console.log(`[DB-SQLITE] Successfully saved SOC indicator ${indicatorId} for organization ${orgId}.`);
+  const lastEventType = assessmentData.event_type || assessmentData.raw_data?.event_type || null;
+  const lastEventSeverity = assessmentData.severity || assessmentData.raw_data?.severity || null;
+  const source = assessmentData.source || 'simulator';
+
+  await db.run(query, [orgId, indicatorId, value, previousValue, eventCount, lastEventType, lastEventSeverity, source]);
+
+  console.log(`[DB-SQLITE] Successfully saved SOC indicator ${indicatorId} for organization ${orgId} (value: ${value}, previous: ${previousValue}).`);
 
   return {
     orgId,
     indicatorId,
     previousValue,
-    newValue: assessmentData.bayesian_score
+    newValue: value,
+    eventCount
   };
 }
 
