@@ -1165,14 +1165,14 @@ app.get('/api/organizations/:orgId/export/zip', async (req, res) => {
 
 /**
  * GET /api/soc/:orgId
- * Get SOC indicator data from {org-name}-soc.json file
+ * Get SOC indicator data using database abstraction layer
  */
-app.get('/api/soc/:orgId', (req, res) => {
+app.get('/api/soc/:orgId', async (req, res) => {
   try {
     const { orgId } = req.params;
 
-    // Prima ottieni i dati dell'organizzazione per il nome
-    if (!dataManager.organizationExists(orgId)) {
+    // Check if organization exists
+    if (!(await dataManager.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -1180,29 +1180,18 @@ app.get('/api/soc/:orgId', (req, res) => {
       });
     }
 
-    const orgData = dataManager.readOrganization(orgId);
+    // Get SOC data using db abstraction layer
+    const db = require('./db');
+    const socData = await db.getSocData(orgId);
 
-    // Normalizza il nome dell'organizzazione per il file SOC
-    const normalizedOrgName = orgData.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
-
-    const socFilePath = path.join(__dirname, 'data', 'organizations', `${normalizedOrgName}-soc.json`);
-
-    // Verifica se il file SOC esiste
-    if (!fs.existsSync(socFilePath)) {
+    if (!socData) {
       return res.status(404).json({
         success: false,
-        error: 'SOC data file not found',
+        error: 'SOC data not found',
         message: 'No SOC data available for this organization',
-        orgId,
-        expectedFile: `${normalizedOrgName}-soc.json`
+        orgId
       });
     }
-
-    // Leggi il file SOC
-    const socData = JSON.parse(fs.readFileSync(socFilePath, 'utf8'));
 
     res.json({
       success: true,
@@ -1629,7 +1618,7 @@ app.get('/api/simulator/status', (req, res) => {
       }
 
       // Verify organization exists
-      if (!dataManager.organizationExists(orgId)) {
+      if (!(await dataManager.organizationExists(orgId))) {
         return res.status(404).json({
           success: false,
           error: 'Organization not found',

@@ -1,10 +1,11 @@
 /**
  * CPF Data Manager - Utility functions for organization and assessment management
- * Handles all file I/O operations for JSON-based storage
+ * Uses database abstraction layer to support JSON, SQLite, and PostgreSQL storage
  */
 
 const fs = require('fs');
 const path = require('path');
+const db = require('../db');
 
 // ============================================================================
 // Configuration
@@ -505,32 +506,26 @@ function getLastAssessmentDate(assessments) {
 // ============================================================================
 
 /**
- * Read single organization
+ * Read single organization using database abstraction layer
  */
-function readOrganization(orgId) {
-  const filePath = path.join(ORGS_DIR, `${orgId}.json`);
-  return readJsonFile(filePath);
+async function readOrganization(orgId) {
+  return await db.readOrganization(orgId);
 }
 
 /**
- * Write single organization
+ * Write single organization using database abstraction layer
  */
-function writeOrganization(orgData) {
-  ensureDir(ORGS_DIR);
-  const filePath = path.join(ORGS_DIR, `${orgData.id}.json`);
+async function writeOrganization(orgData) {
   orgData.metadata.updated_at = new Date().toISOString();
-  writeJsonFile(filePath, orgData);
-
-  // Update index
-  updateOrganizationInIndex(orgData);
+  return await db.writeOrganization(orgData.id, orgData);
 }
 
 /**
- * Check if organization exists
+ * Check if organization exists using database abstraction layer
  */
-function organizationExists(orgId) {
-  const filePath = path.join(ORGS_DIR, `${orgId}.json`);
-  return fs.existsSync(filePath);
+async function organizationExists(orgId) {
+  const org = await db.readOrganization(orgId);
+  return org !== null && org !== undefined;
 }
 
 /**
@@ -885,51 +880,14 @@ function deleteAssessment(orgId, indicatorId, user = 'System') {
 }
 
 /**
- * Save SOC indicator value to separate file
+ * Save SOC indicator value using database abstraction layer
  */
-function saveSocIndicator(orgId, assessmentData) {
-  const orgData = readOrganization(orgId);
+async function saveSocIndicator(orgId, assessmentData) {
   const indicatorId = assessmentData.indicator_id;
 
-  // Normalize organization name for filename
-  const normalizedOrgName = orgData.name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')  // Replace non-alphanumeric with dash
-    .replace(/^-|-$/g, '');        // Remove leading/trailing dashes
-
-  const socFilePath = path.join(ORGS_DIR, `${normalizedOrgName}-soc.json`);
-
-  // Read existing SOC file or create new one
-  let socData;
-  if (fs.existsSync(socFilePath)) {
-    socData = readJsonFile(socFilePath);
-  } else {
-    socData = {
-      org_id: orgId,
-      org_name: orgData.name,
-      indicators: {}
-    };
-  }
-
-  // Ensure org_id and org_name are always up to date
-  socData.org_id = orgId;
-  socData.org_name = orgData.name;
-
-  // Get previous value if exists
-  const previousValue = socData.indicators[indicatorId]
-    ? socData.indicators[indicatorId].value
-    : null;
-
-  // Save new indicator value
-  socData.indicators[indicatorId] = {
-    indicator_id: indicatorId,
-    value: assessmentData.bayesian_score,
-    previous_value: previousValue,
-    last_updated: new Date().toISOString()
-  };
-
-  // Write SOC file
-  writeJsonFile(socFilePath, socData);
+  // Use db abstraction layer to save SOC indicator
+  const result = await db.saveSocIndicator(orgId, assessmentData);
+  const previousValue = result.previousValue;
 
   // Emit WebSocket event for real-time dashboard update
   if (global.io) {
@@ -951,7 +909,7 @@ function saveSocIndicator(orgId, assessmentData) {
     });
   }
 
-  return socData;
+  return result;
 }
 
 // ============================================================================

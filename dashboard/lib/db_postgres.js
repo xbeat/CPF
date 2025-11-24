@@ -60,6 +60,22 @@ async function initialize() {
       UNIQUE(org_id, indicator_id)
     );`);
 
+    // Create soc_indicators table (separate from assessments/auditing)
+    await client.query(`CREATE TABLE IF NOT EXISTS soc_indicators (
+      id SERIAL PRIMARY KEY,
+      org_id VARCHAR(50) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      indicator_id VARCHAR(10) NOT NULL,
+      value DECIMAL(5, 4),
+      previous_value DECIMAL(5, 4),
+      event_count INT DEFAULT 0,
+      last_event_type VARCHAR(100),
+      last_event_severity VARCHAR(20),
+      source VARCHAR(50) DEFAULT 'simulator',
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(org_id, indicator_id)
+    );`);
+
     console.log('[DB-PG] Tabelle base assicurate.');
 
     // Aggiunta delle nuove colonne alla tabella 'organizations' in modo idempotente
@@ -375,6 +391,104 @@ async function deleteAssessment(orgId, indicatorId) {
     }
 }
 
+/**
+ * Get SOC indicator data for an organization
+ * Returns SOC indicators (NOT assessments/auditing data)
+ */
+async function getSocData(orgId) {
+    await initialize();
+    try {
+        const orgRes = await pool.query('SELECT id, name FROM organizations WHERE id = $1 AND is_deleted = false', [orgId]);
+        const orgRow = orgRes.rows[0];
+
+        if (!orgRow) {
+            return null;
+        }
+
+        // Read from soc_indicators table (NOT assessments table)
+        const socRes = await pool.query('SELECT indicator_id, value, previous_value, event_count, last_event_type, last_event_severity, updated_at FROM soc_indicators WHERE org_id = $1 ORDER BY indicator_id', [orgId]);
+
+        // If no SOC data exists, return null (to trigger "generate data" message in dashboard)
+        if (socRes.rows.length === 0) {
+            return null;
+        }
+
+        const indicators = {};
+        for (const row of socRes.rows) {
+            indicators[row.indicator_id] = {
+                indicator_id: row.indicator_id,
+                value: parseFloat(row.value),
+                previous_value: row.previous_value ? parseFloat(row.previous_value) : null,
+                event_count: row.event_count,
+                last_event_type: row.last_event_type,
+                last_event_severity: row.last_event_severity,
+                last_updated: row.updated_at
+            };
+        }
+
+        return {
+            org_id: orgRow.id,
+            org_name: orgRow.name,
+            indicators
+        };
+    } catch (error) {
+        console.error(`[DB-PG] Error reading SOC data for ${orgId}:`, error);
+        throw error;
+    }
+}
+
+/**
+ * Save SOC indicator to soc_indicators table (SEPARATE from assessments/auditing)
+ */
+async function saveSocIndicator(orgId, assessmentData) {
+    await initialize();
+    const indicatorId = assessmentData.indicator_id;
+    const value = assessmentData.bayesian_score;
+
+    // Get previous value if exists
+    let previousValue = null;
+    let eventCount = 1;
+    try {
+        const prevRes = await pool.query('SELECT value, event_count FROM soc_indicators WHERE org_id = $1 AND indicator_id = $2', [orgId, indicatorId]);
+        if (prevRes.rows.length > 0) {
+            previousValue = parseFloat(prevRes.rows[0].value);
+            eventCount = (prevRes.rows[0].event_count || 0) + 1;
+        }
+    } catch (error) {
+        console.warn(`[DB-PG] Could not fetch previous SOC value for ${orgId}/${indicatorId}:`, error.message);
+    }
+
+    // Save to soc_indicators table (NOT assessments!)
+    const query = `
+        INSERT INTO soc_indicators (org_id, indicator_id, value, previous_value, event_count, last_event_type, last_event_severity, source, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+        ON CONFLICT (org_id, indicator_id) DO UPDATE SET
+            previous_value = soc_indicators.value,
+            value = EXCLUDED.value,
+            event_count = EXCLUDED.event_count,
+            last_event_type = EXCLUDED.last_event_type,
+            last_event_severity = EXCLUDED.last_event_severity,
+            source = EXCLUDED.source,
+            updated_at = CURRENT_TIMESTAMP;
+    `;
+
+    const lastEventType = assessmentData.event_type || assessmentData.raw_data?.event_type || null;
+    const lastEventSeverity = assessmentData.severity || assessmentData.raw_data?.severity || null;
+    const source = assessmentData.source || 'simulator';
+
+    await pool.query(query, [orgId, indicatorId, value, previousValue, eventCount, lastEventType, lastEventSeverity, source]);
+
+    console.log(`[DB-PG] Successfully saved SOC indicator ${indicatorId} for organization ${orgId} (value: ${value}, previous: ${previousValue}).`);
+
+    return {
+        orgId,
+        indicatorId,
+        previousValue,
+        newValue: value,
+        eventCount
+    };
+}
+
 
 module.exports = {
   initialize,
@@ -386,10 +500,11 @@ module.exports = {
   saveAssessment,
   getAssessment,
   deleteAssessment,
+  getSocData,
+  saveSocIndicator,
   // Funzioni alias o non più necessarie mantenute per retrocompatibilità
-  writeOrganization: updateOrganization, 
+  writeOrganization: updateOrganization,
   saveIndicatorMetadata: async () => { console.warn('[DB-PG] saveIndicatorMetadata non è implementata in modo granulare, i dati vengono salvati con l\'intera organizzazione.'); },
-  saveSocIndicator: async () => { console.warn('[DB-PG] saveSocIndicator non è implementata.'); },
   writeOrganizationsIndex: async () => {},
   updateOrganizationInIndex: async () => {},
   removeOrganizationFromIndex: async () => {},
