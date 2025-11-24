@@ -111,21 +111,45 @@ app.use('/data', express.static(path.join(__dirname, 'data')));
 
 // Serve Auditor Field Kit interactive indicator files
 // Auto-detect the correct path based on working directory
-const auditorKitPath = process.env.AUDITOR_KIT_PATH || (() => {
-  const relativePath = path.join(__dirname, '../auditor field kit');
-  const rootPath = path.join(__dirname, '../../auditor field kit');
-
-  if (fs.existsSync(relativePath)) {
-    return relativePath;
-  } else if (fs.existsSync(rootPath)) {
-    return rootPath;
-  } else {
-    console.warn('⚠️  Auditor Field Kit directory not found at expected locations');
-    return relativePath; // fallback
+const auditorKitPath = (() => {
+  // Check if environment variable is set
+  if (process.env.AUDITOR_KIT_PATH) {
+    const envPath = process.env.AUDITOR_KIT_PATH;
+    const interactivePath = path.join(envPath, 'interactive');
+    if (fs.existsSync(interactivePath)) {
+      console.log('✅ Using AUDITOR_KIT_PATH from environment:', envPath);
+      return envPath;
+    } else {
+      console.warn('⚠️  AUDITOR_KIT_PATH set but interactive folder not found:', interactivePath);
+    }
   }
+
+  // Try relative paths
+  const pathsToTry = [
+    path.join(__dirname, '..', 'auditor field kit'),  // Standard: dashboard/../auditor field kit
+    path.join(__dirname, '..', '..', 'auditor field kit'),  // Nested deployment
+  ];
+
+  console.log('🔍 Auto-detecting Auditor Field Kit path...');
+  for (const testPath of pathsToTry) {
+    const interactivePath = path.join(testPath, 'interactive');
+    console.log(`   Trying: ${testPath}`);
+    if (fs.existsSync(testPath) && fs.existsSync(interactivePath)) {
+      console.log(`✅ Found Auditor Field Kit at: ${testPath}`);
+      return testPath;
+    }
+  }
+
+  console.error('❌ Auditor Field Kit directory not found at any expected location!');
+  console.error('   Paths tried:', pathsToTry);
+  console.error('   Set AUDITOR_KIT_PATH environment variable to specify the location.');
+
+  // Return first path as fallback (will fail but give better error messages)
+  return pathsToTry[0];
 })();
 
 console.log('📁 Auditor Field Kit path:', auditorKitPath);
+console.log('📁 Interactive folder exists:', fs.existsSync(path.join(auditorKitPath, 'interactive')));
 app.use('/auditor-field-kit', express.static(auditorKitPath));
 
 // ============================================
