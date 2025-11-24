@@ -395,8 +395,21 @@ async function selectOrganization(orgId) {
     await loadAndRenderOrganization(orgId);
 }
 
+// Store original org-detail template on first load
+let originalOrgDetailTemplate = null;
+
 async function loadAndRenderOrganization(orgId) {
+    const orgDetailEl = document.getElementById('org-detail');
+
+    // Save original template on first call
+    if (!originalOrgDetailTemplate) {
+        originalOrgDetailTemplate = orgDetailEl.innerHTML;
+    }
+
     try {
+        // Restore original template before rendering (in case it was corrupted by previous error)
+        orgDetailEl.innerHTML = originalOrgDetailTemplate;
+
         // Fetch SOC data (NON usare assessments di auditing)
         const socResponse = await fetch(`/api/soc/${orgId}`);
         if (!socResponse.ok) {
@@ -411,11 +424,14 @@ async function loadAndRenderOrganization(orgId) {
         renderOrganizationDetail(socResult.data);
     } catch (error) {
         console.error('Error loading organization:', error);
-        document.getElementById('org-detail').innerHTML = `
-            <div class="error-message">
-                <h3>⚠️ Error Loading SOC Data</h3>
-                <p>${error.message}</p>
-                <p>Make sure the simulator has generated data for this organization</p>
+        orgDetailEl.innerHTML = `
+            <div class="error-message" style="padding: 40px; text-align: center;">
+                <h3 style="color: #d32f2f; margin-bottom: 16px;">⚠️ Error Loading SOC Data</h3>
+                <p style="margin-bottom: 8px; color: #666;">${error.message}</p>
+                <p style="color: #999;">Make sure the simulator has generated data for this organization</p>
+                <button onclick="window.location.href='/dashboard/simulator/'" style="margin-top: 20px; padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Go to Simulator
+                </button>
             </div>
         `;
     }
