@@ -1105,7 +1105,7 @@ async function showAssessmentDetails(indicatorId, assessment) {
     try {
         const [categoryNum, indicatorNum] = indicatorId.split('.');
         const categoryName = CATEGORY_MAP[categoryNum];
-        const language = selectedOrgData.metadata.language || 'en-US';
+        const language = selectedOrgData.metadata?.language || 'en-US';
         const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
 
         const response = await fetch(url);
@@ -1346,7 +1346,7 @@ async function openIntegratedClient(indicatorId, orgId, existingAssessment = nul
     const content = document.getElementById('indicatorModalContent');
 
     // Get organization data
-    const language = selectedOrgData.metadata.language || 'en-US';
+    const language = selectedOrgData.metadata?.language || 'en-US';
 
     // Load indicator from GitHub and render integrated form
     const [categoryNum, indicatorNum] = indicatorId.split('.');
@@ -1391,7 +1391,7 @@ async function openIntegratedVersion() {
 
     const indicatorId = selectedIndicatorId;
     const orgId = selectedOrgId;
-    const language = selectedOrgData.metadata.language || 'en-US';
+    const language = selectedOrgData.metadata?.language || 'en-US';
     const assessment = selectedOrgData.assessments[indicatorId];
 
     console.log('🎨 openIntegratedVersion called with:', { indicatorId, orgId, assessment: !!assessment });
@@ -1837,7 +1837,7 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
     try {
         const [categoryNum, indicatorNum] = indicatorId.split('.');
         const categoryName = CATEGORY_MAP[categoryNum];
-        const language = selectedOrgData.metadata.language || 'en-US';
+        const language = selectedOrgData.metadata?.language || 'en-US';
         const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
 
         const response = await fetch(url);
