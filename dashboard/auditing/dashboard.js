@@ -329,6 +329,15 @@ function filterAuditingAssessments(org) {
 function renderAssessmentDetails() {
     if (!selectedOrgData) return;
 
+    // DEBUG: Log della struttura dati
+    console.log('📊 renderAssessmentDetails - selectedOrgData:', {
+        name: selectedOrgData.name,
+        hasMetadata: !!selectedOrgData.metadata,
+        hasAggregates: !!selectedOrgData.aggregates,
+        aggregates: selectedOrgData.aggregates,
+        metadata: selectedOrgData.metadata
+    });
+
     // IMPORTANTE: Filtra SOLO assessments con human_values (auditor)
     const org = filterAuditingAssessments(selectedOrgData);
 
