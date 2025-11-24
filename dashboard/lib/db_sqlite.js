@@ -111,6 +111,9 @@ async function readOrganization(orgId) {
       return acc;
     }, {});
 
+    // Calculate aggregates from assessments
+    const aggregates = calculateAggregates(assessments, orgRow.industry);
+
     const result = {
       id: orgRow.id,
       name: orgRow.name,
@@ -127,7 +130,7 @@ async function readOrganization(orgId) {
         partita_iva: orgRow.partita_iva,
       },
       assessments: assessments,
-      aggregates: {}
+      aggregates: aggregates
     };
     return result;
   } catch (error) {
