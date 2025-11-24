@@ -1,10 +1,11 @@
 /**
  * CPF Data Manager - Utility functions for organization and assessment management
- * Handles all file I/O operations for JSON-based storage
+ * Uses database abstraction layer to support JSON, SQLite, and PostgreSQL storage
  */
 
 const fs = require('fs');
 const path = require('path');
+const db = require('../db');
 
 // ============================================================================
 // Configuration
@@ -505,32 +506,26 @@ function getLastAssessmentDate(assessments) {
 // ============================================================================
 
 /**
- * Read single organization
+ * Read single organization using database abstraction layer
  */
-function readOrganization(orgId) {
-  const filePath = path.join(ORGS_DIR, `${orgId}.json`);
-  return readJsonFile(filePath);
+async function readOrganization(orgId) {
+  return await db.readOrganization(orgId);
 }
 
 /**
- * Write single organization
+ * Write single organization using database abstraction layer
  */
-function writeOrganization(orgData) {
-  ensureDir(ORGS_DIR);
-  const filePath = path.join(ORGS_DIR, `${orgData.id}.json`);
+async function writeOrganization(orgData) {
   orgData.metadata.updated_at = new Date().toISOString();
-  writeJsonFile(filePath, orgData);
-
-  // Update index
-  updateOrganizationInIndex(orgData);
+  return await db.writeOrganization(orgData.id, orgData);
 }
 
 /**
- * Check if organization exists
+ * Check if organization exists using database abstraction layer
  */
-function organizationExists(orgId) {
-  const filePath = path.join(ORGS_DIR, `${orgId}.json`);
-  return fs.existsSync(filePath);
+async function organizationExists(orgId) {
+  const org = await db.readOrganization(orgId);
+  return org !== null && org !== undefined;
 }
 
 /**

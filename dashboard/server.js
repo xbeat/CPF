@@ -1172,7 +1172,7 @@ app.get('/api/soc/:orgId', async (req, res) => {
     const { orgId } = req.params;
 
     // Check if organization exists
-    if (!dataManager.organizationExists(orgId)) {
+    if (!(await dataManager.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -1618,7 +1618,7 @@ app.get('/api/simulator/status', (req, res) => {
       }
 
       // Verify organization exists
-      if (!dataManager.organizationExists(orgId)) {
+      if (!(await dataManager.organizationExists(orgId))) {
         return res.status(404).json({
           success: false,
           error: 'Organization not found',
