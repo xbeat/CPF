@@ -241,14 +241,14 @@ async function readOrganization(orgId) {
   await initialize();
   try {
     const orgRes = await pool.query('SELECT * FROM organizations WHERE id = $1 AND is_deleted = false', [orgId]);
-    const org = orgRes.rows[0];
+    const orgRow = orgRes.rows[0];
 
-    if (!org) return null;
+    if (!orgRow) return null;
 
     const assessRes = await pool.query('SELECT * FROM assessments WHERE org_id = $1', [orgId]);
-    
+
     // Convert decimal fields from string to number for consistency
-    org.assessments = assessRes.rows.reduce((acc, a) => {
+    const assessments = assessRes.rows.reduce((acc, a) => {
       if (a.bayesian_score) {
         a.bayesian_score = parseFloat(a.bayesian_score);
       }
@@ -258,9 +258,35 @@ async function readOrganization(orgId) {
       acc[a.indicator_id] = a;
       return acc;
     }, {});
-    
+
+    // Calculate aggregates from assessments if not already stored
+    let aggregates = orgRow.aggregates;
+    if (!aggregates || Object.keys(aggregates).length === 0) {
+      aggregates = calculateAggregates(assessments, orgRow.industry);
+    }
+
+    // Return organization with proper structure
+    const result = {
+      id: orgRow.id,
+      name: orgRow.name,
+      metadata: {
+        industry: orgRow.industry,
+        size: orgRow.size,
+        country: orgRow.country,
+        language: orgRow.language,
+        created_at: orgRow.created_at,
+        updated_at: orgRow.updated_at,
+        created_by: orgRow.created_by,
+        notes: orgRow.notes,
+        sede_sociale: orgRow.sede_sociale,
+        partita_iva: orgRow.partita_iva,
+      },
+      assessments: assessments,
+      aggregates: aggregates
+    };
+
     console.log(`[DB-PG] Successfully read organization ${orgId}.`);
-    return org;
+    return result;
   } catch (error) {
     console.error(`[DB-PG] Error reading organization ${orgId}:`, error);
     throw error;
