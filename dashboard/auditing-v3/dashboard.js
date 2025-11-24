@@ -2627,7 +2627,7 @@ function renderMaturityTab() {
         </div>
         <div style="padding: 10px; background: var(--bg-gray); border-radius: 6px;">
             <div style="font-size: 12px; color: var(--text-light);">Sector</div>
-            <div style="font-size: 16px; font-weight: 600;">${selectedOrgData.metadata?.industry || 'N/A'}</div>
+            <div style="font-size: 16px; font-weight: 600;">${selectedOrgData.industry || 'N/A'}</div>
         </div>
     `;
     document.getElementById('benchmarkStats').innerHTML = benchmarkStatsHTML;
