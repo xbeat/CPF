@@ -388,12 +388,12 @@ async function fetchIndicatorsForOrganization(orgId, language) {
  * Update organization metadata
  * Body: { name, industry, size, country, language, notes }
  */
-app.put('/api/organizations/:orgId', (req, res) => {
+app.put('/api/organizations/:orgId', async (req, res) => {
   try {
     const { orgId } = req.params;
     const updates = req.body;
 
-    if (!dataManager.organizationExists(orgId)) {
+    if (!(await db.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -401,8 +401,8 @@ app.put('/api/organizations/:orgId', (req, res) => {
       });
     }
 
-    // Read current org data
-    const orgData = dataManager.readOrganization(orgId);
+    // Read current org data from database
+    const orgData = await db.readOrganization(orgId);
 
     // Update metadata fields
     if (updates.name) orgData.name = updates.name;
@@ -414,8 +414,8 @@ app.put('/api/organizations/:orgId', (req, res) => {
     if (updates.sede_sociale !== undefined) orgData.metadata.sede_sociale = updates.sede_sociale;
     if (updates.partita_iva !== undefined) orgData.metadata.partita_iva = updates.partita_iva;
 
-    // Save
-    dataManager.writeOrganization(orgData);
+    // Save to database
+    await db.writeOrganization(orgData);
 
     console.log(`\n✅ [API] Updated organization: ${orgId}\n`);
 
