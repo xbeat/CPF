@@ -538,13 +538,9 @@ async function getSocData(orgId) {
   // Read SOC file (separate from organization.json)
   let socData = readJsonFile(socFilePath);
 
-  if (!socData) {
-    // Return empty structure if no SOC data yet
-    return {
-      org_id: organization.id,
-      org_name: organization.name,
-      indicators: {}
-    };
+  // If no SOC file exists or no indicators, return null (to trigger "generate data" message in dashboard)
+  if (!socData || !socData.indicators || Object.keys(socData.indicators).length === 0) {
+    return null;
   }
 
   return socData;

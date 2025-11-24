@@ -408,6 +408,11 @@ async function getSocData(orgId) {
         // Read from soc_indicators table (NOT assessments table)
         const socRes = await pool.query('SELECT indicator_id, value, previous_value, event_count, last_event_type, last_event_severity, updated_at FROM soc_indicators WHERE org_id = $1 ORDER BY indicator_id', [orgId]);
 
+        // If no SOC data exists, return null (to trigger "generate data" message in dashboard)
+        if (socRes.rows.length === 0) {
+            return null;
+        }
+
         const indicators = {};
         for (const row of socRes.rows) {
             indicators[row.indicator_id] = {
