@@ -1108,7 +1108,7 @@ async function showAssessmentDetails(indicatorId, assessment) {
     try {
         const [categoryNum, indicatorNum] = indicatorId.split('.');
         const categoryName = CATEGORY_MAP[categoryNum];
-        const language = selectedOrgData.metadata.language || 'en-US';
+        const language = selectedOrgData.metadata?.language || 'en-US';
         const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
 
         const response = await fetch(url);
@@ -1349,7 +1349,7 @@ async function openIntegratedClient(indicatorId, orgId, existingAssessment = nul
     const content = document.getElementById('indicatorModalContent');
 
     // Get organization data
-    const language = selectedOrgData.metadata.language || 'en-US';
+    const language = selectedOrgData.metadata?.language || 'en-US';
 
     // Load indicator from GitHub and render integrated form
     const [categoryNum, indicatorNum] = indicatorId.split('.');
@@ -1394,7 +1394,7 @@ async function openIntegratedVersion() {
 
     const indicatorId = selectedIndicatorId;
     const orgId = selectedOrgId;
-    const language = selectedOrgData.metadata.language || 'en-US';
+    const language = selectedOrgData.metadata?.language || 'en-US';
     const assessment = selectedOrgData.assessments[indicatorId];
 
     console.log('🎨 openIntegratedVersion called with:', { indicatorId, orgId, assessment: !!assessment });
@@ -1824,7 +1824,7 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
     try {
         const [categoryNum, indicatorNum] = indicatorId.split('.');
         const categoryName = CATEGORY_MAP[categoryNum];
-        const language = selectedOrgData.metadata.language || 'en-US';
+        const language = selectedOrgData.metadata?.language || 'en-US';
         const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
 
         const response = await fetch(url);
@@ -2627,7 +2627,7 @@ function renderMaturityTab() {
         </div>
         <div style="padding: 10px; background: var(--bg-gray); border-radius: 6px;">
             <div style="font-size: 12px; color: var(--text-light);">Sector</div>
-            <div style="font-size: 16px; font-weight: 600;">${selectedOrgData.metadata.industry}</div>
+            <div style="font-size: 16px; font-weight: 600;">${selectedOrgData.industry || 'N/A'}</div>
         </div>
     `;
     document.getElementById('benchmarkStats').innerHTML = benchmarkStatsHTML;
