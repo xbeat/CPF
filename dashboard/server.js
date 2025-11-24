@@ -110,7 +110,23 @@ app.use('/dashboard/card-editor', express.static(path.join(__dirname, 'card-edit
 app.use('/data', express.static(path.join(__dirname, 'data')));
 
 // Serve Auditor Field Kit interactive indicator files
-app.use('/auditor-field-kit', express.static(path.join(__dirname, '../auditor field kit')));
+// Auto-detect the correct path based on working directory
+const auditorKitPath = process.env.AUDITOR_KIT_PATH || (() => {
+  const relativePath = path.join(__dirname, '../auditor field kit');
+  const rootPath = path.join(__dirname, '../../auditor field kit');
+
+  if (fs.existsSync(relativePath)) {
+    return relativePath;
+  } else if (fs.existsSync(rootPath)) {
+    return rootPath;
+  } else {
+    console.warn('⚠️  Auditor Field Kit directory not found at expected locations');
+    return relativePath; // fallback
+  }
+})();
+
+console.log('📁 Auditor Field Kit path:', auditorKitPath);
+app.use('/auditor-field-kit', express.static(auditorKitPath));
 
 // ============================================
 // LANDING PAGE ROUTE
@@ -1213,11 +1229,9 @@ app.get('/api/indicators/:indicatorId/metadata/:lang', (req, res) => {
       });
     }
 
-    // Costruisci il path al file JSON
+    // Costruisci il path al file JSON usando il path auto-detected
     const metadataPath = path.join(
-      __dirname,
-      '..',
-      'auditor field kit',
+      auditorKitPath,
       'interactive',
       lang,
       categoryFolder,
