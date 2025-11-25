@@ -531,15 +531,15 @@ async function organizationExists(orgId) {
 /**
  * Soft delete organization (moves to trash)
  */
-function deleteOrganization(orgId, user = 'System') {
-  const orgData = readOrganization(orgId);
+async function deleteOrganization(orgId, user = 'System') {
+  const orgData = await readOrganization(orgId);
 
   // Mark as deleted
   orgData.metadata.deleted_at = new Date().toISOString();
   orgData.metadata.deleted_by = user;
 
   // Save to main location (with deleted flag)
-  writeOrganization(orgData);
+  await writeOrganization(orgData);
 
   // Log audit event
   logAuditEvent('delete', 'organization', orgId, {
@@ -553,8 +553,8 @@ function deleteOrganization(orgId, user = 'System') {
 /**
  * Restore organization from trash
  */
-function restoreOrganization(orgId, user = 'System') {
-  const orgData = readOrganization(orgId);
+async function restoreOrganization(orgId, user = 'System') {
+  const orgData = await readOrganization(orgId);
 
   if (!orgData.metadata.deleted_at) {
     throw new Error('Organization is not in trash');
@@ -565,7 +565,7 @@ function restoreOrganization(orgId, user = 'System') {
   delete orgData.metadata.deleted_by;
 
   // Save
-  writeOrganization(orgData);
+  await writeOrganization(orgData);
 
   // Log audit event
   logAuditEvent('restore', 'organization', orgId, {
@@ -578,8 +578,8 @@ function restoreOrganization(orgId, user = 'System') {
 /**
  * Permanently delete organization (cannot be undone)
  */
-function permanentlyDeleteOrganization(orgId, user = 'System') {
-  const orgData = readOrganization(orgId);
+async function permanentlyDeleteOrganization(orgId, user = 'System') {
+  const orgData = await readOrganization(orgId);
 
   if (!orgData.metadata.deleted_at) {
     throw new Error('Organization must be in trash before permanent deletion');
@@ -753,7 +753,7 @@ function getAssessmentHistory(orgId, indicatorId) {
 /**
  * Revert assessment to specific version
  */
-function revertAssessment(orgId, indicatorId, versionNumber, user = 'System') {
+async function revertAssessment(orgId, indicatorId, versionNumber, user = 'System') {
   const history = getAssessmentHistory(orgId, indicatorId);
 
   const targetVersion = history.versions.find(v => v.version === versionNumber);
@@ -763,7 +763,7 @@ function revertAssessment(orgId, indicatorId, versionNumber, user = 'System') {
   }
 
   // Save current as new version before reverting
-  const orgData = readOrganization(orgId);
+  const orgData = await readOrganization(orgId);
   const currentAssessment = orgData.assessments[indicatorId];
 
   if (currentAssessment) {
@@ -773,7 +773,7 @@ function revertAssessment(orgId, indicatorId, versionNumber, user = 'System') {
   // Restore old version
   orgData.assessments[indicatorId] = targetVersion.data;
   orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
-  writeOrganization(orgData);
+  await writeOrganization(orgData);
 
   // Log audit event
   logAuditEvent('revert', 'assessment', `${orgId}/${indicatorId}`, {
@@ -792,8 +792,8 @@ function revertAssessment(orgId, indicatorId, versionNumber, user = 'System') {
 /**
  * Save assessment to organization
  */
-function saveAssessment(orgId, assessmentData, user = 'System') {
-  const orgData = readOrganization(orgId);
+async function saveAssessment(orgId, assessmentData, user = 'System') {
+  const orgData = await readOrganization(orgId);
   const indicatorId = assessmentData.indicator_id;
 
   // Check if this is an update (save previous version)
@@ -802,7 +802,7 @@ function saveAssessment(orgId, assessmentData, user = 'System') {
 
   if (isUpdate) {
     // Save previous version to history
-    saveAssessmentVersion(orgId, indicatorId, orgData.assessments[indicatorId], user);
+    await saveAssessmentVersion(orgId, indicatorId, orgData.assessments[indicatorId], user);
   }
 
   // Add or update assessment
@@ -812,7 +812,7 @@ function saveAssessment(orgId, assessmentData, user = 'System') {
   orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
 
   // Save
-  writeOrganization(orgData);
+  await writeOrganization(orgData);
 
   // Log audit event
   logAuditEvent(isUpdate ? 'update' : 'create', 'assessment', `${orgId}/${indicatorId}`, {
@@ -844,16 +844,16 @@ function saveAssessment(orgId, assessmentData, user = 'System') {
 /**
  * Get assessment from organization
  */
-function getAssessment(orgId, indicatorId) {
-  const orgData = readOrganization(orgId);
+async function getAssessment(orgId, indicatorId) {
+  const orgData = await readOrganization(orgId);
   return orgData.assessments[indicatorId] || null;
 }
 
 /**
  * Delete assessment from organization
  */
-function deleteAssessment(orgId, indicatorId, user = 'System') {
-  const orgData = readOrganization(orgId);
+async function deleteAssessment(orgId, indicatorId, user = 'System') {
+  const orgData = await readOrganization(orgId);
 
   if (orgData.assessments[indicatorId]) {
     const deletedScore = orgData.assessments[indicatorId].bayesian_score;
@@ -867,7 +867,7 @@ function deleteAssessment(orgId, indicatorId, user = 'System') {
     orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
 
     // Save
-    writeOrganization(orgData);
+    await writeOrganization(orgData);
 
     // Log audit event
     logAuditEvent('delete', 'assessment', `${orgId}/${indicatorId}`, {
@@ -1007,10 +1007,10 @@ function calculateAggregates(assessments, industry = 'Other') {
 /**
  * Recalculate aggregates for organization
  */
-function recalculateAggregates(orgId) {
-  const orgData = readOrganization(orgId);
+async function recalculateAggregates(orgId) {
+  const orgData = await readOrganization(orgId);
   orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
-  writeOrganization(orgData);
+  await writeOrganization(orgData);
   return orgData;
 }
 
@@ -1023,7 +1023,7 @@ function recalculateAggregates(orgId) {
  */
 async function generateXLSXExport(orgId, user = 'System') {
   const ExcelJS = require('exceljs');
-  const orgData = readOrganization(orgId);
+  const orgData = await readOrganization(orgId);
 
   // Log audit event
   logAuditEvent('export', 'organization', orgId, { format: 'xlsx' }, user);
@@ -1169,7 +1169,7 @@ async function generateXLSXExport(orgId, user = 'System') {
  */
 async function generatePDFExport(orgId, user = 'System') {
   const PDFDocument = require('pdfkit');
-  const orgData = readOrganization(orgId);
+  const orgData = await readOrganization(orgId);
 
   // Log audit event
   logAuditEvent('export', 'organization', orgId, { format: 'pdf' }, user);
@@ -1332,7 +1332,7 @@ async function generatePDFExport(orgId, user = 'System') {
 async function generateZIPExport(orgId, user = 'System') {
   const archiver = require('archiver');
   const { PassThrough } = require('stream');
-  const orgData = readOrganization(orgId);
+  const orgData = await readOrganization(orgId);
 
   // Log audit event
   logAuditEvent('export', 'organization', orgId, { format: 'zip' }, user);

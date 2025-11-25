@@ -559,11 +559,11 @@ app.get('/api/organizations/:orgId/assessments', (req, res) => {
  * GET /api/organizations/:orgId/assessments/:indicatorId
  * Get specific assessment
  */
-app.get('/api/organizations/:orgId/assessments/:indicatorId', (req, res) => {
+app.get('/api/organizations/:orgId/assessments/:indicatorId', async (req, res) => {
   try {
     const { orgId, indicatorId } = req.params;
 
-    if (!dataManager.organizationExists(orgId)) {
+    if (!(await dataManager.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -571,7 +571,7 @@ app.get('/api/organizations/:orgId/assessments/:indicatorId', (req, res) => {
       });
     }
 
-    const assessment = dataManager.getAssessment(orgId, indicatorId);
+    const assessment = await dataManager.getAssessment(orgId, indicatorId);
 
     if (!assessment) {
       return res.status(404).json({
@@ -600,13 +600,13 @@ app.get('/api/organizations/:orgId/assessments/:indicatorId', (req, res) => {
  * Save or update assessment
  * Body: { indicator_id, title, category, bayesian_score, confidence, maturity_level, assessor, assessment_date, raw_data, user }
  */
-app.post('/api/organizations/:orgId/assessments', (req, res) => {
+app.post('/api/organizations/:orgId/assessments', async (req, res) => {
   try {
     const { orgId } = req.params;
     const assessmentData = req.body;
     const user = assessmentData.assessor || req.body.user || 'System';
 
-    if (!dataManager.organizationExists(orgId)) {
+    if (!(await dataManager.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -623,7 +623,7 @@ app.post('/api/organizations/:orgId/assessments', (req, res) => {
     }
 
     // Save assessment (this also recalculates aggregates, saves version, and logs)
-    const orgData = dataManager.saveAssessment(orgId, assessmentData, user);
+    const orgData = await dataManager.saveAssessment(orgId, assessmentData, user);
 
     console.log(`\n✅ [API] Saved assessment: ${orgId} / ${assessmentData.indicator_id}\n`);
 
@@ -648,12 +648,12 @@ app.post('/api/organizations/:orgId/assessments', (req, res) => {
  * Delete assessment
  * Query: ?user=username (optional)
  */
-app.delete('/api/organizations/:orgId/assessments/:indicatorId', (req, res) => {
+app.delete('/api/organizations/:orgId/assessments/:indicatorId', async (req, res) => {
   try {
     const { orgId, indicatorId } = req.params;
     const user = req.query.user || req.body.user || 'System';
 
-    if (!dataManager.organizationExists(orgId)) {
+    if (!(await dataManager.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -662,7 +662,7 @@ app.delete('/api/organizations/:orgId/assessments/:indicatorId', (req, res) => {
     }
 
     // Delete assessment (this also recalculates aggregates, saves version, and logs)
-    const orgData = dataManager.deleteAssessment(orgId, indicatorId, user);
+    const orgData = await dataManager.deleteAssessment(orgId, indicatorId, user);
 
     console.log(`\n🗑️  [API] Deleted assessment: ${orgId} / ${indicatorId}\n`);
 
@@ -722,11 +722,11 @@ app.get('/api/organizations/:orgId/aggregates', (req, res) => {
  * POST /api/organizations/:orgId/recalculate
  * Recalculate aggregates for organization
  */
-app.post('/api/organizations/:orgId/recalculate', (req, res) => {
+app.post('/api/organizations/:orgId/recalculate', async (req, res) => {
   try {
     const { orgId } = req.params;
 
-    if (!dataManager.organizationExists(orgId)) {
+    if (!(await dataManager.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -734,7 +734,7 @@ app.post('/api/organizations/:orgId/recalculate', (req, res) => {
       });
     }
 
-    const orgData = dataManager.recalculateAggregates(orgId);
+    const orgData = await dataManager.recalculateAggregates(orgId);
 
     console.log(`\n🔄 [API] Recalculated aggregates: ${orgId}\n`);
 
@@ -990,7 +990,7 @@ app.get('/api/organizations/:orgId/assessments/:indicatorId/history', (req, res)
  * Revert assessment to specific version
  * Body: { version, user } (version is required)
  */
-app.post('/api/organizations/:orgId/assessments/:indicatorId/revert', (req, res) => {
+app.post('/api/organizations/:orgId/assessments/:indicatorId/revert', async (req, res) => {
   try {
     const { orgId, indicatorId } = req.params;
     const { version, user } = req.body;
@@ -1002,7 +1002,7 @@ app.post('/api/organizations/:orgId/assessments/:indicatorId/revert', (req, res)
       });
     }
 
-    if (!dataManager.organizationExists(orgId)) {
+    if (!(await dataManager.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -1010,7 +1010,7 @@ app.post('/api/organizations/:orgId/assessments/:indicatorId/revert', (req, res)
       });
     }
 
-    const orgData = dataManager.revertAssessment(orgId, indicatorId, parseInt(version), user || 'System');
+    const orgData = await dataManager.revertAssessment(orgId, indicatorId, parseInt(version), user || 'System');
 
     console.log(`\n↩️  [API] Reverted assessment: ${orgId} / ${indicatorId} to version ${version}\n`);
 
