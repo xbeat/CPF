@@ -23,15 +23,6 @@ const dashboardTranslations = {
 		'auditing-v3.feature.4': 'Integrated Field Kit',
 		'auditing-v3.button': 'Open v3',
 
-		// Auditing Dashboard v2
-		'auditing-v2.title': 'Auditing Dashboard v2',
-		'auditing-v2.description': 'Organization management and assessment progress tracking',
-		'auditing-v2.feature.1': 'Organization management',
-		'auditing-v2.feature.2': 'Track 100 CPF indicators',
-		'auditing-v2.feature.3': 'Risk analysis by category',
-		'auditing-v2.feature.4': 'XLSX/PDF export',
-		'auditing-v2.button': 'Open v2',
-
 		// SOC Integration
 		'soc.title': 'SOC Integration',
 		'soc.description': 'Integrate SOC data with Bayesian analysis for machine + human correlation',
@@ -92,15 +83,6 @@ const dashboardTranslations = {
 		'auditing-v3.feature.3': 'ROI analysis e certification paths',
 		'auditing-v3.feature.4': 'Field Kit integrato',
 		'auditing-v3.button': 'Apri v3',
-
-		// Auditing Dashboard v2
-		'auditing-v2.title': 'Auditing Dashboard v2',
-		'auditing-v2.description': 'Gestione organizzazioni e tracciamento progressi assessment',
-		'auditing-v2.feature.1': 'Gestione organizzazioni',
-		'auditing-v2.feature.2': 'Tracciamento 100 indicatori CPF',
-		'auditing-v2.feature.3': 'Analisi rischio per categoria',
-		'auditing-v2.feature.4': 'Export XLSX/PDF',
-		'auditing-v2.button': 'Apri v2',
 
 		// SOC Integration
 		'soc.title': 'SOC Integration',

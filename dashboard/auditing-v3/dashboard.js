@@ -1254,7 +1254,7 @@ async function showAssessmentDetails(indicatorId, assessment) {
                 <div style="background: #fee2e2; padding: 15px; border-radius: 8px; border: 1px solid var(--danger);">
                     <div style="font-weight: 600; margin-bottom: 10px; color: var(--danger);">🚩 Red Flags Identified (${assessment.raw_data.client_conversation.red_flags.length})</div>
                     <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
-                        ${assessment.raw_data.client_conversation.red_flags.map(flag => `<li>${flag}</li>`).join('')}
+                        ${assessment.raw_data.client_conversation.red_flags.map(flag => `<li>${typeof flag === 'object' ? flag.flag : flag}</li>`).join('')}
                     </ul>
                 </div>
                 ` : ''}
@@ -1973,7 +1973,7 @@ async function viewAssessmentDetailsFromEdit(indicatorId) {
                 <div style="background: #fee2e2; padding: 15px; border-radius: 8px; border: 1px solid var(--danger);">
                     <div style="font-weight: 600; margin-bottom: 10px; color: var(--danger);">🚩 Red Flags Identified (${assessment.raw_data.client_conversation.red_flags.length})</div>
                     <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
-                        ${assessment.raw_data.client_conversation.red_flags.map(flag => '<li>' + flag + '</li>').join('')}
+                        ${assessment.raw_data.client_conversation.red_flags.map(flag => '<li>' + (typeof flag === 'object' ? flag.flag : flag) + '</li>').join('')}
                     </ul>
                 </div>
                 ` : ''}
