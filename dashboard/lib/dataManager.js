@@ -764,6 +764,15 @@ async function revertAssessment(orgId, indicatorId, versionNumber, user = 'Syste
 
   // Save current as new version before reverting
   const orgData = await readOrganization(orgId);
+
+  if (!orgData) {
+    throw new Error(`Organization ${orgId} not found - cannot revert assessment`);
+  }
+
+  if (!orgData.assessments) {
+    orgData.assessments = {};
+  }
+
   const currentAssessment = orgData.assessments[indicatorId];
 
   if (currentAssessment) {
@@ -794,6 +803,15 @@ async function revertAssessment(orgId, indicatorId, versionNumber, user = 'Syste
  */
 async function saveAssessment(orgId, assessmentData, user = 'System') {
   const orgData = await readOrganization(orgId);
+
+  if (!orgData) {
+    throw new Error(`Organization ${orgId} not found - cannot save assessment`);
+  }
+
+  if (!orgData.assessments) {
+    orgData.assessments = {};
+  }
+
   const indicatorId = assessmentData.indicator_id;
 
   // Check if this is an update (save previous version)
@@ -846,6 +864,11 @@ async function saveAssessment(orgId, assessmentData, user = 'System') {
  */
 async function getAssessment(orgId, indicatorId) {
   const orgData = await readOrganization(orgId);
+
+  if (!orgData || !orgData.assessments) {
+    return null;
+  }
+
   return orgData.assessments[indicatorId] || null;
 }
 
@@ -854,6 +877,14 @@ async function getAssessment(orgId, indicatorId) {
  */
 async function deleteAssessment(orgId, indicatorId, user = 'System') {
   const orgData = await readOrganization(orgId);
+
+  if (!orgData) {
+    throw new Error(`Organization ${orgId} not found - cannot delete assessment`);
+  }
+
+  if (!orgData.assessments) {
+    orgData.assessments = {};
+  }
 
   if (orgData.assessments[indicatorId]) {
     const deletedScore = orgData.assessments[indicatorId].bayesian_score;
@@ -1009,6 +1040,15 @@ function calculateAggregates(assessments, industry = 'Other') {
  */
 async function recalculateAggregates(orgId) {
   const orgData = await readOrganization(orgId);
+
+  if (!orgData) {
+    throw new Error(`Organization ${orgId} not found - cannot recalculate aggregates`);
+  }
+
+  if (!orgData.assessments) {
+    orgData.assessments = {};
+  }
+
   orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
   await writeOrganization(orgData);
   return orgData;
