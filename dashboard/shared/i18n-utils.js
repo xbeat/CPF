@@ -6,10 +6,10 @@
 
 /**
  * Get current language from localStorage or default to 'en'
- * Uses 'cpf-dashboard-lang' key to avoid conflicts with website
+ * Uses 'cpf-lang' key - same as website for consistency
  */
 function getCurrentLanguage() {
-	return localStorage.getItem('cpf-dashboard-lang') || 'en';
+	return localStorage.getItem('cpf-lang') || 'en';
 }
 
 /**
@@ -17,7 +17,7 @@ function getCurrentLanguage() {
  * @param {string} lang - Language code (en, it, es, fr, de)
  */
 function setCurrentLanguage(lang) {
-	localStorage.setItem('cpf-dashboard-lang', lang);
+	localStorage.setItem('cpf-lang', lang);
 	document.documentElement.lang = lang;
 }
 
@@ -116,7 +116,7 @@ function updateMetaTags(lang, translations) {
  * @param {string} lang - Language code
  */
 function updateLanguageSwitcher(lang) {
-	document.querySelectorAll('.lang-switcher button, .lang-btn').forEach(btn => {
+	document.querySelectorAll('.lang-switcher button, .lang-switcher-v3 button, .lang-btn').forEach(btn => {
 		const btnLang = btn.getAttribute('data-lang');
 		if (btnLang === lang) {
 			btn.classList.add('active');
@@ -189,7 +189,7 @@ function initLanguage(translations, callback) {
 	const currentLang = getCurrentLanguage();
 
 	// Set up language switcher event listeners
-	document.querySelectorAll('.lang-switcher button, .lang-btn').forEach(btn => {
+	document.querySelectorAll('.lang-switcher button, .lang-switcher-v3 button, .lang-btn').forEach(btn => {
 		btn.addEventListener('click', (e) => {
 			e.preventDefault();
 			const lang = btn.getAttribute('data-lang');
