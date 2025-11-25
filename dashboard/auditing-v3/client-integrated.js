@@ -555,6 +555,14 @@ async function saveToAPI() {
         return;
     }
 
+    // Validate currentData structure
+    if (!currentData || !currentData.fieldKit || !currentData.fieldKit.indicator) {
+        console.error('❌ Invalid currentData structure:', currentData);
+        console.error('❌ Missing fieldKit or indicator');
+        alert('⚠️ Cannot save: indicator data is not loaded properly');
+        return;
+    }
+
     // Auto-calculate score if not present
     if (!currentScore) {
         console.log('📊 Auto-calculating score before save...');
