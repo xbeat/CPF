@@ -66,6 +66,25 @@ const translations = {
 		'assessment.implementation.description': 'Systematic methodology for deploying all 100 CPF indicators in SOC environments. Practical guide for integrating <strong>cognitive bias cybersecurity</strong> detection into existing security operations.',
 		'assessment.implementation.button': 'Implementation Guide',
 
+		// Strategic Pages Navigation
+		'strategic.title': 'Explore CPF3 Methodology',
+		'strategic.subtitle': 'Comprehensive resources for understanding and implementing cybersecurity psychology in your organization',
+		'strategic.pva.title': 'Psychological Vulnerability Assessment',
+		'strategic.pva.description': 'Revolutionary methodology for identifying unconscious cybersecurity behaviors and psychological vulnerabilities before they become attack vectors.',
+		'strategic.pva.button': 'Learn Assessment Method',
+		'strategic.bias.title': 'Unconscious Bias in Cybersecurity',
+		'strategic.bias.description': 'Discover how cognitive bias patterns create security vulnerabilities and learn evidence-based strategies for bias detection and mitigation.',
+		'strategic.bias.button': 'Explore Bias Patterns',
+		'strategic.human.title': 'Human Factor Security',
+		'strategic.human.description': 'Comprehensive approach to addressing the 85% of security breaches caused by human factors through scientific psychological analysis.',
+		'strategic.human.button': 'Human Factor Analysis',
+		'strategic.training.title': 'Cognitive Bias Training',
+		'strategic.training.description': 'Advanced training programs that create lasting behavioral change by addressing unconscious decision-making patterns in security contexts.',
+		'strategic.training.button': 'Training Programs',
+		'strategic.research.title': 'Research Publications',
+		'strategic.research.description': 'Access groundbreaking cybersecurity psychology research, peer-reviewed publications, and scientific methodologies for evidence-based security.',
+		'strategic.research.button': 'View Research',
+
 		// Key Statistics
 		'stats.title': 'The Human Factor Security Challenge',
 		'stats.subtitle': 'Understanding the scope of <strong>unconscious cybersecurity vulnerabilities</strong> in modern organizations',
@@ -221,6 +240,25 @@ const translations = {
 		'assessment.implementation.title': 'Guida di Implementazione',
 		'assessment.implementation.description': 'Metodologia sistematica per il deployment di tutti i 100 indicatori CPF in ambienti SOC. Guida pratica per integrare la detection di <strong>cognitive bias cybersecurity</strong> nelle operazioni di sicurezza esistenti.',
 		'assessment.implementation.button': 'Guida di Implementazione',
+
+		// Strategic Pages Navigation
+		'strategic.title': 'Esplora la Metodologia CPF3',
+		'strategic.subtitle': 'Risorse complete per comprendere e implementare la psicologia della cybersecurity nella tua organizzazione',
+		'strategic.pva.title': 'Psychological Vulnerability Assessment',
+		'strategic.pva.description': 'Metodologia rivoluzionaria per identificare comportamenti inconsci di cybersecurity e vulnerabilità psicologiche prima che diventino vettori di attacco.',
+		'strategic.pva.button': 'Scopri il Metodo di Assessment',
+		'strategic.bias.title': 'Unconscious Bias nella Cybersecurity',
+		'strategic.bias.description': 'Scopri come i pattern di cognitive bias creano vulnerabilità di sicurezza e apprendi strategie basate su evidenze per la detection e mitigazione dei bias.',
+		'strategic.bias.button': 'Esplora i Pattern di Bias',
+		'strategic.human.title': 'Human Factor Security',
+		'strategic.human.description': 'Approccio completo per affrontare l\'85% delle violazioni di sicurezza causate da fattori umani attraverso analisi psicologica scientifica.',
+		'strategic.human.button': 'Analisi del Fattore Umano',
+		'strategic.training.title': 'Cognitive Bias Training',
+		'strategic.training.description': 'Programmi di training avanzati che creano cambiamento comportamentale duraturo affrontando pattern di decision-making inconsci in contesti di sicurezza.',
+		'strategic.training.button': 'Programmi di Training',
+		'strategic.research.title': 'Pubblicazioni di Ricerca',
+		'strategic.research.description': 'Accedi a ricerca rivoluzionaria di cybersecurity psychology, pubblicazioni peer-reviewed e metodologie scientifiche per sicurezza basata su evidenze.',
+		'strategic.research.button': 'Visualizza Ricerca',
 
 		// Key Statistics
 		'stats.title': 'La Sfida della Human Factor Security',
