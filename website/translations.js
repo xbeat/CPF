@@ -136,7 +136,15 @@ const translations = {
 		'footer.copyright': '© 2025 Cybersecurity Psychology Framework (CPF3). Revolutionary psychological vulnerability assessment for predictive security.',
 		'footer.blockchain': 'Blockchain timestamped for intellectual property protection via OpenTimestamps.org',
 		'footer.keywords.label': '<strong>Key Topics:</strong>',
-		'footer.keywords.list': 'Psychological vulnerability assessment, unconscious cybersecurity, human factor security, cognitive bias cybersecurity, cybersecurity psychology framework, vulnerability assessment psychology, unconscious bias cybersecurity, cyber risk psychology, behavioral cybersecurity training, cybersecurity awareness training'
+		'footer.keywords.list': 'Psychological vulnerability assessment, unconscious cybersecurity, human factor security, cognitive bias cybersecurity, cybersecurity psychology framework, vulnerability assessment psychology, unconscious bias cybersecurity, cyber risk psychology, behavioral cybersecurity training, cybersecurity awareness training',
+
+		// Infographic Page
+		'infographic.title': 'CPF Top 10 Categories',
+		'infographic.header.title': 'TOP 10 PSYCHOLOGY CATEGORIES',
+		'infographic.header.subtitle': 'EVERY CYBERSECURITY PRO SHOULD UNDERSTAND',
+		'infographic.header.year': 'IN 2025',
+		'infographic.footer.note': 'Based on the Cybersecurity Psychology Framework (CPF)',
+		'infographic.footer.author': 'Giuseppe Canale, CISSP | cpf3.org'
 	},
 	it: {
 		// Meta and SEO
@@ -274,7 +282,15 @@ const translations = {
 		'footer.copyright': '© 2025 Cybersecurity Psychology Framework (CPF3). Psychological vulnerability assessment rivoluzionario per predictive security.',
 		'footer.blockchain': 'Timestamped su blockchain per protezione della proprietà intellettuale via OpenTimestamps.org',
 		'footer.keywords.label': '<strong>Argomenti Chiave:</strong>',
-		'footer.keywords.list': 'Psychological vulnerability assessment, unconscious cybersecurity, human factor security, cognitive bias cybersecurity, cybersecurity psychology framework, vulnerability assessment psychology, unconscious bias cybersecurity, cyber risk psychology, behavioral cybersecurity training, cybersecurity awareness training'
+		'footer.keywords.list': 'Psychological vulnerability assessment, unconscious cybersecurity, human factor security, cognitive bias cybersecurity, cybersecurity psychology framework, vulnerability assessment psychology, unconscious bias cybersecurity, cyber risk psychology, behavioral cybersecurity training, cybersecurity awareness training',
+
+		// Infographic Page
+		'infographic.title': 'CPF Top 10 Categorie',
+		'infographic.header.title': 'TOP 10 CATEGORIE DI PSICOLOGIA',
+		'infographic.header.subtitle': 'CHE OGNI PROFESSIONISTA DI CYBERSECURITY DOVREBBE COMPRENDERE',
+		'infographic.header.year': 'NEL 2025',
+		'infographic.footer.note': 'Basato sul Cybersecurity Psychology Framework (CPF)',
+		'infographic.footer.author': 'Giuseppe Canale, CISSP | cpf3.org'
 	}
 };
 
