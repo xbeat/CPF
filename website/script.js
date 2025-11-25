@@ -30,6 +30,9 @@ function setLanguage(lang) {
 
 	// Update language switcher active state
 	updateLanguageSwitcher(lang);
+
+	// Update language-specific links
+	updateLanguageLinks(lang);
 }
 
 // Update meta tags
@@ -60,6 +63,17 @@ function updateMetaTags(lang) {
 function updateLanguageSwitcher(lang) {
 	document.querySelectorAll('.lang-switcher button').forEach(btn => {
 		btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+	});
+}
+
+// Update language-specific links
+function updateLanguageLinks(lang) {
+	document.querySelectorAll('.lang-link').forEach(link => {
+		const hrefAttr = `data-href-${lang}`;
+		const href = link.getAttribute(hrefAttr);
+		if (href) {
+			link.setAttribute('href', href);
+		}
 	});
 }
 
