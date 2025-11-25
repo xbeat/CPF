@@ -25,6 +25,7 @@ const auditingTranslations = {
 		// Sidebar
 		'sidebar.title': 'Organizations',
 		'sidebar.search': '🔍 Search organizations...',
+		'sidebar.sort.label': 'Sort by',
 		'sidebar.sort.date': '📅 Date Created',
 		'sidebar.sort.name': '🔤 Name',
 		'sidebar.sort.risk': '⚠️ Risk Score',
@@ -34,6 +35,9 @@ const auditingTranslations = {
 		'sidebar.sort.industry': '🏢 Industry',
 		'sidebar.sort.country': '🌍 Country',
 		'sidebar.loading': 'Loading...',
+		'sidebar.open.title': 'Show organizations',
+		'sidebar.create.title': 'Create new organization',
+		'sidebar.trash.title': 'View deleted organizations',
 
 		// Empty State
 		'empty.title': 'Welcome to CPF Auditing Dashboard',
@@ -48,6 +52,7 @@ const auditingTranslations = {
 		// Progress Tab
 		'progress.title': 'Assessment Progress Matrix',
 		'progress.zoom': 'Zoom:',
+		'progress.zoom.label': 'Zoom:',
 
 		// Risk Tab
 		'risk.title': 'Risk Analysis by Category',
@@ -57,6 +62,10 @@ const auditingTranslations = {
 		'risk.stats.title': '📊 Quick Stats',
 		'risk.priority.title': '🎯 Prioritization Matrix',
 		'risk.priority.subtitle': 'Categories ordered by priority for remediation (risk × weight + downstream impact)',
+		'risk.recommendation.immediate': 'Immediate action required',
+		'risk.recommendation.high-priority': 'High priority - address soon',
+		'risk.recommendation.monitor': 'Monitor and plan improvements',
+		'risk.recommendation.maintain': 'Maintain current level',
 
 		// Prioritization Table
 		'table.th.number': '#',
@@ -76,6 +85,12 @@ const auditingTranslations = {
 		'maturity.convergence': 'Convergence Index',
 		'maturity.domain-distribution': 'Domain Distribution',
 		'maturity.sector-percentile': 'Sector Percentile',
+		'maturity.status.balanced': 'Balanced - Good distribution',
+		'maturity.status.skewed': 'Skewed - Some domains need attention',
+		'maturity.status.critical': 'Critical - Significant imbalances',
+		'maturity.comparison.above': 'Above sector average',
+		'maturity.comparison.average': 'At sector average',
+		'maturity.comparison.below': 'Below sector average',
 
 		// Compliance
 		'compliance.title': '📋 Regulatory Compliance Status',
@@ -204,6 +219,7 @@ const auditingTranslations = {
 		// Sidebar
 		'sidebar.title': 'Organizzazioni',
 		'sidebar.search': '🔍 Cerca organizzazioni...',
+		'sidebar.sort.label': 'Ordina per',
 		'sidebar.sort.date': '📅 Data Creazione',
 		'sidebar.sort.name': '🔤 Nome',
 		'sidebar.sort.risk': '⚠️ Punteggio Rischio',
@@ -213,6 +229,9 @@ const auditingTranslations = {
 		'sidebar.sort.industry': '🏢 Settore',
 		'sidebar.sort.country': '🌍 Paese',
 		'sidebar.loading': 'Caricamento...',
+		'sidebar.open.title': 'Mostra organizzazioni',
+		'sidebar.create.title': 'Crea nuova organizzazione',
+		'sidebar.trash.title': 'Visualizza organizzazioni eliminate',
 
 		// Empty State
 		'empty.title': 'Benvenuto nella CPF Auditing Dashboard',
@@ -227,6 +246,7 @@ const auditingTranslations = {
 		// Progress Tab
 		'progress.title': 'Matrice Progressi Assessment',
 		'progress.zoom': 'Zoom:',
+		'progress.zoom.label': 'Zoom:',
 
 		// Risk Tab
 		'risk.title': 'Analisi Rischio per Categoria',
@@ -236,6 +256,10 @@ const auditingTranslations = {
 		'risk.stats.title': '📊 Statistiche Rapide',
 		'risk.priority.title': '🎯 Matrice Priorità',
 		'risk.priority.subtitle': 'Categorie ordinate per priorità di remediation (rischio × peso + impatto downstream)',
+		'risk.recommendation.immediate': 'Azione immediata richiesta',
+		'risk.recommendation.high-priority': 'Alta priorità - affrontare presto',
+		'risk.recommendation.monitor': 'Monitorare e pianificare miglioramenti',
+		'risk.recommendation.maintain': 'Mantenere il livello attuale',
 
 		// Prioritization Table
 		'table.th.number': '#',
@@ -255,6 +279,12 @@ const auditingTranslations = {
 		'maturity.convergence': 'Convergence Index',
 		'maturity.domain-distribution': 'Distribuzione Domini',
 		'maturity.sector-percentile': 'Percentile Settore',
+		'maturity.status.balanced': 'Bilanciato - Buona distribuzione',
+		'maturity.status.skewed': 'Sbilanciato - Alcuni domini necessitano attenzione',
+		'maturity.status.critical': 'Critico - Squilibri significativi',
+		'maturity.comparison.above': 'Sopra la media del settore',
+		'maturity.comparison.average': 'Alla media del settore',
+		'maturity.comparison.below': 'Sotto la media del settore',
 
 		// Compliance
 		'compliance.title': '📋 Stato Compliance Normativa',
