@@ -1,3 +1,77 @@
+// ============================================
+// I18N SYSTEM
+// ============================================
+
+// Get current language from localStorage or default to 'en'
+let currentLang = localStorage.getItem('cpf-lang') || 'en';
+
+// Set language and update all elements
+function setLanguage(lang) {
+	currentLang = lang;
+	localStorage.setItem('cpf-lang', lang);
+
+	// Update HTML lang attribute
+	document.documentElement.lang = lang;
+
+	// Update all elements with data-i18n attribute
+	document.querySelectorAll('[data-i18n]').forEach(element => {
+		const key = element.getAttribute('data-i18n');
+		const translation = t(key, lang);
+
+		if (element.hasAttribute('data-i18n-placeholder')) {
+			element.placeholder = translation;
+		} else {
+			element.innerHTML = translation;
+		}
+	});
+
+	// Update meta tags
+	updateMetaTags(lang);
+
+	// Update language switcher active state
+	updateLanguageSwitcher(lang);
+}
+
+// Update meta tags
+function updateMetaTags(lang) {
+	const metaTitle = document.querySelector('title');
+	const metaDescription = document.querySelector('meta[name="description"]');
+	const metaKeywords = document.querySelector('meta[name="keywords"]');
+	const metaAuthor = document.querySelector('meta[name="author"]');
+
+	if (metaTitle) metaTitle.textContent = t('meta.title', lang);
+	if (metaDescription) metaDescription.setAttribute('content', t('meta.description', lang));
+	if (metaKeywords) metaKeywords.setAttribute('content', t('meta.keywords', lang));
+	if (metaAuthor) metaAuthor.setAttribute('content', t('meta.author', lang));
+
+	// Update Open Graph tags
+	const ogTitle = document.querySelector('meta[property="og:title"]');
+	const ogDescription = document.querySelector('meta[property="og:description"]');
+	const twitterTitle = document.querySelector('meta[property="twitter:title"]');
+	const twitterDescription = document.querySelector('meta[property="twitter:description"]');
+
+	if (ogTitle) ogTitle.setAttribute('content', t('meta.title', lang));
+	if (ogDescription) ogDescription.setAttribute('content', t('meta.description', lang));
+	if (twitterTitle) twitterTitle.setAttribute('content', t('meta.title', lang));
+	if (twitterDescription) twitterDescription.setAttribute('content', t('meta.description', lang));
+}
+
+// Update language switcher active state
+function updateLanguageSwitcher(lang) {
+	document.querySelectorAll('.lang-switcher button').forEach(btn => {
+		btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+	});
+}
+
+// Initialize language on page load
+function initLanguage() {
+	setLanguage(currentLang);
+}
+
+// ============================================
+// CATEGORIES DATA
+// ============================================
+
 // Categories data from the CPF framework
 const categoriesData = [
 	{
@@ -300,8 +374,19 @@ const observer = new IntersectionObserver((entries) => {
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
+	// Initialize language system
+	initLanguage();
+
 	renderCategories();
-	
+
+	// Setup language switcher event listeners
+	document.querySelectorAll('.lang-switcher button').forEach(btn => {
+		btn.addEventListener('click', () => {
+			const lang = btn.getAttribute('data-lang');
+			setLanguage(lang);
+		});
+	});
+
 	// Observe all cards for animation
 	setTimeout(() => {
 		document.querySelectorAll('.framework-card, .category-card, .stat-card').forEach(card => {
