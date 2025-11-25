@@ -144,7 +144,17 @@ const translations = {
 		'infographic.header.subtitle': 'EVERY CYBERSECURITY PRO SHOULD UNDERSTAND',
 		'infographic.header.year': 'IN 2025',
 		'infographic.footer.note': 'Based on the Cybersecurity Psychology Framework (CPF)',
-		'infographic.footer.author': 'Giuseppe Canale, CISSP | cpf3.org'
+		'infographic.footer.author': 'Giuseppe Canale, CISSP | cpf3.org',
+
+		// Complete Framework Page
+		'complete.title': 'Cybersecurity Psychology Framework - Complete Operational Assessment Guide',
+		'complete.main.title': 'Cybersecurity Psychology Framework<br>Complete Operational Assessment Guide',
+		'complete.subtitle': 'A Pre-Cognitive Vulnerability Assessment Model<br>Integrating Psychoanalytic and Cognitive Sciences',
+
+		// Assessment Page
+		'assessment.page.title': 'CPF Maturity Assessment - All 10 Categories',
+		'assessment.page.main': 'CPF Maturity Assessment',
+		'assessment.page.subtitle': 'Evaluate Your Organization\'s Psychological Security Posture'
 	},
 	it: {
 		// Meta and SEO
@@ -290,7 +300,17 @@ const translations = {
 		'infographic.header.subtitle': 'CHE OGNI PROFESSIONISTA DI CYBERSECURITY DOVREBBE COMPRENDERE',
 		'infographic.header.year': 'NEL 2025',
 		'infographic.footer.note': 'Basato sul Cybersecurity Psychology Framework (CPF)',
-		'infographic.footer.author': 'Giuseppe Canale, CISSP | cpf3.org'
+		'infographic.footer.author': 'Giuseppe Canale, CISSP | cpf3.org',
+
+		// Complete Framework Page
+		'complete.title': 'Cybersecurity Psychology Framework - Guida Operativa di Assessment Completa',
+		'complete.main.title': 'Cybersecurity Psychology Framework<br>Guida Operativa di Assessment Completa',
+		'complete.subtitle': 'Un Modello di Pre-Cognitive Vulnerability Assessment<br>Integrando Scienze Psicoanalitiche e Cognitive',
+
+		// Assessment Page
+		'assessment.page.title': 'CPF Maturity Assessment - Tutte le 10 Categorie',
+		'assessment.page.main': 'CPF Maturity Assessment',
+		'assessment.page.subtitle': 'Valuta la Postura di Sicurezza Psicologica della Tua Organizzazione'
 	}
 };
 
