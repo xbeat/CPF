@@ -1380,7 +1380,7 @@ async function saveOrganization(event) {
     const notes = document.getElementById('org-notes-input').value.trim();
 
     // Validate org ID format
-    if (!/^org-[a-z0-9-]+$/.test(orgId)) {
+    if (!/^org-[-a-z0-9]+$/.test(orgId)) {
         alert('Organization ID must follow format: org-yourname-001 (lowercase, hyphens allowed)');
         return;
     }
