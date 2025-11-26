@@ -254,6 +254,41 @@ async function readOrganizationsIndex() {
   }
 }
 
+async function writeOrganization(orgId, fullOrgData) {
+  await initialize();
+
+  // Extract flat data from full organization structure
+  const data = {
+    name: fullOrgData.name,
+    industry: fullOrgData.metadata.industry,
+    size: fullOrgData.metadata.size,
+    country: fullOrgData.metadata.country,
+    language: fullOrgData.metadata.language,
+    notes: fullOrgData.metadata.notes || '',
+    created_by: fullOrgData.metadata.created_by || '',
+    partita_iva: fullOrgData.metadata.partita_iva || '',
+    sede_sociale: fullOrgData.metadata.sede_sociale || ''
+  };
+
+  const query = `
+    UPDATE organizations SET
+      name = ?, industry = ?, size = ?, country = ?, language = ?,
+      notes = ?, created_by = ?, partita_iva = ?, sede_sociale = ?,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?;
+  `;
+
+  try {
+    await db.run(query, [data.name, data.industry, data.size, data.country, data.language,
+                         data.notes, data.created_by, data.partita_iva, data.sede_sociale, orgId]);
+    console.log(`[DB-SQLITE] Organization ${orgId} written successfully.`);
+    return fullOrgData;
+  } catch (error) {
+    console.error(`[DB-SQLITE] Error in writeOrganization for ID ${orgId}:`, error);
+    throw error;
+  }
+}
+
 async function updateOrganization(orgId, data) {
   await initialize();
   const { name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale } = data;
@@ -411,7 +446,7 @@ module.exports = {
   getSocData,
   saveSocIndicator,
   updateOrganization,
-  writeOrganization: updateOrganization,
+  writeOrganization,
   deleteOrganization,
   getAssessment,
   deleteAssessment,

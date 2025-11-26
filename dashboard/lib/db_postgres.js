@@ -320,6 +320,37 @@ async function organizationExists(orgId) {
   }
 }
 
+async function writeOrganization(orgId, fullOrgData) {
+  await initialize();
+
+  // Extract flat data from full organization structure
+  const data = {
+    name: fullOrgData.name,
+    industry: fullOrgData.metadata.industry,
+    size: fullOrgData.metadata.size,
+    country: fullOrgData.metadata.country,
+    language: fullOrgData.metadata.language,
+    notes: fullOrgData.metadata.notes || '',
+    sede_sociale: fullOrgData.metadata.sede_sociale || '',
+    partita_iva: fullOrgData.metadata.partita_iva || ''
+  };
+
+  const query = `UPDATE organizations SET
+    name = $1, industry = $2, size = $3, country = $4, language = $5,
+    notes = $6, sede_sociale = $7, partita_iva = $8, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $9;`;
+
+  try {
+    await pool.query(query, [data.name, data.industry, data.size, data.country, data.language,
+                              data.notes, data.sede_sociale, data.partita_iva, orgId]);
+    console.log(`[DB-PG] Successfully written organization ${orgId}.`);
+    return fullOrgData;
+  } catch (error) {
+    console.error(`[DB-PG] Error writing organization ${orgId}:`, error);
+    throw error;
+  }
+}
+
 async function updateOrganization(orgId, data) {
   await initialize();
   const { name, industry, size, country, language, notes, sede_sociale, partita_iva } = data;
@@ -508,6 +539,7 @@ module.exports = {
   readOrganization,
   organizationExists,
   updateOrganization,
+  writeOrganization,
   deleteOrganization,
   saveAssessment,
   getAssessment,
@@ -515,7 +547,6 @@ module.exports = {
   getSocData,
   saveSocIndicator,
   // Funzioni alias o non più necessarie mantenute per retrocompatibilità
-  writeOrganization: updateOrganization,
   saveIndicatorMetadata: async () => { console.warn('[DB-PG] saveIndicatorMetadata non è implementata in modo granulare, i dati vengono salvati con l\'intera organizzazione.'); },
   writeOrganizationsIndex: async () => {},
   updateOrganizationInIndex: async () => {},
