@@ -848,13 +848,29 @@ app.post('/api/organizations/:orgId/restore', (req, res) => {
 
     const orgData = dataManager.restoreOrganization(orgId, user);
 
-    console.log(`\n♻️  [API] Restored from trash: ${orgId}\n`);
+    // Return organization data in index format for frontend
+    const organization = {
+      id: orgData.id,
+      name: orgData.name,
+      industry: orgData.metadata.industry,
+      size: orgData.metadata.size,
+      country: orgData.metadata.country,
+      language: orgData.metadata.language,
+      created_at: orgData.metadata.created_at,
+      updated_at: orgData.metadata.updated_at,
+      stats: {
+        total_assessments: orgData.aggregates.completion.assessed_indicators,
+        completion_percentage: orgData.aggregates.completion.percentage,
+        overall_risk: orgData.aggregates.overall_risk || 0.5,
+        avg_confidence: orgData.aggregates.overall_confidence || 0
+      }
+    };
 
     res.json({
       success: true,
       message: 'Organization restored successfully',
       orgId,
-      data: orgData
+      organization
     });
   } catch (error) {
     console.error(`[API] Error restoring organization ${req.params.orgId}:`, error.message);

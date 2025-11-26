@@ -72,7 +72,6 @@ window.addEventListener('keydown', (event) => {
 
 // ===== DATA LOADING =====
 async function loadAllData() {
-    console.log('📥 LOAD ALL DATA - Starting...');
     try {
         const response = await fetch('/api/organizations', {
             cache: 'no-cache',
@@ -85,8 +84,6 @@ async function loadAllData() {
         const data = await response.json();
 
         organizations = data.organizations || [];
-        console.log('📥 LOAD ALL DATA - Fetched', organizations.length, 'organizations');
-        console.log('📥 LOAD ALL DATA - Organizations:', organizations.map(o => ({id: o.id, name: o.name, stats: o.stats})));
 
         // Load category descriptions
         await loadCategoryDescriptions();
@@ -94,18 +91,14 @@ async function loadAllData() {
         // Load trash count for badge
         await loadTrashCount();
 
-        console.log('📥 LOAD ALL DATA - Calling renderOrganizations()');
         renderOrganizations();
 
         // If there's a selected org, reload its data
         if (selectedOrgId) {
-            console.log('📥 LOAD ALL DATA - Reloading selected org:', selectedOrgId);
             await loadOrganizationDetails(selectedOrgId);
-        } else {
-            console.log('📥 LOAD ALL DATA - No selected org');
         }
     } catch (error) {
-        console.error('❌ LOAD ALL DATA - Error:', error);
+        console.error('Error loading organizations:', error);
         showAlert('Failed to load organizations: ' + error.message, 'error');
     }
 }
@@ -146,15 +139,86 @@ function refreshData() {
 // Note: openSidebar() and closeSidebar() are now in shared/ui-utils.js
 
 // ===== RENDERING =====
+// Helper function to create a single organization card
+function createOrganizationCard(org) {
+    const item = document.createElement('div');
+    item.className = 'org-item';
+    if (selectedOrgId === org.id) {
+        item.classList.add('active');
+    }
+    item.dataset.action = 'select-organization';
+    item.dataset.orgId = org.id;
+
+    const overallRisk = org.stats?.overall_risk || 0;
+    const riskClass = overallRisk > 0.66 ? 'high' :
+        overallRisk > 0.33 ? 'medium' : 'low';
+    const riskLabel = overallRisk > 0.66 ? 'High' :
+        overallRisk > 0.33 ? 'Medium' : 'Low';
+    const completion = org.stats?.completion_percentage || 0;
+    const totalAssessments = org.stats?.total_assessments || 0;
+
+    // Get country flag using ISO codes
+    const country = org.country || 'Unknown';
+    const countryFlag = country === 'IT' ? '🇮🇹' :
+                       country === 'US' ? '🇺🇸' :
+                       country === 'GB' ? '🇬🇧' :
+                       country === 'DE' ? '🇩🇪' :
+                       country === 'FR' ? '🇫🇷' :
+                       country === 'ES' ? '🇪🇸' : '🌐';
+
+    // Get language info
+    const language = org.language || 'en-US';
+
+    // Format creation date
+    const createdDate = org.created_at ? new Date(org.created_at).toLocaleDateString() : 'N/A';
+
+    item.innerHTML = `
+        <div class="org-card-header">
+            <div style="flex: 1; min-width: 0;">
+                <div class="org-name">${escapeHtml(org.name)}</div>
+                <div class="org-meta">
+                    ${org.industry} • ${capitalizeFirst(org.size)} • ${countryFlag} ${org.country}
+                </div>
+            </div>
+            <div class="org-card-actions">
+                <button class="icon-btn" data-action="edit-organization" data-org-id="${org.id}" title="Edit">✏️</button>
+                <button class="icon-btn" data-action="delete-organization" data-org-id="${org.id}" data-org-name="${escapeHtml(org.name)}" title="Delete">🗑️</button>
+            </div>
+        </div>
+        <div class="org-stats-detailed">
+            <div class="stat-row">
+                <span class="stat-label">Created</span>
+                <span class="stat-value">${createdDate}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Language</span>
+                <span class="stat-value">${language}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Assessments</span>
+                <span class="stat-value">${totalAssessments}/100 (${completion}%)</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Risk Level</span>
+                <span class="stat-value ${riskClass}">${riskLabel} (${(overallRisk * 100).toFixed(0)}%)</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Confidence</span>
+                <span class="stat-value">${typeof org.stats?.avg_confidence === 'number' ? (org.stats.avg_confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
+            </div>
+        </div>
+    `;
+
+    return item;
+}
+
 function renderOrganizations() {
-    console.log('🎨 RENDER ORGANIZATIONS - Starting with', organizations.length, 'orgs');
     const orgList = document.getElementById('org-list');
     const countEl = document.getElementById('org-count');
 
     countEl.textContent = organizations.length;
 
     if (organizations.length === 0) {
-        console.log('🎨 RENDER ORGANIZATIONS - No organizations, showing empty message');
         orgList.innerHTML = `
             <div style="padding: 1rem; text-align: center; color: var(--text-light);">
                 <p>No organizations found</p>
@@ -164,82 +228,9 @@ function renderOrganizations() {
     }
 
     orgList.innerHTML = '';
-
     organizations.forEach(org => {
-        console.log('🎨 RENDER ORG:', org.id, 'Stats:', org.stats);
-        const item = document.createElement('div');
-        item.className = 'org-item';
-        if (selectedOrgId === org.id) {
-            item.classList.add('active');
-        }
-        item.dataset.action = 'select-organization';
-        item.dataset.orgId = org.id;
-
-        const overallRisk = org.stats?.overall_risk || 0;
-        const riskClass = overallRisk > 0.66 ? 'high' :
-            overallRisk > 0.33 ? 'medium' : 'low';
-        const riskLabel = overallRisk > 0.66 ? 'High' :
-            overallRisk > 0.33 ? 'Medium' : 'Low';
-        const completion = org.stats?.completion_percentage || 0;
-        const totalAssessments = org.stats?.total_assessments || 0;
-
-        console.log('🎨 ORG', org.id, '- completion:', completion, '%, risk:', (overallRisk * 100).toFixed(0), '%, confidence:', org.stats?.avg_confidence);
-
-        // Get country flag using ISO codes
-        const country = org.country || 'Unknown';
-        const countryFlag = country === 'IT' ? '🇮🇹' :
-                           country === 'US' ? '🇺🇸' :
-                           country === 'GB' ? '🇬🇧' :
-                           country === 'DE' ? '🇩🇪' :
-                           country === 'FR' ? '🇫🇷' :
-                           country === 'ES' ? '🇪🇸' : '🌐';
-
-        // Get language info
-        const language = org.language || 'en-US';
-
-        // Format creation date
-        const createdDate = org.created_at ? new Date(org.created_at).toLocaleDateString() : 'N/A';
-
-        item.innerHTML = `
-            <div class="org-card-header">
-                <div style="flex: 1; min-width: 0;">
-                    <div class="org-name">${escapeHtml(org.name)}</div>
-                    <div class="org-meta">
-                        ${org.industry} • ${capitalizeFirst(org.size)} • ${countryFlag} ${org.country}
-                    </div>
-                </div>
-                <div class="org-card-actions">
-                    <button class="icon-btn" data-action="edit-organization" data-org-id="${org.id}" title="Edit">✏️</button>
-                    <button class="icon-btn" data-action="delete-organization" data-org-id="${org.id}" data-org-name="${escapeHtml(org.name)}" title="Delete">🗑️</button>
-                </div>
-            </div>
-            <div class="org-stats-detailed">
-                <div class="stat-row">
-                    <span class="stat-label">Created</span>
-                    <span class="stat-value">${createdDate}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Language</span>
-                    <span class="stat-value">${language}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Assessments</span>
-                    <span class="stat-value">${totalAssessments}/100 (${completion}%)</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Risk Level</span>
-                    <span class="stat-value ${riskClass}">${riskLabel} (${(overallRisk * 100).toFixed(0)}%)</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Confidence</span>
-                    <span class="stat-value">${typeof org.stats?.avg_confidence === 'number' ? (org.stats.avg_confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
-                </div>
-            </div>
-        `;
-
-        orgList.appendChild(item);
+        orgList.appendChild(createOrganizationCard(org));
     });
-    console.log('🎨 RENDER ORGANIZATIONS - Complete');
 }
 
 // Toggle sort direction
@@ -2447,7 +2438,6 @@ async function confirmDelete() {
 
             // If deleting selected org, clear selection and dashboard
             if (selectedOrgId === deletingOrgId) {
-                console.log('🗑️ DELETING SELECTED ORG - Clearing dashboard');
                 selectedOrgId = null;
                 selectedOrgData = null;
 
@@ -2455,12 +2445,10 @@ async function confirmDelete() {
                 const assessmentSection = document.getElementById('assessmentSection');
                 if (assessmentSection) {
                     assessmentSection.classList.add('hidden');
-                    console.log('🗑️ Hidden assessment section');
                 }
                 const emptyState = document.getElementById('emptyState');
                 if (emptyState) {
                     emptyState.style.display = 'block';
-                    console.log('🗑️ Showed empty state');
                 }
 
                 // Clear all tab contents (only if they exist)
@@ -2478,7 +2466,6 @@ async function confirmDelete() {
                 if (prioritizationTable) prioritizationTable.innerHTML = '';
                 const maturityTab = document.getElementById('maturityTab');
                 if (maturityTab) maturityTab.innerHTML = '';
-                console.log('🗑️ Cleared all tab contents');
             }
 
             await loadAllData();
@@ -3428,7 +3415,6 @@ function closeTrashModal() {
 }
 
 async function restoreFromTrash(orgId) {
-    console.log('♻️ RESTORE FROM TRASH - Starting for org:', orgId);
     try {
         const response = await fetch(`/api/organizations/${orgId}/restore`, {
             method: 'POST',
@@ -3437,21 +3423,29 @@ async function restoreFromTrash(orgId) {
         });
 
         const result = await response.json();
-        console.log('♻️ RESTORE FROM TRASH - API result:', result);
 
         if (result.success) {
             showAlert(`Organization restored successfully!`, 'success');
             closeTrashModal();
-            console.log('♻️ RESTORE FROM TRASH - Calling loadAllData()');
-            await loadAllData();
-            console.log('♻️ RESTORE FROM TRASH - Calling loadTrashCount()');
+
+            // Add restored org to the array and create its card at the top
+            const restoredOrg = result.organization;
+            organizations.unshift(restoredOrg); // Add to beginning of array
+
+            // Update count
+            document.getElementById('org-count').textContent = organizations.length;
+
+            // Create and insert card at the top
+            const orgList = document.getElementById('org-list');
+            const item = createOrganizationCard(restoredOrg);
+            orgList.insertBefore(item, orgList.firstChild);
+
             await loadTrashCount();
-            console.log('♻️ RESTORE FROM TRASH - Complete');
         } else {
             throw new Error(result.error);
         }
     } catch (error) {
-        console.error('❌ RESTORE FROM TRASH - Error:', error);
+        console.error('Error restoring organization:', error);
         showAlert(`Failed to restore: ${error.message}`, 'error');
     }
 }
@@ -3518,16 +3512,6 @@ async function openHistoryModal() {
         // Render history (newest first)
         const versions = [...data.history.versions].reverse();
 
-        console.log('📜 DEBUG History versions loaded:', versions.length);
-        versions.forEach((v, i) => {
-            console.log(`📜 DEBUG Version ${v.version}:`, {
-                timestamp: v.timestamp,
-                user: v.user,
-                responses: v.data?.raw_data?.client_conversation?.responses,
-                score: v.data?.bayesian_score
-            });
-        });
-
         let html = '<div style="padding: 20px;">';
 
         versions.forEach((version, index) => {
@@ -3588,7 +3572,7 @@ function closeHistoryModal() {
 }
 
 async function revertToVersion(versionNumber) {
-    if (!confirm(`Revert to version ${versionNumber}?`)) return;
+    if (!confirm(`Revert to version ${versionNumber}?\n\nThis will create a new version based on the selected one.`)) return;
 
     const orgId = currentHistoryOrgId;
     const indicatorId = currentHistoryIndicatorId;
@@ -3611,13 +3595,44 @@ async function revertToVersion(versionNumber) {
             // USA I DATI DAL SERVER, NON ricaricare dal database!
             selectedOrgData.assessments[indicatorId] = result.data;
 
-            // Aggiorna la form se aperta
-            if (currentData && currentData.fieldKit) {
-                const responses = result.data.raw_data?.client_conversation?.responses;
-                if (responses) {
-                    currentData.responses = responses;
-                    renderFieldKit(currentData.fieldKit);
+            // If form is open, update it with reverted data
+            if (currentData && currentData.fieldKit && selectedOrgData) {
+                const revertedAssessment = selectedOrgData.assessments[indicatorId];
+
+                if (revertedAssessment?.raw_data?.client_conversation) {
+                    const conv = revertedAssessment.raw_data.client_conversation;
+
+                    // CRITICAL FIX: Ensure responses is a valid object before assigning
+                    // Use direct assignment instead of spread operator to avoid empty object issues
+                    if (conv.responses && typeof conv.responses === 'object') {
+                        currentData.responses = conv.responses;
+                    } else {
+                        currentData.responses = {};
+                    }
+
+                    currentData.score = conv.scores || null;
+
+                    // Merge metadata carefully to preserve existing properties
+                    if (conv.metadata && typeof conv.metadata === 'object') {
+                        currentData.metadata = { ...currentData.metadata, ...conv.metadata };
+                    }
+
+                    // CRITICAL FIX: Force a complete re-render by temporarily clearing the fieldKit
+                    // This ensures renderFieldKit will regenerate all HTML elements from scratch
+                    const tempFieldKit = currentData.fieldKit;
+                    currentData.fieldKit = null;
+
+                    // Use setTimeout to ensure DOM is cleared before re-rendering
+                    setTimeout(() => {
+                        currentData.fieldKit = tempFieldKit;
+                        renderFieldKit(currentData.fieldKit);
+                        showAlert(`✅ Reverted to version ${versionNumber} - Form updated`, 'success');
+                    }, 50);
+                } else {
+                    showAlert('⚠️ No data to restore', 'warning');
                 }
+            } else {
+                showAlert('Reverted', 'success');
             }
 
             // Ora ricarica solo la sidebar per aggiornare gli stats
