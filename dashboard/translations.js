@@ -14,14 +14,14 @@ const dashboardTranslations = {
 		'header.title': '🛡️ CPF Dashboard Suite',
 		'header.subtitle': 'Cybersecurity Psychology Framework - Assessment & Analysis Platform',
 
-		// Auditing Dashboard v3
-		'auditing-v3.title': 'Auditing Dashboard v3',
-		'auditing-v3.description': 'Updated version with CPF Maturity Model, compliance and ROI analysis',
-		'auditing-v3.feature.1': '🎖️ Complete CPF Maturity Model',
-		'auditing-v3.feature.2': 'GDPR, NIS2, DORA, ISO27001 Compliance',
-		'auditing-v3.feature.3': 'ROI analysis and certification paths',
-		'auditing-v3.feature.4': 'Integrated Field Kit',
-		'auditing-v3.button': 'Open v3',
+		// Auditing Dashboard
+		'auditing.title': 'Auditing Dashboard',
+		'auditing.description': 'Updated version with CPF Maturity Model, compliance and ROI analysis',
+		'auditing.feature.1': '🎖️ Complete CPF Maturity Model',
+		'auditing.feature.2': 'GDPR, NIS2, DORA, ISO27001 Compliance',
+		'auditing.feature.3': 'ROI analysis and certification paths',
+		'auditing.feature.4': 'Integrated Field Kit',
+		'auditing.button': 'Open Auditing Dashboard',
 
 		// SOC Integration
 		'soc.title': 'SOC Integration',
@@ -75,14 +75,14 @@ const dashboardTranslations = {
 		'header.title': '🛡️ CPF Dashboard Suite',
 		'header.subtitle': 'Cybersecurity Psychology Framework - Piattaforma di Assessment & Analisi',
 
-		// Auditing Dashboard v3
-		'auditing-v3.title': 'Auditing Dashboard v3',
-		'auditing-v3.description': 'Versione aggiornata con Maturity Model CPF, compliance e ROI analysis',
-		'auditing-v3.feature.1': '🎖️ CPF Maturity Model completo',
-		'auditing-v3.feature.2': 'Compliance GDPR, NIS2, DORA, ISO27001',
-		'auditing-v3.feature.3': 'ROI analysis e certification paths',
-		'auditing-v3.feature.4': 'Field Kit integrato',
-		'auditing-v3.button': 'Apri v3',
+		// Auditing Dashboard
+		'auditing.title': 'Auditing Dashboard',
+		'auditing.description': 'Versione aggiornata con Maturity Model CPF, compliance e ROI analysis',
+		'auditing.feature.1': '🎖️ CPF Maturity Model completo',
+		'auditing.feature.2': 'Compliance GDPR, NIS2, DORA, ISO27001',
+		'auditing.feature.3': 'ROI analysis e certification paths',
+		'auditing.feature.4': 'Field Kit integrato',
+		'auditing.button': 'Apri Auditing Dashboard',
 
 		// SOC Integration
 		'soc.title': 'SOC Integration',
