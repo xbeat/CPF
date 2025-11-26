@@ -190,7 +190,7 @@ http://localhost:8000/index.html
 ```bash
 # 1. Clone repository
 git clone https://github.com/xbeat/CPF.git
-cd CPF/dashboard/auditing/client-v3
+cd CPF/dashboard/auditing
 
 # 2. Verify files
 ls -la
@@ -248,7 +248,7 @@ git push
 
 ### Dashboard Integration
 
-To use v3.0 in the main dashboard:
+Dashboard Integration:
 
 The client is already integrated in the dashboard at `/dashboard/auditing/index.html`:
 ```html

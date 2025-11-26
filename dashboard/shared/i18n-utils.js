@@ -116,7 +116,7 @@ function updateMetaTags(lang, translations) {
  * @param {string} lang - Language code
  */
 function updateLanguageSwitcher(lang) {
-	document.querySelectorAll('.lang-switcher button, .lang-switcher-v3 button, .lang-btn').forEach(btn => {
+	document.querySelectorAll('.lang-switcher button, .lang-switcher-auditing button, .lang-btn').forEach(btn => {
 		const btnLang = btn.getAttribute('data-lang');
 		if (btnLang === lang) {
 			btn.classList.add('active');
@@ -189,7 +189,7 @@ function initLanguage(translations, callback) {
 	const currentLang = getCurrentLanguage();
 
 	// Set up language switcher event listeners
-	document.querySelectorAll('.lang-switcher button, .lang-switcher-v3 button, .lang-btn').forEach(btn => {
+	document.querySelectorAll('.lang-switcher button, .lang-switcher-auditing button, .lang-btn').forEach(btn => {
 		btn.addEventListener('click', (e) => {
 			e.preventDefault();
 			const lang = btn.getAttribute('data-lang');
