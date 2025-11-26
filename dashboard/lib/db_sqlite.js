@@ -152,6 +152,17 @@ async function readOrganization(orgId) {
   }
 }
 
+async function organizationExists(orgId) {
+  await initialize();
+  try {
+    const row = await db.get('SELECT id FROM organizations WHERE id = ? AND is_deleted = 0', orgId);
+    return row !== undefined;
+  } catch (error) {
+    console.error(`[DB-SQLITE] Errore in organizationExists per ID ${orgId}:`, error);
+    return false;
+  }
+}
+
 async function saveAssessment(orgId, indicatorId, data) {
   await initialize();
   const { title, category, bayesian_score, confidence, maturity_level, assessor, assessment_date, raw_data } = data;
@@ -394,6 +405,7 @@ module.exports = {
   initialize,
   createOrganization,
   readOrganization,
+  organizationExists,
   readOrganizationsIndex,
   saveAssessment,
   getSocData,

@@ -440,7 +440,7 @@ app.put('/api/organizations/:orgId', async (req, res) => {
     const { orgId } = req.params;
     const updates = req.body;
 
-    if (!(await dataManager.organizationExists(orgId))) {
+    if (!(await db.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -462,7 +462,7 @@ app.put('/api/organizations/:orgId', async (req, res) => {
     if (updates.partita_iva !== undefined) orgData.metadata.partita_iva = updates.partita_iva;
 
     // Save to database
-    await db.writeOrganization(orgData);
+    await db.writeOrganization(orgData.id, orgData);
 
     console.log(`\n✅ [API] Updated organization: ${orgId}\n`);
 

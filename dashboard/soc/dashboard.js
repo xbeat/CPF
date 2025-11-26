@@ -256,6 +256,7 @@ async function editOrganization(orgId) {
         const org = result.data;
 
         // Populate form
+        document.getElementById('edit-org-id').value = org.id;
         document.getElementById('edit-org-name').value = org.name;
         document.getElementById('edit-org-industry').value = org.metadata.industry;
         document.getElementById('edit-org-size').value = org.metadata.size;

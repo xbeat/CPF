@@ -102,6 +102,11 @@ async function writeOrganization(orgId, data) {
     return data;
 }
 
+async function organizationExists(orgId) {
+  const orgPath = path.join(orgsDir, `${orgId}.json`);
+  return fs.existsSync(orgPath);
+}
+
 async function createOrganization(orgData) {
   await writeOrganization(orgData.id, orgData);
 
@@ -614,6 +619,8 @@ module.exports = {
   initialize,
   createOrganization,
   readOrganization,
+  writeOrganization,
+  organizationExists,
   saveAssessment,
   getSocData,
   saveSocIndicator,
@@ -622,7 +629,6 @@ module.exports = {
   recalculateAllAggregates,
   readOrganizationsIndex,
   writeOrganizationsIndex,
-  writeOrganization,
   // Placeholder for other potential functions to avoid breaking require()
   updateOrganizationInIndex: async () => {},
   removeOrganizationFromIndex: async () => {},
