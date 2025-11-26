@@ -477,6 +477,8 @@ function updateMeta(field, value) {
 }
 
 function updateResponse(id, value) {
+    console.log('📝 DEBUG updateResponse called:', { id, value });
+
     currentData.responses[id] = value;
     const elem = document.getElementById(id);
     if (elem && elem.type === 'checkbox') {
@@ -507,6 +509,7 @@ function updateResponse(id, value) {
         calculateIndicatorScore();
     }
 
+    console.log('📝 DEBUG calling autoSave...');
     // Auto-save immediately
     autoSave();
 }
@@ -533,7 +536,12 @@ async function saveData() {
 // ============================================
 
 async function autoSave() {
+    console.log('💾 DEBUG autoSave called');
+    console.log('💾 DEBUG - has fieldKit:', !!currentData.fieldKit);
+    console.log('💾 DEBUG - organizationContext.orgId:', organizationContext.orgId);
+
     if (!currentData.fieldKit) {
+        console.warn('⚠️ autoSave: No fieldKit, skipping');
         return;
     }
 
@@ -544,12 +552,15 @@ async function autoSave() {
     // If organization context is available, save IMMEDIATELY to API (no debounce!)
     // NOTE: We removed the currentScore check - saveToAPI will calculate it if needed
     if (organizationContext.orgId) {
+        console.log('💾 DEBUG - calling saveToAPI...');
         try {
             await saveToAPI();
         } catch (error) {
             console.error('❌ Auto-save to API failed:', error);
             // Continue silently - localStorage backup is still working
         }
+    } else {
+        console.warn('⚠️ autoSave: No organizationContext.orgId, skipping API save');
     }
 }
 
