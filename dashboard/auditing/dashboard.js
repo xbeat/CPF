@@ -2149,6 +2149,9 @@ function generateOrgIdFromName() {
     idInput.value = finalId;
 }
 
+// Make generateOrgIdFromName globally accessible for inline HTML event handlers
+window.generateOrgIdFromName = generateOrgIdFromName;
+
 function openCreateOrgModal() {
     editingOrgId = null;
     document.getElementById('orgModalTitle').textContent = 'Create New Organization';
