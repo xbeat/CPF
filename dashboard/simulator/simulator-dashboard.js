@@ -1560,8 +1560,6 @@ function closeTrashModal() {
 }
 
 async function restoreFromTrash(orgId) {
-    if (!confirm('Restore this organization?')) return;
-
     try {
         const response = await fetch(`/api/organizations/${orgId}/restore`, {
             method: 'POST',
