@@ -148,6 +148,7 @@ async function createOrganization(orgData) {
         total_assessments: orgData.aggregates.completion.assessed_indicators,
         completion_percentage: orgData.aggregates.completion.percentage,
         overall_risk: orgData.aggregates.overall_risk,
+        avg_confidence: orgData.aggregates.overall_confidence || 0
     }
   };
 
@@ -651,9 +652,46 @@ module.exports = {
   recalculateAllAggregates,
   readOrganizationsIndex,
   writeOrganizationsIndex,
-  // Placeholder for other potential functions to avoid breaking require()
-  updateOrganizationInIndex: async () => {},
-  removeOrganizationFromIndex: async () => {},
+  // Update organization in index (used after restore, assessment save, etc.)
+  updateOrganizationInIndex: async (orgData) => {
+    const index = await readOrganizationsIndex();
+    const existingIndex = index.organizations.findIndex(o => o.id === orgData.id);
+
+    const indexEntry = {
+      id: orgData.id,
+      name: orgData.name,
+      industry: orgData.metadata.industry,
+      size: orgData.metadata.size,
+      country: orgData.metadata.country,
+      language: orgData.metadata.language,
+      created_at: orgData.metadata.created_at,
+      updated_at: orgData.metadata.updated_at,
+      deleted_at: orgData.metadata.deleted_at || null,
+      stats: {
+        total_assessments: orgData.aggregates.completion.assessed_indicators,
+        completion_percentage: orgData.aggregates.completion.percentage,
+        overall_risk: orgData.aggregates.overall_risk,
+        avg_confidence: orgData.aggregates.overall_confidence || 0
+      }
+    };
+
+    if (existingIndex >= 0) {
+      index.organizations[existingIndex] = indexEntry;
+    } else {
+      index.organizations.push(indexEntry);
+    }
+
+    index.metadata.total_organizations = index.organizations.filter(o => !o.deleted_at).length;
+    index.metadata.last_updated = new Date().toISOString();
+    await writeOrganizationsIndex(index);
+  },
+  removeOrganizationFromIndex: async (orgId) => {
+    const index = await readOrganizationsIndex();
+    index.organizations = index.organizations.filter(o => o.id !== orgId);
+    index.metadata.total_organizations = index.organizations.length;
+    index.metadata.last_updated = new Date().toISOString();
+    await writeOrganizationsIndex(index);
+  },
   getAssessment: async () => null,
   deleteAssessment: async () => ({ success: true }),
   saveIndicatorMetadata: async () => ({ success: true }),
