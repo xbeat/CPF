@@ -3554,33 +3554,38 @@ async function revertToVersion(versionNumber) {
             // Reload organization data and sidebar
             await window.dashboardReloadOrganization();
 
-            // CRITICAL: If the integrated form is open, CLOSE and REOPEN it with reverted data
-            // This ensures all data is properly reloaded from scratch
-            const formIsOpen = currentData && currentData.fieldKit;
-
-            if (formIsOpen && selectedOrgData) {
+            // If form is open, update it with reverted data
+            if (currentData && currentData.fieldKit && selectedOrgData) {
                 const revertedAssessment = selectedOrgData.assessments[indicatorId];
 
-                console.log('🔄 Revert: Form is open - will close and reopen with reverted data');
+                console.log('🔄 DEBUG Revert - Form is open, updating with reverted data');
+                console.log('🔄 DEBUG - Has reverted assessment:', !!revertedAssessment);
+                console.log('🔄 DEBUG - Reverted raw_data:', revertedAssessment?.raw_data);
 
-                // Close the current modal
-                document.getElementById('indicatorModal').classList.remove('active');
-                popModal('indicatorModal');
+                if (revertedAssessment?.raw_data?.client_conversation) {
+                    const conv = revertedAssessment.raw_data.client_conversation;
 
-                // Wait a moment for modal to close
-                await new Promise(resolve => setTimeout(resolve, 100));
+                    console.log('🔄 DEBUG - Responses to restore:', conv.responses);
+                    console.log('🔄 DEBUG - Current responses before:', currentData.responses);
 
-                // Reopen with the reverted assessment
-                if (revertedAssessment) {
-                    await openIntegratedClient(indicatorId, orgId, revertedAssessment);
-                    showAlert(`✅ Reverted to version ${versionNumber} - form reloaded`, 'success');
+                    // Update currentData with reverted values
+                    currentData.responses = { ...conv.responses } || {};
+                    currentData.score = conv.scores || null;
+                    currentData.metadata = { ...currentData.metadata, ...conv.metadata };
+
+                    console.log('🔄 DEBUG - Current responses after:', currentData.responses);
+                    console.log('🔄 DEBUG - Calling renderFieldKit now...');
+
+                    // Re-render the form with updated data
+                    renderFieldKit(currentData.fieldKit);
+
+                    console.log('🔄 DEBUG - renderFieldKit completed');
+                    showAlert(`✅ Reverted to version ${versionNumber}`, 'success');
                 } else {
-                    // Open empty form if no assessment data
-                    await openIntegratedClient(indicatorId, orgId, null);
-                    showAlert(`✅ Reverted to version ${versionNumber} (empty)`, 'success');
+                    console.warn('⚠️ No client_conversation data to restore');
+                    showAlert('⚠️ No data to restore', 'warning');
                 }
             } else {
-                console.log('ℹ️ Form not open - only updated backend data');
                 showAlert(`✅ Reverted to version ${versionNumber}`, 'success');
             }
         } else {
