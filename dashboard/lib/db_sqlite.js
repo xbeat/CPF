@@ -265,7 +265,7 @@ async function updateOrganization(orgId, data) {
     WHERE id = ?;
   `;
   try {
-    await db.run(query, [name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, orgId]);
+    await db.run(query, [name, industry, size, country, language, notes || '', created_by || '', partita_iva || '', sede_sociale || '', orgId]);
     console.log(`[DB-SQLITE] Organization ${orgId} updated successfully.`);
     return await readOrganization(orgId);
   } catch (error) {

@@ -327,9 +327,9 @@ async function updateOrganization(orgId, data) {
     name = $1, industry = $2, size = $3, country = $4, language = $5, notes = $6, sede_sociale = $7, partita_iva = $8, updated_at = CURRENT_TIMESTAMP
     WHERE id = $9;`;
   try {
-    await pool.query(query, [name, industry, size, country, language, notes, sede_sociale, partita_iva, orgId]);
+    await pool.query(query, [name, industry, size, country, language, notes || '', sede_sociale || '', partita_iva || '', orgId]);
     console.log(`[DB-PG] Successfully updated organization ${orgId}.`);
-    return { id: orgId, ...data };
+    return await readOrganization(orgId);
   } catch (error) {
     console.error(`[DB-PG] Error updating organization ${orgId}:`, error);
     throw error;
