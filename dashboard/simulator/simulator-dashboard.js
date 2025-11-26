@@ -1097,22 +1097,71 @@ function closeSidebar() {
 let editingOrgId = null;
 let deletingOrgId = null;
 
-function editOrganization(orgId) {
+/**
+ * Generate organization ID from name (auto-generation with duplicate check)
+ */
+function generateOrgIdFromName() {
+    const nameInput = document.getElementById('org-name-input');
+    const idInput = document.getElementById('org-id-input');
+
+    if (!nameInput || !idInput) return;
+
+    const name = nameInput.value.trim();
+    if (!name) {
+        idInput.value = '';
+        return;
+    }
+
+    // Convert name to lowercase slug format
+    let slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+        .replace(/\s+/g, '-')          // Replace spaces with hyphens
+        .replace(/-+/g, '-')           // Replace multiple hyphens with single
+        .substring(0, 30);             // Limit length
+
+    // Check for duplicates and add number suffix if needed
+    let baseId = `org-${slug}`;
+    let finalId = baseId;
+    let counter = 1;
+
+    // Check if ID already exists in current organizations list
+    while (organizations && organizations.some(org => org.id === finalId)) {
+        counter++;
+        finalId = `${baseId}-${counter.toString().padStart(3, '0')}`;
+    }
+
+    idInput.value = finalId;
+}
+
+async function editOrganization(orgId) {
     editingOrgId = orgId;
-    const org = organizations.find(o => o.id === orgId);
-    if (!org) return;
 
-    document.getElementById('edit-org-id').value = org.id;
-    document.getElementById('edit-org-name').value = org.name;
-    document.getElementById('edit-org-industry').value = org.industry;
-    document.getElementById('edit-org-size').value = org.size;
-    document.getElementById('edit-org-country').value = org.country;
-    document.getElementById('edit-org-language').value = org.language;
-    document.getElementById('edit-org-sede-sociale').value = org.sede_sociale || '';
-    document.getElementById('edit-org-partita-iva').value = org.partita_iva || '';
+    try {
+        // Fetch full organization data to ensure all fields are populated
+        const response = await fetch(`/api/organizations/${orgId}`);
+        if (!response.ok) throw new Error('Failed to load organization');
 
-    document.getElementById('edit-org-modal').style.display = 'block';
-    pushModal('edit-org-modal');
+        const result = await response.json();
+        const org = result.data;
+
+        // Populate form with full organization data
+        document.getElementById('edit-org-id').value = org.id;
+        document.getElementById('edit-org-name').value = org.name;
+        document.getElementById('edit-org-industry').value = org.metadata.industry;
+        document.getElementById('edit-org-size').value = org.metadata.size;
+        document.getElementById('edit-org-country').value = org.metadata.country;
+        document.getElementById('edit-org-language').value = org.metadata.language;
+        document.getElementById('edit-org-sede-sociale').value = org.metadata.sede_sociale || '';
+        document.getElementById('edit-org-partita_iva').value = org.metadata.partita_iva || '';
+        document.getElementById('edit-org-notes').value = org.metadata.notes || '';
+
+        document.getElementById('edit-org-modal').style.display = 'block';
+        pushModal('edit-org-modal');
+    } catch (error) {
+        console.error('Error loading organization:', error);
+        showAlert('Failed to load organization data: ' + error.message, 'error');
+    }
 }
 
 function closeEditOrgModal() {
@@ -1455,8 +1504,15 @@ async function openTrashModal() {
         html += '<p style="color: var(--text-light); font-size: 14px; margin-bottom: 20px;">Organizations will be automatically deleted after 30 days</p>';
 
         data.organizations.forEach(org => {
-            const daysLeft = org.days_until_permanent_delete;
+            // Safety check: skip if org is invalid
+            if (!org || !org.id || !org.name) {
+                console.warn('Invalid organization in trash:', org);
+                return;
+            }
+
+            const daysLeft = org.days_until_permanent_delete || 0;
             const warningClass = daysLeft <= 5 ? 'var(--danger)' : 'var(--text-light)';
+            const deletedDate = org.deleted_at ? new Date(org.deleted_at).toLocaleString() : 'Unknown';
 
             html += `
                 <div style="background: var(--bg-gray); border: 2px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 15px;">
@@ -1465,8 +1521,8 @@ async function openTrashModal() {
                             <h4 style="margin: 0 0 8px 0; color: var(--primary);">${escapeHtml(org.name)}</h4>
                             <div style="font-size: 13px; color: var(--text-light);">
                                 <div>ID: <code>${escapeHtml(org.id)}</code></div>
-                                <div>Industry: ${escapeHtml(org.industry)}</div>
-                                <div>Assessments: ${org.stats.total_assessments}/100</div>
+                                <div>Industry: ${escapeHtml(org.industry || 'Unknown')}</div>
+                                <div>Assessments: ${org.stats?.total_assessments || 0}/100</div>
                             </div>
                         </div>
                         <div style="text-align: right;">
@@ -1484,7 +1540,7 @@ async function openTrashModal() {
                         </div>
                     </div>
                     <div style="font-size: 12px; color: var(--text-light); padding-top: 12px; border-top: 1px solid var(--border);">
-                        Deleted: ${new Date(org.deleted_at).toLocaleString()}
+                        Deleted: ${deletedDate}
                     </div>
                 </div>
             `;
