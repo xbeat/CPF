@@ -8,7 +8,7 @@ Sistema unificato di dashboard per il **CPF** (Cognitive Persuasion Framework), 
 - **SOC Simulator** - Generazione realistica di eventi SIEM per testing
 - **Detection Engine** - Motore di rilevamento basato su algoritmi statistici
 - **Dashboard Auditing** - Field Kit Progress Tracking + Risk Analysis
-- **Client Field Kit v3** - Client di assessment refactorizzato (ES6+)
+- **Client Field Kit** - Client di assessment refactorizzato (ES6+)
 - **Certificate Generator** - Generatore certificati PDF (Python + Node.js)
 - **RESTful API** - Backend services con WebSocket real-time
 - **Multi-Storage** - Supporto JSON, SQLite, PostgreSQL (configurabile via .env)
@@ -78,15 +78,14 @@ dashboard/
 │   ├── styles.css
 │   ├── reference_guide_*.json   # Guide di riferimento (IT/EN)
 │   ├── category-descriptions.json
-│   ├── client-v3/               # Client Field Kit v3 (refactored)
-│   │   ├── README.md            # Guida completa v3
-│   │   ├── README-PYTHON.md     # Setup backend Python
-│   │   ├── index.html           # Test standalone
-│   │   ├── client-integrated.js # ES6+ refactored (33% meno codice)
-│   │   ├── test-runner.html     # Test UI (50+ tests)
-│   │   ├── test-suite.js        # Suite di test
-│   │   ├── run-tests-simple.js  # Test runner Node.js
-│   │   └── run-tests.js
+│   ├── README-CLIENT.md         # Client Field Kit - Guida completa
+│   │   ├── README-CLIENT-PYTHON.md  # Setup backend Python
+│   ├── index-client-test.html   # Test standalone
+│   ├── client-integrated.js     # ES6+ refactored (33% meno codice)
+│   ├── test-runner.html         # Test UI (50+ tests)
+│   ├── test-suite.js            # Suite di test
+│   ├── run-tests-simple.js      # Test runner Node.js
+│   └── run-tests.js
 │   └── scripts/                 # Script utility
 │       ├── validate-fieldkit.js
 │       └── README.md
@@ -395,13 +394,13 @@ sudo systemctl status cpf-dashboard
 | `http://localhost:3000/dashboard/soc/` | **Dashboard SOC** - Analisi Bayesiana multi-org |
 | `http://localhost:3000/dashboard/simulator/` | **Simulatore SIEM** - Generazione eventi real-time |
 | `http://localhost:3000/dashboard/auditing/` | **Dashboard Auditing** - Progress + Risk Analysis |
-| `http://localhost:3000/dashboard/auditing/client-v3/` | **Field Kit Client v3** - Assessment tool (standalone) |
+| `http://localhost:3000/dashboard/auditing/` | **Field Kit Client** - Assessment tool (standalone) |
 
 ### Testing & Sviluppo
 
 | URL | Descrizione |
 |-----|-------------|
-| `http://localhost:3000/dashboard/auditing/client-v3/test-runner.html` | Test suite Client v3 (50+ tests) |
+| `http://localhost:3000/dashboard/auditing/test-runner.html` | Test suite Client (50+ tests) |
 | `http://localhost:3000/dashboard/soc/documentation/` | Documentazione SOC/SIEM |
 
 ---
@@ -502,13 +501,13 @@ sudo systemctl status cpf-dashboard
    - **Tab Progress**: Completion % e grid 10×10
    - **Tab Risk Analysis**: Bayesian risk scores, heatmap, prioritization
 
-### Workflow C: Client Field Kit v3 (Standalone)
+### Workflow C: Client Field Kit (Standalone)
 
 **Scenario**: Eseguire assessment manuale per un indicatore
 
-1. **Apri Client v3:**
+1. **Apri Client:**
    ```
-   http://localhost:3000/dashboard/auditing/client-v3/
+   http://localhost:3000/dashboard/auditing/
    ```
 
 2. **Carica un indicatore:**
@@ -527,11 +526,11 @@ sudo systemctl status cpf-dashboard
 5. **Test automatici:**
    ```bash
    # Test Node.js
-   cd dashboard/auditing/client-v3
+   cd dashboard/auditing
    node run-tests-simple.js
 
    # Test browser
-   http://localhost:3000/dashboard/auditing/client-v3/test-runner.html
+   http://localhost:3000/dashboard/auditing/test-runner.html
    ```
 
 ### Workflow D: PostgreSQL Database
@@ -687,17 +686,16 @@ Integrazione:
 - Batch import automatico
 - API REST per CRUD
 
-### 5. Client Field Kit v3 (`/dashboard/auditing/client-v3/`)
+### 5. Client Field Kit (`/dashboard/auditing/`)
 
 **Assessment Tool Refactorizzato ES6+**
 
-Miglioramenti vs v2:
+Miglioramenti:
 - ✅ ES6+ classes (no IIFE wrapper)
-- ✅ 33% meno codice (1350 vs 2000 righe)
+- ✅ Codice ottimizzato e pulito
 - ✅ Zero duplicazione
-- ✅ 100% compatibilità v2 API
-- ✅ 21 test automatici (100% passing)
-- ✅ Architettura modulare (8 classes)
+- ✅ Test automatici completi
+- ✅ Architettura modulare (8 classi)
 
 Classi:
 1. `AssessmentManager` - Core data + auto-save
@@ -999,11 +997,11 @@ taskkill /PID <pid> /F
 - Riduzione baseline values
 - Indicator cooldown
 
-### "Client v3: test falliscono"
+### "Client: test falliscono"
 
 **Soluzione:**
 ```bash
-cd dashboard/auditing/client-v3
+cd dashboard/auditing
 
 # Verifica sintassi
 node -c client-integrated.js
@@ -1137,8 +1135,8 @@ docker exec -it <container-id> psql -U postgres
 |------------|--------|-------------|
 | **Simulatore SIEM** | `/dashboard/simulator/README.md` | Logica, problemi noti, soluzioni |
 | **Detection Engine** | `/dashboard/cpf-detection-engine/README.md` | Architettura detection-based |
-| **Client v3** | `/dashboard/auditing/client-v3/README.md` | Guida completa refactoring |
-| **Client v3 Python** | `/dashboard/auditing/client-v3/README-PYTHON.md` | Setup backend Python |
+| **Client** | `/dashboard/auditing/README-CLIENT.md` | Guida completa refactoring |
+| **Client Python** | `/dashboard/auditing/README-CLIENT-PYTHON.md` | Setup backend Python |
 | **Certificate Gen** | `/dashboard/certificate/README.md` | Generazione certificati PDF |
 | **Data Storage** | `/dashboard/data/README.md` | **Multi-Storage: JSON, SQLite, PostgreSQL** |
 | **Data Schemas** | `/dashboard/data/schemas/README.md` | JSON Schema validazione |
@@ -1234,7 +1232,7 @@ const CATEGORY_DEPENDENCIES = {
 **Stili specifici:**
 - SOC: `/dashboard/auditing/styles.css`
 - Auditing: `/dashboard/auditing/styles.css`
-- Client v3: `/dashboard/auditing/client-v3/client-integrated.css`
+- Client: `/dashboard/auditing/client-integrated.css`
 
 ### Aggiungere Nuovo Connettore SIEM
 
@@ -1276,7 +1274,7 @@ const CATEGORY_DEPENDENCIES = {
 
 - **Dashboard SOC v1.0** - Analisi Bayesiana multi-org completa
 - **Simulatore SIEM** - 12+ connettori, 40+ eventi
-- **Client Field Kit v3** - Refactoring ES6+ con test automatici
+- **Client Field Kit** - Refactoring ES6+ con test automatici
 - **Certificate Generator** - Python + Node.js
 - **WebSocket Real-time** - Aggiornamenti live indicatori
 - **Trash Management** - Soft delete con restore
@@ -1341,7 +1339,7 @@ Parte del progetto **CPF** (Cognitive Persuasion Framework).
    ```bash
    git checkout -b feature/my-feature
    ```
-3. **Scrivi test** (per Client v3)
+3. **Scrivi test** (per Client)
 4. **Commit con messaggi chiari:**
    ```bash
    git commit -m "Add: feature description"
@@ -1372,10 +1370,10 @@ npm start
 http://localhost:3000/dashboard/soc/
 # → Crea org → Avvia simulatore → Osserva real-time
 
-# Client v3 Test
-cd dashboard/auditing/client-v3
+# Client Test
+cd dashboard/auditing
 node run-tests-simple.js
-# → ✅ 21/21 tests passed
+# → ✅ All tests passed
 ```
 
 ### Workflow Completo (15 minuti)

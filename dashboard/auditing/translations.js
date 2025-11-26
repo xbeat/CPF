@@ -1,17 +1,16 @@
 // ============================================
-// CPF AUDITING DASHBOARD V3 - TRANSLATIONS (EN/IT)
+// CPF AUDITING DASHBOARD - TRANSLATIONS (EN/IT)
 // ============================================
 
 const auditingTranslations = {
 	en: {
 		// Meta tags
-		'meta.title': 'CPF Auditing Dashboard v3.0 - Organizations & Assessment Progress',
+		'meta.title': 'CPF Auditing Dashboard - Organizations & Assessment Progress',
 		'meta.description': 'Comprehensive CPF assessment platform with maturity model, compliance tracking, and ROI analysis',
 
 		// Header
 		'header.back': '← Back to Dashboard',
 		'header.title': '🛡️ CPF Auditing Dashboard',
-		'header.version': 'v3.0',
 		'header.subtitle': 'Organizations & Assessment Progress',
 
 		// Buttons
@@ -199,13 +198,12 @@ const auditingTranslations = {
 	},
 	it: {
 		// Meta tags
-		'meta.title': 'CPF Auditing Dashboard v3.0 - Organizzazioni e Progressi Assessment',
+		'meta.title': 'CPF Auditing Dashboard - Organizzazioni e Progressi Assessment',
 		'meta.description': 'Piattaforma completa di assessment CPF con maturity model, compliance tracking e ROI analysis',
 
 		// Header
 		'header.back': '← Torna alla Dashboard',
 		'header.title': '🛡️ CPF Auditing Dashboard',
-		'header.version': 'v3.0',
 		'header.subtitle': 'Organizzazioni e Progressi Assessment',
 
 		// Buttons

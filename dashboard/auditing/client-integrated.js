@@ -1,5 +1,5 @@
 // ============================================
-// CLIENT V3.0 - REFACTORED (NO IIFE WRAPPER)
+// CPF CLIENT - REFACTORED (NO IIFE WRAPPER)
 // ============================================
 'use strict';
 
@@ -2075,4 +2075,4 @@ export {
     loadIndicatorFromReference
 };
 
-// End of client-integrated.js v3.0 - Pure ES6 Module (no global namespace)
+// End of client-integrated.js - Pure ES6 Module (no global namespace)
