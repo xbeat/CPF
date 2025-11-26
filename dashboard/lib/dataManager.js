@@ -515,9 +515,13 @@ async function readOrganization(orgId) {
 /**
  * Write single organization using database abstraction layer
  */
-async function writeOrganization(orgData) {
+async function writeOrganization(orgId, orgData) {
+  // Ensure metadata exists before setting updated_at
+  if (!orgData.metadata) {
+    orgData.metadata = {};
+  }
   orgData.metadata.updated_at = new Date().toISOString();
-  return await db.writeOrganization(orgData.id, orgData);
+  return await db.writeOrganization(orgId, orgData);
 }
 
 /**
