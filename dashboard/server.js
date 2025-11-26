@@ -1036,6 +1036,7 @@ app.post('/api/organizations/:orgId/assessments/:indicatorId/revert', async (req
       orgId,
       indicator_id: indicatorId,
       reverted_to_version: version,
+      data: orgData.assessments[indicatorId],  // ⭐ RITORNA I DATI RIPRISTINATI
       aggregates: orgData.aggregates
     });
   } catch (error) {
