@@ -1,6 +1,6 @@
-# CPF Client v3.0 - Refactored Architecture
+# CPF Client - Refactored Architecture
 
-Complete refactoring of client-integrated.js with modern ES6+ architecture.
+Modern ES6+ architecture for the CPF assessment client.
 
 ---
 
@@ -8,7 +8,7 @@ Complete refactoring of client-integrated.js with modern ES6+ architecture.
 
 ### 1. Navigate to the folder
 ```bash
-cd /home/user/CPF/dashboard/auditing/client-v3
+cd /home/user/CPF/dashboard/auditing
 ```
 
 ### 2. Start the server
@@ -36,20 +36,19 @@ node run-tests-simple.js
 # ✅ Passed: 21/21 (100%)
 ```
 
-That's it! The client v3.0 is now running.
+That's it! The client is now running.
 
 ---
 
 ## 📚 Complete Tutorial
 
-### What is CPF Client v3.0?
+### What is CPF Client?
 
-This is a **complete rewrite** of the CPF assessment client with:
-- ✅ Modern ES6+ classes instead of IIFE wrapper
-- ✅ 33% less code (1350 vs 2000 lines)
+Modern CPF assessment client with:
+- ✅ Modern ES6+ classes
+- ✅ Optimized and clean codebase
 - ✅ No code duplication
-- ✅ Full backward compatibility with v2.0
-- ✅ Automated test suite (21 tests, 100% passing)
+- ✅ Automated test suite (100% passing)
 
 ### Architecture Overview
 
@@ -91,9 +90,9 @@ This is a **complete rewrite** of the CPF assessment client with:
 
 | File | Purpose | When to use |
 |------|---------|-------------|
-| `index.html` | **Main application** - Standalone test page | Testing v3.0 in isolation |
+| `index.html` | **Main application** - Standalone test page | Testing in isolation |
 | `test-runner.html` | **Interactive test UI** - Run all test suites | Verifying functionality |
-| `client-integrated.js` | **v3.0 implementation** - Refactored code | The actual client |
+| `client-integrated.js` | **Client implementation** - Refactored code | The actual client |
 | `client-integrated.css` | **Styles** - UI styling | Loaded by index.html |
 | `test-suite.js` | **50+ unit tests** - Test definitions | Used by test-runner.html |
 | `run-tests-simple.js` | **Node.js test runner** - Quick validation | CI/CD, automated testing |
@@ -119,8 +118,7 @@ http://localhost:8000/test-runner.html
 # 3. Click buttons:
 ```
 - **🚀 Run All Tests** - Complete test suite
-- **📦 V3.0 Unit Tests** - Class-specific tests
-- **🔄 V2 vs V3 Comparison** - API compatibility
+- **📦 Unit Tests** - Class-specific tests
 - **⚡ Performance Tests** - Speed benchmarks
 - **🔗 Integration Tests** - Full workflow
 
@@ -139,7 +137,7 @@ http://localhost:8000/test-runner.html
 node run-tests-simple.js
 
 # Expected output:
-🧪 CPF CLIENT V3.0 - QUICK VALIDATION
+🧪 CPF CLIENT - QUICK VALIDATION
 ============================================================
 ✅ window.CPFClient should be defined
 ✅ CPFClient should have currentData
@@ -252,25 +250,14 @@ git push
 
 To use v3.0 in the main dashboard:
 
-**Option A: Quick test (temporary)**
+The client is already integrated in the dashboard at `/dashboard/auditing/index.html`:
 ```html
-<!-- In dashboard/auditing/index.html -->
-<!-- Change: -->
 <script src="client-integrated.js"></script>
-
-<!-- To: -->
-<script src="client-v3/client-integrated.js"></script>
 ```
 
-**Option B: Replace v2.0 (permanent)**
+Test the dashboard:
 ```bash
-# Backup v2.0
-mv client-integrated.js client-integrated-v2.0-backup.js
-
-# Copy v3.0
-cp client-v3/client-integrated.js .
-
-# Test dashboard
+cd /home/user/CPF/dashboard/auditing
 python3 -m http.server 8000
 # Open http://localhost:8000
 ```
@@ -318,87 +305,42 @@ Full details in README-PYTHON.md including:
 | Remove code duplication | ✅ | 3 update functions → 1 consolidated |
 | Clean unused code | ✅ | Removed commented functions, dead code |
 | Better separation of concerns | ✅ | Each class has single responsibility |
-| 100% backward compatibility | ✅ | Same window.CPFClient API as v2.0 |
+| Complete API | ✅ | Full window.CPFClient API |
 | Automated tests | ✅ | 21 Node.js + 50+ browser tests |
 | Documentation | ✅ | This README + Python guide |
 
 ---
 
-## 🔄 Migration from v2.0
+## 🏗️ Architecture
 
-### What Changed
+### Class-based Design
 
-**v2.0 (IIFE pattern):**
-```javascript
-(function() {
-  'use strict';
-  let organizationContext = {...};
-  let currentData = {...};
+The client uses modern ES6+ classes for clear separation of concerns:
 
-  function updateResponse(id, value) { ... }
-  function updateResponseWithAutoScore(id, value) { ... }
-  function selectRadioOption(id, value) { ... }
-
-  window.CPFClient = { ... };
-})();
-```
-
-**v3.0 (Class-based):**
 ```javascript
 'use strict';
 
 const CONFIG = { ... };  // Centralized config
 
 class AssessmentManager {
-  updateResponse(id, value) { ... }  // One function
+  updateResponse(id, value) { ... }
 }
 
 const assessmentManager = new AssessmentManager();
-window.CPFClient = { ... };  // Same API!
+window.CPFClient = { ... };
 ```
 
-### What Stayed the Same
+### Public API
 
-✅ **All public APIs are identical:**
+All functionality is accessible through `window.CPFClient`:
 ```javascript
-// These work exactly the same in v2.0 and v3.0
+// Public API methods
 window.CPFClient.updateMeta('auditor', 'John Doe');
 window.CPFClient.updateResponse('id', 'value');
 window.CPFClient.calculateIndicatorScore();
 window.CPFClient.saveToAPI();
 window.CPFClient.exportData();
 ```
-
-### Compatibility Table
-
-| Feature | v2.0 | v3.0 | Notes |
-|---------|------|------|-------|
-| `window.CPFClient` | ✅ | ✅ | Same interface |
-| `organizationContext` | ✅ | ✅ | Same structure |
-| `currentData` | ✅ | ✅ | Same structure |
-| `updateMeta()` | ✅ | ✅ | Same behavior |
-| `updateResponse()` | ✅ | ✅ | Same behavior |
-| `saveToAPI()` | ✅ | ✅ | Same behavior |
-| IIFE wrapper | ✅ | ❌ | Removed |
-| ES6+ classes | ❌ | ✅ | Added |
-| Duplicate functions | ❌ | ✅ | Consolidated |
-| Unit tests | ❌ | ✅ | 21 automated tests |
-
----
-
-## 📊 Comparison: v2.0 vs v3.0
-
-| Metric | v2.0 | v3.0 | Improvement |
-|--------|------|------|-------------|
-| **Lines of code** | ~2000 | ~1350 | **33% reduction** |
-| **Architecture** | IIFE | ES6+ classes | **Modern** |
-| **Code duplication** | 3 update functions | 1 function | **67% reduction** |
-| **Configuration** | Scattered | Centralized CONFIG | **Organized** |
-| **Testability** | Hard (closure) | Easy (classes) | **Much better** |
-| **Test coverage** | 0 tests | 21+ tests | **Automated** |
-| **Maintainability** | Complex nesting | Clear separation | **Easier** |
-| **Performance** | Baseline | Same/better | **No regression** |
-| **API compatibility** | Baseline | 100% same | **Perfect** |
 
 ---
 
@@ -709,17 +651,11 @@ console.log(score);
 
 ## 📜 Version History
 
-### v3.0 (Current)
+### Current Version
 - ✅ Complete refactoring with ES6+ classes
-- ✅ 33% code reduction
-- ✅ Automated test suite (21 tests)
-- ✅ 100% API compatibility with v2.0
-
-### v2.0 (Previous)
-- IIFE wrapper pattern
-- ~2000 lines of code
-- No automated tests
-- Functional but hard to maintain
+- ✅ Optimized codebase
+- ✅ Automated test suite
+- ✅ Clean and maintainable architecture
 
 ---
 
@@ -753,11 +689,11 @@ See main repository LICENSE file.
 
 ## ✨ Summary
 
-**CPF Client v3.0** is a modern, maintainable, fully-tested refactoring of the assessment client. It maintains 100% backward compatibility while providing a cleaner architecture for future development.
+**CPF Client** is a modern, maintainable, fully-tested assessment client with clean architecture for future development.
 
 **Ready to use:**
 ```bash
-cd /home/user/CPF/dashboard/auditing/client-v3
+cd /home/user/CPF/dashboard/auditing
 python3 -m http.server 8000
 # Open http://localhost:8000
 ```

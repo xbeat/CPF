@@ -5,7 +5,7 @@
  * Runs basic syntax and structure checks without full DOM simulation
  */
 
-console.log('\n🧪 CPF CLIENT V3.0 - QUICK VALIDATION\n');
+console.log('\n🧪 CPF CLIENT - QUICK VALIDATION\n');
 console.log('='.repeat(60));
 
 // Mock minimal browser environment

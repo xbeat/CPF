@@ -111,7 +111,7 @@ Ogni componente ha la sua documentazione specifica:
 
 - **Quick Start**: `/dashboard/README.md` (sezione Quick Start)
 - **Database Setup**: `/dashboard/postgres/DATABASE_SETUP.md`
-- **Client v3 Guide**: `/dashboard/auditing-v3/README.md`
+- **Client Guide**: `/dashboard/auditing/README-CLIENT.md`
 
 ## Contribuire
 
