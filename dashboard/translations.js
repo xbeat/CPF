@@ -16,7 +16,7 @@ const dashboardTranslations = {
 
 		// Auditing Dashboard
 		'auditing.title': 'Auditing Dashboard',
-		'auditing.description': 'Updated version with CPF Maturity Model, compliance and ROI analysis',
+		'auditing.description': 'CPF Maturity Model, compliance and ROI analysis',
 		'auditing.feature.1': '🎖️ Complete CPF Maturity Model',
 		'auditing.feature.2': 'GDPR, NIS2, DORA, ISO27001 Compliance',
 		'auditing.feature.3': 'ROI analysis and certification paths',
@@ -77,7 +77,7 @@ const dashboardTranslations = {
 
 		// Auditing Dashboard
 		'auditing.title': 'Auditing Dashboard',
-		'auditing.description': 'Versione aggiornata con Maturity Model CPF, compliance e ROI analysis',
+		'auditing.description': 'Maturity Model CPF, compliance e ROI analysis',
 		'auditing.feature.1': '🎖️ CPF Maturity Model completo',
 		'auditing.feature.2': 'Compliance GDPR, NIS2, DORA, ISO27001',
 		'auditing.feature.3': 'ROI analysis e certification paths',
