@@ -267,21 +267,31 @@ async function writeOrganization(orgId, fullOrgData) {
     notes: fullOrgData.metadata.notes || '',
     created_by: fullOrgData.metadata.created_by || '',
     partita_iva: fullOrgData.metadata.partita_iva || '',
-    sede_sociale: fullOrgData.metadata.sede_sociale || ''
+    sede_sociale: fullOrgData.metadata.sede_sociale || '',
+    created_at: fullOrgData.metadata.created_at || new Date().toISOString()
   };
 
+  // UPSERT: Insert if not exists, update if exists
   const query = `
-    UPDATE organizations SET
-      name = ?, industry = ?, size = ?, country = ?, language = ?,
-      notes = ?, created_by = ?, partita_iva = ?, sede_sociale = ?,
-      updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?;
+    INSERT INTO organizations (id, name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(id) DO UPDATE SET
+      name = excluded.name,
+      industry = excluded.industry,
+      size = excluded.size,
+      country = excluded.country,
+      language = excluded.language,
+      notes = excluded.notes,
+      created_by = excluded.created_by,
+      partita_iva = excluded.partita_iva,
+      sede_sociale = excluded.sede_sociale,
+      updated_at = CURRENT_TIMESTAMP;
   `;
 
   try {
-    await db.run(query, [data.name, data.industry, data.size, data.country, data.language,
-                         data.notes, data.created_by, data.partita_iva, data.sede_sociale, orgId]);
-    console.log(`[DB-SQLITE] Organization ${orgId} written successfully.`);
+    await db.run(query, [orgId, data.name, data.industry, data.size, data.country, data.language,
+                         data.notes, data.created_by, data.partita_iva, data.sede_sociale, data.created_at]);
+    console.log(`[DB-SQLITE] Organization ${orgId} written successfully (UPSERT).`);
     return fullOrgData;
   } catch (error) {
     console.error(`[DB-SQLITE] Error in writeOrganization for ID ${orgId}:`, error);
