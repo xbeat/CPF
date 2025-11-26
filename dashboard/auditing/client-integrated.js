@@ -204,6 +204,10 @@ function importJSON(event) {
 }
 
 function renderFieldKit(data) {
+    console.log('🎨 DEBUG renderFieldKit called');
+    console.log('🎨 DEBUG currentData.responses:', currentData.responses);
+    console.log('🎨 DEBUG Object.keys(currentData.responses):', Object.keys(currentData.responses || {}));
+
     // Detect Bayesian schema (indicators 9.6-9.10)
     const isBayesianSchema = data.indicator_id && data.quick_assessment && !data.sections;
 
