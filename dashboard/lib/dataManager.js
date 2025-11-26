@@ -539,7 +539,7 @@ async function deleteOrganization(orgId, user = 'System') {
   orgData.metadata.deleted_by = user;
 
   // Save to main location (with deleted flag)
-  await writeOrganization(orgData);
+  await writeOrganization(orgData.id, orgData);
 
   // Log audit event
   logAuditEvent('delete', 'organization', orgId, {
@@ -565,7 +565,7 @@ async function restoreOrganization(orgId, user = 'System') {
   delete orgData.metadata.deleted_by;
 
   // Save
-  await writeOrganization(orgData);
+  await writeOrganization(orgData.id, orgData);
 
   // Log audit event
   logAuditEvent('restore', 'organization', orgId, {
@@ -782,7 +782,7 @@ async function revertAssessment(orgId, indicatorId, versionNumber, user = 'Syste
   // Restore old version
   orgData.assessments[indicatorId] = targetVersion.data;
   orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
-  await writeOrganization(orgData);
+  await writeOrganization(orgData.id, orgData);
 
   // Log audit event
   logAuditEvent('revert', 'assessment', `${orgId}/${indicatorId}`, {
@@ -830,7 +830,7 @@ async function saveAssessment(orgId, assessmentData, user = 'System') {
   orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
 
   // Save
-  await writeOrganization(orgData);
+  await writeOrganization(orgData.id, orgData);
 
   // Log audit event
   logAuditEvent(isUpdate ? 'update' : 'create', 'assessment', `${orgId}/${indicatorId}`, {
@@ -898,7 +898,7 @@ async function deleteAssessment(orgId, indicatorId, user = 'System') {
     orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
 
     // Save
-    await writeOrganization(orgData);
+    await writeOrganization(orgData.id, orgData);
 
     // Log audit event
     logAuditEvent('delete', 'assessment', `${orgId}/${indicatorId}`, {
@@ -1050,7 +1050,7 @@ async function recalculateAggregates(orgId) {
   }
 
   orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
-  await writeOrganization(orgData);
+  await writeOrganization(orgData.id, orgData);
   return orgData;
 }
 
