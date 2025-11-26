@@ -654,6 +654,7 @@ module.exports = {
   writeOrganizationsIndex,
   // Update organization in index (used after restore, assessment save, etc.)
   updateOrganizationInIndex: async (orgData) => {
+    console.log('🔄 UPDATE INDEX - org:', orgData.id, 'aggregates:', orgData.aggregates);
     const index = await readOrganizationsIndex();
     const existingIndex = index.organizations.findIndex(o => o.id === orgData.id);
 
@@ -670,20 +671,25 @@ module.exports = {
       stats: {
         total_assessments: orgData.aggregates.completion.assessed_indicators,
         completion_percentage: orgData.aggregates.completion.percentage,
-        overall_risk: orgData.aggregates.overall_risk,
+        overall_risk: orgData.aggregates.overall_risk || 0.5,  // ✅ Added fallback
         avg_confidence: orgData.aggregates.overall_confidence || 0
       }
     };
 
+    console.log('🔄 UPDATE INDEX - stats:', indexEntry.stats);
+
     if (existingIndex >= 0) {
+      console.log('🔄 UPDATE INDEX - Updating existing at index', existingIndex);
       index.organizations[existingIndex] = indexEntry;
     } else {
+      console.log('🔄 UPDATE INDEX - Adding new org to index');
       index.organizations.push(indexEntry);
     }
 
     index.metadata.total_organizations = index.organizations.filter(o => !o.deleted_at).length;
     index.metadata.last_updated = new Date().toISOString();
     await writeOrganizationsIndex(index);
+    console.log('🔄 UPDATE INDEX - Complete. Total orgs:', index.organizations.length, 'Active:', index.metadata.total_organizations);
   },
   removeOrganizationFromIndex: async (orgId) => {
     const index = await readOrganizationsIndex();

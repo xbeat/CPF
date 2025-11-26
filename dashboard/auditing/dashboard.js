@@ -803,6 +803,10 @@ function renderSecurityRadarChart(org) {
 
 function renderPrioritizationTable(org) {
     const tbody = document.getElementById('prioritizationTableBody');
+    if (!tbody) {
+        console.warn('⚠️ prioritizationTableBody not found - skipping render');
+        return;
+    }
     const categories = org.aggregates.by_category || {};
 
     const categoryNames = {
