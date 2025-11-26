@@ -205,7 +205,7 @@ function renderOrganizations() {
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Confidence</span>
-                    <span class="stat-value">${org.stats?.avg_confidence ? (org.stats.avg_confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
+                    <span class="stat-value">${typeof org.stats?.avg_confidence === 'number' ? (org.stats.avg_confidence * 100).toFixed(0) + '%' : 'N/A'}</span>
                 </div>
             </div>
         `;
