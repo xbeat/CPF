@@ -3593,11 +3593,6 @@ async function revertToVersion(versionNumber) {
     const orgId = currentHistoryOrgId;
     const indicatorId = currentHistoryIndicatorId;
 
-    console.log('═══════════════════════════════════════════════');
-    console.log('REVERT Step 1: Richiesta revert');
-    console.log('Versione richiesta:', versionNumber);
-    console.log('Org:', orgId, 'Indicator:', indicatorId);
-
     try {
         const response = await fetch(`/api/organizations/${orgId}/assessments/${indicatorId}/revert`, {
             method: 'POST',
@@ -3610,40 +3605,27 @@ async function revertToVersion(versionNumber) {
 
         const result = await response.json();
 
-        console.log('REVERT Step 2: Risposta server');
-        console.log('Success:', result.success);
-        console.log('Data tornato:', result.data);
-
-        if (result.success) {
+        if (result.success && result.data) {
             closeHistoryModal();
 
-            console.log('REVERT Step 3: Ricarico org...');
+            // USA I DATI DAL SERVER, NON ricaricare dal database!
+            selectedOrgData.assessments[indicatorId] = result.data;
+
+            // Aggiorna la form se aperta
+            if (currentData && currentData.fieldKit) {
+                const responses = result.data.raw_data?.client_conversation?.responses;
+                if (responses) {
+                    currentData.responses = responses;
+                    renderFieldKit(currentData.fieldKit);
+                }
+            }
+
+            // Ora ricarica solo la sidebar per aggiornare gli stats
             await window.dashboardReloadOrganization();
 
-            const revertedAssessment = selectedOrgData.assessments[indicatorId];
-            console.log('REVERT Step 4: Assessment dopo reload');
-            console.log('Score:', revertedAssessment?.bayesian_score);
-            console.log('Date:', revertedAssessment?.assessment_date);
-
-            const responses = revertedAssessment?.raw_data?.client_conversation?.responses;
-            console.log('REVERT Step 5: Responses');
-            console.log('Numero chiavi:', responses ? Object.keys(responses).length : 0);
-            if (responses) {
-                const keys = Object.keys(responses).slice(0, 3);
-                console.log('Prime 3 chiavi:', keys);
-                console.log('Valori:', keys.map(k => responses[k]));
-            }
-            console.log('═══════════════════════════════════════════════');
-
-            if (currentData && currentData.fieldKit && responses) {
-                currentData.responses = responses;
-                renderFieldKit(currentData.fieldKit);
-                showAlert('Form restored', 'success');
-            } else {
-                showAlert('Reverted', 'success');
-            }
+            showAlert('Restored to version ' + versionNumber, 'success');
         } else {
-            throw new Error(result.error);
+            throw new Error(result.error || 'No data returned');
         }
     } catch (error) {
         console.error('Error reverting version:', error);
