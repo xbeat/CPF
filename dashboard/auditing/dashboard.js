@@ -1710,6 +1710,17 @@ function closeIndicatorModal() {
 // Callback functions for client integration
 window.dashboardReloadOrganization = async function() {
     if (selectedOrgId) {
+        // Reload organization index to update sidebar stats (completion, risk, confidence)
+        try {
+            const response = await fetch('/api/organizations');
+            const data = await response.json();
+            organizations = data.organizations || [];
+            renderOrganizations(); // Update sidebar with fresh stats
+        } catch (error) {
+            console.error('Error reloading organizations index:', error);
+        }
+
+        // Reload organization details to update all tabs
         await loadOrganizationDetails(selectedOrgId);
     }
 };
@@ -2073,8 +2084,8 @@ async function deleteAssessmentFromDetails() {
             // Close details modal
             closeAssessmentDetailsModal();
 
-            // Reload organization to refresh UI
-            await loadOrganizationDetails(selectedOrgId);
+            // Reload organization to refresh UI (including sidebar stats)
+            await window.dashboardReloadOrganization();
         } else {
             showAlert(`Failed to delete: ${result.error}`, 'error');
         }
@@ -2413,7 +2424,15 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab').forEach(tab => {
         tab.classList.remove('active');
     });
-    event.target.classList.add('active');
+
+    // Find and activate the correct tab button
+    const tabButton = document.querySelector(`.tab[data-tab="${tabName}"]`);
+    if (tabButton) {
+        tabButton.classList.add('active');
+    } else if (event && event.target) {
+        // Fallback to event.target if available
+        event.target.classList.add('active');
+    }
 
     // Update tab content
     document.querySelectorAll('.tab-content').forEach(content => {
@@ -2422,8 +2441,10 @@ function switchTab(tabName) {
 
     if (tabName === 'progress') {
         document.getElementById('progressTab').classList.add('active');
+        // Progress tab data is already rendered by renderAssessmentDetails()
     } else if (tabName === 'risk') {
         document.getElementById('riskTab').classList.add('active');
+        // Risk tab data is already rendered by renderAssessmentDetails()
     } else if (tabName === 'maturity') {
         document.getElementById('maturityTab').classList.add('active');
         renderMaturityTab(); // Render maturity model data
@@ -3012,9 +3033,9 @@ async function saveAssessmentToOrg() {
 
         showAlert(`Assessment saved successfully for indicator ${currentIndicatorId}!`, 'success');
 
-        // Refresh organization details
+        // Refresh organization details and sidebar
         setTimeout(() => {
-            loadOrganizationDetails(selectedOrganization);
+            window.dashboardReloadOrganization();
         }, 1000);
 
         // Switch back to progress tab
@@ -3216,9 +3237,9 @@ async function resetCompileForm() {
             console.log('✅ Empty assessment saved successfully');
             showAlert('Assessment reset successfully!', 'success');
 
-            // Refresh organization data to update matrix
+            // Refresh organization data to update matrix and sidebar
             if (selectedOrgData) {
-                await loadOrganizationDetails(orgId);
+                await window.dashboardReloadOrganization();
             }
 
             // Recalculate score to update UI
@@ -3524,9 +3545,8 @@ async function revertToVersion(versionNumber) {
             showAlert(`Reverted to version ${versionNumber}`, 'success');
             closeHistoryModal();
 
-            // Reload organization data
-            await loadOrganizationDetails(orgId);
-            renderAssessmentDetails();
+            // Reload organization data and sidebar
+            await window.dashboardReloadOrganization();
 
             // CRITICAL: Reload the integrated form if it's open
             // Update CPFClient with reverted data
@@ -3932,9 +3952,9 @@ function setupEventDelegation() {
                         if (modal && modal.style.display !== 'none' && selectedOrgId) {
                             showAlert('Assessment saved successfully!', 'success');
 
-                            // Reload organization data after short delay
+                            // Reload organization data and sidebar after short delay
                             setTimeout(async () => {
-                                await loadOrganizationDetails(selectedOrgId);
+                                await window.dashboardReloadOrganization();
                             }, 1000);
                         }
                     } catch (error) {
