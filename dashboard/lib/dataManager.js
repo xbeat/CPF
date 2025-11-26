@@ -448,39 +448,10 @@ function writeOrganizationsIndex(index) {
 /**
  * Update organization in index
  */
-function updateOrganizationInIndex(orgData) {
-  const index = readOrganizationsIndex();
-
-  const existingIndex = index.organizations.findIndex(o => o.id === orgData.id);
-
-  const indexEntry = {
-    id: orgData.id,
-    name: orgData.name,
-    industry: orgData.metadata.industry,
-    size: orgData.metadata.size,
-    country: orgData.metadata.country,
-    language: orgData.metadata.language,
-    sede_sociale: orgData.metadata.sede_sociale || '',
-    partita_iva: orgData.metadata.partita_iva || '',
-    created_at: orgData.metadata.created_at,
-    updated_at: orgData.metadata.updated_at,
-    deleted_at: orgData.metadata.deleted_at || null,
-    stats: {
-      total_assessments: orgData.aggregates.completion.assessed_indicators,
-      completion_percentage: orgData.aggregates.completion.percentage,
-      overall_risk: orgData.aggregates.overall_risk,
-      avg_confidence: orgData.aggregates.overall_confidence,
-      last_assessment_date: getLastAssessmentDate(orgData.assessments)
-    }
-  };
-
-  if (existingIndex >= 0) {
-    index.organizations[existingIndex] = indexEntry;
-  } else {
-    index.organizations.push(indexEntry);
-  }
-
-  writeOrganizationsIndex(index);
+async function updateOrganizationInIndex(orgData) {
+  console.log('📋 [dataManager] updateOrganizationInIndex - delegating to db layer');
+  // Delegate to database layer implementation
+  return await db.updateOrganizationInIndex(orgData);
 }
 
 /**
@@ -565,7 +536,9 @@ async function deleteOrganization(orgId, user = 'System') {
  * Restore organization from trash
  */
 async function restoreOrganization(orgId, user = 'System') {
+  console.log('♻️ [dataManager] RESTORE - Starting for:', orgId);
   const orgData = await readOrganization(orgId);
+  console.log('♻️ [dataManager] RESTORE - Read org, deleted_at:', orgData.metadata.deleted_at);
 
   if (!orgData.metadata.deleted_at) {
     throw new Error('Organization is not in trash');
@@ -574,18 +547,23 @@ async function restoreOrganization(orgId, user = 'System') {
   // Remove deleted flag
   delete orgData.metadata.deleted_at;
   delete orgData.metadata.deleted_by;
+  console.log('♻️ [dataManager] RESTORE - Deleted flags removed');
 
   // Save
   await writeOrganization(orgData.id, orgData);
+  console.log('♻️ [dataManager] RESTORE - Organization saved');
 
   // Update index to reflect restoration (remove deleted_at from index)
-  await updateOrganizationInIndex(orgData);  // ✅ ADDED AWAIT!
+  console.log('♻️ [dataManager] RESTORE - Calling updateOrganizationInIndex...');
+  await updateOrganizationInIndex(orgData);
+  console.log('♻️ [dataManager] RESTORE - updateOrganizationInIndex complete');
 
   // Log audit event
   logAuditEvent('restore', 'organization', orgId, {
     name: orgData.name
   }, user);
 
+  console.log('♻️ [dataManager] RESTORE - Complete');
   return orgData;
 }
 
