@@ -1584,21 +1584,21 @@ function renderReferenceContent(container, data) {
         html += `
             <div class="category-accordion">
                 <div class="category-header" data-action="toggle-category" data-category-id="${category.id}">
-                    <div class="category-title">
-                        <span class="category-badge">${category.id}.x</span>
-                        <div style="flex: 1;">
-                            <div>${category.name}</div>
-                            <div class="category-description">${category.description}</div>
+                    <div class="category-title" data-action="toggle-category" data-category-id="${category.id}">
+                        <span class="category-badge" data-action="toggle-category" data-category-id="${category.id}">${category.id}.x</span>
+                        <div style="flex: 1;" data-action="toggle-category" data-category-id="${category.id}">
+                            <div data-action="toggle-category" data-category-id="${category.id}">${category.name}</div>
+                            <div class="category-description" data-action="toggle-category" data-category-id="${category.id}">${category.description}</div>
                         </div>
                     </div>
-                    <span class="category-arrow">▶</span>
+                    <span class="category-arrow" data-action="toggle-category" data-category-id="${category.id}">▶</span>
                 </div>
                 <div class="category-body" id="category-${category.id}">
                     <div class="indicator-list">
                         ${category.indicators.map(indicator => `
                             <div class="indicator-item" data-action="load-indicator" data-indicator-id="${indicator.id}" title="Click to load this indicator">
-                                <span class="indicator-code">${indicator.id}</span>
-                                <span class="indicator-title">${indicator.title}</span>
+                                <span class="indicator-code" data-action="load-indicator" data-indicator-id="${indicator.id}">${indicator.id}</span>
+                                <span class="indicator-title" data-action="load-indicator" data-indicator-id="${indicator.id}">${indicator.title}</span>
                             </div>
                         `).join('')}
                     </div>
