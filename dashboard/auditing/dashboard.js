@@ -2111,6 +2111,44 @@ function clearCategoryFilter() {
 }
 
 // ===== ORGANIZATION CRUD =====
+
+/**
+ * Generate organization ID from name (auto-generation with duplicate check)
+ */
+function generateOrgIdFromName() {
+    const nameInput = document.getElementById('orgName');
+    const idInput = document.getElementById('orgId');
+
+    if (!nameInput || !idInput) return;
+
+    const name = nameInput.value.trim();
+    if (!name) {
+        idInput.value = '';
+        return;
+    }
+
+    // Convert name to lowercase slug format
+    let slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+        .replace(/\s+/g, '-')          // Replace spaces with hyphens
+        .replace(/-+/g, '-')           // Replace multiple hyphens with single
+        .substring(0, 30);             // Limit length
+
+    // Check for duplicates and add number suffix if needed
+    let baseId = `org-${slug}`;
+    let finalId = baseId;
+    let counter = 1;
+
+    // Check if ID already exists in current organizations list
+    while (organizations && organizations.some(org => org.id === finalId)) {
+        counter++;
+        finalId = `${baseId}-${counter.toString().padStart(3, '0')}`;
+    }
+
+    idInput.value = finalId;
+}
+
 function openCreateOrgModal() {
     editingOrgId = null;
     document.getElementById('orgModalTitle').textContent = 'Create New Organization';
@@ -3254,8 +3292,15 @@ async function openTrashModal() {
         html += '<p style="color: var(--text-light); font-size: 14px; margin-bottom: 20px;">Organizations will be automatically deleted after 30 days</p>';
 
         data.organizations.forEach(org => {
-            const daysLeft = org.days_until_permanent_delete;
+            // Safety check: skip if org is invalid
+            if (!org || !org.id || !org.name) {
+                console.warn('Invalid organization in trash:', org);
+                return;
+            }
+
+            const daysLeft = org.days_until_permanent_delete || 0;
             const warningClass = daysLeft <= 5 ? 'var(--danger)' : 'var(--text-light)';
+            const deletedDate = org.deleted_at ? new Date(org.deleted_at).toLocaleString() : 'Unknown';
 
             html += `
                 <div style="background: var(--bg-gray); border: 2px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 15px;">
@@ -3264,8 +3309,8 @@ async function openTrashModal() {
                             <h4 style="margin: 0 0 8px 0; color: var(--primary);">${escapeHtml(org.name)}</h4>
                             <div style="font-size: 13px; color: var(--text-light);">
                                 <div>ID: <code>${escapeHtml(org.id)}</code></div>
-                                <div>Industry: ${escapeHtml(org.industry)}</div>
-                                <div>Assessments: ${org.stats.total_assessments}/100</div>
+                                <div>Industry: ${escapeHtml(org.industry || 'Unknown')}</div>
+                                <div>Assessments: ${org.stats?.total_assessments || 0}/100</div>
                             </div>
                         </div>
                         <div style="text-align: right;">
@@ -3283,7 +3328,7 @@ async function openTrashModal() {
                         </div>
                     </div>
                     <div style="font-size: 12px; color: var(--text-light); padding-top: 12px; border-top: 1px solid var(--border);">
-                        Deleted: ${new Date(org.deleted_at).toLocaleString()}
+                        Deleted: ${deletedDate}
                     </div>
                 </div>
             `;
