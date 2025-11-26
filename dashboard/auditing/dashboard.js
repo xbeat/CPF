@@ -73,7 +73,14 @@ window.addEventListener('keydown', (event) => {
 // ===== DATA LOADING =====
 async function loadAllData() {
     try {
-        const response = await fetch('/api/organizations');
+        const response = await fetch('/api/organizations', {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        });
         const data = await response.json();
 
         organizations = data.organizations || [];
@@ -97,7 +104,14 @@ async function loadAllData() {
 
 async function loadOrganizationDetails(orgId) {
     try {
-        const response = await fetch(`/api/organizations/${orgId}`);
+        const response = await fetch(`/api/organizations/${orgId}`, {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        });
         const result = await response.json();
 
         if (result.success) {
@@ -1722,7 +1736,14 @@ window.dashboardReloadOrganization = async function() {
     if (selectedOrgId) {
         // Reload organization index to update sidebar stats (completion, risk, confidence)
         try {
-            const response = await fetch('/api/organizations');
+            const response = await fetch('/api/organizations', {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
             const data = await response.json();
             organizations = data.organizations || [];
             renderOrganizations(); // Update sidebar with fresh stats
@@ -2397,13 +2418,24 @@ async function confirmDelete() {
             showAlert('Organization deleted successfully', 'success');
             closeDeleteModal();
 
-            // If deleting selected org, clear selection
+            // If deleting selected org, clear selection and dashboard
             if (selectedOrgId === deletingOrgId) {
                 selectedOrgId = null;
                 selectedOrgData = null;
+
+                // Hide assessment section and show empty state
                 document.getElementById('assessmentSection').classList.add('hidden');
                 const emptyState = document.getElementById('emptyState');
                 if (emptyState) emptyState.style.display = 'block';
+
+                // Clear all tab contents
+                document.getElementById('progressSummary').innerHTML = '';
+                document.getElementById('progressMatrix').innerHTML = '';
+                document.getElementById('riskSummary').innerHTML = '';
+                document.getElementById('riskHeatmap').innerHTML = '';
+                document.getElementById('radarChart').innerHTML = '';
+                document.getElementById('prioritizationTable').innerHTML = '';
+                document.getElementById('maturityTab').innerHTML = '';
             }
 
             await loadAllData();
@@ -3237,7 +3269,14 @@ function initializeCompileTab() {
 
 async function loadTrashCount() {
     try {
-        const response = await fetch('/api/trash');
+        const response = await fetch('/api/trash', {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        });
         const data = await response.json();
 
         if (data.success) {
