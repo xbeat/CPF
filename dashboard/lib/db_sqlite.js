@@ -54,14 +54,22 @@ async function initialize() {
     await db.exec(createAssessmentsTable);
     await db.exec(createSocIndicatorsTable);
 
-    // Add aggregates column if it doesn't exist (for storing calculated metrics)
-    try {
-      await db.exec('ALTER TABLE organizations ADD COLUMN aggregates TEXT;');
-      console.log('[DB-SQLITE] Added aggregates column to organizations table.');
-    } catch (error) {
-      // Column already exists, ignore error
-      if (!error.message.includes('duplicate column name')) {
-        console.warn('[DB-SQLITE] Warning adding aggregates column:', error.message);
+    // Add missing columns if they don't exist (for storing calculated metrics and soft delete)
+    const columnsToAdd = [
+      { name: 'aggregates', type: 'TEXT' },
+      { name: 'deleted_at', type: 'TIMESTAMP' },
+      { name: 'deleted_by', type: 'VARCHAR(255)' }
+    ];
+
+    for (const col of columnsToAdd) {
+      try {
+        await db.exec(`ALTER TABLE organizations ADD COLUMN ${col.name} ${col.type};`);
+        console.log(`[DB-SQLITE] Added ${col.name} column to organizations table.`);
+      } catch (error) {
+        // Column already exists, ignore error
+        if (!error.message.includes('duplicate column name')) {
+          console.warn(`[DB-SQLITE] Warning adding ${col.name} column:`, error.message);
+        }
       }
     }
 
@@ -125,7 +133,8 @@ async function createOrganization(orgData) {
 async function readOrganization(orgId) {
   await initialize();
   try {
-    const orgRow = await db.get('SELECT * FROM organizations WHERE id = ? AND is_deleted = 0', orgId);
+    // Read organization including deleted ones (dataManager will handle filtering)
+    const orgRow = await db.get('SELECT * FROM organizations WHERE id = ?', orgId);
     if (!orgRow) return null;
 
     const assessmentRows = await db.all('SELECT * FROM assessments WHERE org_id = ?', orgId);
@@ -136,8 +145,18 @@ async function readOrganization(orgId) {
       return acc;
     }, {});
 
-    // Calculate aggregates from assessments
-    const aggregates = calculateAggregates(assessments, orgRow.industry);
+    // Parse aggregates if it's a JSON string, or calculate from assessments
+    let aggregates;
+    if (orgRow.aggregates) {
+      try {
+        aggregates = JSON.parse(orgRow.aggregates);
+      } catch (e) {
+        console.warn('[DB-SQLITE] Failed to parse aggregates, recalculating...');
+        aggregates = calculateAggregates(assessments, orgRow.industry);
+      }
+    } else {
+      aggregates = calculateAggregates(assessments, orgRow.industry);
+    }
 
     const result = {
       id: orgRow.id,
@@ -153,6 +172,8 @@ async function readOrganization(orgId) {
         notes: orgRow.notes,
         sede_sociale: orgRow.sede_sociale,
         partita_iva: orgRow.partita_iva,
+        deleted_at: orgRow.deleted_at || undefined,
+        deleted_by: orgRow.deleted_by || undefined
       },
       assessments: assessments,
       aggregates: aggregates
@@ -280,16 +301,21 @@ async function writeOrganization(orgId, fullOrgData) {
     created_by: fullOrgData.metadata.created_by || '',
     partita_iva: fullOrgData.metadata.partita_iva || '',
     sede_sociale: fullOrgData.metadata.sede_sociale || '',
-    created_at: fullOrgData.metadata.created_at || new Date().toISOString()
+    created_at: fullOrgData.metadata.created_at || new Date().toISOString(),
+    deleted_at: fullOrgData.metadata.deleted_at || null,
+    deleted_by: fullOrgData.metadata.deleted_by || null
   };
 
   // Serialize aggregates to JSON string if present
   const aggregatesJson = fullOrgData.aggregates ? JSON.stringify(fullOrgData.aggregates) : null;
 
+  // is_deleted flag is 1 if deleted_at is present
+  const isDeleted = data.deleted_at ? 1 : 0;
+
   // UPSERT: Insert if not exists, update if exists
   const query = `
-    INSERT INTO organizations (id, name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, aggregates, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    INSERT INTO organizations (id, name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, aggregates, deleted_at, deleted_by, is_deleted, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(id) DO UPDATE SET
       name = excluded.name,
       industry = excluded.industry,
@@ -301,12 +327,16 @@ async function writeOrganization(orgId, fullOrgData) {
       partita_iva = excluded.partita_iva,
       sede_sociale = excluded.sede_sociale,
       aggregates = excluded.aggregates,
+      deleted_at = excluded.deleted_at,
+      deleted_by = excluded.deleted_by,
+      is_deleted = excluded.is_deleted,
       updated_at = CURRENT_TIMESTAMP;
   `;
 
   try {
     await db.run(query, [orgId, data.name, data.industry, data.size, data.country, data.language,
-                         data.notes, data.created_by, data.partita_iva, data.sede_sociale, aggregatesJson, data.created_at]);
+                         data.notes, data.created_by, data.partita_iva, data.sede_sociale, aggregatesJson,
+                         data.deleted_at, data.deleted_by, isDeleted, data.created_at]);
     console.log(`[DB-SQLITE] Organization ${orgId} written successfully (UPSERT).`);
     return fullOrgData;
   } catch (error) {

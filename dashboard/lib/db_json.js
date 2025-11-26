@@ -655,7 +655,6 @@ module.exports = {
   updateOrganizationInIndex: async () => {},
   removeOrganizationFromIndex: async () => {},
   getAssessment: async () => null,
-  deleteOrganization: async () => ({ success: true }),
   deleteAssessment: async () => ({ success: true }),
   saveIndicatorMetadata: async () => ({ success: true }),
 };
