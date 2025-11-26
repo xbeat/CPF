@@ -3409,6 +3409,17 @@ async function openHistoryModal() {
 
         // Render history (newest first)
         const versions = [...data.history.versions].reverse();
+
+        console.log('📜 DEBUG History versions loaded:', versions.length);
+        versions.forEach((v, i) => {
+            console.log(`📜 DEBUG Version ${v.version}:`, {
+                timestamp: v.timestamp,
+                user: v.user,
+                responses: v.data?.raw_data?.client_conversation?.responses,
+                score: v.data?.bayesian_score
+            });
+        });
+
         let html = '<div style="padding: 20px;">';
 
         versions.forEach((version, index) => {
@@ -3469,11 +3480,15 @@ function closeHistoryModal() {
 }
 
 async function revertToVersion(versionNumber) {
+    console.log('🔄 DEBUG revertToVersion called with version:', versionNumber);
+
     if (!confirm(`Revert to version ${versionNumber}?\n\nThis will create a new version based on the selected one.`)) return;
 
     // IMPORTANT: Save IDs before closing modal (closeHistoryModal nullifies them!)
     const orgId = currentHistoryOrgId;
     const indicatorId = currentHistoryIndicatorId;
+
+    console.log('🔄 DEBUG - orgId:', orgId, 'indicatorId:', indicatorId);
 
     try {
         const response = await fetch(`/api/organizations/${orgId}/assessments/${indicatorId}/revert`, {
