@@ -3577,11 +3577,6 @@ async function revertToVersion(versionNumber) {
     const orgId = currentHistoryOrgId;
     const indicatorId = currentHistoryIndicatorId;
 
-    console.log('═══════════════════════════════════════════════');
-    console.log('REVERT Step 1: Richiesta revert');
-    console.log('Versione richiesta:', versionNumber);
-    console.log('Org:', orgId, 'Indicator:', indicatorId);
-
     try {
         const response = await fetch(`/api/organizations/${orgId}/assessments/${indicatorId}/revert`, {
             method: 'POST',
@@ -3594,15 +3589,11 @@ async function revertToVersion(versionNumber) {
 
         const result = await response.json();
 
-        console.log('REVERT Step 2: Risposta server');
-        console.log('Success:', result.success);
-        console.log('Data tornato:', result.data);
-
-        if (result.success) {
+        if (result.success && result.data) {
             closeHistoryModal();
 
-            console.log('REVERT Step 3: Ricarico org...');
-            await window.dashboardReloadOrganization();
+            // USA I DATI DAL SERVER, NON ricaricare dal database!
+            selectedOrgData.assessments[indicatorId] = result.data;
 
             // If form is open, update it with reverted data
             if (currentData && currentData.fieldKit && selectedOrgData) {
@@ -3643,8 +3634,13 @@ async function revertToVersion(versionNumber) {
             } else {
                 showAlert('Reverted', 'success');
             }
+
+            // Ora ricarica solo la sidebar per aggiornare gli stats
+            await window.dashboardReloadOrganization();
+
+            showAlert('Restored to version ' + versionNumber, 'success');
         } else {
-            throw new Error(result.error);
+            throw new Error(result.error || 'No data returned');
         }
     } catch (error) {
         console.error('Error reverting version:', error);
