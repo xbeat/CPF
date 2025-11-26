@@ -795,9 +795,9 @@ async function revertAssessment(orgId, indicatorId, versionNumber, user = 'Syste
 
   const currentAssessment = orgData.assessments[indicatorId];
 
-  if (currentAssessment) {
-    saveAssessmentVersion(orgId, indicatorId, currentAssessment, user);
-  }
+  // NOTE: We no longer save current version before reverting
+  // The current version was already saved by the last saveAssessment() call
+  // Reverting simply restores old data - the next user save will create a new history entry
 
   // Restore old version
   orgData.assessments[indicatorId] = targetVersion.data;
