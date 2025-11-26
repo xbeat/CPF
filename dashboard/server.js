@@ -485,12 +485,12 @@ app.put('/api/organizations/:orgId', async (req, res) => {
  * Soft delete organization (moves to trash)
  * Query: ?user=username (optional)
  */
-app.delete('/api/organizations/:orgId', (req, res) => {
+app.delete('/api/organizations/:orgId', async (req, res) => {
   try {
     const { orgId } = req.params;
     const user = req.query.user || req.body.user || 'System';
 
-    if (!dataManager.organizationExists(orgId)) {
+    if (!(await dataManager.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -499,7 +499,7 @@ app.delete('/api/organizations/:orgId', (req, res) => {
     }
 
     // Soft delete organization (moves to trash, logs audit)
-    const orgData = dataManager.deleteOrganization(orgId, user);
+    const orgData = await dataManager.deleteOrganization(orgId, user);
 
     console.log(`\n🗑️  [API] Moved to trash: ${orgId}\n`);
 

@@ -411,6 +411,7 @@ module.exports = {
   getSocData,
   saveSocIndicator,
   updateOrganization,
+  writeOrganization: updateOrganization,
   deleteOrganization,
   getAssessment,
   deleteAssessment,
