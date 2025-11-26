@@ -538,7 +538,8 @@ async function autoSave() {
     console.log('✅ Local auto-save at', new Date().toLocaleTimeString());
 
     // If organization context is available, save IMMEDIATELY to API (no debounce!)
-    if (organizationContext.orgId && currentScore) {
+    // NOTE: We removed the currentScore check - saveToAPI will calculate it if needed
+    if (organizationContext.orgId) {
         try {
             await saveToAPI();
         } catch (error) {
@@ -564,17 +565,33 @@ async function saveToAPI() {
     }
 
     // Auto-calculate score if not present
-    if (!currentScore) {
+    if (!currentScore || !currentScore.final_score) {
         console.log('📊 Auto-calculating score before save...');
         calculateIndicatorScore();
 
         // Wait a moment for score to be calculated
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        if (!currentScore) {
-            console.warn('⚠️ Score calculation failed - cannot save to API');
-            alert('⚠️ Unable to calculate score. Please fill in the required fields.');
-            return;
+        // If score still not available, use default values
+        // IMPORTANT: We must save even with incomplete data to track all changes in history
+        if (!currentScore || !currentScore.final_score) {
+            console.warn('⚠️ Score not fully calculated - saving with default values');
+            currentScore = {
+                quick_assessment: 0,
+                conversation_depth: 0,
+                red_flags: 0,
+                final_score: 0,
+                maturity_level: 'green',
+                details: {
+                    quick_assessment_breakdown: [],
+                    conversation_breakdown: {
+                        total_questions: 0,
+                        answered_questions: 0,
+                        completion_rate: 0
+                    },
+                    red_flags_list: []
+                }
+            };
         }
     }
 
