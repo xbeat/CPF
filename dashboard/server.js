@@ -833,7 +833,7 @@ app.get('/api/trash', async (req, res) => {
  * Restore organization from trash
  * Body: { user } (optional)
  */
-app.post('/api/organizations/:orgId/restore', (req, res) => {
+app.post('/api/organizations/:orgId/restore', async (req, res) => {
   try {
     const { orgId } = req.params;
     const user = req.body.user || 'System';
@@ -846,7 +846,7 @@ app.post('/api/organizations/:orgId/restore', (req, res) => {
       });
     }
 
-    const orgData = dataManager.restoreOrganization(orgId, user);
+    const orgData = await dataManager.restoreOrganization(orgId, user);
 
     // Return organization data in index format for frontend
     const organization = {
