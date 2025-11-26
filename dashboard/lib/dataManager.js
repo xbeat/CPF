@@ -534,6 +534,10 @@ async function organizationExists(orgId) {
 async function deleteOrganization(orgId, user = 'System') {
   const orgData = await readOrganization(orgId);
 
+  if (!orgData) {
+    throw new Error(`Organization ${orgId} not found`);
+  }
+
   // Mark as deleted
   orgData.metadata.deleted_at = new Date().toISOString();
   orgData.metadata.deleted_by = user;
@@ -646,7 +650,7 @@ function cleanupTrash(user = 'System') {
 /**
  * Create new organization
  */
-function createOrganization(orgConfig) {
+async function createOrganization(orgConfig) {
   const now = new Date().toISOString();
   const user = orgConfig.created_by || 'System';
 
@@ -681,7 +685,7 @@ function createOrganization(orgConfig) {
     }
   };
 
-  writeOrganization(orgData.id, orgData);
+  await writeOrganization(orgData.id, orgData);
 
   // Log audit event
   logAuditEvent('create', 'organization', orgData.id, {

@@ -359,8 +359,8 @@ app.post('/api/organizations', async (req, res) => {
       });
     }
 
-    // Create organization using db layer
-    const orgData = await db.createOrganization({
+    // Create organization using dataManager
+    const orgData = await dataManager.createOrganization({
       id,
       name,
       industry,
