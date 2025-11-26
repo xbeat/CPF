@@ -351,12 +351,12 @@ function setMode(newMode) {
 
 async function startSimulator() {
     if (!currentOrgId) {
-        alert('Please select an organization first');
+        showAlert('Please select an organization first', 'warning');
         return;
     }
 
     if (selectedSources.length === 0) {
-        alert('Please select at least one SIEM/EDR source');
+        showAlert('Please select at least one SIEM/EDR source', 'warning');
         return;
     }
 
@@ -403,7 +403,7 @@ async function startSimulator() {
     } catch (error) {
         console.error('Error starting simulator:', error);
         logEvent(`❌ Error: ${error.message}`, 'error');
-        alert(`Failed to start simulator: ${error.message}`);
+        showAlert(`Failed to start simulator: ${error.message}`, 'error');
     }
 }
 
@@ -440,7 +440,7 @@ async function stopSimulator() {
     } catch (error) {
         console.error('Error stopping simulator:', error);
         logEvent(`❌ Error: ${error.message}`, 'error');
-        alert(`Failed to stop simulator: ${error.message}`);
+        showAlert(`Failed to stop simulator: ${error.message}`, 'error');
     }
 }
 
@@ -481,7 +481,7 @@ async function emitManualEvent() {
     } catch (error) {
         console.error('Error emitting event:', error);
         logEvent(`❌ Error: ${error.message}`, 'error');
-        alert(`Failed to emit event: ${error.message}`);
+        showAlert(`Failed to emit event: ${error.message}`, 'error');
     }
 }
 
@@ -1148,12 +1148,13 @@ async function saveOrganizationEdit(event) {
             logEvent(`Organization updated: ${orgData.name}`);
             closeEditOrgModal();
             await loadOrganizations();
+            showAlert('Organization updated successfully!', 'success');
         } else {
-            alert(`Error: ${result.error || 'Failed to update organization'}`);
+            showAlert(`Error: ${result.error || 'Failed to update organization'}`, 'error');
         }
     } catch (error) {
         console.error('Error updating organization:', error);
-        alert('Failed to update organization');
+        showAlert('Failed to update organization', 'error');
     }
 }
 
@@ -1192,12 +1193,13 @@ async function confirmDeleteOrganization() {
             }
 
             await loadOrganizations();
+            showAlert('Organization deleted successfully!', 'success');
         } else {
-            alert(`Error: ${result.error || 'Failed to delete organization'}`);
+            showAlert(`Error: ${result.error || 'Failed to delete organization'}`, 'error');
         }
     } catch (error) {
         console.error('Error deleting organization:', error);
-        alert('Failed to delete organization');
+        showAlert('Failed to delete organization', 'error');
     }
 }
 
@@ -1250,7 +1252,7 @@ async function saveOrganization(event) {
 
     // Validate org ID format
     if (!/^org-[-a-z0-9]+$/.test(orgId)) {
-        alert('Organization ID must follow format: org-yourname-001 (lowercase, hyphens allowed)');
+        showAlert('Organization ID must follow format: org-yourname-001 (lowercase, hyphens allowed)', 'warning');
         return;
     }
 
@@ -1288,10 +1290,11 @@ async function saveOrganization(event) {
 
         closeOrgModal();
         logEvent(`Organization "${orgName}" created successfully!`, 'success');
+        showAlert(`Organization "${orgName}" created successfully!`, 'success');
 
     } catch (error) {
         console.error('Error creating organization:', error);
-        alert(`Failed to create organization: ${error.message}`);
+        showAlert(`Failed to create organization: ${error.message}`, 'error');
     } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Create Organization';
@@ -1305,7 +1308,7 @@ async function saveOrganization(event) {
  */
 async function exportCurrentOrgXLSX() {
     if (!currentOrgId) {
-        alert('Please select an organization first');
+        showAlert('Please select an organization first', 'warning');
         return;
     }
 
@@ -1341,7 +1344,7 @@ async function exportCurrentOrgXLSX() {
     } catch (error) {
         console.error('Error exporting XLSX:', error);
         logEvent(`Failed to export XLSX: ${error.message}`, 'error');
-        alert(`Failed to export XLSX: ${error.message}`);
+        showAlert(`Failed to export XLSX: ${error.message}`, 'error');
     }
 }
 
@@ -1350,7 +1353,7 @@ async function exportCurrentOrgXLSX() {
  */
 async function exportCurrentOrgPDF() {
     if (!currentOrgId) {
-        alert('Please select an organization first');
+        showAlert('Please select an organization first', 'warning');
         return;
     }
 
@@ -1386,7 +1389,7 @@ async function exportCurrentOrgPDF() {
     } catch (error) {
         console.error('Error exporting PDF:', error);
         logEvent(`Failed to export PDF: ${error.message}`, 'error');
-        alert(`Failed to export PDF: ${error.message}`);
+        showAlert(`Failed to export PDF: ${error.message}`, 'error');
     }
 }
 
@@ -1491,7 +1494,7 @@ async function openTrashModal() {
 
     } catch (error) {
         console.error('Error loading trash:', error);
-        alert('Failed to load trash');
+        showAlert('Failed to load trash', 'error');
     }
 }
 
@@ -1513,6 +1516,7 @@ async function restoreFromTrash(orgId) {
 
         if (result.success) {
             logEvent('Organization restored successfully!', 'success');
+            showAlert('Organization restored successfully!', 'success');
             closeTrashModal();
             await loadOrganizations();
             await loadTrashCount();
@@ -1521,7 +1525,7 @@ async function restoreFromTrash(orgId) {
         }
     } catch (error) {
         console.error('Error restoring organization:', error);
-        alert(`Failed to restore: ${error.message}`);
+        showAlert(`Failed to restore: ${error.message}`, 'error');
     }
 }
 
@@ -1540,6 +1544,7 @@ async function permanentDeleteOrg(orgId, orgName) {
 
         if (result.success) {
             logEvent('Organization permanently deleted', 'success');
+            showAlert('Organization permanently deleted', 'success');
             closeTrashModal();
             await loadTrashCount();
         } else {
@@ -1547,7 +1552,7 @@ async function permanentDeleteOrg(orgId, orgName) {
         }
     } catch (error) {
         console.error('Error permanently deleting organization:', error);
-        alert(`Failed to delete: ${error.message}`);
+        showAlert(`Failed to delete: ${error.message}`, 'error');
     }
 }
 

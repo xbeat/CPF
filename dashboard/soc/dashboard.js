@@ -270,7 +270,7 @@ async function editOrganization(orgId) {
         pushModal('edit-org-modal');
     } catch (error) {
         console.error('Error loading organization:', error);
-        alert('Failed to load organization data: ' + error.message);
+        showAlert('Failed to load organization data: ' + error.message, 'error');
     }
 }
 
@@ -307,7 +307,7 @@ async function saveOrganizationEdit(event) {
         const result = await response.json();
 
         if (result.success) {
-            alert('✅ Organization updated successfully!');
+            showAlert('✅ Organization updated successfully!', 'success');
             closeEditOrgModal();
             await loadOrganizationsData();
 
@@ -316,11 +316,11 @@ async function saveOrganizationEdit(event) {
                 await loadAndRenderOrganization(editingOrgId);
             }
         } else {
-            alert('Failed to update organization: ' + result.error);
+            showAlert('Failed to update organization: ' + result.error, 'error');
         }
     } catch (error) {
         console.error('Error updating organization:', error);
-        alert('Failed to update organization: ' + error.message);
+        showAlert('Failed to update organization: ' + error.message, 'error');
     }
 }
 
@@ -349,7 +349,7 @@ async function confirmDeleteOrganization() {
         const result = await response.json();
 
         if (result.success) {
-            alert('✅ Organization deleted successfully!');
+            showAlert('✅ Organization deleted successfully!', 'success');
             closeDeleteOrgModal();
 
             // If deleting currently selected org, clear selection
@@ -361,11 +361,11 @@ async function confirmDeleteOrganization() {
 
             await loadOrganizationsData();
         } else {
-            alert('Failed to delete organization: ' + result.error);
+            showAlert('Failed to delete organization: ' + result.error, 'error');
         }
     } catch (error) {
         console.error('Error deleting organization:', error);
-        alert('Failed to delete organization: ' + error.message);
+        showAlert('Failed to delete organization: ' + error.message, 'error');
     }
 }
 
@@ -1381,7 +1381,7 @@ async function saveOrganization(event) {
 
     // Validate org ID format
     if (!/^org-[-a-z0-9]+$/.test(orgId)) {
-        alert('Organization ID must follow format: org-yourname-001 (lowercase, hyphens allowed)');
+        showAlert('Organization ID must follow format: org-yourname-001 (lowercase, hyphens allowed)', 'warning');
         return;
     }
 
@@ -1418,11 +1418,11 @@ async function saveOrganization(event) {
         await loadOrganizationsData();
 
         closeOrgModal();
-        alert(`Organization "${orgName}" created successfully!`);
+        showAlert(`Organization "${orgName}" created successfully!`, 'success');
 
     } catch (error) {
         console.error('Error creating organization:', error);
-        alert(`Failed to create organization: ${error.message}`);
+        showAlert(`Failed to create organization: ${error.message}`, 'error');
     } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Create Organization';
@@ -1436,7 +1436,7 @@ async function saveOrganization(event) {
  */
 async function exportCurrentOrgXLSX() {
     if (!currentOrgId) {
-        alert('Please select an organization first');
+        showAlert('Please select an organization first', 'warning');
         return;
     }
 
@@ -1470,7 +1470,7 @@ async function exportCurrentOrgXLSX() {
         console.log('XLSX export successful');
     } catch (error) {
         console.error('Error exporting XLSX:', error);
-        alert(`Failed to export XLSX: ${error.message}`);
+        showAlert(`Failed to export XLSX: ${error.message}`, 'error');
     }
 }
 
@@ -1479,7 +1479,7 @@ async function exportCurrentOrgXLSX() {
  */
 async function exportCurrentOrgPDF() {
     if (!currentOrgId) {
-        alert('Please select an organization first');
+        showAlert('Please select an organization first', 'warning');
         return;
     }
 
@@ -1513,7 +1513,7 @@ async function exportCurrentOrgPDF() {
         console.log('PDF export successful');
     } catch (error) {
         console.error('Error exporting PDF:', error);
-        alert(`Failed to export PDF: ${error.message}`);
+        showAlert(`Failed to export PDF: ${error.message}`, 'error');
     }
 }
 
@@ -1618,7 +1618,7 @@ async function openTrashModal() {
 
     } catch (error) {
         console.error('Error loading trash:', error);
-        alert('Failed to load trash');
+        showAlert('Failed to load trash', 'error');
     }
 }
 
@@ -1639,7 +1639,7 @@ async function restoreFromTrash(orgId) {
         const result = await response.json();
 
         if (result.success) {
-            alert('Organization restored successfully!');
+            showAlert('Organization restored successfully!', 'success');
             closeTrashModal();
             await loadOrganizationsData();
             await loadTrashCount();
@@ -1648,7 +1648,7 @@ async function restoreFromTrash(orgId) {
         }
     } catch (error) {
         console.error('Error restoring organization:', error);
-        alert(`Failed to restore: ${error.message}`);
+        showAlert(`Failed to restore: ${error.message}`, 'error');
     }
 }
 
@@ -1666,7 +1666,7 @@ async function permanentDeleteOrg(orgId, orgName) {
         const result = await response.json();
 
         if (result.success) {
-            alert('Organization permanently deleted');
+            showAlert('Organization permanently deleted', 'success');
             closeTrashModal();
             await loadTrashCount();
         } else {
@@ -1674,7 +1674,7 @@ async function permanentDeleteOrg(orgId, orgName) {
         }
     } catch (error) {
         console.error('Error permanently deleting organization:', error);
-        alert(`Failed to delete: ${error.message}`);
+        showAlert(`Failed to delete: ${error.message}`, 'error');
     }
 }
 
