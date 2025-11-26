@@ -1876,12 +1876,22 @@ function setupEventDelegation() {
                 toggleScoreDetails();
                 break;
             case 'toggle-category':
-                const categoryId = e.target.dataset.categoryId;
-                if (categoryId) toggleCategory(parseInt(categoryId));
+                // Use closest() to find the category-header element even if clicking on nested elements
+                const categoryHeader = e.target.closest('[data-action="toggle-category"]');
+                const categoryId = categoryHeader?.dataset.categoryId;
+                if (categoryId) {
+                    console.log(`📍 Category header clicked, ID: ${categoryId}`);
+                    toggleCategory(parseInt(categoryId));
+                }
                 break;
             case 'load-indicator':
-                const indicatorId = e.target.dataset.indicatorId;
-                if (indicatorId) loadIndicatorFromReference(indicatorId);
+                // Use closest() to find the indicator-item element even if clicking on nested elements
+                const indicatorItem = e.target.closest('[data-action="load-indicator"]');
+                const indicatorId = indicatorItem?.dataset.indicatorId;
+                if (indicatorId) {
+                    console.log(`📍 Indicator item clicked, ID: ${indicatorId}`);
+                    loadIndicatorFromReference(indicatorId);
+                }
                 break;
         }
     });
