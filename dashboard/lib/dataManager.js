@@ -550,7 +550,7 @@ async function deleteOrganization(orgId, user = 'System') {
   await writeOrganization(orgData.id, orgData);
 
   // Update index to reflect deletion (add deleted_at to index)
-  updateOrganizationInIndex(orgData);
+  await updateOrganizationInIndex(orgData);
 
   // Log audit event
   logAuditEvent('delete', 'organization', orgId, {
@@ -579,7 +579,7 @@ async function restoreOrganization(orgId, user = 'System') {
   await writeOrganization(orgData.id, orgData);
 
   // Update index to reflect restoration (remove deleted_at from index)
-  updateOrganizationInIndex(orgData);
+  await updateOrganizationInIndex(orgData);  // ✅ ADDED AWAIT!
 
   // Log audit event
   logAuditEvent('restore', 'organization', orgId, {
@@ -701,7 +701,7 @@ async function createOrganization(orgConfig) {
   await writeOrganization(orgData.id, orgData);
 
   // Update index with new organization
-  updateOrganizationInIndex(orgData);
+  await updateOrganizationInIndex(orgData);
 
   // Log audit event
   logAuditEvent('create', 'organization', orgData.id, {
@@ -805,7 +805,7 @@ async function revertAssessment(orgId, indicatorId, versionNumber, user = 'Syste
   await writeOrganization(orgData.id, orgData);
 
   // Update index to reflect new stats/aggregates
-  updateOrganizationInIndex(orgData);
+  await updateOrganizationInIndex(orgData);
 
   // Log audit event
   logAuditEvent('revert', 'assessment', `${orgId}/${indicatorId}`, {
@@ -861,7 +861,7 @@ async function saveAssessment(orgId, assessmentData, user = 'System') {
   await writeOrganization(orgData.id, orgData);
 
   // Update index to reflect new stats/aggregates
-  updateOrganizationInIndex(orgData);
+  await updateOrganizationInIndex(orgData);
 
   // CRITICAL: Save current version to history AFTER saving
   // This ensures every save (including the first one) is tracked in history
@@ -936,7 +936,7 @@ async function deleteAssessment(orgId, indicatorId, user = 'System') {
     await writeOrganization(orgData.id, orgData);
 
     // Update index to reflect new stats/aggregates
-    updateOrganizationInIndex(orgData);
+    await updateOrganizationInIndex(orgData);
 
     // Log audit event
     logAuditEvent('delete', 'assessment', `${orgId}/${indicatorId}`, {
@@ -1091,7 +1091,7 @@ async function recalculateAggregates(orgId) {
   await writeOrganization(orgData.id, orgData);
 
   // Update index to reflect new stats/aggregates
-  updateOrganizationInIndex(orgData);
+  await updateOrganizationInIndex(orgData);
 
   return orgData;
 }
