@@ -1610,8 +1610,17 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
             // Render the field kit
             renderFieldKit(indicatorData);
 
-            // Note: Save behavior is handled in event delegation
-            // See 'save-data' action in setupEventDelegation()
+            // STEP 1: Save immediately after opening (even if no changes)
+            setTimeout(async () => {
+                if (typeof saveToAPI === 'function') {
+                    try {
+                        await saveToAPI();
+                        console.log('✅ Initial save completed');
+                    } catch (error) {
+                        console.error('❌ Initial save failed:', error);
+                    }
+                }
+            }, 500);
 
         } else {
             console.error('❌ renderFieldKit not available');
@@ -3565,9 +3574,13 @@ function closeHistoryModal() {
 async function revertToVersion(versionNumber) {
     if (!confirm(`Revert to version ${versionNumber}?\n\nThis will create a new version based on the selected one.`)) return;
 
-    // IMPORTANT: Save IDs before closing modal (closeHistoryModal nullifies them!)
     const orgId = currentHistoryOrgId;
     const indicatorId = currentHistoryIndicatorId;
+
+    console.log('═══════════════════════════════════════════════');
+    console.log('REVERT Step 1: Richiesta revert');
+    console.log('Versione richiesta:', versionNumber);
+    console.log('Org:', orgId, 'Indicator:', indicatorId);
 
     try {
         const response = await fetch(`/api/organizations/${orgId}/assessments/${indicatorId}/revert`, {
@@ -3581,11 +3594,14 @@ async function revertToVersion(versionNumber) {
 
         const result = await response.json();
 
+        console.log('REVERT Step 2: Risposta server');
+        console.log('Success:', result.success);
+        console.log('Data tornato:', result.data);
+
         if (result.success) {
-            showAlert(`Reverted to version ${versionNumber}`, 'success');
             closeHistoryModal();
 
-            // Reload organization data and sidebar
+            console.log('REVERT Step 3: Ricarico org...');
             await window.dashboardReloadOrganization();
 
             // If form is open, update it with reverted data
@@ -3625,7 +3641,7 @@ async function revertToVersion(versionNumber) {
                     showAlert('⚠️ No data to restore', 'warning');
                 }
             } else {
-                showAlert(`✅ Reverted to version ${versionNumber}`, 'success');
+                showAlert('Reverted', 'success');
             }
         } else {
             throw new Error(result.error);
