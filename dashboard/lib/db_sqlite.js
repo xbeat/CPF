@@ -253,6 +253,8 @@ async function readOrganizationsIndex() {
         size: row.size,
         country: row.country,
         language: row.language,
+        sede_sociale: row.sede_sociale || '',
+        partita_iva: row.partita_iva || '',
         created_at: row.created_at,
         updated_at: row.updated_at,
         deleted_at: row.deleted_at || undefined,
