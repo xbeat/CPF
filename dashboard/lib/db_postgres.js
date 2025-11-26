@@ -86,6 +86,8 @@ async function initialize() {
     await client.query(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS sede_sociale TEXT;`);
     await client.query(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS partita_iva VARCHAR(50);`);
     await client.query(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS aggregates JSONB;`);
+    await client.query(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;`);
+    await client.query(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS deleted_by VARCHAR(255);`);
     console.log('[DB-PG] Colonne della tabella `organizations` aggiornate.');
 
     // Aggiunta delle nuove colonne alla tabella 'assessments' in modo idempotente
@@ -256,7 +258,8 @@ async function readOrganizationsIndex() {
 async function readOrganization(orgId) {
   await initialize();
   try {
-    const orgRes = await pool.query('SELECT * FROM organizations WHERE id = $1 AND is_deleted = false', [orgId]);
+    // Read organization including deleted ones (dataManager will handle filtering)
+    const orgRes = await pool.query('SELECT * FROM organizations WHERE id = $1', [orgId]);
     const orgRow = orgRes.rows[0];
 
     if (!orgRow) return null;
@@ -296,6 +299,8 @@ async function readOrganization(orgId) {
         notes: orgRow.notes,
         sede_sociale: orgRow.sede_sociale,
         partita_iva: orgRow.partita_iva,
+        deleted_at: orgRow.deleted_at || undefined,
+        deleted_by: orgRow.deleted_by || undefined
       },
       assessments: assessments,
       aggregates: aggregates
@@ -334,16 +339,21 @@ async function writeOrganization(orgId, fullOrgData) {
     sede_sociale: fullOrgData.metadata.sede_sociale || '',
     partita_iva: fullOrgData.metadata.partita_iva || '',
     created_by: fullOrgData.metadata.created_by || '',
-    created_at: fullOrgData.metadata.created_at || new Date().toISOString()
+    created_at: fullOrgData.metadata.created_at || new Date().toISOString(),
+    deleted_at: fullOrgData.metadata.deleted_at || null,
+    deleted_by: fullOrgData.metadata.deleted_by || null
   };
 
   // Serialize aggregates to JSON string if present
   const aggregatesJson = fullOrgData.aggregates ? JSON.stringify(fullOrgData.aggregates) : null;
 
+  // is_deleted flag is true if deleted_at is present
+  const isDeleted = !!data.deleted_at;
+
   // UPSERT: Insert if not exists, update if exists
   const query = `
-    INSERT INTO organizations (id, name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, aggregates, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
+    INSERT INTO organizations (id, name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, aggregates, deleted_at, deleted_by, is_deleted, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP)
     ON CONFLICT (id) DO UPDATE SET
       name = EXCLUDED.name,
       industry = EXCLUDED.industry,
@@ -355,12 +365,16 @@ async function writeOrganization(orgId, fullOrgData) {
       partita_iva = EXCLUDED.partita_iva,
       sede_sociale = EXCLUDED.sede_sociale,
       aggregates = EXCLUDED.aggregates,
+      deleted_at = EXCLUDED.deleted_at,
+      deleted_by = EXCLUDED.deleted_by,
+      is_deleted = EXCLUDED.is_deleted,
       updated_at = CURRENT_TIMESTAMP;
   `;
 
   try {
     await pool.query(query, [orgId, data.name, data.industry, data.size, data.country, data.language,
-                              data.notes, data.created_by, data.partita_iva, data.sede_sociale, aggregatesJson, data.created_at]);
+                              data.notes, data.created_by, data.partita_iva, data.sede_sociale, aggregatesJson,
+                              data.deleted_at, data.deleted_by, isDeleted, data.created_at]);
     console.log(`[DB-PG] Successfully written organization ${orgId} (UPSERT).`);
     return fullOrgData;
   } catch (error) {
