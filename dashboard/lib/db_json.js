@@ -107,6 +107,27 @@ async function organizationExists(orgId) {
   return fs.existsSync(orgPath);
 }
 
+async function updateOrganization(orgId, updates) {
+  const organization = await readOrganization(orgId);
+  if (!organization) throw new Error(`Organization with ID ${orgId} not found.`);
+
+  // Update metadata fields
+  if (updates.name !== undefined) organization.name = updates.name;
+  if (updates.industry !== undefined) organization.metadata.industry = updates.industry;
+  if (updates.size !== undefined) organization.metadata.size = updates.size;
+  if (updates.country !== undefined) organization.metadata.country = updates.country;
+  if (updates.language !== undefined) organization.metadata.language = updates.language;
+  if (updates.notes !== undefined) organization.metadata.notes = updates.notes;
+  if (updates.sede_sociale !== undefined) organization.metadata.sede_sociale = updates.sede_sociale;
+  if (updates.partita_iva !== undefined) organization.metadata.partita_iva = updates.partita_iva;
+  if (updates.created_by !== undefined) organization.metadata.created_by = updates.created_by;
+
+  organization.metadata.updated_at = new Date().toISOString();
+
+  await writeOrganization(orgId, organization);
+  return organization;
+}
+
 async function createOrganization(orgData) {
   await writeOrganization(orgData.id, orgData);
 
@@ -619,6 +640,7 @@ module.exports = {
   initialize,
   createOrganization,
   readOrganization,
+  updateOrganization,
   writeOrganization,
   organizationExists,
   saveAssessment,
@@ -632,4 +654,8 @@ module.exports = {
   // Placeholder for other potential functions to avoid breaking require()
   updateOrganizationInIndex: async () => {},
   removeOrganizationFromIndex: async () => {},
+  getAssessment: async () => null,
+  deleteOrganization: async () => ({ success: true }),
+  deleteAssessment: async () => ({ success: true }),
+  saveIndicatorMetadata: async () => ({ success: true }),
 };
