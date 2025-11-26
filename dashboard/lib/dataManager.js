@@ -549,6 +549,9 @@ async function deleteOrganization(orgId, user = 'System') {
   // Save to main location (with deleted flag)
   await writeOrganization(orgData.id, orgData);
 
+  // Update index to reflect deletion (add deleted_at to index)
+  updateOrganizationInIndex(orgData);
+
   // Log audit event
   logAuditEvent('delete', 'organization', orgId, {
     name: orgData.name,
@@ -574,6 +577,9 @@ async function restoreOrganization(orgId, user = 'System') {
 
   // Save
   await writeOrganization(orgData.id, orgData);
+
+  // Update index to reflect restoration (remove deleted_at from index)
+  updateOrganizationInIndex(orgData);
 
   // Log audit event
   logAuditEvent('restore', 'organization', orgId, {
@@ -694,6 +700,9 @@ async function createOrganization(orgConfig) {
 
   await writeOrganization(orgData.id, orgData);
 
+  // Update index with new organization
+  updateOrganizationInIndex(orgData);
+
   // Log audit event
   logAuditEvent('create', 'organization', orgData.id, {
     name: orgData.name,
@@ -795,6 +804,9 @@ async function revertAssessment(orgId, indicatorId, versionNumber, user = 'Syste
   orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
   await writeOrganization(orgData.id, orgData);
 
+  // Update index to reflect new stats/aggregates
+  updateOrganizationInIndex(orgData);
+
   // Log audit event
   logAuditEvent('revert', 'assessment', `${orgId}/${indicatorId}`, {
     reverted_to_version: versionNumber,
@@ -848,6 +860,9 @@ async function saveAssessment(orgId, assessmentData, user = 'System') {
   // For JSON: this updates the file with new aggregates
   // For SQL: this updates the aggregates column in organizations table
   await writeOrganization(orgData.id, orgData);
+
+  // Update index to reflect new stats/aggregates
+  updateOrganizationInIndex(orgData);
 
   // Log audit event
   logAuditEvent(isUpdate ? 'update' : 'create', 'assessment', `${orgId}/${indicatorId}`, {
@@ -916,6 +931,9 @@ async function deleteAssessment(orgId, indicatorId, user = 'System') {
 
     // Save
     await writeOrganization(orgData.id, orgData);
+
+    // Update index to reflect new stats/aggregates
+    updateOrganizationInIndex(orgData);
 
     // Log audit event
     logAuditEvent('delete', 'assessment', `${orgId}/${indicatorId}`, {
@@ -1068,6 +1086,10 @@ async function recalculateAggregates(orgId) {
 
   orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
   await writeOrganization(orgData.id, orgData);
+
+  // Update index to reflect new stats/aggregates
+  updateOrganizationInIndex(orgData);
+
   return orgData;
 }
 
