@@ -1562,10 +1562,20 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                         currentData.responses = existingAssessment.raw_data.client_conversation.responses;
                     }
 
+                    // CRITICAL: Load scores into both currentData.score and window.currentScore
+                    // This ensures the score display matches the loaded data
+                    if (existingAssessment.raw_data.client_conversation.scores) {
+                        currentData.score = existingAssessment.raw_data.client_conversation.scores;
+                        if (window.currentScore) {
+                            window.currentScore = existingAssessment.raw_data.client_conversation.scores;
+                        }
+                    }
+
                     console.log('✅ Existing assessment data loaded:', {
                         metadata: currentData.metadata,
                         responses: Object.keys(currentData.responses).length + ' items',
-                        notes: currentData.metadata.notes
+                        notes: currentData.metadata.notes,
+                        score: currentData.score
                     });
                 }
             }
@@ -3054,65 +3064,9 @@ async function resetCompileForm() {
 
     console.log('🗑️ Resetting assessment:', { indicatorId, orgId });
 
-    // SAVE CURRENT STATE TO HISTORY BEFORE RESET
-    // This ensures undo is possible via history
-    if (currentData) {
-        const currentResponses = currentData.responses || {};
-        const hasData = Object.keys(currentResponses).length > 0;
-
-        if (hasData) {
-            console.log('💾 Saving current state to history before reset...');
-
-            // Get indicator data from CPFClient if available
-            const indicatorData = currentData?.fieldKit || currentIndicatorData;
-
-            // Build current assessment data
-            const currentAssessment = {
-                indicator_id: indicatorId,
-                title: indicatorData?.title || '',
-                category: indicatorData?.category || '',
-                bayesian_score: currentData.score?.bayesian_score || 0,
-                confidence: currentData.score?.confidence || 0.5,
-                maturity_level: currentData.score?.maturity_level || 'green',
-                assessor: currentData.metadata?.auditor || '',
-                assessment_date: new Date().toISOString(),
-                raw_data: {
-                    quick_assessment: {},
-                    client_conversation: {
-                        responses: currentResponses,
-                        scores: currentData.score || null,
-                        metadata: currentData.metadata || {
-                            date: new Date().toISOString().split('T')[0],
-                            auditor: '',
-                            client: selectedOrgData?.name || '',
-                            status: 'in-progress',
-                            notes: ''
-                        },
-                        notes: currentData.notes || '',
-                        red_flags: currentData.redFlags || []
-                    }
-                }
-            };
-
-            try {
-                // Save current state first (this creates a history entry)
-                const saveResponse = await fetch(`/api/organizations/${orgId}/assessments`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(currentAssessment)
-                });
-
-                const saveResult = await saveResponse.json();
-                if (saveResult.success) {
-                    console.log('✅ Current state saved to history before reset');
-                } else {
-                    console.warn('⚠️ Could not save current state to history:', saveResult.error);
-                }
-            } catch (error) {
-                console.warn('⚠️ Error saving current state to history:', error);
-            }
-        }
-    }
+    // NOTE: No need to save current state to history before reset
+    // Auto-save already ensures all changes are saved immediately after each modification
+    // We only need to save the empty assessment below to create the reset entry in history
 
     // Clear all form inputs in both possible containers
     const containers = [
@@ -3158,6 +3112,19 @@ async function resetCompileForm() {
         currentData.score = null;
 
         console.log('✅ CPFClient data reset');
+    }
+
+    // CRITICAL: Also reset currentScore to match the empty state
+    if (window.currentScore) {
+        window.currentScore = {
+            quick_assessment: 0,
+            conversation_depth: 0,
+            red_flags: 0,
+            final_score: 0,
+            maturity_level: 'green',
+            details: {}
+        };
+        console.log('✅ currentScore reset to empty state');
     }
 
     // REMOVE score displays entirely so they get recreated fresh by calculateIndicatorScore
@@ -3543,6 +3510,13 @@ async function revertToVersion(versionNumber) {
                             ...currentData.metadata,
                             ...revertedAssessment.raw_data.client_conversation.metadata
                         };
+                    }
+
+                    // CRITICAL: Update currentScore with reverted score data
+                    // This ensures the score display matches the reverted data
+                    if (window.currentScore && currentData.score) {
+                        window.currentScore = currentData.score;
+                        console.log('✅ Updated currentScore with reverted data:', window.currentScore);
                     }
 
                     // Re-render the form with reverted data
