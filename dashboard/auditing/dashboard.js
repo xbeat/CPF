@@ -3517,8 +3517,14 @@ async function revertToVersion(versionNumber) {
 
             // CRITICAL: Reload the integrated form if it's open
             // Update CPFClient with reverted data
-            if (currentData && selectedOrgData) {
+            if (currentData && currentData.fieldKit && selectedOrgData) {
                 const revertedAssessment = selectedOrgData.assessments[indicatorId];
+
+                console.log('🔄 Revert: Checking for reverted data...', {
+                    hasRevertedAssessment: !!revertedAssessment,
+                    hasRawData: !!revertedAssessment?.raw_data,
+                    hasClientConversation: !!revertedAssessment?.raw_data?.client_conversation
+                });
 
                 if (revertedAssessment && revertedAssessment.raw_data && revertedAssessment.raw_data.client_conversation) {
                     // Update CPFClient internal data
@@ -3534,18 +3540,48 @@ async function revertToVersion(versionNumber) {
 
                     // CRITICAL: Update currentScore with reverted score data
                     // This ensures the score display matches the reverted data
-                    if (window.currentScore && currentData.score) {
-                        window.currentScore = currentData.score;
+                    if (currentData.score) {
+                        if (window.currentScore) {
+                            window.currentScore = { ...currentData.score };
+                        }
                         console.log('✅ Updated currentScore with reverted data:', window.currentScore);
+                    } else {
+                        // No score in reverted data - reset to default
+                        if (window.currentScore) {
+                            window.currentScore = {
+                                quick_assessment: 0,
+                                conversation_depth: 0,
+                                red_flags: 0,
+                                final_score: 0,
+                                maturity_level: 'green',
+                                details: {}
+                            };
+                        }
+                        console.log('✅ Reset currentScore (no score in reverted data)');
                     }
 
+                    console.log('🔄 Re-rendering form with reverted data...', {
+                        responsesCount: Object.keys(currentData.responses).length,
+                        hasScore: !!currentData.score,
+                        metadata: currentData.metadata
+                    });
+
                     // Re-render the form with reverted data
-                    if (currentData.fieldKit) {
-                        console.log('🔄 Reloading form with reverted data...');
-                        renderFieldKit(currentData.fieldKit);
-                        showAlert(`Form reloaded with version ${versionNumber} data`, 'info');
+                    renderFieldKit(currentData.fieldKit);
+
+                    // Force recalculate score if scoring is available
+                    if (currentData.fieldKit.scoring && typeof calculateIndicatorScore === 'function') {
+                        console.log('📊 Recalculating score after revert...');
+                        calculateIndicatorScore();
                     }
+
+                    showAlert(`✅ Reverted to version ${versionNumber}`, 'success');
+                } else {
+                    console.warn('⚠️ Reverted assessment has no client_conversation data');
+                    showAlert('⚠️ Reverted assessment has incomplete data', 'warning');
                 }
+            } else {
+                console.log('ℹ️ Form not open - only updated backend data');
             }
         } else {
             throw new Error(result.error);
