@@ -72,6 +72,7 @@ window.addEventListener('keydown', (event) => {
 
 // ===== DATA LOADING =====
 async function loadAllData() {
+    console.log('📥 LOAD ALL DATA - Starting...');
     try {
         const response = await fetch('/api/organizations', {
             cache: 'no-cache',
@@ -84,20 +85,27 @@ async function loadAllData() {
         const data = await response.json();
 
         organizations = data.organizations || [];
+        console.log('📥 LOAD ALL DATA - Fetched', organizations.length, 'organizations');
+        console.log('📥 LOAD ALL DATA - Organizations:', organizations.map(o => ({id: o.id, name: o.name, stats: o.stats})));
 
         // Load category descriptions
         await loadCategoryDescriptions();
 
         // Load trash count for badge
         await loadTrashCount();
+
+        console.log('📥 LOAD ALL DATA - Calling renderOrganizations()');
         renderOrganizations();
 
         // If there's a selected org, reload its data
         if (selectedOrgId) {
+            console.log('📥 LOAD ALL DATA - Reloading selected org:', selectedOrgId);
             await loadOrganizationDetails(selectedOrgId);
+        } else {
+            console.log('📥 LOAD ALL DATA - No selected org');
         }
     } catch (error) {
-        console.error('Error loading organizations:', error);
+        console.error('❌ LOAD ALL DATA - Error:', error);
         showAlert('Failed to load organizations: ' + error.message, 'error');
     }
 }
@@ -139,12 +147,14 @@ function refreshData() {
 
 // ===== RENDERING =====
 function renderOrganizations() {
+    console.log('🎨 RENDER ORGANIZATIONS - Starting with', organizations.length, 'orgs');
     const orgList = document.getElementById('org-list');
     const countEl = document.getElementById('org-count');
 
     countEl.textContent = organizations.length;
 
     if (organizations.length === 0) {
+        console.log('🎨 RENDER ORGANIZATIONS - No organizations, showing empty message');
         orgList.innerHTML = `
             <div style="padding: 1rem; text-align: center; color: var(--text-light);">
                 <p>No organizations found</p>
@@ -156,6 +166,7 @@ function renderOrganizations() {
     orgList.innerHTML = '';
 
     organizations.forEach(org => {
+        console.log('🎨 RENDER ORG:', org.id, 'Stats:', org.stats);
         const item = document.createElement('div');
         item.className = 'org-item';
         if (selectedOrgId === org.id) {
@@ -171,6 +182,8 @@ function renderOrganizations() {
             overallRisk > 0.33 ? 'Medium' : 'Low';
         const completion = org.stats?.completion_percentage || 0;
         const totalAssessments = org.stats?.total_assessments || 0;
+
+        console.log('🎨 ORG', org.id, '- completion:', completion, '%, risk:', (overallRisk * 100).toFixed(0), '%, confidence:', org.stats?.avg_confidence);
 
         // Get country flag using ISO codes
         const country = org.country || 'Unknown';
@@ -226,6 +239,7 @@ function renderOrganizations() {
 
         orgList.appendChild(item);
     });
+    console.log('🎨 RENDER ORGANIZATIONS - Complete');
 }
 
 // Toggle sort direction
@@ -2420,22 +2434,38 @@ async function confirmDelete() {
 
             // If deleting selected org, clear selection and dashboard
             if (selectedOrgId === deletingOrgId) {
+                console.log('🗑️ DELETING SELECTED ORG - Clearing dashboard');
                 selectedOrgId = null;
                 selectedOrgData = null;
 
                 // Hide assessment section and show empty state
-                document.getElementById('assessmentSection').classList.add('hidden');
+                const assessmentSection = document.getElementById('assessmentSection');
+                if (assessmentSection) {
+                    assessmentSection.classList.add('hidden');
+                    console.log('🗑️ Hidden assessment section');
+                }
                 const emptyState = document.getElementById('emptyState');
-                if (emptyState) emptyState.style.display = 'block';
+                if (emptyState) {
+                    emptyState.style.display = 'block';
+                    console.log('🗑️ Showed empty state');
+                }
 
-                // Clear all tab contents
-                document.getElementById('progressSummary').innerHTML = '';
-                document.getElementById('progressMatrix').innerHTML = '';
-                document.getElementById('riskSummary').innerHTML = '';
-                document.getElementById('riskHeatmap').innerHTML = '';
-                document.getElementById('radarChart').innerHTML = '';
-                document.getElementById('prioritizationTable').innerHTML = '';
-                document.getElementById('maturityTab').innerHTML = '';
+                // Clear all tab contents (only if they exist)
+                const progressSummary = document.getElementById('progressSummary');
+                if (progressSummary) progressSummary.innerHTML = '';
+                const progressMatrix = document.getElementById('progressMatrix');
+                if (progressMatrix) progressMatrix.innerHTML = '';
+                const riskSummary = document.getElementById('riskSummary');
+                if (riskSummary) riskSummary.innerHTML = '';
+                const riskHeatmap = document.getElementById('riskHeatmap');
+                if (riskHeatmap) riskHeatmap.innerHTML = '';
+                const radarChart = document.getElementById('radarChart');
+                if (radarChart) radarChart.innerHTML = '';
+                const prioritizationTable = document.getElementById('prioritizationTable');
+                if (prioritizationTable) prioritizationTable.innerHTML = '';
+                const maturityTab = document.getElementById('maturityTab');
+                if (maturityTab) maturityTab.innerHTML = '';
+                console.log('🗑️ Cleared all tab contents');
             }
 
             await loadAllData();
@@ -3385,6 +3415,7 @@ function closeTrashModal() {
 }
 
 async function restoreFromTrash(orgId) {
+    console.log('♻️ RESTORE FROM TRASH - Starting for org:', orgId);
     try {
         const response = await fetch(`/api/organizations/${orgId}/restore`, {
             method: 'POST',
@@ -3393,17 +3424,21 @@ async function restoreFromTrash(orgId) {
         });
 
         const result = await response.json();
+        console.log('♻️ RESTORE FROM TRASH - API result:', result);
 
         if (result.success) {
             showAlert(`Organization restored successfully!`, 'success');
             closeTrashModal();
+            console.log('♻️ RESTORE FROM TRASH - Calling loadAllData()');
             await loadAllData();
+            console.log('♻️ RESTORE FROM TRASH - Calling loadTrashCount()');
             await loadTrashCount();
+            console.log('♻️ RESTORE FROM TRASH - Complete');
         } else {
             throw new Error(result.error);
         }
     } catch (error) {
-        console.error('Error restoring organization:', error);
+        console.error('❌ RESTORE FROM TRASH - Error:', error);
         showAlert(`Failed to restore: ${error.message}`, 'error');
     }
 }
