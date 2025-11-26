@@ -440,7 +440,7 @@ app.put('/api/organizations/:orgId', async (req, res) => {
     const { orgId } = req.params;
     const updates = req.body;
 
-    if (!(await db.organizationExists(orgId))) {
+    if (!(await dataManager.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
