@@ -337,10 +337,13 @@ async function writeOrganization(orgId, fullOrgData) {
     created_at: fullOrgData.metadata.created_at || new Date().toISOString()
   };
 
+  // Serialize aggregates to JSON string if present
+  const aggregatesJson = fullOrgData.aggregates ? JSON.stringify(fullOrgData.aggregates) : null;
+
   // UPSERT: Insert if not exists, update if exists
   const query = `
-    INSERT INTO organizations (id, name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP)
+    INSERT INTO organizations (id, name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, aggregates, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
     ON CONFLICT (id) DO UPDATE SET
       name = EXCLUDED.name,
       industry = EXCLUDED.industry,
@@ -351,12 +354,13 @@ async function writeOrganization(orgId, fullOrgData) {
       created_by = EXCLUDED.created_by,
       partita_iva = EXCLUDED.partita_iva,
       sede_sociale = EXCLUDED.sede_sociale,
+      aggregates = EXCLUDED.aggregates,
       updated_at = CURRENT_TIMESTAMP;
   `;
 
   try {
     await pool.query(query, [orgId, data.name, data.industry, data.size, data.country, data.language,
-                              data.notes, data.created_by, data.partita_iva, data.sede_sociale, data.created_at]);
+                              data.notes, data.created_by, data.partita_iva, data.sede_sociale, aggregatesJson, data.created_at]);
     console.log(`[DB-PG] Successfully written organization ${orgId} (UPSERT).`);
     return fullOrgData;
   } catch (error) {

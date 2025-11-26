@@ -831,13 +831,19 @@ async function saveAssessment(orgId, assessmentData, user = 'System') {
     await saveAssessmentVersion(orgId, indicatorId, orgData.assessments[indicatorId], user);
   }
 
-  // Add or update assessment
+  // Add or update assessment in memory (for aggregate calculation)
   orgData.assessments[indicatorId] = assessmentData;
 
   // Recalculate aggregates
   orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
 
-  // Save
+  // Save assessment to database using db layer
+  // This handles the storage-specific logic (separate table for SQL, embedded for JSON)
+  await db.saveAssessment(orgId, indicatorId, assessmentData);
+
+  // Update organization metadata and aggregates
+  // For JSON: this updates the file with new aggregates
+  // For SQL: this updates the aggregates column in organizations table
   await writeOrganization(orgData.id, orgData);
 
   // Log audit event
