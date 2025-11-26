@@ -615,8 +615,11 @@ async function permanentlyDeleteOrganization(orgId, user = 'System') {
 /**
  * Get organizations in trash
  */
-function getTrash() {
-  const index = readOrganizationsIndex(true); // Include deleted
+async function getTrash() {
+  // Use db layer to get index (works for all storage backends)
+  const index = await db.readOrganizationsIndex();
+
+  // Filter only deleted organizations
   const trashOrgs = index.organizations.filter(o => o.deleted_at);
 
   // Calculate days until auto-delete (30 days retention)
@@ -633,20 +636,20 @@ function getTrash() {
 /**
  * Auto-delete organizations older than 30 days in trash
  */
-function cleanupTrash(user = 'System') {
-  const trashOrgs = getTrash();
+async function cleanupTrash(user = 'System') {
+  const trashOrgs = await getTrash();
   let deletedCount = 0;
 
-  trashOrgs.forEach(org => {
+  for (const org of trashOrgs) {
     if (org.days_until_permanent_delete === 0) {
       try {
-        permanentlyDeleteOrganization(org.id, user);
+        await permanentlyDeleteOrganization(org.id, user);
         deletedCount++;
       } catch (error) {
         console.error(`Failed to auto-delete ${org.id}:`, error.message);
       }
     }
-  });
+  }
 
   return { deletedCount };
 }

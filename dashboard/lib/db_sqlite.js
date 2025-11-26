@@ -228,7 +228,8 @@ const { calculateAggregates } = require('./db_json');
 async function readOrganizationsIndex() {
   await initialize();
   try {
-    const rows = await db.all('SELECT * FROM organizations WHERE is_deleted = 0 ORDER BY name ASC');
+    // Read ALL organizations including deleted ones (filtering happens at application layer)
+    const rows = await db.all('SELECT * FROM organizations ORDER BY name ASC');
     const organizations = [];
 
     for (const row of rows) {
@@ -254,6 +255,8 @@ async function readOrganizationsIndex() {
         language: row.language,
         created_at: row.created_at,
         updated_at: row.updated_at,
+        deleted_at: row.deleted_at || undefined,
+        deleted_by: row.deleted_by || undefined,
         stats: {
           total_assessments: aggregates.completion.assessed_indicators,
           completion_percentage: aggregates.completion.percentage,
@@ -347,16 +350,56 @@ async function writeOrganization(orgId, fullOrgData) {
 
 async function updateOrganization(orgId, data) {
   await initialize();
-  const { name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale } = data;
-  const query = `
-    UPDATE organizations SET
-      name = ?, industry = ?, size = ?, country = ?, language = ?,
-      notes = ?, created_by = ?, partita_iva = ?, sede_sociale = ?,
-      updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?;
-  `;
+
+  // Build dynamic UPDATE query with only provided fields
+  const fields = [];
+  const values = [];
+
+  if (data.name !== undefined) {
+    fields.push('name = ?');
+    values.push(data.name);
+  }
+  if (data.industry !== undefined) {
+    fields.push('industry = ?');
+    values.push(data.industry);
+  }
+  if (data.size !== undefined) {
+    fields.push('size = ?');
+    values.push(data.size);
+  }
+  if (data.country !== undefined) {
+    fields.push('country = ?');
+    values.push(data.country);
+  }
+  if (data.language !== undefined) {
+    fields.push('language = ?');
+    values.push(data.language);
+  }
+  if (data.notes !== undefined) {
+    fields.push('notes = ?');
+    values.push(data.notes);
+  }
+  if (data.created_by !== undefined) {
+    fields.push('created_by = ?');
+    values.push(data.created_by);
+  }
+  if (data.partita_iva !== undefined) {
+    fields.push('partita_iva = ?');
+    values.push(data.partita_iva);
+  }
+  if (data.sede_sociale !== undefined) {
+    fields.push('sede_sociale = ?');
+    values.push(data.sede_sociale);
+  }
+
+  // Always update updated_at
+  fields.push('updated_at = CURRENT_TIMESTAMP');
+  values.push(orgId); // Last parameter for WHERE clause
+
+  const query = `UPDATE organizations SET ${fields.join(', ')} WHERE id = ?;`;
+
   try {
-    await db.run(query, [name, industry, size, country, language, notes || '', created_by || '', partita_iva || '', sede_sociale || '', orgId]);
+    await db.run(query, values);
     console.log(`[DB-SQLITE] Organization ${orgId} updated successfully.`);
     return await readOrganization(orgId);
   } catch (error) {

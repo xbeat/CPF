@@ -293,10 +293,20 @@ app.post('/api/cards/propose', async (req, res) => {
 app.get('/api/organizations', async (req, res) => {
   try {
     const index = await db.readOrganizationsIndex();
-    res.json(index);
+
+    // Filter out deleted organizations from main list
+    const filteredOrgs = index.organizations.filter(org => !org.deleted_at);
+
+    res.json({
+      metadata: {
+        ...index.metadata,
+        total_organizations: filteredOrgs.length
+      },
+      organizations: filteredOrgs
+    });
   } catch (error) {
     console.error('[API] Error reading organizations index:', error.message);
-    res.status(500).json({
+    res.json({
       success: false,
       error: error.message
     });
@@ -800,9 +810,9 @@ app.get('/api/organizations/:orgId/missing', (req, res) => {
  * GET /api/trash
  * Get all organizations in trash
  */
-app.get('/api/trash', (req, res) => {
+app.get('/api/trash', async (req, res) => {
   try {
-    const trashOrgs = dataManager.getTrash();
+    const trashOrgs = await dataManager.getTrash();
 
     res.json({
       success: true,
