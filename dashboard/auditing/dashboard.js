@@ -3515,73 +3515,34 @@ async function revertToVersion(versionNumber) {
             // Reload organization data and sidebar
             await window.dashboardReloadOrganization();
 
-            // CRITICAL: Reload the integrated form if it's open
-            // Update CPFClient with reverted data
-            if (currentData && currentData.fieldKit && selectedOrgData) {
+            // CRITICAL: If the integrated form is open, CLOSE and REOPEN it with reverted data
+            // This ensures all data is properly reloaded from scratch
+            const formIsOpen = currentData && currentData.fieldKit;
+
+            if (formIsOpen && selectedOrgData) {
                 const revertedAssessment = selectedOrgData.assessments[indicatorId];
 
-                console.log('🔄 Revert: Checking for reverted data...', {
-                    hasRevertedAssessment: !!revertedAssessment,
-                    hasRawData: !!revertedAssessment?.raw_data,
-                    hasClientConversation: !!revertedAssessment?.raw_data?.client_conversation
-                });
+                console.log('🔄 Revert: Form is open - will close and reopen with reverted data');
 
-                if (revertedAssessment && revertedAssessment.raw_data && revertedAssessment.raw_data.client_conversation) {
-                    // Update CPFClient internal data
-                    currentData.responses = revertedAssessment.raw_data.client_conversation.responses || {};
-                    currentData.score = revertedAssessment.raw_data.client_conversation.scores || null;
+                // Close the current modal
+                document.getElementById('indicatorModal').classList.remove('active');
+                popModal('indicatorModal');
 
-                    if (revertedAssessment.raw_data.client_conversation.metadata) {
-                        currentData.metadata = {
-                            ...currentData.metadata,
-                            ...revertedAssessment.raw_data.client_conversation.metadata
-                        };
-                    }
+                // Wait a moment for modal to close
+                await new Promise(resolve => setTimeout(resolve, 100));
 
-                    // CRITICAL: Update currentScore with reverted score data
-                    // This ensures the score display matches the reverted data
-                    if (currentData.score) {
-                        if (window.currentScore) {
-                            window.currentScore = { ...currentData.score };
-                        }
-                        console.log('✅ Updated currentScore with reverted data:', window.currentScore);
-                    } else {
-                        // No score in reverted data - reset to default
-                        if (window.currentScore) {
-                            window.currentScore = {
-                                quick_assessment: 0,
-                                conversation_depth: 0,
-                                red_flags: 0,
-                                final_score: 0,
-                                maturity_level: 'green',
-                                details: {}
-                            };
-                        }
-                        console.log('✅ Reset currentScore (no score in reverted data)');
-                    }
-
-                    console.log('🔄 Re-rendering form with reverted data...', {
-                        responsesCount: Object.keys(currentData.responses).length,
-                        hasScore: !!currentData.score,
-                        metadata: currentData.metadata
-                    });
-
-                    // Re-render the form with reverted data
-                    renderFieldKit(currentData.fieldKit);
-
-                    // Force recalculate score if scoring is available
-                    if (currentData.fieldKit.scoring && typeof calculateIndicatorScore === 'function') {
-                        console.log('📊 Recalculating score after revert...');
-                        calculateIndicatorScore();
-                    }
-
-                    showAlert(`✅ Reverted to version ${versionNumber}`, 'success');
+                // Reopen with the reverted assessment
+                if (revertedAssessment) {
+                    await openIntegratedClient(indicatorId, orgId, revertedAssessment);
+                    showAlert(`✅ Reverted to version ${versionNumber} - form reloaded`, 'success');
                 } else {
-                    console.warn('⚠️ Reverted assessment has no client_conversation data');
-                    showAlert('⚠️ Reverted assessment has incomplete data', 'warning');
+                    // Open empty form if no assessment data
+                    await openIntegratedClient(indicatorId, orgId, null);
+                    showAlert(`✅ Reverted to version ${versionNumber} (empty)`, 'success');
                 }
             } else {
                 console.log('ℹ️ Form not open - only updated backend data');
+                showAlert(`✅ Reverted to version ${versionNumber}`, 'success');
             }
         } else {
             throw new Error(result.error);
