@@ -2114,8 +2114,14 @@ function clearCategoryFilter() {
 
 /**
  * Generate organization ID from name (auto-generation with duplicate check)
+ * ONLY works in CREATE mode - ID is immutable after creation
  */
 function generateOrgIdFromName() {
+    // NEVER regenerate ID in edit mode
+    if (editingOrgId !== null) {
+        return;
+    }
+
     const nameInput = document.getElementById('orgName');
     const idInput = document.getElementById('orgId');
 

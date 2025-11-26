@@ -359,8 +359,8 @@ app.post('/api/organizations', async (req, res) => {
       });
     }
 
-    // Create organization
-    const orgData = dataManager.createOrganization({
+    // Create organization using db layer
+    const orgData = await db.createOrganization({
       id,
       name,
       industry,
@@ -504,15 +504,16 @@ app.delete('/api/organizations/:orgId', async (req, res) => {
       });
     }
 
-    // Soft delete organization using db layer
-    const result = await db.deleteOrganization(orgId);
+    // Soft delete using dataManager for trash system
+    const orgData = await dataManager.deleteOrganization(orgId, user);
 
-    console.log(`\n🗑️  [API] Deleted organization: ${orgId}\n`);
+    console.log(`\n🗑️  [API] Moved to trash: ${orgId}\n`);
 
     res.json({
       success: true,
-      message: 'Organization deleted successfully',
-      orgId
+      message: 'Organization moved to trash',
+      orgId,
+      deleted_at: orgData.metadata.deleted_at
     });
   } catch (error) {
     console.error(`[API] Error deleting organization ${req.params.orgId}:`, error.message);
