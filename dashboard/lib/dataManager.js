@@ -681,7 +681,7 @@ function createOrganization(orgConfig) {
     }
   };
 
-  writeOrganization(orgData);
+  writeOrganization(orgData.id, orgData);
 
   // Log audit event
   logAuditEvent('create', 'organization', orgData.id, {
