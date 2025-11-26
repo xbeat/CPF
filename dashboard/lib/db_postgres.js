@@ -332,18 +332,32 @@ async function writeOrganization(orgId, fullOrgData) {
     language: fullOrgData.metadata.language,
     notes: fullOrgData.metadata.notes || '',
     sede_sociale: fullOrgData.metadata.sede_sociale || '',
-    partita_iva: fullOrgData.metadata.partita_iva || ''
+    partita_iva: fullOrgData.metadata.partita_iva || '',
+    created_by: fullOrgData.metadata.created_by || '',
+    created_at: fullOrgData.metadata.created_at || new Date().toISOString()
   };
 
-  const query = `UPDATE organizations SET
-    name = $1, industry = $2, size = $3, country = $4, language = $5,
-    notes = $6, sede_sociale = $7, partita_iva = $8, updated_at = CURRENT_TIMESTAMP
-    WHERE id = $9;`;
+  // UPSERT: Insert if not exists, update if exists
+  const query = `
+    INSERT INTO organizations (id, name, industry, size, country, language, notes, created_by, partita_iva, sede_sociale, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP)
+    ON CONFLICT (id) DO UPDATE SET
+      name = EXCLUDED.name,
+      industry = EXCLUDED.industry,
+      size = EXCLUDED.size,
+      country = EXCLUDED.country,
+      language = EXCLUDED.language,
+      notes = EXCLUDED.notes,
+      created_by = EXCLUDED.created_by,
+      partita_iva = EXCLUDED.partita_iva,
+      sede_sociale = EXCLUDED.sede_sociale,
+      updated_at = CURRENT_TIMESTAMP;
+  `;
 
   try {
-    await pool.query(query, [data.name, data.industry, data.size, data.country, data.language,
-                              data.notes, data.sede_sociale, data.partita_iva, orgId]);
-    console.log(`[DB-PG] Successfully written organization ${orgId}.`);
+    await pool.query(query, [orgId, data.name, data.industry, data.size, data.country, data.language,
+                              data.notes, data.created_by, data.partita_iva, data.sede_sociale, data.created_at]);
+    console.log(`[DB-PG] Successfully written organization ${orgId} (UPSERT).`);
     return fullOrgData;
   } catch (error) {
     console.error(`[DB-PG] Error writing organization ${orgId}:`, error);
