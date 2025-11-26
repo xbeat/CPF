@@ -2408,13 +2408,24 @@ async function confirmDelete() {
             showAlert('Organization deleted successfully', 'success');
             closeDeleteModal();
 
-            // If deleting selected org, clear selection
+            // If deleting selected org, clear selection and dashboard
             if (selectedOrgId === deletingOrgId) {
                 selectedOrgId = null;
                 selectedOrgData = null;
+
+                // Hide assessment section and show empty state
                 document.getElementById('assessmentSection').classList.add('hidden');
                 const emptyState = document.getElementById('emptyState');
                 if (emptyState) emptyState.style.display = 'block';
+
+                // Clear all tab contents
+                document.getElementById('progressSummary').innerHTML = '';
+                document.getElementById('progressMatrix').innerHTML = '';
+                document.getElementById('riskSummary').innerHTML = '';
+                document.getElementById('riskHeatmap').innerHTML = '';
+                document.getElementById('radarChart').innerHTML = '';
+                document.getElementById('prioritizationTable').innerHTML = '';
+                document.getElementById('maturityTab').innerHTML = '';
             }
 
             await loadAllData();
