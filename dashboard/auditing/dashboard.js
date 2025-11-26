@@ -3622,19 +3622,38 @@ async function revertToVersion(versionNumber) {
                     console.log('🔄 DEBUG - Responses to restore:', conv.responses);
                     console.log('🔄 DEBUG - Current responses before:', currentData.responses);
 
-                    // Update currentData with reverted values
-                    currentData.responses = { ...conv.responses } || {};
+                    // CRITICAL FIX: Ensure responses is a valid object before assigning
+                    // Use direct assignment instead of spread operator to avoid empty object issues
+                    if (conv.responses && typeof conv.responses === 'object') {
+                        currentData.responses = conv.responses;
+                    } else {
+                        console.warn('⚠️ conv.responses is invalid, using empty object');
+                        currentData.responses = {};
+                    }
+
                     currentData.score = conv.scores || null;
-                    currentData.metadata = { ...currentData.metadata, ...conv.metadata };
+
+                    // Merge metadata carefully to preserve existing properties
+                    if (conv.metadata && typeof conv.metadata === 'object') {
+                        currentData.metadata = { ...currentData.metadata, ...conv.metadata };
+                    }
 
                     console.log('🔄 DEBUG - Current responses after:', currentData.responses);
+                    console.log('🔄 DEBUG - Response keys count:', Object.keys(currentData.responses).length);
                     console.log('🔄 DEBUG - Calling renderFieldKit now...');
 
-                    // Re-render the form with updated data
-                    renderFieldKit(currentData.fieldKit);
+                    // CRITICAL FIX: Force a complete re-render by temporarily clearing the fieldKit
+                    // This ensures renderFieldKit will regenerate all HTML elements from scratch
+                    const tempFieldKit = currentData.fieldKit;
+                    currentData.fieldKit = null;
 
-                    console.log('🔄 DEBUG - renderFieldKit completed');
-                    showAlert(`✅ Reverted to version ${versionNumber}`, 'success');
+                    // Use setTimeout to ensure DOM is cleared before re-rendering
+                    setTimeout(() => {
+                        currentData.fieldKit = tempFieldKit;
+                        renderFieldKit(currentData.fieldKit);
+                        console.log('🔄 DEBUG - renderFieldKit completed');
+                        showAlert(`✅ Reverted to version ${versionNumber} - Form updated`, 'success');
+                    }, 50);
                 } else {
                     console.warn('⚠️ No client_conversation data to restore');
                     showAlert('⚠️ No data to restore', 'warning');
