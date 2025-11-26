@@ -1619,8 +1619,17 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
             // Render the field kit
             renderFieldKit(indicatorData);
 
-            // Note: Save behavior is handled in event delegation
-            // See 'save-data' action in setupEventDelegation()
+            // STEP 1: Save immediately after opening (even if no changes)
+            setTimeout(async () => {
+                if (typeof saveToAPI === 'function') {
+                    try {
+                        await saveToAPI();
+                        console.log('✅ Initial save completed');
+                    } catch (error) {
+                        console.error('❌ Initial save failed:', error);
+                    }
+                }
+            }, 500);
 
         } else {
             console.error('❌ renderFieldKit not available');
@@ -3579,15 +3588,10 @@ function closeHistoryModal() {
 }
 
 async function revertToVersion(versionNumber) {
-    console.log('🔄 DEBUG revertToVersion called with version:', versionNumber);
+    if (!confirm(`Revert to version ${versionNumber}?`)) return;
 
-    if (!confirm(`Revert to version ${versionNumber}?\n\nThis will create a new version based on the selected one.`)) return;
-
-    // IMPORTANT: Save IDs before closing modal (closeHistoryModal nullifies them!)
     const orgId = currentHistoryOrgId;
     const indicatorId = currentHistoryIndicatorId;
-
-    console.log('🔄 DEBUG - orgId:', orgId, 'indicatorId:', indicatorId);
 
     try {
         const response = await fetch(`/api/organizations/${orgId}/assessments/${indicatorId}/revert`, {
@@ -3602,64 +3606,27 @@ async function revertToVersion(versionNumber) {
         const result = await response.json();
 
         if (result.success) {
-            showAlert(`Reverted to version ${versionNumber}`, 'success');
             closeHistoryModal();
 
-            // Reload organization data and sidebar
+            // Reload organization data
             await window.dashboardReloadOrganization();
 
-            // If form is open, update it with reverted data
-            if (currentData && currentData.fieldKit && selectedOrgData) {
-                const revertedAssessment = selectedOrgData.assessments[indicatorId];
+            // STEP 2: Get the restored values and log them
+            const revertedAssessment = selectedOrgData.assessments[indicatorId];
+            const responses = revertedAssessment?.raw_data?.client_conversation?.responses;
 
-                console.log('🔄 DEBUG Revert - Form is open, updating with reverted data');
-                console.log('🔄 DEBUG - Has reverted assessment:', !!revertedAssessment);
-                console.log('🔄 DEBUG - Reverted raw_data:', revertedAssessment?.raw_data);
+            console.log('=============== RESTORE VALUES ===============');
+            console.log('Responses from server:', responses);
+            console.log('Number of keys:', responses ? Object.keys(responses).length : 0);
+            console.log('==============================================');
 
-                if (revertedAssessment?.raw_data?.client_conversation) {
-                    const conv = revertedAssessment.raw_data.client_conversation;
-
-                    console.log('🔄 DEBUG - Responses to restore:', conv.responses);
-                    console.log('🔄 DEBUG - Current responses before:', currentData.responses);
-
-                    // CRITICAL FIX: Ensure responses is a valid object before assigning
-                    // Use direct assignment instead of spread operator to avoid empty object issues
-                    if (conv.responses && typeof conv.responses === 'object') {
-                        currentData.responses = conv.responses;
-                    } else {
-                        console.warn('⚠️ conv.responses is invalid, using empty object');
-                        currentData.responses = {};
-                    }
-
-                    currentData.score = conv.scores || null;
-
-                    // Merge metadata carefully to preserve existing properties
-                    if (conv.metadata && typeof conv.metadata === 'object') {
-                        currentData.metadata = { ...currentData.metadata, ...conv.metadata };
-                    }
-
-                    console.log('🔄 DEBUG - Current responses after:', currentData.responses);
-                    console.log('🔄 DEBUG - Response keys count:', Object.keys(currentData.responses).length);
-                    console.log('🔄 DEBUG - Calling renderFieldKit now...');
-
-                    // CRITICAL FIX: Force a complete re-render by temporarily clearing the fieldKit
-                    // This ensures renderFieldKit will regenerate all HTML elements from scratch
-                    const tempFieldKit = currentData.fieldKit;
-                    currentData.fieldKit = null;
-
-                    // Use setTimeout to ensure DOM is cleared before re-rendering
-                    setTimeout(() => {
-                        currentData.fieldKit = tempFieldKit;
-                        renderFieldKit(currentData.fieldKit);
-                        console.log('🔄 DEBUG - renderFieldKit completed');
-                        showAlert(`✅ Reverted to version ${versionNumber} - Form updated`, 'success');
-                    }, 50);
-                } else {
-                    console.warn('⚠️ No client_conversation data to restore');
-                    showAlert('⚠️ No data to restore', 'warning');
-                }
+            // STEP 3: Update form if open
+            if (currentData && currentData.fieldKit && responses) {
+                currentData.responses = responses;
+                renderFieldKit(currentData.fieldKit);
+                showAlert('Form restored', 'success');
             } else {
-                showAlert(`✅ Reverted to version ${versionNumber}`, 'success');
+                showAlert('Reverted', 'success');
             }
         } else {
             throw new Error(result.error);
