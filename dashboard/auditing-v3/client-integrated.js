@@ -1618,9 +1618,28 @@ function renderReferenceContent(container, data) {
 }
 
 function toggleCategory(categoryId) {
+    console.log(`🔍 toggleCategory called with ID: ${categoryId}`);
     const body = document.getElementById(`category-${categoryId}`);
+
+    // Add null safety checks
+    if (!body) {
+        console.error(`❌ Category body not found for ID: category-${categoryId}`);
+        return;
+    }
+
     const header = body.previousElementSibling; // Get the category-header element
+
+    if (!header) {
+        console.error(`❌ Category header not found for category: ${categoryId}`);
+        return;
+    }
+
     const arrow = header.querySelector('.category-arrow');
+
+    if (!arrow) {
+        console.error(`❌ Category arrow not found for category: ${categoryId}`);
+        return;
+    }
 
     // Toggle active state
     header.classList.toggle('active');
@@ -1629,8 +1648,10 @@ function toggleCategory(categoryId) {
     // Rotate arrow
     if (body.classList.contains('active')) {
         arrow.textContent = '▼';
+        console.log(`✅ Category ${categoryId} opened`);
     } else {
         arrow.textContent = '▶';
+        console.log(`✅ Category ${categoryId} closed`);
     }
 }
 
