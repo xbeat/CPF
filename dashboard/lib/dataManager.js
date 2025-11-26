@@ -781,6 +781,12 @@ async function revertAssessment(orgId, indicatorId, versionNumber, user = 'Syste
   console.log('SERVER REVERT Step 4: Current assessment prima del revert');
   console.log('Current score:', currentAssessment?.bayesian_score);
 
+  // SALVA la versione corrente nella history PRIMA di sovrascriverla!
+  if (currentAssessment) {
+    saveAssessmentVersion(orgId, indicatorId, currentAssessment, user);
+    console.log('✅ Versione corrente salvata nella history');
+  }
+
   // Restore old version
   orgData.assessments[indicatorId] = targetVersion.data;
   console.log('SERVER REVERT Step 5: Assessment sostituito');

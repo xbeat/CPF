@@ -3519,10 +3519,13 @@ async function openHistoryModal() {
             const score = version.data.bayesian_score;
             const confidence = version.data.confidence;
             const timestamp = new Date(version.timestamp).toLocaleString();
+            const isReset = score === 0;
 
+            const resetBadgeRight = isCurrent ? '120px' : '10px';
             html += `
                 <div style="background: ${isCurrent ? '#eff6ff' : 'var(--bg-gray)'}; border: 2px solid ${isCurrent ? 'var(--primary)' : 'var(--border)'}; border-radius: 10px; padding: 20px; margin-bottom: 15px; position: relative;">
                     ${isCurrent ? '<div style="position: absolute; top: 10px; right: 10px; background: var(--primary); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">CURRENT</div>' : ''}
+                    ${isReset ? `<div style="position: absolute; top: 10px; right: ${resetBadgeRight}; background: var(--warning); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">🔄 RESET</div>` : ''}
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="flex: 1;">
                             <div style="font-size: 18px; font-weight: 600; color: var(--primary); margin-bottom: 8px;">
@@ -3543,13 +3546,11 @@ async function openHistoryModal() {
                                 </div>
                             </div>
                         </div>
-                        ${!isCurrent ? `
                         <div>
-                            <button class="btn btn-warning btn-small" data-action="revert-to-version" data-version="${version.version}">
-                                ↩️ Revert to This
+                            <button class="btn ${isCurrent ? 'btn-primary' : 'btn-warning'} btn-small" data-action="revert-to-version" data-version="${version.version}">
+                                ${isCurrent ? '🔄 Reload This' : '↩️ Revert to This'}
                             </button>
                         </div>
-                        ` : ''}
                     </div>
                 </div>
             `;
