@@ -351,7 +351,7 @@ app.post('/api/organizations', async (req, res) => {
     }
 
     // Check if organization already exists
-    if (dataManager.organizationExists(id)) {
+    if (await db.organizationExists(id)) {
       return res.status(409).json({
         success: false,
         error: 'Organization already exists',
@@ -448,28 +448,34 @@ app.put('/api/organizations/:orgId', async (req, res) => {
       });
     }
 
-    // Read current org data from database
-    const orgData = await db.readOrganization(orgId);
+    // Update using updateOrganization with flat data structure
+    const updateData = {
+      name: updates.name,
+      industry: updates.industry,
+      size: updates.size,
+      country: updates.country,
+      language: updates.language,
+      notes: updates.notes,
+      sede_sociale: updates.sede_sociale,
+      partita_iva: updates.partita_iva,
+      created_by: updates.created_by
+    };
 
-    // Update metadata fields
-    if (updates.name) orgData.name = updates.name;
-    if (updates.industry) orgData.metadata.industry = updates.industry;
-    if (updates.size) orgData.metadata.size = updates.size;
-    if (updates.country) orgData.metadata.country = updates.country;
-    if (updates.language) orgData.metadata.language = updates.language;
-    if (updates.notes !== undefined) orgData.metadata.notes = updates.notes;
-    if (updates.sede_sociale !== undefined) orgData.metadata.sede_sociale = updates.sede_sociale;
-    if (updates.partita_iva !== undefined) orgData.metadata.partita_iva = updates.partita_iva;
+    // Remove undefined values
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
 
-    // Save to database
-    await db.writeOrganization(orgData.id, orgData);
+    const updatedOrg = await db.updateOrganization(orgId, updateData);
 
     console.log(`\n✅ [API] Updated organization: ${orgId}\n`);
 
     res.json({
       success: true,
       message: 'Organization updated successfully',
-      data: orgData
+      data: updatedOrg
     });
   } catch (error) {
     console.error(`[API] Error updating organization ${req.params.orgId}:`, error.message);
@@ -490,7 +496,7 @@ app.delete('/api/organizations/:orgId', async (req, res) => {
     const { orgId } = req.params;
     const user = req.query.user || req.body.user || 'System';
 
-    if (!(await dataManager.organizationExists(orgId))) {
+    if (!(await db.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -498,16 +504,15 @@ app.delete('/api/organizations/:orgId', async (req, res) => {
       });
     }
 
-    // Soft delete organization (moves to trash, logs audit)
-    const orgData = await dataManager.deleteOrganization(orgId, user);
+    // Soft delete organization using db layer
+    const result = await db.deleteOrganization(orgId);
 
-    console.log(`\n🗑️  [API] Moved to trash: ${orgId}\n`);
+    console.log(`\n🗑️  [API] Deleted organization: ${orgId}\n`);
 
     res.json({
       success: true,
-      message: 'Organization moved to trash (recoverable for 30 days)',
-      orgId,
-      deleted_at: orgData.metadata.deleted_at
+      message: 'Organization deleted successfully',
+      orgId
     });
   } catch (error) {
     console.error(`[API] Error deleting organization ${req.params.orgId}:`, error.message);
