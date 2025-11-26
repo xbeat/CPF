@@ -837,14 +837,13 @@ async function saveAssessment(orgId, assessmentData, user = 'System') {
 
   const indicatorId = assessmentData.indicator_id;
 
-  // Check if this is an update (save previous version)
+  // Check if this is an update
   const isUpdate = !!orgData.assessments[indicatorId];
   const previousScore = isUpdate ? orgData.assessments[indicatorId].bayesian_score : null;
 
-  if (isUpdate) {
-    // Save previous version to history
-    await saveAssessmentVersion(orgId, indicatorId, orgData.assessments[indicatorId], user);
-  }
+  // NOTE: We no longer save the previous version here
+  // Instead, we save EVERY version (including the first) after updating the assessment
+  // This ensures all changes are tracked in history
 
   // Add or update assessment in memory (for aggregate calculation)
   orgData.assessments[indicatorId] = assessmentData;
@@ -863,6 +862,10 @@ async function saveAssessment(orgId, assessmentData, user = 'System') {
 
   // Update index to reflect new stats/aggregates
   updateOrganizationInIndex(orgData);
+
+  // CRITICAL: Save current version to history AFTER saving
+  // This ensures every save (including the first one) is tracked in history
+  await saveAssessmentVersion(orgId, indicatorId, assessmentData, user);
 
   // Log audit event
   logAuditEvent(isUpdate ? 'update' : 'create', 'assessment', `${orgId}/${indicatorId}`, {
