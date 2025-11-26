@@ -536,9 +536,7 @@ async function deleteOrganization(orgId, user = 'System') {
  * Restore organization from trash
  */
 async function restoreOrganization(orgId, user = 'System') {
-  console.log('♻️ [dataManager] RESTORE - Starting for:', orgId);
   const orgData = await readOrganization(orgId);
-  console.log('♻️ [dataManager] RESTORE - Read org, deleted_at:', orgData.metadata.deleted_at);
 
   if (!orgData.metadata.deleted_at) {
     throw new Error('Organization is not in trash');
@@ -547,23 +545,21 @@ async function restoreOrganization(orgId, user = 'System') {
   // Remove deleted flag
   delete orgData.metadata.deleted_at;
   delete orgData.metadata.deleted_by;
-  console.log('♻️ [dataManager] RESTORE - Deleted flags removed');
+
+  // Recalculate aggregates to ensure stats are up to date
+  orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
 
   // Save
   await writeOrganization(orgData.id, orgData);
-  console.log('♻️ [dataManager] RESTORE - Organization saved');
 
   // Update index to reflect restoration (remove deleted_at from index)
-  console.log('♻️ [dataManager] RESTORE - Calling updateOrganizationInIndex...');
   await updateOrganizationInIndex(orgData);
-  console.log('♻️ [dataManager] RESTORE - updateOrganizationInIndex complete');
 
   // Log audit event
   logAuditEvent('restore', 'organization', orgId, {
     name: orgData.name
   }, user);
 
-  console.log('♻️ [dataManager] RESTORE - Complete');
   return orgData;
 }
 
