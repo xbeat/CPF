@@ -1102,6 +1102,7 @@ function editOrganization(orgId) {
     const org = organizations.find(o => o.id === orgId);
     if (!org) return;
 
+    document.getElementById('edit-org-id').value = org.id;
     document.getElementById('edit-org-name').value = org.name;
     document.getElementById('edit-org-industry').value = org.industry;
     document.getElementById('edit-org-size').value = org.size;

@@ -309,6 +309,17 @@ async function readOrganization(orgId) {
   }
 }
 
+async function organizationExists(orgId) {
+  await initialize();
+  try {
+    const result = await pool.query('SELECT id FROM organizations WHERE id = $1 AND is_deleted = false', [orgId]);
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error(`[DB-PG] Error checking if organization exists ${orgId}:`, error);
+    return false;
+  }
+}
+
 async function updateOrganization(orgId, data) {
   await initialize();
   const { name, industry, size, country, language, notes, sede_sociale, partita_iva } = data;
@@ -495,6 +506,7 @@ module.exports = {
   createOrganization,
   readOrganizationsIndex,
   readOrganization,
+  organizationExists,
   updateOrganization,
   deleteOrganization,
   saveAssessment,
