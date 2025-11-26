@@ -163,8 +163,8 @@ async function saveAssessment(orgId, indicatorId, assessmentData) {
     const organization = await readOrganization(orgId);
     if (!organization) throw new Error(`Organization with ID ${orgId} not found.`);
 
+    // Only save the assessment data - aggregates calculation is handled by dataManager
     organization.assessments[indicatorId] = assessmentData;
-    organization.aggregates = calculateAggregates(organization.assessments, organization.metadata.industry);
     organization.metadata.updated_at = new Date().toISOString();
 
     await writeOrganization(orgId, organization);
