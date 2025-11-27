@@ -683,13 +683,21 @@ async function saveToAPI() {
 function showAutoSaveIndicator() {
     const indicator = document.getElementById('auto-save-status');
     if (indicator) {
-        indicator.style.display = 'inline';
-        indicator.textContent = '✓ Auto-saved';
-        indicator.style.color = '#4CAF50';
+        // Remove hide class if present
+        indicator.classList.remove('hide');
 
-        // Hide after 3 seconds
+        // Show with animation
+        indicator.classList.add('show');
+
+        // Hide after 3 seconds with animation
         setTimeout(() => {
-            indicator.style.display = 'none';
+            indicator.classList.remove('show');
+            indicator.classList.add('hide');
+
+            // Remove hide class after animation completes
+            setTimeout(() => {
+                indicator.classList.remove('hide');
+            }, 400);
         }, 3000);
     }
 }
