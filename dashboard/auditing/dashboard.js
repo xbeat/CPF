@@ -2437,12 +2437,13 @@ async function confirmDelete() {
 
         if (result.success) {
             showAlert('Organization deleted successfully', 'success');
-            closeDeleteModal();
+            const deletedOrgId = deletingOrgId;  // Save BEFORE closing modal
+            closeDeleteModal();  // This sets deletingOrgId = null
 
-            console.log('[DELETE] selectedOrgId:', selectedOrgId, 'deletingOrgId:', deletingOrgId, 'Match:', selectedOrgId === deletingOrgId);
+            console.log('[DELETE] selectedOrgId:', selectedOrgId, 'deletedOrgId:', deletedOrgId, 'Match:', selectedOrgId === deletedOrgId);
 
             // If deleting selected org, clear selection and dashboard
-            if (selectedOrgId === deletingOrgId) {
+            if (selectedOrgId === deletedOrgId) {
                 console.log('[DELETE] Clearing dashboard for deleted org');
                 selectedOrgId = null;
                 selectedOrgData = null;
