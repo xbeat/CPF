@@ -8,7 +8,6 @@ const sqlite = require('sqlite');
 const sqlite3 = require('sqlite3');
 
 const db = require('../db');
-const dataManager = require('../lib/dataManager');
 const { generateDemoOrganizations } = require('./generate_demo_organizations');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
@@ -104,7 +103,7 @@ async function runTest() {
 
     try {
       // 2. Testa la creazione dell'organizzazione
-      const createdOrg = await dataManager.createOrganization(testOrgData);
+      const createdOrg = await db.createOrganization(testOrgData);
       if (!createdOrg || createdOrg.id !== testOrgData.id) {
         throw new Error('Organization creation returned unexpected result');
       }
@@ -128,7 +127,7 @@ async function runTest() {
           throw new Error('No valid assessments found in test data');
         }
 
-        await dataManager.saveAssessment(createdOrg.id, testAssessment, 'System');
+        await db.saveAssessment(createdOrg.id, testAssessment.indicator_id, testAssessment);
         console.log(`  ✓ Assessment saved successfully.`);
 
         // 5. Rileggi l'organizzazione e verifica l'assessment
