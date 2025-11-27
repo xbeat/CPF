@@ -1509,13 +1509,16 @@ function renderIntegratedClientForm(indicatorId, indicatorData, orgId, existingA
                         <button class="btn btn-warning" data-action="open-history-modal">📜 History</button>
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                        <span id="auto-save-status" style="color: #4CAF50; font-size: 14px; display: none;">✓ Auto-saved</span>
                         <button class="btn btn-secondary" data-action="save-data">💾 Save</button>
                         <button class="btn btn-success" data-action="export-data">💾 Export Data</button>
                         <button class="btn btn-primary" data-action="generate-report">📊 Report</button>
                         <button class="btn btn-secondary" data-action="close-indicator-modal">Close</button>
                     </div>
                 </div>
+
+                <!-- Auto-save Toast Notification (Fixed Position) -->
+                <div id="auto-save-status">Auto-saved</div>
+
                 <div class="metadata-bar" id="metadata-bar" style="display: none;"></div>
                 <div class="content" id="content">
                     <div class="empty-state">
