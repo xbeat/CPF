@@ -1013,15 +1013,37 @@ function calculateAggregates(assessments, industry = 'Other') {
     };
   }
 
-  // Overall stats
-  const overallRisk = assessmentArray.reduce((sum, a) => sum + a.bayesian_score, 0) / assessmentArray.length;
-  const overallConfidence = assessmentArray.reduce((sum, a) => sum + a.confidence, 0) / assessmentArray.length;
+  // BUGFIX: Filter out assessments with score = 0 (considered as "not assessed")
+  // This ensures overall_risk and overall_confidence calculations match the completion logic
+  const validAssessments = assessmentArray.filter(a => a.bayesian_score > 0);
 
-  // By category
+  // If no valid assessments, return defaults
+  if (validAssessments.length === 0) {
+    return {
+      overall_risk: 0.0,  // No valid assessments = no risk data
+      overall_confidence: 0.0,
+      trend: 'stable',
+      by_category: {},
+      completion: {
+        total_indicators: 100,
+        assessed_indicators: 0,
+        percentage: 0.0,
+        missing_indicators: generateAllIndicatorIds()
+      },
+      last_calculated: new Date().toISOString()
+    };
+  }
+
+  // Overall stats - now using only valid assessments (score > 0)
+  const overallRisk = validAssessments.reduce((sum, a) => sum + a.bayesian_score, 0) / validAssessments.length;
+  const overallConfidence = validAssessments.reduce((sum, a) => sum + a.confidence, 0) / validAssessments.length;
+
+  // By category - also filter out score=0 assessments
   const byCategory = {};
   for (let cat = 1; cat <= 10; cat++) {
     const catKey = cat.toString();
-    const catAssessments = assessmentArray.filter(a => a.indicator_id.startsWith(`${cat}.`));
+    // BUGFIX: Filter category assessments to include only those with score > 0
+    const catAssessments = validAssessments.filter(a => a.indicator_id.startsWith(`${cat}.`));
 
     if (catAssessments.length > 0) {
       const avgScore = catAssessments.reduce((sum, a) => sum + a.bayesian_score, 0) / catAssessments.length;
