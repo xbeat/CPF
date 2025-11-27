@@ -351,10 +351,11 @@ async function confirmDeleteOrganization() {
 
         if (result.success) {
             showAlert('✅ Organization deleted successfully!', 'success');
-            closeDeleteOrgModal();
+            const deletedOrgId = deletingOrgId;  // Save BEFORE closing modal
+            closeDeleteOrgModal();  // This sets deletingOrgId = null
 
             // If deleting currently selected org, clear selection
-            if (currentOrgId === deletingOrgId) {
+            if (currentOrgId === deletedOrgId) {
                 currentOrgId = null;
                 document.getElementById('org-detail').style.display = 'none';
                 document.getElementById('empty-state').style.display = 'block';
