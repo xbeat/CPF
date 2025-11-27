@@ -161,6 +161,10 @@ async function createOrganization(orgData) {
 }
 
 async function saveAssessment(orgId, indicatorId, assessmentData) {
+    console.log(`\n💾 [saveAssessment] Saving assessment for ${orgId} / ${indicatorId}`);
+    console.log(`   ├─ bayesian_score: ${assessmentData.bayesian_score}`);
+    console.log(`   └─ confidence: ${assessmentData.confidence}`);
+
     const organization = await readOrganization(orgId);
     if (!organization) throw new Error(`Organization with ID ${orgId} not found.`);
 
@@ -173,6 +177,7 @@ async function saveAssessment(orgId, indicatorId, assessmentData) {
 
     // Save organization with updated aggregates
     await writeOrganization(orgId, organization);
+    console.log(`   ✓ Organization file saved with updated aggregates`);
 
     // Update index with new stats
     await module.exports.updateOrganizationInIndex(organization);
@@ -448,7 +453,10 @@ function calculateMaturityModel(assessments, byCategory, industry) {
  */
 function calculateAggregates(assessments, industry = 'Other') {
   const assessmentArray = Object.values(assessments);
+  console.log(`\n📊 [calculateAggregates] Calculating for ${assessmentArray.length} total assessments`);
+
   if (assessmentArray.length === 0) {
+    console.log(`   ⚠️  No assessments found - returning defaults`);
     return {
       overall_risk: 0.5,
       overall_confidence: 0.0,
@@ -468,9 +476,14 @@ function calculateAggregates(assessments, industry = 'Other') {
   // This ensures overall_risk and overall_confidence calculations match the completion logic
   // An assessment is valid only if BOTH score and confidence are > 0
   const validAssessments = assessmentArray.filter(a => a.bayesian_score > 0 && a.confidence > 0);
+  const filteredCount = assessmentArray.length - validAssessments.length;
+
+  console.log(`   ├─ Valid assessments (score>0 AND confidence>0): ${validAssessments.length}`);
+  console.log(`   ├─ Filtered out (score=0 OR confidence=0): ${filteredCount}`);
 
   // If no valid assessments, return defaults
   if (validAssessments.length === 0) {
+    console.log(`   ⚠️  No valid assessments - returning 0.0 risk/confidence\n`);
     return {
       overall_risk: 0.0,  // No valid assessments = no risk data
       overall_confidence: 0.0,
@@ -489,6 +502,8 @@ function calculateAggregates(assessments, industry = 'Other') {
   // Overall stats - now using only valid assessments (score > 0)
   const overallRisk = validAssessments.reduce((sum, a) => sum + a.bayesian_score, 0) / validAssessments.length;
   const overallConfidence = validAssessments.reduce((sum, a) => sum + a.confidence, 0) / validAssessments.length;
+  console.log(`   ├─ Calculated overall_risk: ${overallRisk.toFixed(4)}`);
+  console.log(`   └─ Calculated overall_confidence: ${overallConfidence.toFixed(4)}`);
 
   // By category - also filter out score=0 assessments
   const byCategory = {};
@@ -687,6 +702,11 @@ module.exports = {
   writeOrganizationsIndex,
   // Update organization in index (used after restore, assessment save, etc.)
   updateOrganizationInIndex: async (orgData) => {
+    console.log(`🔄 [updateOrganizationInIndex] Updating index for: ${orgData.id}`);
+    console.log(`   ├─ overall_risk: ${orgData.aggregates.overall_risk}`);
+    console.log(`   ├─ overall_confidence: ${orgData.aggregates.overall_confidence}`);
+    console.log(`   └─ assessed_indicators: ${orgData.aggregates.completion.assessed_indicators}`);
+
     const index = await readOrganizationsIndex();
     const existingIndex = index.organizations.findIndex(o => o.id === orgData.id);
 
@@ -708,15 +728,22 @@ module.exports = {
       }
     };
 
+    console.log(`   📝 Index entry stats:`);
+    console.log(`      ├─ overall_risk: ${indexEntry.stats.overall_risk}`);
+    console.log(`      └─ avg_confidence: ${indexEntry.stats.avg_confidence}`);
+
     if (existingIndex >= 0) {
       index.organizations[existingIndex] = indexEntry;
+      console.log(`   ✓ Updated existing entry at index ${existingIndex}`);
     } else {
       index.organizations.push(indexEntry);
+      console.log(`   ✓ Added new entry (total: ${index.organizations.length})`);
     }
 
     index.metadata.total_organizations = index.organizations.filter(o => !o.deleted_at).length;
     index.metadata.last_updated = new Date().toISOString();
     await writeOrganizationsIndex(index);
+    console.log(`   ✅ Index file written successfully\n`);
   },
   removeOrganizationFromIndex: async (orgId) => {
     const index = await readOrganizationsIndex();
