@@ -2797,8 +2797,11 @@ function renderMaturityTab() {
     ];
 
     let certPathHTML = '';
+    // Support both eligible_for (db_json) and eligible (dataManager) structures
+    const eligibleList = mm.certification_path.eligible_for || mm.certification_path.eligible || [];
+
     certifications.forEach(cert => {
-        const isEligible = mm.certification_path.eligible_for.includes(cert.id);
+        const isEligible = eligibleList.includes(cert.id);
         const isCurrent = mm.certification_path.current_certification === cert.id;
 
         certPathHTML += `
