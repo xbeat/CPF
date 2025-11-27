@@ -85,6 +85,12 @@ async function loadAllData() {
 
         organizations = data.organizations || [];
 
+        // DEBUG: Log what we received from API
+        console.log(`📥 [loadAllData] Received ${organizations.length} organizations from API`);
+        organizations.forEach(org => {
+            console.log(`   ${org.id}: risk=${org.stats?.overall_risk}, confidence=${org.stats?.avg_confidence}`);
+        });
+
         // Load category descriptions
         await loadCategoryDescriptions();
 
