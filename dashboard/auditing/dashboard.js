@@ -1781,65 +1781,6 @@ window.dashboardCloseModal = function() {
     closeIndicatorModal();
 };
 
-async function editAssessmentFromModal() {
-    if (!selectedIndicatorId || !selectedOrgId) return;
-
-    // CRITICAL: Save these values BEFORE closing modal
-    const indicatorId = selectedIndicatorId;
-    const orgId = selectedOrgId;
-
-    // Get current assessment data
-    const assessment = selectedOrgData.assessments[indicatorId];
-
-    console.log('✏️ Edit Assessment (IFRAME):', { indicatorId, orgId, assessment });
-
-    // Close the detail modal
-    closeIndicatorModal();
-
-    // Open OLD CLIENT in IFRAME
-    document.getElementById('indicatorModalTitle').textContent = `Indicator ${indicatorId} - Edit Assessment (IFRAME)`;
-    document.getElementById('indicatorModal').classList.add('active');
-    pushModal('indicatorModal');
-
-    // Add fullscreen class for client modal
-    const modalContent = document.querySelector('#indicatorModal .modal-content');
-    modalContent.classList.add('fullscreen-client');
-
-    const content = document.getElementById('indicatorModalContent');
-
-    // Show delete button only (hide edit since we're already editing)
-    document.getElementById('deleteAssessmentBtn').style.display = 'inline-block';
-    document.getElementById('openIntegratedBtn').style.display = 'none';
-
-    // Create iframe with OLD client
-    const iframeUrl = `/dashboard/client/index.html?org_id=${orgId}&indicator_id=${indicatorId}`;
-
-    content.innerHTML = `
-        <div style="width: 100%; height: 80vh; position: relative;">
-            <iframe
-                id="clientIframe"
-                src="${iframeUrl}"
-                style="width: 100%; height: 100%; border: none; border-radius: 8px;"
-                onload="console.log('Iframe loaded')">
-            </iframe>
-        </div>
-    `;
-
-    // Pass assessment data to iframe via postMessage when it loads
-    const iframe = document.getElementById('clientIframe');
-    iframe.addEventListener('load', () => {
-        console.log('📨 Sending assessment data to iframe:', assessment);
-        iframe.contentWindow.postMessage({
-            type: 'LOAD_ASSESSMENT',
-            data: {
-                indicatorId: indicatorId,
-                orgId: orgId,
-                assessment: assessment
-            }
-        }, '*');
-    });
-}
-
 // View assessment details from edit form (opens in separate modal)
 async function viewAssessmentDetailsFromEdit(indicatorId) {
     if (!selectedOrgId) return;
