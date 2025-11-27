@@ -2436,19 +2436,26 @@ async function confirmDelete() {
             showAlert('Organization deleted successfully', 'success');
             closeDeleteModal();
 
+            console.log('[DELETE] selectedOrgId:', selectedOrgId, 'deletingOrgId:', deletingOrgId, 'Match:', selectedOrgId === deletingOrgId);
+
             // If deleting selected org, clear selection and dashboard
             if (selectedOrgId === deletingOrgId) {
+                console.log('[DELETE] Clearing dashboard for deleted org');
                 selectedOrgId = null;
                 selectedOrgData = null;
 
                 // Hide assessment section and show empty state
                 const assessmentSection = document.getElementById('assessmentSection');
+                console.log('[DELETE] assessmentSection:', assessmentSection, 'classes before:', assessmentSection?.className);
                 if (assessmentSection) {
                     assessmentSection.classList.add('hidden');
+                    console.log('[DELETE] classes after add hidden:', assessmentSection.className);
                 }
                 const emptyState = document.getElementById('emptyState');
+                console.log('[DELETE] emptyState:', emptyState, 'display before:', emptyState?.style.display);
                 if (emptyState) {
                     emptyState.style.display = 'block';
+                    console.log('[DELETE] display after:', emptyState.style.display);
                 }
 
                 // Clear all tab contents (only if they exist)
@@ -2466,9 +2473,14 @@ async function confirmDelete() {
                 if (prioritizationTable) prioritizationTable.innerHTML = '';
                 const maturityTab = document.getElementById('maturityTab');
                 if (maturityTab) maturityTab.innerHTML = '';
+                console.log('[DELETE] Dashboard cleared');
+            } else {
+                console.log('[DELETE] NOT clearing - org not selected');
             }
 
+            console.log('[DELETE] Calling loadAllData, selectedOrgId is now:', selectedOrgId);
             await loadAllData();
+            console.log('[DELETE] loadAllData complete');
         } else {
             showAlert('Failed to delete organization: ' + result.error, 'error');
         }
