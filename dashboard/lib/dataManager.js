@@ -1013,9 +1013,10 @@ function calculateAggregates(assessments, industry = 'Other') {
     };
   }
 
-  // BUGFIX: Filter out assessments with score = 0 (considered as "not assessed")
+  // BUGFIX: Filter out assessments with score = 0 OR confidence = 0 (considered as "not assessed")
   // This ensures overall_risk and overall_confidence calculations match the completion logic
-  const validAssessments = assessmentArray.filter(a => a.bayesian_score > 0);
+  // An assessment is valid only if BOTH score and confidence are > 0
+  const validAssessments = assessmentArray.filter(a => a.bayesian_score > 0 && a.confidence > 0);
 
   // If no valid assessments, return defaults
   if (validAssessments.length === 0) {
@@ -1061,9 +1062,10 @@ function calculateAggregates(assessments, industry = 'Other') {
 
   // Completion
   const allIndicators = generateAllIndicatorIds();
-  // Conta solo assessment con score > 0 (score=0 significa reset/non valutato)
+  // Conta solo assessment con score > 0 AND confidence > 0 (considered as "assessed")
+  // This ensures consistency with overall_risk and overall_confidence calculations
   const assessedIndicators = Object.keys(assessments).filter(id =>
-    assessments[id] && assessments[id].bayesian_score > 0
+    assessments[id] && assessments[id].bayesian_score > 0 && assessments[id].confidence > 0
   );
   const missingIndicators = allIndicators.filter(id => !assessedIndicators.includes(id));
 
