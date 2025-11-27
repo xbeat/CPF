@@ -164,11 +164,19 @@ async function saveAssessment(orgId, indicatorId, assessmentData) {
     const organization = await readOrganization(orgId);
     if (!organization) throw new Error(`Organization with ID ${orgId} not found.`);
 
-    // Only save the assessment data - aggregates calculation is handled by dataManager
+    // Save the assessment data
     organization.assessments[indicatorId] = assessmentData;
     organization.metadata.updated_at = new Date().toISOString();
 
+    // Recalculate aggregates after adding/updating assessment
+    organization.aggregates = calculateAggregates(organization.assessments, organization.metadata.industry);
+
+    // Save organization with updated aggregates
     await writeOrganization(orgId, organization);
+
+    // Update index with new stats
+    await module.exports.updateOrganizationInIndex(organization);
+
     return { success: true };
 }
 
