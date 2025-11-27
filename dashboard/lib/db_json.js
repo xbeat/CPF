@@ -475,7 +475,8 @@ function calculateAggregates(assessments, industry = 'Other') {
   // BUGFIX: Filter out assessments with score = 0 OR confidence = 0 (considered as "not assessed")
   // This ensures overall_risk and overall_confidence calculations match the completion logic
   // An assessment is valid only if BOTH score and confidence are > 0
-  const validAssessments = assessmentArray.filter(a => a.bayesian_score > 0 && a.confidence > 0);
+  // IMPORTANT: Convert to Number to handle both JSON (numbers) and PostgreSQL (strings)
+  const validAssessments = assessmentArray.filter(a => Number(a.bayesian_score) > 0 && Number(a.confidence) > 0);
   const filteredCount = assessmentArray.length - validAssessments.length;
 
   console.log(`   ├─ Valid assessments (score>0 AND confidence>0): ${validAssessments.length}`);
@@ -500,8 +501,9 @@ function calculateAggregates(assessments, industry = 'Other') {
   }
 
   // Overall stats - now using only valid assessments (score > 0)
-  const overallRisk = validAssessments.reduce((sum, a) => sum + a.bayesian_score, 0) / validAssessments.length;
-  const overallConfidence = validAssessments.reduce((sum, a) => sum + a.confidence, 0) / validAssessments.length;
+  // IMPORTANT: Convert to Number to handle both JSON (numbers) and PostgreSQL (strings)
+  const overallRisk = validAssessments.reduce((sum, a) => sum + Number(a.bayesian_score), 0) / validAssessments.length;
+  const overallConfidence = validAssessments.reduce((sum, a) => sum + Number(a.confidence), 0) / validAssessments.length;
   console.log(`   ├─ Calculated overall_risk: ${overallRisk.toFixed(4)}`);
   console.log(`   └─ Calculated overall_confidence: ${overallConfidence.toFixed(4)}`);
 
@@ -512,8 +514,9 @@ function calculateAggregates(assessments, industry = 'Other') {
     // BUGFIX: Filter category assessments to include only those with score > 0
     const catAssessments = validAssessments.filter(a => a.indicator_id.startsWith(`${cat}.`));
     if (catAssessments.length > 0) {
-      const avgScore = catAssessments.reduce((sum, a) => sum + a.bayesian_score, 0) / catAssessments.length;
-      const avgConfidence = catAssessments.reduce((sum, a) => sum + a.confidence, 0) / catAssessments.length;
+      // IMPORTANT: Convert to Number to handle both JSON (numbers) and PostgreSQL (strings)
+      const avgScore = catAssessments.reduce((sum, a) => sum + Number(a.bayesian_score), 0) / catAssessments.length;
+      const avgConfidence = catAssessments.reduce((sum, a) => sum + Number(a.confidence), 0) / catAssessments.length;
       byCategory[catKey] = {
         category_name: CATEGORY_NAMES[catKey],
         avg_score: parseFloat(avgScore.toFixed(4)),
@@ -528,8 +531,9 @@ function calculateAggregates(assessments, industry = 'Other') {
   const allIndicators = generateAllIndicatorIds();
   // Conta solo assessment con score > 0 AND confidence > 0 (considered as "assessed")
   // This ensures consistency with overall_risk and overall_confidence calculations
+  // IMPORTANT: Convert to Number to handle both JSON (numbers) and PostgreSQL (strings)
   const assessedIndicators = Object.keys(assessments).filter(id =>
-    assessments[id] && assessments[id].bayesian_score > 0 && assessments[id].confidence > 0
+    assessments[id] && Number(assessments[id].bayesian_score) > 0 && Number(assessments[id].confidence) > 0
   );
   const missingIndicators = allIndicators.filter(id => !assessedIndicators.includes(id));
 
