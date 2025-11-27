@@ -449,7 +449,6 @@ function writeOrganizationsIndex(index) {
  * Update organization in index
  */
 async function updateOrganizationInIndex(orgData) {
-  console.log('📋 [dataManager] updateOrganizationInIndex - delegating to db layer');
   // Delegate to database layer implementation
   return await db.updateOrganizationInIndex(orgData);
 }
@@ -748,24 +747,13 @@ function getAssessmentHistory(orgId, indicatorId) {
  * Revert assessment to specific version
  */
 async function revertAssessment(orgId, indicatorId, versionNumber, user = 'System') {
-  console.log('SERVER REVERT Step 1: Cerco history');
-  console.log('Org:', orgId, 'Indicator:', indicatorId, 'Version:', versionNumber);
-
   const history = getAssessmentHistory(orgId, indicatorId);
-  console.log('SERVER REVERT Step 2: History trovato');
-  console.log('Versioni disponibili:', history.versions.map(v => v.version));
 
   const targetVersion = history.versions.find(v => v.version === versionNumber);
 
   if (!targetVersion) {
     throw new Error(`Version ${versionNumber} not found for ${indicatorId}`);
   }
-
-  console.log('SERVER REVERT Step 3: Versione target trovata');
-  console.log('Target version number:', targetVersion.version);
-  console.log('Target timestamp:', targetVersion.timestamp);
-  console.log('Target score:', targetVersion.data?.bayesian_score);
-  console.log('Target responses keys:', targetVersion.data?.raw_data?.client_conversation?.responses ? Object.keys(targetVersion.data.raw_data.client_conversation.responses).length : 0);
 
   const orgData = await readOrganization(orgId);
 
@@ -778,24 +766,17 @@ async function revertAssessment(orgId, indicatorId, versionNumber, user = 'Syste
   }
 
   const currentAssessment = orgData.assessments[indicatorId];
-  console.log('SERVER REVERT Step 4: Current assessment prima del revert');
-  console.log('Current score:', currentAssessment?.bayesian_score);
 
   // SALVA la versione corrente nella history PRIMA di sovrascriverla!
   if (currentAssessment) {
     saveAssessmentVersion(orgId, indicatorId, currentAssessment, user);
-    console.log('✅ Versione corrente salvata nella history');
   }
 
   // Restore old version
   orgData.assessments[indicatorId] = targetVersion.data;
-  console.log('SERVER REVERT Step 5: Assessment sostituito');
-  console.log('New score:', orgData.assessments[indicatorId]?.bayesian_score);
 
   orgData.aggregates = calculateAggregates(orgData.assessments, orgData.metadata.industry);
   await writeOrganization(orgData.id, orgData);
-
-  console.log('SERVER REVERT Step 6: Salvato e completato');
 
   // Update index to reflect new stats/aggregates
   await updateOrganizationInIndex(orgData);
