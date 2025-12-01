@@ -216,8 +216,10 @@ export async function confirmDelete() {
             // If the deleted org was selected, clear selection
             if(selectedOrgId === orgId) {
                  setSelectedOrgId(null);
-                 document.getElementById('assessmentSection')?.classList.add('hidden');
-                 document.getElementById('emptyState')?.style.display = 'block';
+                 const assessmentSection = document.getElementById('assessmentSection');
+                 if(assessmentSection) assessmentSection.classList.add('hidden');
+                 const emptyState = document.getElementById('emptyState');
+                 if(emptyState) emptyState.style.display = 'block';
 
                  // Hide export buttons
                  ['exportXLSXBtn', 'exportPDFBtn', 'exportZIPBtn'].forEach(id => {
