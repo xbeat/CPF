@@ -36,7 +36,9 @@ export function createOrganizationCard(org) {
     const riskClass = risk > 0.66 ? 'high' : risk > 0.33 ? 'medium' : 'low';
     const riskLabel = risk > 0.66 ? 'High' : risk > 0.33 ? 'Medium' : 'Low';
     const assessmentsCount = org.stats?.total_assessments || 0;
-    
+    const language = org.language || 'en-US';
+    const confidence = org.stats?.avg_confidence;
+
     const flag = getFlag(org.country);
     const date = org.created_at ? new Date(org.created_at).toLocaleDateString() : 'N/A';
 
@@ -53,8 +55,10 @@ export function createOrganizationCard(org) {
         </div>
         <div class="org-stats-detailed">
             <div class="stat-row"><span>Created</span><span>${date}</span></div>
+            <div class="stat-row"><span>Language</span><span>${language}</span></div>
             <div class="stat-row"><span>Assessments</span><span>${assessmentsCount}/100 (${completion}%)</span></div>
-            <div class="stat-row"><span>Risk</span><span class="stat-value ${riskClass}">${riskLabel} (${(risk * 100).toFixed(0)}%)</span></div>
+            <div class="stat-row"><span>Risk Level</span><span class="stat-value ${riskClass}">${riskLabel} (${(risk * 100).toFixed(0)}%)</span></div>
+            <div class="stat-row"><span>Confidence</span><span>${typeof confidence === 'number' ? (confidence * 100).toFixed(0) + '%' : 'N/A'}</span></div>
         </div>
     `;
     return item;
