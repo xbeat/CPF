@@ -185,8 +185,6 @@ export function renderRiskHeatmap(org) {
         if (data) {
             const risk = (data.avg_score * 100).toFixed(1);
             const riskClass = data.avg_score < 0.3 ? 'risk-low' : data.avg_score < 0.7 ? 'risk-medium' : 'risk-high';
-            const riskColor = data.avg_score < 0.3 ? '#22c55e' : data.avg_score < 0.7 ? '#f59e0b' : '#ef4444';
-            const riskBadge = data.avg_score < 0.3 ? '🟢' : data.avg_score < 0.7 ? '🟡' : '🔴';
 
             html += `
                 <div class="category-card" style="position: relative;">
@@ -195,14 +193,11 @@ export function renderRiskHeatmap(org) {
                             ${cat}. ${name}
                         </div>
                         <div class="category-stats">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 20px;">${riskBadge}</span>
-                                <span class="category-risk ${riskClass}">${risk}%</span>
-                            </div>
+                            <div class="category-risk ${riskClass}">${risk}%</div>
                             <div class="category-completion">${data.completion_percentage}% complete</div>
                         </div>
                         <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width:${data.completion_percentage}%; background:${riskColor};"></div>
+                            <div class="progress-bar-fill" style="width:${data.completion_percentage}%"></div>
                         </div>
                         <div style="font-size:12px;color:var(--text-light);margin-top:8px;">
                             ${data.total_assessments}/10 assessed • Conf: ${(data.avg_confidence * 100).toFixed(0)}%
