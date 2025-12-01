@@ -34,9 +34,9 @@ export function renderFieldKit(data) {
     if (metadataBar) {
         metadataBar.style.display = 'grid';
         metadataBar.innerHTML = `
-            <div class="meta-field" style="grid-column: 1 / -1; background: #f8fafc; padding: 12px 16px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #64748b;">
-                <label style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 600; display: block; margin-bottom: 4px;">Organization</label>
-                <div style="font-size: 16px; font-weight: 600; color: #1e293b;">${currentData.metadata.client}</div>
+            <div class="meta-field" style="grid-column: 1 / -1; background: #dbeafe; padding: 16px 20px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #3b82f6;">
+                <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #2563eb; font-weight: 700; display: block; margin-bottom: 6px;">Organization</label>
+                <div style="font-size: 24px; font-weight: 700; color: #1e40af;">${currentData.metadata.client}</div>
             </div>
             <div class="meta-field">
                 <label>Assessment Date</label>
@@ -325,11 +325,30 @@ export function toggleScoreDetails() {
 }
 
 export function toggleDetailedAnalysis() {
+    console.log('🔍 toggleDetailedAnalysis called');
     const breakdown = document.getElementById('score-detailed-breakdown');
-    if (breakdown) {
-        breakdown.style.display = (breakdown.style.display === 'none') ? 'block' : 'none';
-    } else {
+    console.log('🔍 Found breakdown element:', breakdown);
+
+    if (!breakdown) {
         alert('⚠️ No score analysis available yet. Please complete the Quick Assessment section first.');
+        return;
+    }
+
+    // Check if score has been calculated
+    if (!currentScore || !currentScore.final_score) {
+        alert('⚠️ Score not calculated yet. Please complete some questions first.');
+        return;
+    }
+
+    // Toggle visibility
+    const isHidden = breakdown.style.display === 'none';
+    breakdown.style.display = isHidden ? 'block' : 'none';
+    console.log('🔍 Toggled breakdown to:', breakdown.style.display);
+
+    // Update button text
+    const button = document.querySelector('[data-action="toggle-detailed-analysis"]');
+    if (button) {
+        button.textContent = isHidden ? '📊 Hide Analysis' : '📊 Show/Hide Analysis';
     }
 }
 
