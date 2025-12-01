@@ -17,7 +17,7 @@ export async function openIntegratedClient(indicatorId, orgId) {
 
     if(modalTitle) modalTitle.style.display = 'none';
     if(modalDialog) modalDialog.classList.add('fullscreen-client');
-    if(modalActions) modalActions.style.display = 'none'; // Hide bottom action bar
+    // Keep modalActions visible and sticky for close button
 
     showModal('indicatorModal');
     if(modalContent) modalContent.innerHTML = `<div class="loading-spinner"></div> Loading Indicator ${indicatorId}...`;
@@ -39,7 +39,7 @@ export async function openIntegratedClient(indicatorId, orgId) {
                 <div class="cpf-client">
                     <div class="container" id="client-integrated-container" style="max-width:100%;margin:0;box-shadow:none;">
                         <div class="header" id="header"></div>
-                        <div class="toolbar cpf-toolbar-sticky" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <div class="toolbar" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                                 <button class="btn btn-primary" data-action="show-quick-reference">📚 Quick Reference</button>
                                 <button class="btn btn-info" data-action="toggle-detailed-analysis">📊 Show/Hide Analysis</button>
