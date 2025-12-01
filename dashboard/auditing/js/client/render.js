@@ -289,8 +289,9 @@ export function updateScoreDisplay() {
                     <div class="component-description">${currentScore.details.red_flags_list ? currentScore.details.red_flags_list.length : 0} flags detected</div>
                 </div>
                 <div class="score-component" style="border: 2px dashed #ccc; background: #fafafa;">
-                    <div class="component-label">Conversation</div>
+                    <div class="component-label">Conversation Completeness</div>
                     <div class="component-value" style="color: #666;">${(currentScore.details.conversation_breakdown ? currentScore.details.conversation_breakdown.completion_rate * 100 : 0).toFixed(0)}%</div>
+                    <div class="component-description" style="font-size: 12px; color: #666;">${currentScore.details.conversation_breakdown ? currentScore.details.conversation_breakdown.answered_questions : 0}/${currentScore.details.conversation_breakdown ? currentScore.details.conversation_breakdown.total_questions : 0} answered<br><em style="font-size: 11px;">(Informational only)</em></div>
                 </div>
             </div>
             
@@ -306,8 +307,56 @@ export function updateScoreDisplay() {
             </div>
 
             <div id="score-details-content" class="score-details-content">
-                <div class="calculation-formula">
-                     <strong>Score:</strong> (${currentScore.quick_assessment.toFixed(2)} × ${weights.quick_assessment}) + (${currentScore.red_flags.toFixed(2)} × ${weights.red_flags}) = ${currentScore.final_score.toFixed(2)}
+                <!-- Quick Assessment Breakdown -->
+                ${currentScore.details.quick_assessment_breakdown && currentScore.details.quick_assessment_breakdown.length > 0 ? `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: var(--primary);">Quick Assessment Breakdown</h4>
+                    ${currentScore.details.quick_assessment_breakdown.map(item => `
+                        <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid var(--border);">
+                            <div style="flex: 1;">
+                                <strong>${item.question}</strong>
+                            </div>
+                            <div style="text-align: right; min-width: 80px; font-weight: 600; color: var(--primary);">
+                                ${(item.weighted_score * 100).toFixed(1)}%
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                ` : ''}
+
+                <!-- Red Flags Detected -->
+                ${currentScore.details.red_flags_list && currentScore.details.red_flags_list.length > 0 ? `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: var(--danger);">Red Flags Detected</h4>
+                    ${currentScore.details.red_flags_list.map(flag => `
+                        <div style="display: flex; align-items: center; padding: 8px; background: #fee; border-left: 4px solid var(--danger); margin-bottom: 8px; border-radius: 4px;">
+                            <span style="margin-right: 10px; font-size: 20px;">⚠️</span>
+                            <div style="flex: 1;">
+                                <strong>"${flag.flag}"</strong>
+                            </div>
+                            <div style="text-align: right; min-width: 80px; font-weight: 600; color: var(--danger);">
+                                +${(flag.impact * 100).toFixed(1)}%
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                ` : ''}
+
+                <!-- Calculation Formula -->
+                <div class="calculation-formula" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
+                    <h4 style="margin: 0 0 10px 0;">Vulnerability Score Calculation:</h4>
+                    <p style="margin: 0; font-family: monospace; color: var(--text-light);">
+                        <strong>Final Score = (Quick Assessment × ${weights.quick_assessment}) + (Red Flags × ${weights.red_flags})</strong><br>
+                        Final Score = (${currentScore.quick_assessment.toFixed(3)} × ${weights.quick_assessment}) + (${currentScore.red_flags.toFixed(3)} × ${weights.red_flags})<br>
+                        <strong>Final Score = ${currentScore.final_score.toFixed(3)} (${(currentScore.final_score * 100).toFixed(1)}%)</strong>
+                    </p>
+                    ${currentScore.details.conversation_breakdown ? `
+                    <p style="margin-top: 15px; padding: 10px; background: #f0f9ff; border-radius: 6px; font-size: 13px;">
+                        <strong>Note:</strong> Conversation completeness is tracked separately for reference<br>
+                        ${currentScore.details.conversation_breakdown.answered_questions}/${currentScore.details.conversation_breakdown.total_questions} answered (${(currentScore.details.conversation_breakdown.completion_rate * 100).toFixed(0)}%)
+                        <em style="color: var(--text-light); display: block; margin-top: 5px;">(Informational only)</em>
+                    </p>
+                    ` : ''}
                 </div>
             </div>
         </div>`;

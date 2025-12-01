@@ -67,13 +67,13 @@ export function setupDashboardEventDelegation() {
             setSelectedOrgId(orgId);
             renderOrganizations(); // Update active class
             await loadOrganizationDetails(orgId);
-            
+
             const emptyState = document.getElementById('emptyState');
             if(emptyState) emptyState.style.display = 'none';
-            
+
             const assessmentSection = document.getElementById('assessmentSection');
             if(assessmentSection) assessmentSection.classList.remove('hidden');
-            
+
             // Show export buttons
             ['exportXLSXBtn', 'exportPDFBtn', 'exportZIPBtn'].forEach(id => {
                 const btn = document.getElementById(id);
