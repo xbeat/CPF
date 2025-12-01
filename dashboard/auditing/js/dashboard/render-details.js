@@ -202,7 +202,7 @@ export function renderRiskHeatmap(org) {
                             <div class="category-completion">${data.completion_percentage}% complete</div>
                         </div>
                         <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width:${risk}%; background:${riskColor};"></div>
+                            <div class="progress-bar-fill" style="width:${data.completion_percentage}%; background:${riskColor};"></div>
                         </div>
                         <div style="font-size:12px;color:var(--text-light);margin-top:8px;">
                             ${data.total_assessments}/10 assessed • Conf: ${(data.avg_confidence * 100).toFixed(0)}%
