@@ -341,7 +341,11 @@ export function toggleDetailedAnalysis() {
     }
 
     // Toggle visibility
-    const isHidden = breakdown.style.display === 'none';
+    const currentDisplay = breakdown.style.display;
+    console.log('🔍 Current display value:', currentDisplay, 'Type:', typeof currentDisplay);
+    const isHidden = (currentDisplay === 'none' || currentDisplay === '');
+    console.log('🔍 isHidden:', isHidden);
+
     breakdown.style.display = isHidden ? 'block' : 'none';
     console.log('🔍 Toggled breakdown to:', breakdown.style.display);
 
