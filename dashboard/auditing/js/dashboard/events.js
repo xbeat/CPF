@@ -55,15 +55,19 @@ export function setupDashboardEventDelegation() {
         if (action === 'open-sidebar') {
             const sidebar = document.querySelector('.sidebar');
             const dashboardMain = document.querySelector('.dashboard-main');
+            const openBtn = document.getElementById('sidebarOpenBtn');
             if(sidebar) sidebar.classList.remove('sidebar-hidden');
             if(dashboardMain) dashboardMain.classList.remove('sidebar-collapsed');
+            if(openBtn) openBtn.style.display = 'none';
             return;
         }
         if (action === 'close-sidebar') {
             const sidebar = document.querySelector('.sidebar');
             const dashboardMain = document.querySelector('.dashboard-main');
+            const openBtn = document.getElementById('sidebarOpenBtn');
             if(sidebar) sidebar.classList.add('sidebar-hidden');
             if(dashboardMain) dashboardMain.classList.add('sidebar-collapsed');
+            if(openBtn) openBtn.style.display = 'inline-flex';
             return;
         }
 
