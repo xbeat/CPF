@@ -366,7 +366,7 @@ export function closeQuickReference() {
 async function loadReferenceContent(container) {
     try {
         const lang = 'en-US'; // Potresti volerlo rendere dinamico
-        const response = await fetch(`./reference_guide_${lang}.json`);
+        const response = await fetch(`/dashboard/auditing/reference_guide_${lang}.json`);
         
         if (!response.ok) throw new Error('Reference guide file not found');
         const data = await response.json();
