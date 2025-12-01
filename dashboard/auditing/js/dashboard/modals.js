@@ -37,9 +37,9 @@ export async function openIntegratedClient(indicatorId, orgId) {
         if(modalContent) {
             modalContent.innerHTML = `
                 <div class="cpf-client">
-                    <div class="container" id="client-integrated-container" style="max-width:100%;margin:0;box-shadow:none;border-radius:0;">
+                    <div class="container" id="client-integrated-container" style="max-width:100%;margin:0;box-shadow:none;">
                         <div class="header" id="header"></div>
-                        <div class="toolbar" style="position: sticky; top: 0; z-index: 100; background: white; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div class="toolbar cpf-toolbar-sticky" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                                 <button class="btn btn-primary" data-action="show-quick-reference">📚 Quick Reference</button>
                                 <button class="btn btn-info" data-action="toggle-detailed-analysis">📊 Show/Hide Analysis</button>
@@ -177,12 +177,12 @@ export async function editOrganization(orgId) {
         document.getElementById('orgId').value = org.id;
         document.getElementById('orgId').disabled = true;
         document.getElementById('orgName').value = org.name;
-        document.getElementById('orgIndustry').value = org.industry || 'Technology';
-        document.getElementById('orgSize').value = org.size || 'Medium';
-        document.getElementById('orgCountry').value = org.country || '';
-        document.getElementById('orgLanguage').value = org.language || 'en-US';
+        document.getElementById('orgIndustry').value = org.industry;  // NO defaults - use exact values!
+        document.getElementById('orgSize').value = org.size;
+        document.getElementById('orgCountry').value = org.country;
+        document.getElementById('orgLanguage').value = org.language;
 
-        // Optional fields - now with proper notes from API
+        // Optional fields
         if(document.getElementById('orgSedeSociale')) document.getElementById('orgSedeSociale').value = org.sede_sociale || '';
         if(document.getElementById('orgPartitaIva')) document.getElementById('orgPartitaIva').value = org.partita_iva || '';
         if(document.getElementById('orgNotes')) document.getElementById('orgNotes').value = org.notes || '';
