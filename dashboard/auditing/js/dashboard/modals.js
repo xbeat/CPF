@@ -13,10 +13,12 @@ export async function openIntegratedClient(indicatorId, orgId) {
     const modalTitle = document.getElementById('indicatorModalTitle');
     const modalContent = document.getElementById('indicatorModalContent');
     const modalDialog = document.querySelector('#indicatorModal .modal-content');
-    
+    const modalActions = document.querySelector('#indicatorModal .modal-actions');
+
     if(modalTitle) modalTitle.style.display = 'none';
     if(modalDialog) modalDialog.classList.add('fullscreen-client');
-    
+    if(modalActions) modalActions.style.display = 'none'; // Hide bottom action bar
+
     showModal('indicatorModal');
     if(modalContent) modalContent.innerHTML = `<div class="loading-spinner"></div> Loading Indicator ${indicatorId}...`;
 
@@ -103,9 +105,12 @@ export async function openIntegratedClient(indicatorId, orgId) {
 export function closeIndicatorModal() {
     closeModal('indicatorModal');
     const modalDialog = document.querySelector('#indicatorModal .modal-content');
-    if(modalDialog) modalDialog.classList.remove('fullscreen-client');
     const modalTitle = document.getElementById('indicatorModalTitle');
+    const modalActions = document.querySelector('#indicatorModal .modal-actions');
+
+    if(modalDialog) modalDialog.classList.remove('fullscreen-client');
     if(modalTitle) modalTitle.style.display = 'block';
+    if(modalActions) modalActions.style.display = 'flex'; // Restore bottom action bar
 }
 
 // --- ORGANIZATION MODALS ---
