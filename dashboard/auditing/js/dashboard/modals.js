@@ -82,19 +82,22 @@ export async function openIntegratedClient(indicatorId, orgId) {
 
         // 5. Load Data (Merge existing or Reset)
         const existing = selectedOrgData.assessments?.[indicatorId];
-        
-        resetCurrentData(); 
-        
+
+        resetCurrentData();
+
+        // Always set client name from dashboard's selected organization
+        currentData.metadata.client = selectedOrgData.name;
+
         if (existing && existing.raw_data?.client_conversation) {
             currentData.responses = existing.raw_data.client_conversation.responses || {};
             if(existing.raw_data.client_conversation.metadata) {
-                currentData.metadata = { ...currentData.metadata, ...existing.raw_data.client_conversation.metadata };
+                // Merge metadata but preserve client name from dashboard
+                const { client, ...otherMetadata } = existing.raw_data.client_conversation.metadata;
+                currentData.metadata = { ...currentData.metadata, ...otherMetadata };
             }
             if(existing.raw_data.client_conversation.scores) {
                 currentData.score = existing.raw_data.client_conversation.scores;
             }
-        } else {
-            currentData.metadata.client = selectedOrgData.name;
         }
         
         currentData.fieldKit = indicatorData;
