@@ -1,4 +1,4 @@
-import { selectedOrgData, selectedOrgId } from './state.js';
+import { selectedOrgData, selectedOrgId, setSelectedOrgId } from './state.js';
 import { showModal, closeModal, showAlert, escapeHtml } from '../shared/utils.js';
 import { CATEGORY_MAP } from '../shared/config.js';
 import { organizationContext, currentData, renderFieldKit, resetCurrentData } from '../client/index.js';
@@ -205,11 +205,26 @@ export async function confirmDelete() {
     const btn = document.querySelector('[data-action="confirm-delete"]');
     const orgId = btn ? btn.dataset.deleteId : null;
     if(orgId) {
-        await deleteOrganizationAPI(orgId);
-        // If the deleted org was selected, clear selection
-        if(selectedOrgId === orgId) {
-             document.getElementById('assessmentSection').classList.add('hidden');
-             document.getElementById('emptyState').style.display = 'block';
+        const success = await deleteOrganizationAPI(orgId);
+        if (success) {
+            // Close the delete confirmation modal
+            closeDeleteModal();
+
+            // Reload all organizations
+            await loadAllData();
+
+            // If the deleted org was selected, clear selection
+            if(selectedOrgId === orgId) {
+                 setSelectedOrgId(null);
+                 document.getElementById('assessmentSection')?.classList.add('hidden');
+                 document.getElementById('emptyState')?.style.display = 'block';
+
+                 // Hide export buttons
+                 ['exportXLSXBtn', 'exportPDFBtn', 'exportZIPBtn'].forEach(id => {
+                     const el = document.getElementById(id);
+                     if(el) el.style.display = 'none';
+                 });
+            }
         }
     }
 }

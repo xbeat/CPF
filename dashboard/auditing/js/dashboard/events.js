@@ -67,18 +67,24 @@ export function setupDashboardEventDelegation() {
             setSelectedOrgId(orgId);
             renderOrganizations(); // Update active class
             await loadOrganizationDetails(orgId);
-            
+
             const emptyState = document.getElementById('emptyState');
             if(emptyState) emptyState.style.display = 'none';
-            
+
             const assessmentSection = document.getElementById('assessmentSection');
             if(assessmentSection) assessmentSection.classList.remove('hidden');
-            
+
             // Show export buttons
             ['exportXLSXBtn', 'exportPDFBtn', 'exportZIPBtn'].forEach(id => {
                 const btn = document.getElementById(id);
                 if(btn) btn.style.display = 'inline-block';
             });
+
+            // Close sidebar on mobile/tablet after selection
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && window.innerWidth < 1024) {
+                sidebar.classList.remove('active');
+            }
         }
         
         // 2. Org CRUD Modals
