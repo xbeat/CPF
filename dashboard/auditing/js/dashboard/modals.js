@@ -714,12 +714,72 @@ export async function openHistoryModalFromDetails() {
 }
 
 // Category modal
-export function openCategoryModal(catKey) { 
+export function openCategoryModal(catKey) {
     showModal('categoryModal');
     const title = document.getElementById('category-modal-title');
     const body = document.getElementById('category-modal-body');
-    if(title) title.textContent = `Category ${catKey}`;
-    // Load content dynamically or static...
-    if(body) body.innerHTML = `<p>Details for category ${catKey}...</p>`;
+
+    // Import categoryDescriptions from state
+    import('./state.js').then(state => {
+        const categoryDescriptions = state.categoryDescriptions;
+
+        if (!categoryDescriptions || !categoryDescriptions.categories || !categoryDescriptions.categories[catKey]) {
+            if(title) title.textContent = `Category ${catKey}`;
+            if(body) body.innerHTML = `<p>Category descriptions not loaded yet.</p>`;
+            return;
+        }
+
+        // Detect current language (default to 'en')
+        const currentLang = getCurrentLanguage();
+        const langKey = currentLang === 'it' ? 'it' : 'en';
+        const cat = categoryDescriptions.categories[catKey][langKey];
+
+        if (!cat) {
+            if(title) title.textContent = `Category ${catKey}`;
+            if(body) body.innerHTML = `<p>No data available for this category.</p>`;
+            return;
+        }
+
+        if(title) title.textContent = `${catKey}. ${cat.name}`;
+
+        if(body) {
+            body.innerHTML = `
+                <div style="line-height: 1.6;">
+                    <!-- Short Description -->
+                    <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 20px;">
+                        <strong style="color: var(--primary);">📌 Overview:</strong>
+                        <p style="margin: 8px 0 0 0;">${cat.short_description}</p>
+                    </div>
+
+                    <!-- Full Description -->
+                    <h4 style="margin: 0 0 10px 0; color: var(--primary);">Description</h4>
+                    <p style="margin: 0 0 20px 0; color: var(--text-dark);">${cat.description}</p>
+
+                    <!-- Examples -->
+                    ${cat.examples && cat.examples.length > 0 ? `
+                    <h4 style="margin: 0 0 10px 0; color: var(--primary);">Common Attack Examples</h4>
+                    <ul style="margin: 0 0 20px 0; padding-left: 20px;">
+                        ${cat.examples.map(ex => `<li style="margin-bottom: 8px;">${ex}</li>`).join('')}
+                    </ul>
+                    ` : ''}
+
+                    <!-- Mitigation -->
+                    ${cat.mitigation ? `
+                    <h4 style="margin: 0 0 10px 0; color: var(--success);">🛡️ Mitigation Strategies</h4>
+                    <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; border-left: 4px solid var(--success);">
+                        <p style="margin: 0;">${cat.mitigation}</p>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+    });
 }
+
 export function closeCategoryModal() { closeModal('categoryModal'); }
+
+// Helper per ottenere la lingua corrente
+function getCurrentLanguage() {
+    // Controlla localStorage o default 'en'
+    return localStorage.getItem('language') || 'en';
+}
