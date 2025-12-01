@@ -251,9 +251,11 @@ export function setupDashboardEventDelegation() {
     if (orgForm) {
         orgForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
+            const editingId = getEditingOrgId();
+
             const orgData = {
-                id: document.getElementById('orgId').value.trim(),
+                id: editingId || document.getElementById('orgId').value.trim(),
                 name: document.getElementById('orgName').value.trim(),
                 industry: document.getElementById('orgIndustry').value,
                 size: document.getElementById('orgSize').value,
@@ -263,17 +265,16 @@ export function setupDashboardEventDelegation() {
                 partita_iva: document.getElementById('orgPartitaIva') ? document.getElementById('orgPartitaIva').value.trim() : '',
                 notes: document.getElementById('orgNotes') ? document.getElementById('orgNotes').value.trim() : ''
             };
-            
+
             const fetchEl = document.getElementById('fetchIndicators');
             const fetchIndicators = fetchEl ? fetchEl.checked : false;
             const saveBtn = document.getElementById('saveOrgBtn');
-            
+
             if(saveBtn) {
                 saveBtn.disabled = true;
                 saveBtn.textContent = 'Saving...';
             }
-            
-            const editingId = getEditingOrgId();
+
             saveOrganizationAPI(orgData, !!editingId, fetchIndicators).then(success => {
                 if (!success && saveBtn) {
                     saveBtn.disabled = false;
