@@ -382,6 +382,7 @@ async function loadReferenceContent(container) {
         `;
 
         data.categories.forEach(category => {
+            console.log('🔍 Loading category:', category.id, 'with', category.indicators?.length || 0, 'indicators');
             html += `
                 <div class="category-accordion">
                     <div class="category-header" data-action="toggle-category" data-category-id="${category.id}">
@@ -391,16 +392,16 @@ async function loadReferenceContent(container) {
                             <span style="margin-left:10px;">${category.name}</span>
                         </div>
                     </div>
-                    <div class="category-body" id="category-${category.id}" style="display:none;padding-left:30px;">
-                        <div class="indicator-list">
-                            ${category.indicators.map(indicator => `
-                                <div class="indicator-item" style="cursor:pointer;padding:5px;" 
-                                     data-action="load-indicator" 
+                    <div class="category-body" id="category-${category.id}" style="display:none;padding-left:30px;background:#f9fafb;">
+                        <div class="indicator-list" style="padding:10px;">
+                            ${category.indicators && category.indicators.length > 0 ? category.indicators.map(indicator => `
+                                <div class="indicator-item" style="cursor:pointer;padding:8px;margin:4px 0;background:white;border:1px solid #e5e7eb;border-radius:4px;display:flex;gap:8px;"
+                                     data-action="load-indicator"
                                      data-indicator-id="${indicator.id}">
-                                    <span class="indicator-code"><strong>${indicator.id}</strong></span>
-                                    <span class="indicator-title">${indicator.title}</span>
+                                    <span class="indicator-code" style="font-weight:600;color:#3b82f6;min-width:40px;">${indicator.id}</span>
+                                    <span class="indicator-title" style="color:#1f2937;">${indicator.title}</span>
                                 </div>
-                            `).join('')}
+                            `).join('') : '<div style="padding:10px;color:#9ca3af;">No indicators available</div>'}
                         </div>
                     </div>
                 </div>
