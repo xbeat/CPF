@@ -37,18 +37,20 @@ export async function openIntegratedClient(indicatorId, orgId) {
                 <div class="cpf-client">
                     <div class="container" id="client-integrated-container" style="max-width:100%;margin:0;box-shadow:none;">
                         <div class="header" id="header"></div>
-                        <div class="toolbar" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;padding:10px;background:#eee;">
-                            <div>
-                                <button class="btn btn-info" data-action="show-quick-reference">📚 Ref</button>
-                                <button class="btn btn-light" data-action="toggle-detailed-analysis">📊 Analysis</button>
-                            </div>
-                            <div>
-                                <button class="btn btn-secondary" data-action="save-data">💾 Save</button>
-                                <button class="btn btn-success" data-action="export-data">📥 Export</button>
-                                <button class="btn btn-primary" data-action="generate-report">📄 Report</button>
+                        <div class="toolbar" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                                <button class="btn btn-info" data-action="show-quick-reference">📚 Quick Reference</button>
+                                <button class="btn btn-info" data-action="toggle-detailed-analysis">📊 Show/Hide Analysis</button>
+                                <button class="btn btn-light" data-action="trigger-file-input" data-file-input-id="file-input-integrated">📂 Import Data</button>
+                                <input type="file" id="file-input-integrated" accept=".json" data-action="import-json" style="display: none;">
+                                <button class="btn btn-danger" data-action="reset-compile-form" title="Reset assessment">🗑️ Reset</button>
                                 <button class="btn btn-warning" data-action="open-history-modal-from-details">📜 History</button>
-                                <button class="btn btn-danger" data-action="reset-compile-form">🗑️ Reset</button>
-                                <button class="btn btn-dark" data-action="close-indicator-modal">❌ Close</button>
+                            </div>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                                <button class="btn btn-secondary" data-action="save-data">💾 Save</button>
+                                <button class="btn btn-success" data-action="export-data">💾 Export Data</button>
+                                <button class="btn btn-primary" data-action="generate-report">📊 Report</button>
+                                <button class="btn btn-secondary" data-action="close-indicator-modal">Close</button>
                             </div>
                         </div>
                         <div id="auto-save-status" class="hide">Auto-saved</div>
