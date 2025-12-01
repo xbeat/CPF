@@ -39,9 +39,9 @@ export async function openIntegratedClient(indicatorId, orgId) {
                 <div class="cpf-client">
                     <div class="container" id="client-integrated-container" style="max-width:100%;margin:0;box-shadow:none;border-radius:0;">
                         <div class="header" id="header"></div>
-                        <div class="toolbar" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <div class="toolbar" style="position: sticky; top: 0; z-index: 100; background: white; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                                <button class="btn btn-info" data-action="show-quick-reference">📚 Quick Reference</button>
+                                <button class="btn btn-primary" data-action="show-quick-reference">📚 Quick Reference</button>
                                 <button class="btn btn-info" data-action="toggle-detailed-analysis">📊 Show/Hide Analysis</button>
                                 <button class="btn btn-light" data-action="trigger-file-input" data-file-input-id="file-input-integrated">📂 Import Data</button>
                                 <input type="file" id="file-input-integrated" accept=".json" data-action="import-json" style="display: none;">
