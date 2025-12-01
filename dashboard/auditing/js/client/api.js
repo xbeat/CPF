@@ -210,10 +210,185 @@ export async function resetAll() {
 }
 
 export function generateReport() {
-    // Basic implementation placeholder - full implementation is in original file
-    // Due to size limits, if you need the full PDF generation code, I can provide it separately
-    // or you can copy the generateReport function from your original client-integrated.js
-    if (!currentData.fieldKit) { alert('No assessment loaded'); return; }
-    if (!currentScore || !currentScore.final_score) calculateIndicatorScore();
-    alert("Report generation triggered. (Copy full function if needed)");
+    if (!currentData.fieldKit) {
+        alert('No assessment loaded');
+        return;
+    }
+
+    // Calculate score if not already calculated
+    if (!currentScore || !currentScore.final_score) {
+        calculateIndicatorScore();
+    }
+
+    // Check if score calculation was successful
+    if (!currentScore || currentScore.final_score === undefined) {
+        alert('Unable to calculate score. Please fill in the Quick Assessment section first.');
+        return;
+    }
+
+    const maturityConfig = currentData.fieldKit.scoring?.maturity_levels?.[currentScore.maturity_level] || {
+        color: '#888888',
+        label: 'Unknown',
+        description: 'Score calculated but maturity level not configured'
+    };
+    const scorePercentage = (currentScore.final_score * 100).toFixed(1);
+
+    const report = document.createElement('div');
+    report.innerHTML = `
+        <div style="font-family: Arial; padding: 20px; max-width: 800px;">
+            <div style="background: #1a1a2e; color: white; padding: 20px; margin-bottom: 20px;">
+                <h1>CPF Indicator ${currentData.fieldKit.indicator}</h1>
+                <h2>${currentData.fieldKit.title}</h2>
+            </div>
+            <div style="margin-bottom: 20px; padding: 10px; background: #f5f5f5;">
+                <strong>Date:</strong> ${currentData.metadata.date} |
+                <strong>Auditor:</strong> ${currentData.metadata.auditor}<br>
+                <strong>Client:</strong> ${currentData.metadata.client} |
+                <strong>Status:</strong> ${currentData.metadata.status}
+            </div>
+
+            <!-- SCORE SECTION IN PDF -->
+            <div style="margin-bottom: 30px; padding: 20px; background: ${maturityConfig?.color}15; border-left: 5px solid ${maturityConfig?.color};">
+                <h2 style="margin: 0 0 15px 0; color: ${maturityConfig?.color};">
+                    📊 Assessment Score: ${scorePercentage}%
+                </h2>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Quick Assessment (70%)</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #1a1a2e;">
+                            ${(currentScore.quick_assessment * 100).toFixed(1)}%
+                        </div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Red Flags (30%)</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #1a1a2e;">
+                            ${(currentScore.red_flags * 100).toFixed(1)}%
+                        </div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; border: 2px dashed #888;">
+                        <div style="font-size: 12px; color: #888; margin-bottom: 5px;">Conversation Completeness</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #666;">
+                            ${currentScore.details.conversation_breakdown.answered_questions}/${currentScore.details.conversation_breakdown.total_questions}
+                        </div>
+                        <div style="font-size: 10px; color: #999; margin-top: 3px;">(informational)</div>
+                    </div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px;">
+                    <strong style="color: ${maturityConfig?.color};">Maturity Level: ${maturityConfig?.label}</strong><br>
+                    <span style="font-size: 14px; color: #555;">${maturityConfig?.description}</span>
+                </div>
+            </div>
+
+            ${currentData.fieldKit.sections.map((section, sIdx) => `
+                <div style="margin-bottom: 20px; page-break-inside: avoid;">
+                    <div style="background: #e0e0e0; padding: 10px; margin-bottom: 10px;">
+                        <strong>${section.icon || '📋'} ${section.title}</strong>
+                    </div>
+                    ${(section.items || []).map((item, iIdx) => {
+                        const itemId = `s${sIdx}_i${iIdx}`;
+                        const response = currentData.responses[itemId];
+                        if (item.type === 'radio-list' || item.type === 'radio-group') {
+                            const selectedOption = item.options ? item.options.find(opt => opt.value === response) : null;
+                            const selectedLabel = selectedOption ? selectedOption.label : 'N/A';
+                            return `<div style="margin: 10px 0;">
+                                <div><strong>${item.number ? item.number + '. ' : ''}${item.title || ''}</strong></div>
+                                <div style="margin-left: 20px;">→ ${selectedLabel}</div>
+                            </div>`;
+                        }
+                        else if (item.type === 'checkbox') {
+                            return `<div style="margin: 5px 0;">${response ? '[✓]' : '[ ]'} ${item.label || ''}</div>`;
+                        }
+                        else if (item.type === 'input') {
+                            return `<div style="margin: 10px 0;">
+                                <strong>${item.label || ''}:</strong><br>
+                                <div style="margin-left: 20px;">${response || '_____'}</div>
+                            </div>`;
+                        }
+                        return '';
+                    }).join('')}
+                    ${(section.subsections || []).map((sub, subIdx) => `
+                        <div style="margin: 15px 0; padding-left: 10px; border-left: 3px solid #ccc;">
+                            <h3 style="font-size: 14px; margin: 10px 0;">${sub.title || ''}</h3>
+                            ${(sub.items || []).map((item, iIdx) => {
+                                const itemId = `s${sIdx}_sub${subIdx}_i${iIdx}`;
+                                const response = currentData.responses[itemId];
+                               if (item.type === 'radio-list' || item.type === 'radio-group') {
+                                    const selectedOption = item.options ? item.options.find(opt => opt.value === response) : null;
+                                    const selectedLabel = selectedOption ? selectedOption.label : 'N/A';
+                                    return `<div style="margin: 10px 0;">
+                                        <div><strong>${item.number ? item.number + '. ' : ''}${item.title || ''}</strong></div>
+                                        <div style="margin-left: 20px;">→ ${selectedLabel}</div>
+                                    </div>`;
+                                }
+                                else if (item.type === 'checkbox') {
+                                    return `<div style="margin: 5px 0;">${response ? '[✓]' : '[ ]'} ${item.label || ''}</div>`;
+                                }
+                                else if (item.type === 'question') {
+                                    let questionHTML = `<div style="margin: 15px 0;">
+                                        <div style="font-weight: bold; color: #1a1a2e; margin-bottom: 8px;">${item.text || ''}</div>`;
+
+                                    if (item.followups) {
+                                        item.followups.forEach((followup, fIdx) => {
+                                            const followupId = `${itemId}_f${fIdx}`;
+                                            const followupResponse = currentData.responses[followupId] || '';
+                                            questionHTML += `
+                                                <div style="margin-left: 20px; margin-top: 8px;">
+                                                    <em style="font-size: 13px; color: #666;">${followup.text}</em><br>
+                                                    <div style="margin-left: 15px; padding: 8px; background: #f9f9f9; border-left: 3px solid #ddd;">
+                                                        ${followupResponse || '<em style="color: #999;">No response</em>'}
+                                                    </div>
+                                                </div>
+                                            `;
+                                        });
+                                    }
+                                    questionHTML += `</div>`;
+                                    return questionHTML;
+                                }
+                                return '';
+                            }).join('')}
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('')}
+
+            <div style="margin-top: 30px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+                <small style="color: #666;">
+                    Generated by CPF Field Kit Client | ${new Date().toLocaleString()} |
+                    Framework: cpf3.org
+                </small>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(report);
+    const opt = {
+        margin: 10,
+        filename: `cpf_${currentData.fieldKit.indicator}_${currentData.metadata.client || 'client'}_${currentData.metadata.date}_SCORED.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    // Check if html2pdf library is loaded
+    if (typeof html2pdf === 'undefined') {
+        document.body.removeChild(report);
+        alert('❌ PDF generation library not loaded. Please check your internet connection and reload the page.');
+        return;
+    }
+
+    try {
+        html2pdf().from(report).set(opt).save().then(() => {
+            document.body.removeChild(report);
+            console.log('✅ PDF generated successfully');
+        }).catch(err => {
+            document.body.removeChild(report);
+            console.error('PDF generation error:', err);
+            alert('❌ PDF generation failed: ' + err.message);
+        });
+    } catch (error) {
+        document.body.removeChild(report);
+        console.error('PDF generation error:', error);
+        alert('❌ PDF generation failed: ' + error.message);
+    }
 }
