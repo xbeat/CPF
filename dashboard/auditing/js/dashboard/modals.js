@@ -150,7 +150,8 @@ export function openCreateOrgModal() {
 }
 
 export function editOrganization(orgId) {
-    import('./state.js').then(({organizations}) => {
+    import('./state.js').then(({getOrganizations}) => {
+        const organizations = getOrganizations();
         const org = organizations.find(o => o.id === orgId);
         if(!org) return;
         

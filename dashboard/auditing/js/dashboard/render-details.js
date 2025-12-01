@@ -1,9 +1,10 @@
-import { selectedOrgData, categoryFilter } from './state.js';
+import { getSelectedOrgData, getCategoryFilter } from './state.js';
 import { renderSecurityRadarChart } from './charts.js';
 import { renderMaturityTab } from './maturity.js';
 import { renderPrioritizationTable } from './render-details-table.js';
 
 export function renderAssessmentDetails() {
+    const selectedOrgData = getSelectedOrgData();
     if (!selectedOrgData) return;
     const org = selectedOrgData;
 
@@ -26,7 +27,7 @@ export function renderAssessmentDetails() {
     if (matTab && matTab.classList.contains('active')) {
         renderMaturityTab();
     }
-    
+
     // Restore Zoom
     restoreMatrixZoom();
 }
@@ -69,6 +70,7 @@ export function renderProgressMatrix(org) {
     if (!matrix) return;
 
     // Filter Info
+    const categoryFilter = getCategoryFilter();
     if (filterDiv) {
         if (categoryFilter) {
             filterDiv.innerHTML = `
@@ -88,11 +90,11 @@ export function renderProgressMatrix(org) {
         for (let ind = 1; ind <= 10; ind++) {
             const id = `${cat}.${ind}`;
             const assessment = assessments[id];
-            
+
             // Check completed status
             const hasScore = assessment && typeof assessment.bayesian_score === 'number';
-            const completed = hasScore && (assessment.bayesian_score >= 0); 
-            
+            const completed = hasScore && (assessment.bayesian_score >= 0);
+
             let cellClass = '';
             let title = `${id} - Not Assessed`;
             let riskPercent = '';
@@ -102,7 +104,7 @@ export function renderProgressMatrix(org) {
                 if (score <= 0.33) cellClass = 'risk-low';
                 else if (score <= 0.66) cellClass = 'risk-medium';
                 else cellClass = 'risk-high';
-                
+
                 riskPercent = (score * 100).toFixed(0) + '%';
                 title = `${id} - Risk: ${riskPercent}`;
             }

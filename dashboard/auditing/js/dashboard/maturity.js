@@ -1,9 +1,10 @@
-import { selectedOrgData } from './state.js';
+import { getSelectedOrgData } from './state.js';
 
 export function renderMaturityTab() {
     const container = document.getElementById('maturityTab');
     if (!container) return;
 
+    const selectedOrgData = getSelectedOrgData();
     console.log('🔍 renderMaturityTab called', selectedOrgData);
 
     if (!selectedOrgData || !selectedOrgData.aggregates) {
