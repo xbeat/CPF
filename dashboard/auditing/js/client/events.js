@@ -87,7 +87,7 @@ export function setupClientEventDelegation() {
         switch (action) {
             case 'save':
             case 'save-data':
-                saveToAPI().then(() => alert('Saved!')).catch(e => console.error(e));
+                saveToAPI().catch(e => console.error(e));
                 break;
             case 'export':
             case 'export-data':
