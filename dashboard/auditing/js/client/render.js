@@ -342,12 +342,30 @@ export function toggleDetailedAnalysis() {
 
     // Toggle visibility
     const currentDisplay = breakdown.style.display;
-    console.log('🔍 Current display value:', currentDisplay, 'Type:', typeof currentDisplay);
     const isHidden = (currentDisplay === 'none' || currentDisplay === '');
-    console.log('🔍 isHidden:', isHidden);
 
     breakdown.style.display = isHidden ? 'block' : 'none';
-    console.log('🔍 Toggled breakdown to:', breakdown.style.display);
+
+    // Debug: Check computed styles and dimensions
+    if (isHidden) {
+        setTimeout(() => {
+            const computed = window.getComputedStyle(breakdown);
+            console.log('🔍 After toggle - Computed styles:', {
+                display: computed.display,
+                height: computed.height,
+                maxHeight: computed.maxHeight,
+                overflow: computed.overflow,
+                opacity: computed.opacity,
+                visibility: computed.visibility
+            });
+            console.log('🔍 Element dimensions:', {
+                offsetHeight: breakdown.offsetHeight,
+                scrollHeight: breakdown.scrollHeight,
+                clientHeight: breakdown.clientHeight
+            });
+            console.log('🔍 Children count:', breakdown.children.length);
+        }, 100);
+    }
 
     // Update button text
     const button = document.querySelector('[data-action="toggle-detailed-analysis"]');
