@@ -383,16 +383,8 @@ export function closeHistoryModal() {
 }
 
 export async function revertToVersion(version) {
-    if(!confirm(`Revert to version ${version}?`)) return;
+    if(!confirm(`Revert to version ${version}?\n\nThis will create a new version based on the selected one.`)) return;
 
-    console.log('🔍 Debug revertToVersion:', {
-        currentHistoryOrgId,
-        currentHistoryIndicatorId,
-        organizationContext: organizationContext?.orgId,
-        selectedOrgId
-    });
-
-    // Fallback: se le variabili sono null, prova a recuperarle dal contesto
     const orgId = currentHistoryOrgId || organizationContext?.orgId || selectedOrgId;
     const indicatorId = currentHistoryIndicatorId || currentData?.fieldKit?.indicator;
 
@@ -405,22 +397,64 @@ export async function revertToVersion(version) {
         const response = await fetch(`/api/organizations/${orgId}/assessments/${indicatorId}/revert`, {
             method: 'POST',
             headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({version: version, user: 'Dashboard'})
+            body: JSON.stringify({version: version, user: 'Dashboard User'})
         });
-        const res = await response.json();
-        if(res.success) {
-            showAlert('Reverted successfully', 'success');
+        const result = await response.json();
+
+        if(result.success && result.data) {
             closeHistoryModal();
-            // Reload the integrated client with new data
-            openIntegratedClient(indicatorId, orgId);
-            // Refresh dashboard background
-            loadOrganizationDetails(orgId);
+
+            // Update selectedOrgData with data from server (DON'T reload from database!)
+            selectedOrgData.assessments[indicatorId] = result.data;
+
+            // If form is open, update it with reverted data
+            if (currentData && currentData.fieldKit && selectedOrgData) {
+                const revertedAssessment = selectedOrgData.assessments[indicatorId];
+
+                if (revertedAssessment?.raw_data?.client_conversation) {
+                    const conv = revertedAssessment.raw_data.client_conversation;
+
+                    // Update responses - ensure it's a valid object
+                    if (conv.responses && typeof conv.responses === 'object') {
+                        currentData.responses = conv.responses;
+                    } else {
+                        currentData.responses = {};
+                    }
+
+                    currentData.score = conv.scores || null;
+
+                    // Merge metadata carefully to preserve existing properties
+                    if (conv.metadata && typeof conv.metadata === 'object') {
+                        currentData.metadata = { ...currentData.metadata, ...conv.metadata };
+                    }
+
+                    // Force complete re-render by temporarily clearing fieldKit
+                    const tempFieldKit = currentData.fieldKit;
+                    currentData.fieldKit = null;
+
+                    // Use setTimeout to ensure DOM is cleared before re-rendering
+                    setTimeout(() => {
+                        currentData.fieldKit = tempFieldKit;
+                        renderFieldKit(currentData.fieldKit);
+                        showAlert(`✅ Reverted to version ${version} - Form updated`, 'success');
+                    }, 50);
+                } else {
+                    showAlert('⚠️ No data to restore', 'warning');
+                }
+            } else {
+                showAlert('Reverted', 'success');
+            }
+
+            // Reload only dashboard/sidebar to update stats
+            if (window.dashboardReloadOrganization) {
+                await window.dashboardReloadOrganization();
+            }
         } else {
-            throw new Error(res.error);
+            throw new Error(result.error || 'No data returned');
         }
-    } catch(e) {
-        console.error('Revert error:', e);
-        showAlert(e.message, 'error');
+    } catch(error) {
+        console.error('Error reverting version:', error);
+        showAlert(`Failed to revert: ${error.message}`, 'error');
     }
 }
 
