@@ -76,7 +76,7 @@ async function loadCategoryDescriptions() {
 }
 
 // --- Trash Count ---
-async function loadTrashCount() {
+export async function loadTrashCount() {
     try {
         const response = await fetch('/api/trash', { cache: 'no-cache' });
         const data = await response.json();
@@ -97,16 +97,18 @@ async function loadTrashCount() {
 }
 
 // --- CRUD Operations ---
-export async function saveOrganizationAPI(orgData, isEdit, fetchIndicators) {
+export async function saveOrganizationAPI(orgData, editingOrgId, fetchIndicators) {
     try {
         let response;
-        if (isEdit) {
-            response = await fetch(`/api/organizations/${orgData.id}`, {
+        if (editingOrgId) {
+            // Update existing - use editingOrgId from state, not from orgData
+            response = await fetch(`/api/organizations/${editingOrgId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orgData)
             });
         } else {
+            // Create new
             response = await fetch('/api/organizations', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -117,9 +119,9 @@ export async function saveOrganizationAPI(orgData, isEdit, fetchIndicators) {
         const result = await response.json();
 
         if (result.success) {
-            showAlert(isEdit ? 'Organization updated successfully!' : 'Organization created successfully!', 'success');
+            showAlert(editingOrgId ? 'Organization updated successfully!' : 'Organization created successfully!', 'success');
 
-            if (!isEdit && fetchIndicators) {
+            if (!editingOrgId && fetchIndicators) {
                 await fetchIndicatorsFromGitHub(orgData.id, orgData.language);
             }
 
