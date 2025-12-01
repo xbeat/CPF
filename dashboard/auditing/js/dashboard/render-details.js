@@ -131,52 +131,13 @@ export function renderRiskHeatmap(org) {
 
     const categories = org.aggregates?.by_category || {};
 
-    // Calculate overall risk
-    let totalRisk = 0;
-    let categoryCount = 0;
-    Object.values(categories).forEach(cat => {
-        if (cat && cat.avg_score !== undefined) {
-            totalRisk += cat.avg_score;
-            categoryCount++;
-        }
-    });
-    const overallRisk = categoryCount > 0 ? totalRisk / categoryCount : 0;
-    const overallRiskPercent = (overallRisk * 100).toFixed(1);
-    const overallRiskLabel = overallRisk < 0.3 ? 'Low Risk' : overallRisk < 0.7 ? 'Medium Risk' : 'High Risk';
-    const overallRiskColor = overallRisk < 0.3 ? '#22c55e' : overallRisk < 0.7 ? '#f59e0b' : '#ef4444';
-    const overallRiskBadge = overallRisk < 0.3 ? '🟢' : overallRisk < 0.7 ? '🟡' : '🔴';
-
-    // Add overall risk header
-    let html = `
-        <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 200px;">
-                    <div style="font-size: 14px; color: var(--text-light); margin-bottom: 5px;">Overall Risk:</div>
-                    <div style="font-size: 28px; font-weight: 700; color: ${overallRiskColor};">
-                        ${overallRiskBadge} ${overallRiskLabel}
-                    </div>
-                </div>
-                <div style="flex: 1; min-width: 200px;">
-                    <div style="font-size: 14px; color: var(--text-light); margin-bottom: 5px;">Risk Score:</div>
-                    <div style="font-size: 28px; font-weight: 700; color: ${overallRiskColor};">
-                        ${overallRiskPercent}%
-                    </div>
-                </div>
-                <div style="flex: 2; min-width: 300px;">
-                    <div style="width: 100%; height: 30px; background: #e5e7eb; border-radius: 15px; overflow: hidden;">
-                        <div style="height: 100%; background: ${overallRiskColor}; width: ${overallRiskPercent}%;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
     const catNames = {
         '1':'Authority', '2':'Temporal', '3':'Social', '4':'Affective',
         '5':'Cognitive', '6':'Group', '7':'Stress', '8':'Unconscious',
         '9':'AI-Enhanced', '10':'Convergent'
     };
 
+    let html = '';
     for (let cat = 1; cat <= 10; cat++) {
         const catKey = String(cat);
         const data = categories[catKey];
