@@ -1,8 +1,8 @@
-import { 
-    loadAllData, loadOrganizationDetails, saveOrganizationAPI 
+import {
+    loadAllData, loadOrganizationDetails, saveOrganizationAPI
 } from './api.js';
-import { 
-    setSelectedOrgId, selectedOrgData
+import {
+    setSelectedOrgId, selectedOrgData, getEditingOrgId, setEditingOrgId
 } from './state.js';
 import { 
     renderOrganizations, filterAndSortOrganizations 
@@ -32,12 +32,6 @@ import {
 import { 
     saveToAPI, exportData, generateReport, importJSON 
 } from '../client/api.js';
-
-// Variabili locali per gestire lo stato della modale di edit
-let editingOrgId = null; 
-
-export function setEditingOrgId(id) { editingOrgId = id; }
-export function getEditingOrgId() { return editingOrgId; }
 
 export function setupDashboardEventDelegation() {
     
@@ -279,10 +273,11 @@ export function setupDashboardEventDelegation() {
                 saveBtn.textContent = 'Saving...';
             }
             
-            saveOrganizationAPI(orgData, !!editingOrgId, fetchIndicators).then(success => {
+            const editingId = getEditingOrgId();
+            saveOrganizationAPI(orgData, !!editingId, fetchIndicators).then(success => {
                 if (!success && saveBtn) {
                     saveBtn.disabled = false;
-                    saveBtn.textContent = editingOrgId ? 'Save Changes' : 'Create Organization';
+                    saveBtn.textContent = editingId ? 'Save Changes' : 'Create Organization';
                 }
             });
         });

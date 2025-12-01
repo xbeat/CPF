@@ -1,9 +1,8 @@
-import { selectedOrgData, selectedOrgId, setSelectedOrgId } from './state.js';
+import { selectedOrgData, selectedOrgId, setSelectedOrgId, setEditingOrgId } from './state.js';
 import { showModal, closeModal, showAlert, escapeHtml } from '../shared/utils.js';
 import { CATEGORY_MAP } from '../shared/config.js';
 import { organizationContext, currentData, renderFieldKit, resetCurrentData } from '../client/index.js';
 import { loadAllData, deleteOrganizationAPI, loadOrganizationDetails } from './api.js';
-import { setEditingOrgId } from './events.js';
 import { renderOrganizations } from './render-list.js';
 
 // --- INTEGRATED CLIENT MODAL ---
