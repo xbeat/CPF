@@ -260,16 +260,27 @@ export function setupDashboardEventDelegation() {
 
             const editingId = getEditingOrgId();
 
+            // Get all values from form inputs (like original code)
+            const orgId = document.getElementById('orgId').value.trim();
+            const orgName = document.getElementById('orgName').value.trim();
+            const orgIndustry = document.getElementById('orgIndustry').value;
+            const orgSize = document.getElementById('orgSize').value;
+            const orgCountry = document.getElementById('orgCountry').value.trim().toUpperCase();
+            const orgLanguage = document.getElementById('orgLanguage').value;
+            const orgSedeSociale = document.getElementById('orgSedeSociale') ? document.getElementById('orgSedeSociale').value.trim() : '';
+            const orgPartitaIva = document.getElementById('orgPartitaIva') ? document.getElementById('orgPartitaIva').value.trim() : '';
+            const orgNotes = document.getElementById('orgNotes') ? document.getElementById('orgNotes').value.trim() : '';
+
             const orgData = {
-                id: editingId || document.getElementById('orgId').value.trim(),
-                name: document.getElementById('orgName').value.trim(),
-                industry: document.getElementById('orgIndustry').value,
-                size: document.getElementById('orgSize').value,
-                country: document.getElementById('orgCountry').value.trim().toUpperCase(),
-                language: document.getElementById('orgLanguage').value,
-                sede_sociale: document.getElementById('orgSedeSociale') ? document.getElementById('orgSedeSociale').value.trim() : '',
-                partita_iva: document.getElementById('orgPartitaIva') ? document.getElementById('orgPartitaIva').value.trim() : '',
-                notes: document.getElementById('orgNotes') ? document.getElementById('orgNotes').value.trim() : ''
+                id: orgId, // Use value from input field like original code
+                name: orgName,
+                industry: orgIndustry,
+                size: orgSize,
+                country: orgCountry,
+                language: orgLanguage,
+                sede_sociale: orgSedeSociale,
+                partita_iva: orgPartitaIva,
+                notes: orgNotes
             };
 
             const fetchEl = document.getElementById('fetchIndicators');
