@@ -3,6 +3,7 @@ import { showModal, closeModal, showAlert, escapeHtml } from '../shared/utils.js
 import { CATEGORY_MAP } from '../shared/config.js';
 import { organizationContext, currentData, renderFieldKit, resetCurrentData } from '../client/index.js';
 import { loadAllData, deleteOrganizationAPI, loadOrganizationDetails } from './api.js';
+import { setEditingOrgId } from './events.js';
 import { renderOrganizations } from './render-list.js';
 
 // --- INTEGRATED CLIENT MODAL ---
@@ -125,7 +126,7 @@ export function closeIndicatorModal() {
 // --- ORGANIZATION MODALS ---
 
 export function openCreateOrgModal() {
-    import('./events.js').then(m => m.setEditingOrgId(null));
+    setEditingOrgId(null);
     const title = document.getElementById('orgModalTitle');
     if(title) title.textContent = 'Create New Organization';
     
@@ -162,7 +163,8 @@ export async function editOrganization(orgId) {
 
         const org = result.data.metadata;
 
-        import('./events.js').then(m => m.setEditingOrgId(orgId));
+        // Set editing mode BEFORE opening modal
+        setEditingOrgId(orgId);
 
         const title = document.getElementById('orgModalTitle');
         if(title) title.textContent = 'Edit Organization';

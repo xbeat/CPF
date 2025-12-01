@@ -53,13 +53,15 @@ function renderRiskSummary(org) {
     const risk = org.aggregates?.overall_risk ?? 0.5;
     const riskPercent = (risk * 100).toFixed(1);
     const riskClass = risk < 0.3 ? 'risk-low' : risk < 0.7 ? 'risk-medium' : 'risk-high';
-    const riskLabel = risk < 0.3 ? 'Low' : risk < 0.7 ? 'Medium' : 'High';
+    const riskLabel = risk < 0.3 ? 'Low Risk' : risk < 0.7 ? 'Medium Risk' : 'High Risk';
+    const riskBadge = risk < 0.3 ? '🟢' : risk < 0.7 ? '🟡' : '🔴';
+    const riskColor = risk < 0.3 ? '#22c55e' : risk < 0.7 ? '#f59e0b' : '#ef4444';
 
     el.innerHTML = `
         <div style="display: flex; gap: 30px; align-items: center; margin-top: 10px;">
-            <div><span style="font-size:14px;color:var(--text-light);">Overall Risk</span><span style="font-size:24px;font-weight:700;margin-left:10px;" class="${riskClass}">${riskLabel}</span></div>
+            <div><span style="font-size:14px;color:var(--text-light);">Overall Risk</span><span style="font-size:24px;font-weight:700;margin-left:10px;color:${riskColor};">${riskBadge} ${riskLabel}</span></div>
             <div><span style="font-size:14px;color:var(--text-light);">Score</span><span style="font-size:24px;font-weight:700;color:var(--primary);margin-left:10px;">${riskPercent}%</span></div>
-            <div style="flex:1;"><div class="progress-bar-large"><div class="progress-bar-large-fill" style="width:${riskPercent}%;background:linear-gradient(90deg, var(--danger), #dc2626);">${riskPercent}%</div></div></div>
+            <div style="flex:1;"><div class="progress-bar-large"><div class="progress-bar-large-fill" style="width:${riskPercent}%;background:${riskColor};">${riskPercent}%</div></div></div>
         </div>
     `;
 }
