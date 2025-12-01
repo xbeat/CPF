@@ -34,6 +34,20 @@ export function renderFieldKit(data) {
     if (metadataBar) {
         metadataBar.style.display = 'grid';
         metadataBar.innerHTML = `
+            <div class="meta-field" style="grid-column: 1 / -1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 8px; backdrop-filter: blur(10px);">
+                        <span style="font-size: 20px;">🏢</span>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.8); font-weight: 600; display: block; margin-bottom: 4px;">Organization</label>
+                        <div style="font-size: 18px; font-weight: 700; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">${currentData.metadata.client}</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 6px; font-size: 11px; color: white; font-weight: 600;">
+                        READ-ONLY
+                    </div>
+                </div>
+            </div>
             <div class="meta-field">
                 <label>Assessment Date</label>
                 <input type="date" value="${currentData.metadata.date}" data-meta-field="date">
@@ -41,10 +55,6 @@ export function renderFieldKit(data) {
             <div class="meta-field">
                 <label>Auditor</label>
                 <input type="text" value="${currentData.metadata.auditor}" data-meta-field="auditor" placeholder="Your name">
-            </div>
-            <div class="meta-field">
-                <label>Client</label>
-                <input type="text" value="${currentData.metadata.client}" data-meta-field="client" placeholder="Client name">
             </div>
             <div class="meta-field">
                 <label>Status</label>
