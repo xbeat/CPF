@@ -405,22 +405,22 @@ async function loadReferenceContent(container) {
             html += `
                 <div class="category-accordion">
                     <div class="category-header" data-action="toggle-category" data-category-id="${category.id}">
-                        <div class="category-title" style="display:flex;align-items:center;cursor:pointer;">
-                            <span class="category-arrow" style="margin-right:10px;">▶</span>
+                        <div class="category-title">
+                            <span class="category-arrow">▶</span>
                             <span class="category-badge">${category.id}.x</span>
-                            <span style="margin-left:10px;">${category.name}</span>
+                            <span>${category.name}</span>
                         </div>
                     </div>
-                    <div class="category-body" id="category-${category.id}" style="display:none;padding-left:30px;background:#f9fafb;">
-                        <div class="indicator-list" style="padding:10px;">
+                    <div class="category-body" id="category-${category.id}">
+                        <div class="indicator-list">
                             ${category.indicators && category.indicators.length > 0 ? category.indicators.map(indicator => `
-                                <div class="indicator-item" style="cursor:pointer;padding:8px;margin:4px 0;background:white;border:1px solid #e5e7eb;border-radius:4px;display:flex;gap:8px;"
+                                <div class="indicator-item"
                                      data-action="load-indicator"
                                      data-indicator-id="${indicator.id}">
-                                    <span class="indicator-code" style="font-weight:600;color:#3b82f6;min-width:40px;">${indicator.id}</span>
-                                    <span class="indicator-title" style="color:#1f2937;">${indicator.title}</span>
+                                    <span class="indicator-code">${indicator.id}</span>
+                                    <span class="indicator-title">${indicator.title}</span>
                                 </div>
-                            `).join('') : '<div style="padding:10px;color:#9ca3af;">No indicators available</div>'}
+                            `).join('') : '<div class="no-indicators">No indicators available</div>'}
                         </div>
                     </div>
                 </div>
@@ -452,21 +452,29 @@ async function loadReferenceContent(container) {
 export function toggleCategory(categoryId) {
     console.log('🔍 toggleCategory called with:', categoryId);
     const body = document.getElementById(`category-${categoryId}`);
-    console.log('🔍 Found body element:', body);
+    const header = body ? body.previousElementSibling : null;
+
     if (!body) {
         console.warn('⚠️ Category body not found for:', categoryId);
         return;
     }
 
-    // Toggle visibility
-    const isVisible = body.style.display === 'block';
-    body.style.display = isVisible ? 'none' : 'block';
-    console.log('🔍 Toggled to:', body.style.display);
+    // Toggle active class (CSS handles max-height transition)
+    const isActive = body.classList.contains('active');
+    body.classList.toggle('active');
+
+    // Toggle header active class
+    if (header) {
+        header.classList.toggle('active');
+    }
 
     // Rotate arrow
-    const header = body.previousElementSibling;
     const arrow = header ? header.querySelector('.category-arrow') : null;
-    if (arrow) arrow.textContent = isVisible ? '▶' : '▼';
+    if (arrow) {
+        arrow.textContent = isActive ? '▶' : '▼';
+    }
+
+    console.log('🔍 Category toggled. Active:', !isActive);
 }
 
 export async function loadIndicatorFromReference(indicatorId) {
