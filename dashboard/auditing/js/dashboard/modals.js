@@ -1,5 +1,5 @@
 import { selectedOrgData, selectedOrgId } from './state.js';
-import { showModal, closeModal, showAlert } from '../shared/utils.js';
+import { showModal, closeModal, showAlert, escapeHtml } from '../shared/utils.js';
 import { CATEGORY_MAP } from '../shared/config.js';
 import { organizationContext, currentData, renderFieldKit, resetCurrentData } from '../client/index.js';
 import { loadAllData, deleteOrganizationAPI, loadOrganizationDetails } from './api.js';
@@ -294,42 +294,79 @@ export async function openHistoryModal() {
     showModal('historyModal');
     const content = document.getElementById('historyContent');
     const title = document.getElementById('historyModalTitle');
-    if(title) title.textContent = `History: ${indicatorId}`;
-    
+    if(title) title.textContent = `📜 Version History - ${indicatorId}`;
+
     content.innerHTML = '<div class="loading-spinner"></div> Loading...';
 
     try {
         const response = await fetch(`/api/organizations/${orgId}/assessments/${indicatorId}/history`);
         const data = await response.json();
 
-        if (!data.success || !data.history?.versions?.length) {
-            content.innerHTML = `<div class="empty-state"><p>No history available.</p></div>`;
+        if (!data.success || data.history.versions.length === 0) {
+            content.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📜</div>
+                    <div class="empty-state-title">No History</div>
+                    <div class="empty-state-text">No previous versions found</div>
+                </div>
+            `;
             return;
         }
 
+        // Render history (newest first)
         const versions = [...data.history.versions].reverse();
-        let html = '<div style="padding:20px;">';
-        
-        versions.forEach((ver, idx) => {
-            const isCurrent = idx === 0;
-            const score = ver.data.bayesian_score;
-            const date = new Date(ver.timestamp).toLocaleString();
+
+        let html = '<div style="padding: 20px;">';
+
+        versions.forEach((version, index) => {
+            const isCurrent = index === 0;
+            const score = version.data.bayesian_score;
+            const confidence = version.data.confidence;
+            const timestamp = new Date(version.timestamp).toLocaleString();
+            const isReset = score === 0;
+
+            const resetBadgeRight = isCurrent ? '120px' : '10px';
             html += `
-                <div style="background:${isCurrent ? '#f0f9ff' : 'white'};border:1px solid var(--border);padding:15px;margin-bottom:10px;border-radius:8px;">
-                    <div style="display:flex;justify-content:space-between;">
-                        <div>
-                            <strong>Version ${ver.version}</strong> ${isCurrent ? '(Current)' : ''}<br>
-                            <small>${date} by ${ver.user}</small><br>
-                            Score: <strong>${score ? score.toFixed(2) : '0'}</strong>
+                <div style="background: ${isCurrent ? '#eff6ff' : 'var(--bg-gray)'}; border: 2px solid ${isCurrent ? 'var(--primary)' : 'var(--border)'}; border-radius: 10px; padding: 20px; margin-bottom: 15px; position: relative;">
+                    ${isCurrent ? '<div style="position: absolute; top: 10px; right: 10px; background: var(--primary); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">CURRENT</div>' : ''}
+                    ${isReset ? `<div style="position: absolute; top: 10px; right: ${resetBadgeRight}; background: var(--warning); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">🔄 RESET</div>` : ''}
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 18px; font-weight: 600; color: var(--primary); margin-bottom: 8px;">
+                                Version ${version.version}
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-light); margin-bottom: 12px;">
+                                <div>⏰ ${timestamp}</div>
+                                <div>👤 ${escapeHtml(version.user)}</div>
+                            </div>
+                            <div style="display: flex; gap: 20px; margin-top: 15px;">
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Score</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${score.toFixed(3)}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Confidence</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${confidence.toFixed(2)}</div>
+                                </div>
+                            </div>
                         </div>
-                        ${!isCurrent ? `<button class="btn btn-warning btn-small" data-action="revert-to-version" data-version="${ver.version}">Revert</button>` : ''}
+                        <div>
+                            <button class="btn ${isCurrent ? 'btn-primary' : 'btn-warning'} btn-small" data-action="revert-to-version" data-version="${version.version}">
+                                ${isCurrent ? '🔄 Reload This' : '↩️ Revert to This'}
+                            </button>
+                        </div>
                     </div>
-                </div>`;
+                </div>
+            `;
         });
+
         html += '</div>';
         content.innerHTML = html;
-    } catch(e) {
-        content.innerHTML = `Error: ${e.message}`;
+
+    } catch (error) {
+        console.error('Error loading history:', error);
+        showAlert('Failed to load history', 'error');
+        content.innerHTML = `<div style="padding:20px;color:red;">Error: ${error.message}</div>`;
     }
 }
 
