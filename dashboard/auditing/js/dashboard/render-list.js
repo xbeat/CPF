@@ -1,15 +1,16 @@
-import { organizations, selectedOrgId, sortDirection } from './state.js';
+import { getOrganizations, getSelectedOrgId, getSortDirection } from './state.js';
 import { escapeHtml, capitalizeFirst } from '../shared/utils.js';
 
 export function renderOrganizations() {
     const orgList = document.getElementById('org-list');
     const countEl = document.getElementById('org-count');
-    
+    const organizations = getOrganizations();
+
     if (countEl) countEl.textContent = organizations.length;
     if (!orgList) return;
 
     orgList.innerHTML = '';
-    
+
     if (!organizations || organizations.length === 0) {
         orgList.innerHTML = `<div style="padding:1rem;text-align:center;color:var(--text-light);">No organizations found</div>`;
         return;
@@ -23,6 +24,7 @@ export function renderOrganizations() {
 export function createOrganizationCard(org) {
     const item = document.createElement('div');
     item.className = 'org-item';
+    const selectedOrgId = getSelectedOrgId();
     if (selectedOrgId === org.id) item.classList.add('active');
     
     item.dataset.action = 'select-organization';
@@ -68,7 +70,9 @@ function getFlag(country) {
 export function filterAndSortOrganizations() {
     const searchVal = document.getElementById('org-search')?.value.toLowerCase().trim() || '';
     const sortValue = document.getElementById('org-sort')?.value || 'created_at';
-    
+    const organizations = getOrganizations();
+    const sortDirection = getSortDirection();
+
     // Create a working copy
     let filtered = [...organizations];
     
@@ -107,7 +111,7 @@ export function filterAndSortOrganizations() {
                 result = new Date(a.created_at || 0) - new Date(b.created_at || 0); 
                 break;
         }
-        
+
         return sortDirection === 'desc' ? -result : result;
     });
 

@@ -37,7 +37,7 @@ export function renderPrioritizationTable(org) {
     data.forEach((d, i) => {
         const riskClass = d.risk < 0.33 ? 'risk-low' : d.risk < 0.66 ? 'risk-medium' : 'risk-high';
         html += `
-            <tr data-action="open-category-modal" data-category-key="${d.cat}" class="priority-table-row" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">
+            <tr data-action="open-category-modal" data-category-key="${d.cat}" class="priority-table-row clickable-row">
                 <td style="font-weight:600;color:var(--text-light);padding:12px;">${i+1}</td>
                 <td style="font-weight:600;padding:12px;">${d.cat}. ${d.name}</td>
                 <td style="padding:12px;"><span class="stat-value ${riskClass}">${(d.risk*100).toFixed(1)}%</span></td>

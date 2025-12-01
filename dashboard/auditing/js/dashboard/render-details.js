@@ -1,9 +1,10 @@
-import { selectedOrgData, categoryFilter } from './state.js';
+import { getSelectedOrgData, getCategoryFilter } from './state.js';
 import { renderSecurityRadarChart } from './charts.js';
 import { renderMaturityTab } from './maturity.js';
 import { renderPrioritizationTable } from './render-details-table.js';
 
 export function renderAssessmentDetails() {
+    const selectedOrgData = getSelectedOrgData();
     if (!selectedOrgData) return;
     const org = selectedOrgData;
 
@@ -26,7 +27,7 @@ export function renderAssessmentDetails() {
     if (matTab && matTab.classList.contains('active')) {
         renderMaturityTab();
     }
-    
+
     // Restore Zoom
     restoreMatrixZoom();
 }
@@ -52,13 +53,15 @@ function renderRiskSummary(org) {
     const risk = org.aggregates?.overall_risk ?? 0.5;
     const riskPercent = (risk * 100).toFixed(1);
     const riskClass = risk < 0.3 ? 'risk-low' : risk < 0.7 ? 'risk-medium' : 'risk-high';
-    const riskLabel = risk < 0.3 ? 'Low' : risk < 0.7 ? 'Medium' : 'High';
+    const riskLabel = risk < 0.3 ? 'Low Risk' : risk < 0.7 ? 'Medium Risk' : 'High Risk';
+    const riskBadge = risk < 0.3 ? '🟢' : risk < 0.7 ? '🟡' : '🔴';
+    const riskColor = risk < 0.3 ? '#22c55e' : risk < 0.7 ? '#f59e0b' : '#ef4444';
 
     el.innerHTML = `
         <div style="display: flex; gap: 30px; align-items: center; margin-top: 10px;">
-            <div><span style="font-size:14px;color:var(--text-light);">Overall Risk</span><span style="font-size:24px;font-weight:700;margin-left:10px;" class="${riskClass}">${riskLabel}</span></div>
+            <div><span style="font-size:14px;color:var(--text-light);">Overall Risk</span><span style="font-size:24px;font-weight:700;margin-left:10px;color:${riskColor};">${riskBadge} ${riskLabel}</span></div>
             <div><span style="font-size:14px;color:var(--text-light);">Score</span><span style="font-size:24px;font-weight:700;color:var(--primary);margin-left:10px;">${riskPercent}%</span></div>
-            <div style="flex:1;"><div class="progress-bar-large"><div class="progress-bar-large-fill" style="width:${riskPercent}%;background:linear-gradient(90deg, var(--danger), #dc2626);">${riskPercent}%</div></div></div>
+            <div style="flex:1;"><div class="progress-bar-large"><div class="progress-bar-large-fill" style="width:${riskPercent}%;background:${riskColor};">${riskPercent}%</div></div></div>
         </div>
     `;
 }
@@ -69,6 +72,7 @@ export function renderProgressMatrix(org) {
     if (!matrix) return;
 
     // Filter Info
+    const categoryFilter = getCategoryFilter();
     if (filterDiv) {
         if (categoryFilter) {
             filterDiv.innerHTML = `
@@ -88,11 +92,11 @@ export function renderProgressMatrix(org) {
         for (let ind = 1; ind <= 10; ind++) {
             const id = `${cat}.${ind}`;
             const assessment = assessments[id];
-            
+
             // Check completed status
             const hasScore = assessment && typeof assessment.bayesian_score === 'number';
-            const completed = hasScore && (assessment.bayesian_score >= 0); 
-            
+            const completed = hasScore && (assessment.bayesian_score >= 0);
+
             let cellClass = '';
             let title = `${id} - Not Assessed`;
             let riskPercent = '';
@@ -102,7 +106,7 @@ export function renderProgressMatrix(org) {
                 if (score <= 0.33) cellClass = 'risk-low';
                 else if (score <= 0.66) cellClass = 'risk-medium';
                 else cellClass = 'risk-high';
-                
+
                 riskPercent = (score * 100).toFixed(0) + '%';
                 title = `${id} - Risk: ${riskPercent}`;
             }
@@ -129,52 +133,13 @@ export function renderRiskHeatmap(org) {
 
     const categories = org.aggregates?.by_category || {};
 
-    // Calculate overall risk
-    let totalRisk = 0;
-    let categoryCount = 0;
-    Object.values(categories).forEach(cat => {
-        if (cat && cat.avg_score !== undefined) {
-            totalRisk += cat.avg_score;
-            categoryCount++;
-        }
-    });
-    const overallRisk = categoryCount > 0 ? totalRisk / categoryCount : 0;
-    const overallRiskPercent = (overallRisk * 100).toFixed(1);
-    const overallRiskLabel = overallRisk < 0.3 ? 'Low Risk' : overallRisk < 0.7 ? 'Medium Risk' : 'High Risk';
-    const overallRiskColor = overallRisk < 0.3 ? '#22c55e' : overallRisk < 0.7 ? '#f59e0b' : '#ef4444';
-    const overallRiskBadge = overallRisk < 0.3 ? '🟢' : overallRisk < 0.7 ? '🟡' : '🔴';
-
-    // Add overall risk header
-    let html = `
-        <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 200px;">
-                    <div style="font-size: 14px; color: var(--text-light); margin-bottom: 5px;">Overall Risk:</div>
-                    <div style="font-size: 28px; font-weight: 700; color: ${overallRiskColor};">
-                        ${overallRiskBadge} ${overallRiskLabel}
-                    </div>
-                </div>
-                <div style="flex: 1; min-width: 200px;">
-                    <div style="font-size: 14px; color: var(--text-light); margin-bottom: 5px;">Risk Score:</div>
-                    <div style="font-size: 28px; font-weight: 700; color: ${overallRiskColor};">
-                        ${overallRiskPercent}%
-                    </div>
-                </div>
-                <div style="flex: 2; min-width: 300px;">
-                    <div style="width: 100%; height: 30px; background: #e5e7eb; border-radius: 15px; overflow: hidden;">
-                        <div style="height: 100%; background: ${overallRiskColor}; width: ${overallRiskPercent}%;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
     const catNames = {
         '1':'Authority', '2':'Temporal', '3':'Social', '4':'Affective',
         '5':'Cognitive', '6':'Group', '7':'Stress', '8':'Unconscious',
         '9':'AI-Enhanced', '10':'Convergent'
     };
 
+    let html = '';
     for (let cat = 1; cat <= 10; cat++) {
         const catKey = String(cat);
         const data = categories[catKey];
@@ -183,7 +148,7 @@ export function renderRiskHeatmap(org) {
         if (data) {
             const risk = (data.avg_score * 100).toFixed(1);
             const riskClass = data.avg_score < 0.3 ? 'risk-low' : data.avg_score < 0.7 ? 'risk-medium' : 'risk-high';
-            
+
             html += `
                 <div class="category-card" style="position: relative;">
                     <div style="cursor: pointer;" data-action="filter-by-category" data-category-key="${catKey}">
@@ -192,7 +157,7 @@ export function renderRiskHeatmap(org) {
                         </div>
                         <div class="category-stats">
                             <div class="category-risk ${riskClass}">${risk}%</div>
-                            <div class="category-completion">${data.completion_percentage}%</div>
+                            <div class="category-completion">${data.completion_percentage}% complete</div>
                         </div>
                         <div class="progress-bar-container">
                             <div class="progress-bar-fill" style="width:${data.completion_percentage}%"></div>
@@ -206,9 +171,10 @@ export function renderRiskHeatmap(org) {
             `;
         } else {
             html += `
-                <div class="category-card" style="opacity:0.5">
-                     <div class="category-title">${cat}. ${name} <span class="category-info-icon">❓</span></div>
+                <div class="category-card" style="opacity:0.5; position: relative;">
+                     <div class="category-title">${cat}. ${name}</div>
                      <div class="category-stats"><div>--</div><div>No data</div></div>
+                     <span data-action="open-category-modal" data-category-key="${catKey}" class="category-info-icon" style="position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 18px; z-index: 10;">❓</span>
                 </div>`;
         }
     }

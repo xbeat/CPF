@@ -1,4 +1,4 @@
-import { selectedOrgData, selectedOrgId, setSelectedOrgId } from './state.js';
+import { selectedOrgData, selectedOrgId, setSelectedOrgId, setEditingOrgId } from './state.js';
 import { showModal, closeModal, showAlert, escapeHtml } from '../shared/utils.js';
 import { CATEGORY_MAP } from '../shared/config.js';
 import { organizationContext, currentData, renderFieldKit, resetCurrentData } from '../client/index.js';
@@ -125,7 +125,7 @@ export function closeIndicatorModal() {
 // --- ORGANIZATION MODALS ---
 
 export function openCreateOrgModal() {
-    import('./events.js').then(m => m.setEditingOrgId(null));
+    setEditingOrgId(null);
     const title = document.getElementById('orgModalTitle');
     if(title) title.textContent = 'Create New Organization';
     
@@ -149,22 +149,31 @@ export function openCreateOrgModal() {
     showModal('orgModal');
 }
 
-export function editOrganization(orgId) {
-    import('./state.js').then(({organizations}) => {
-        const org = organizations.find(o => o.id === orgId);
-        if(!org) return;
-        
-        import('./events.js').then(m => m.setEditingOrgId(orgId));
-        
+export async function editOrganization(orgId) {
+    try {
+        // Fetch full organization data including notes
+        const response = await fetch(`/api/organizations/${orgId}`);
+        const result = await response.json();
+
+        if (!result.success || !result.data || !result.data.metadata) {
+            console.error('Failed to load organization data');
+            return;
+        }
+
+        const org = result.data.metadata;
+
+        // Set editing mode BEFORE opening modal
+        setEditingOrgId(orgId);
+
         const title = document.getElementById('orgModalTitle');
         if(title) title.textContent = 'Edit Organization';
-        
+
         const saveBtn = document.getElementById('saveOrgBtn');
         if(saveBtn) {
             saveBtn.textContent = 'Save Changes';
             saveBtn.disabled = false;
         }
-        
+
         document.getElementById('orgId').value = org.id;
         document.getElementById('orgId').disabled = true;
         document.getElementById('orgName').value = org.name;
@@ -172,17 +181,19 @@ export function editOrganization(orgId) {
         document.getElementById('orgSize').value = org.size || 'Medium';
         document.getElementById('orgCountry').value = org.country || '';
         document.getElementById('orgLanguage').value = org.language || 'en-US';
-        
-        // Optional fields
+
+        // Optional fields - now with proper notes from API
         if(document.getElementById('orgSedeSociale')) document.getElementById('orgSedeSociale').value = org.sede_sociale || '';
         if(document.getElementById('orgPartitaIva')) document.getElementById('orgPartitaIva').value = org.partita_iva || '';
         if(document.getElementById('orgNotes')) document.getElementById('orgNotes').value = org.notes || '';
 
         const fetchContainer = document.getElementById('fetchIndicators')?.parentElement?.parentElement;
         if(fetchContainer) fetchContainer.classList.add('hidden');
-        
+
         showModal('orgModal');
-    });
+    } catch (error) {
+        console.error('Error loading organization for editing:', error);
+    }
 }
 
 export function closeOrgModal() {
@@ -216,8 +227,10 @@ export async function confirmDelete() {
             // If the deleted org was selected, clear selection
             if(selectedOrgId === orgId) {
                  setSelectedOrgId(null);
-                 document.getElementById('assessmentSection')?.classList.add('hidden');
-                 document.getElementById('emptyState')?.style.display = 'block';
+                 const assessmentSection = document.getElementById('assessmentSection');
+                 if(assessmentSection) assessmentSection.classList.add('hidden');
+                 const emptyState = document.getElementById('emptyState');
+                 if(emptyState) emptyState.style.display = 'block';
 
                  // Hide export buttons
                  ['exportXLSXBtn', 'exportPDFBtn', 'exportZIPBtn'].forEach(id => {
@@ -730,17 +743,11 @@ export async function openHistoryModalFromDetails() {
 
 // Category modal
 export function openCategoryModal(catKey) {
-    showModal('categoryModal');
-    const title = document.getElementById('category-modal-title');
-    const body = document.getElementById('category-modal-body');
-
-    // Import categoryDescriptions from state
     import('./state.js').then(state => {
-        const categoryDescriptions = state.categoryDescriptions;
+        const categoryDescriptions = state.getCategoryDescriptions();
 
         if (!categoryDescriptions || !categoryDescriptions.categories || !categoryDescriptions.categories[catKey]) {
-            if(title) title.textContent = `Category ${catKey}`;
-            if(body) body.innerHTML = `<p>Category descriptions not loaded yet.</p>`;
+            console.warn('Category description not found:', catKey);
             return;
         }
 
@@ -750,48 +757,61 @@ export function openCategoryModal(catKey) {
         const cat = categoryDescriptions.categories[catKey][langKey];
 
         if (!cat) {
-            if(title) title.textContent = `Category ${catKey}`;
-            if(body) body.innerHTML = `<p>No data available for this category.</p>`;
+            console.warn('No category data for language:', langKey);
             return;
         }
+
+        // Set modal content
+        const title = document.getElementById('category-modal-title');
+        const body = document.getElementById('category-modal-body');
 
         if(title) title.textContent = `${catKey}. ${cat.name}`;
 
         if(body) {
             body.innerHTML = `
                 <div style="line-height: 1.6;">
-                    <!-- Short Description -->
-                    <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 20px;">
-                        <strong style="color: var(--primary);">📌 Overview:</strong>
-                        <p style="margin: 8px 0 0 0;">${cat.short_description}</p>
-                    </div>
+                    <p style="font-size: 16px; font-weight: 500; color: var(--primary); margin-bottom: 15px;">
+                        ${cat.short_description}
+                    </p>
+                    <p style="margin-bottom: 20px; color: var(--text);">
+                        ${cat.description}
+                    </p>
 
-                    <!-- Full Description -->
-                    <h4 style="margin: 0 0 10px 0; color: var(--primary);">Description</h4>
-                    <p style="margin: 0 0 20px 0; color: var(--text-dark);">${cat.description}</p>
-
-                    <!-- Examples -->
-                    ${cat.examples && cat.examples.length > 0 ? `
-                    <h4 style="margin: 0 0 10px 0; color: var(--primary);">Common Attack Examples</h4>
-                    <ul style="margin: 0 0 20px 0; padding-left: 20px;">
+                    <h4 style="color: var(--primary); margin: 20px 0 10px 0; font-size: 16px;">
+                        Common Attack Examples
+                    </h4>
+                    <ul style="margin: 0 0 20px 0; padding-left: 20px; color: var(--text);">
                         ${cat.examples.map(ex => `<li style="margin-bottom: 8px;">${ex}</li>`).join('')}
                     </ul>
-                    ` : ''}
 
-                    <!-- Mitigation -->
-                    ${cat.mitigation ? `
-                    <h4 style="margin: 0 0 10px 0; color: var(--success);">🛡️ Mitigation Strategies</h4>
-                    <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; border-left: 4px solid var(--success);">
-                        <p style="margin: 0;">${cat.mitigation}</p>
-                    </div>
-                    ` : ''}
+                    <h4 style="color: var(--primary); margin: 20px 0 10px 0; font-size: 16px;">
+                        Mitigation Strategies
+                    </h4>
+                    <p style="margin: 0; padding: 15px; background: #f0f9ff; border-left: 4px solid var(--primary); border-radius: 4px; color: var(--text);">
+                        ${cat.mitigation}
+                    </p>
                 </div>
             `;
         }
+
+        // Show modal
+        const modal = document.getElementById('category-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            if (window.pushModal) window.pushModal('category-modal');
+        }
+    }).catch(err => {
+        console.error('Error opening category modal:', err);
     });
 }
 
-export function closeCategoryModal() { closeModal('categoryModal'); }
+export function closeCategoryModal() {
+    const modal = document.getElementById('category-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        if (window.popModal) window.popModal();
+    }
+}
 
 // Helper per ottenere la lingua corrente
 function getCurrentLanguage() {

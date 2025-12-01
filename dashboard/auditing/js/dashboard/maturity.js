@@ -1,9 +1,10 @@
-import { selectedOrgData } from './state.js';
+import { getSelectedOrgData } from './state.js';
 
 export function renderMaturityTab() {
     const container = document.getElementById('maturityTab');
     if (!container) return;
 
+    const selectedOrgData = getSelectedOrgData();
     console.log('🔍 renderMaturityTab called', selectedOrgData);
 
     if (!selectedOrgData || !selectedOrgData.aggregates) {
@@ -66,23 +67,45 @@ export function renderMaturityTab() {
         setStyle('progressToNextLevel', 'display', 'none');
     }
 
-    // 4. Convergence & Benchmark
+    // 4. Convergence Index
     setText('convergenceIndexValue', mm.convergence_index.toFixed(2));
-    const convStatus = mm.convergence_index >= 0.8 ? '✅ Strong alignment' : mm.convergence_index >= 0.5 ? '⚠️ Moderate alignment' : '❌ Weak alignment';
+    let convStatus = '';
+    let convColor = '';
+    if (mm.convergence_index < 2) {
+        convStatus = '✅ Excellent - Low compound risk';
+        convColor = 'var(--success)';
+    } else if (mm.convergence_index < 5) {
+        convStatus = '⚠️ Moderate - Monitor closely';
+        convColor = 'var(--warning)';
+    } else if (mm.convergence_index < 10) {
+        convStatus = '🔴 High - Remediation needed';
+        convColor = 'var(--danger)';
+    } else {
+        convStatus = '🚨 Critical - Immediate action required';
+        convColor = 'var(--danger)';
+    }
     setText('convergenceIndexStatus', convStatus);
+    setStyle('convergenceIndexStatus', 'color', convColor);
 
+    // 5. Sector Benchmark
     setText('sectorPercentileValue', mm.sector_benchmark?.percentile ? mm.sector_benchmark.percentile.toFixed(0) + '%' : 'N/A');
-    const sectorComp = mm.sector_benchmark?.percentile >= 75 ? '🥇 Top performer' : mm.sector_benchmark?.percentile >= 50 ? '✅ Above average' : '⚠️ Below average';
-    setText('sectorComparison', sectorComp);
-
-    // 5. Domain Distribution (Green/Yellow/Red)
-    if (mm.domain_distribution) {
-        setText('greenDomainsCount', mm.domain_distribution.green || 0);
-        setText('yellowDomainsCount', mm.domain_distribution.yellow || 0);
-        setText('redDomainsCount', mm.domain_distribution.red || 0);
+    if (mm.sector_benchmark?.gap !== undefined) {
+        const gap = mm.sector_benchmark.gap;
+        const gapText = gap >= 0 ?
+            `+${gap.toFixed(1)} points above sector average` :
+            `${gap.toFixed(1)} points below sector average`;
+        setText('sectorComparison', gapText);
+        setStyle('sectorComparison', 'color', gap >= 0 ? 'var(--success)' : 'var(--danger)');
+    } else {
+        setText('sectorComparison', 'N/A');
     }
 
-    // 6. Compliance Table
+    // 6. Domain Distribution (Green/Yellow/Red)
+    setText('greenDomainsCount', mm.green_domains_count || 0);
+    setText('yellowDomainsCount', mm.yellow_domains_count || 0);
+    setText('redDomainsCount', mm.red_domains_count || 0);
+
+    // 7. Compliance Table
     const compTable = document.getElementById('complianceTableBody');
     if (compTable && mm.compliance) {
         let html = '';
@@ -236,11 +259,9 @@ function computeBasicMaturityModel(org) {
         maturity_level: maturityLevel,
         level_name: levelNames[maturityLevel],
         convergence_index: convergenceIndex,
-        domain_distribution: {
-            green: greenCount,
-            yellow: yellowCount,
-            red: redCount
-        },
+        green_domains_count: greenCount,
+        yellow_domains_count: yellowCount,
+        red_domains_count: redCount,
         compliance,
         sector_benchmark: sectorBenchmark,
         certifications: true, // Flag to show certification path

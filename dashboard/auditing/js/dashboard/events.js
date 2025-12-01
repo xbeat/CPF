@@ -1,8 +1,8 @@
-import { 
-    loadAllData, loadOrganizationDetails, saveOrganizationAPI 
+import {
+    loadAllData, loadOrganizationDetails, saveOrganizationAPI
 } from './api.js';
-import { 
-    setSelectedOrgId, selectedOrgData
+import {
+    setSelectedOrgId, selectedOrgData, getEditingOrgId, setEditingOrgId
 } from './state.js';
 import { 
     renderOrganizations, filterAndSortOrganizations 
@@ -33,12 +33,6 @@ import {
     saveToAPI, exportData, generateReport, importJSON 
 } from '../client/api.js';
 
-// Variabili locali per gestire lo stato della modale di edit
-let editingOrgId = null; 
-
-export function setEditingOrgId(id) { editingOrgId = id; }
-export function getEditingOrgId() { return editingOrgId; }
-
 export function setupDashboardEventDelegation() {
     
     // --- CLICK DELEGATION ---
@@ -53,11 +47,21 @@ export function setupDashboardEventDelegation() {
 
         // Sidebar Toggles
         if (action === 'open-sidebar') {
-            document.querySelector('.sidebar')?.classList.add('active');
+            const sidebar = document.querySelector('.sidebar');
+            const dashboardMain = document.querySelector('.dashboard-main');
+            const openBtn = document.getElementById('sidebarOpenBtn');
+            if(sidebar) sidebar.classList.remove('sidebar-hidden');
+            if(dashboardMain) dashboardMain.classList.remove('sidebar-collapsed');
+            if(openBtn) openBtn.style.display = 'none';
             return;
         }
         if (action === 'close-sidebar') {
-            document.querySelector('.sidebar')?.classList.remove('active');
+            const sidebar = document.querySelector('.sidebar');
+            const dashboardMain = document.querySelector('.dashboard-main');
+            const openBtn = document.getElementById('sidebarOpenBtn');
+            if(sidebar) sidebar.classList.add('sidebar-hidden');
+            if(dashboardMain) dashboardMain.classList.add('sidebar-collapsed');
+            if(openBtn) openBtn.style.display = 'inline-flex';
             return;
         }
 
@@ -247,9 +251,11 @@ export function setupDashboardEventDelegation() {
     if (orgForm) {
         orgForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
+            const editingId = getEditingOrgId();
+
             const orgData = {
-                id: document.getElementById('orgId').value.trim(),
+                id: editingId || document.getElementById('orgId').value.trim(),
                 name: document.getElementById('orgName').value.trim(),
                 industry: document.getElementById('orgIndustry').value,
                 size: document.getElementById('orgSize').value,
@@ -259,20 +265,20 @@ export function setupDashboardEventDelegation() {
                 partita_iva: document.getElementById('orgPartitaIva') ? document.getElementById('orgPartitaIva').value.trim() : '',
                 notes: document.getElementById('orgNotes') ? document.getElementById('orgNotes').value.trim() : ''
             };
-            
+
             const fetchEl = document.getElementById('fetchIndicators');
             const fetchIndicators = fetchEl ? fetchEl.checked : false;
             const saveBtn = document.getElementById('saveOrgBtn');
-            
+
             if(saveBtn) {
                 saveBtn.disabled = true;
                 saveBtn.textContent = 'Saving...';
             }
-            
-            saveOrganizationAPI(orgData, !!editingOrgId, fetchIndicators).then(success => {
+
+            saveOrganizationAPI(orgData, !!editingId, fetchIndicators).then(success => {
                 if (!success && saveBtn) {
                     saveBtn.disabled = false;
-                    saveBtn.textContent = editingOrgId ? 'Save Changes' : 'Create Organization';
+                    saveBtn.textContent = editingId ? 'Save Changes' : 'Create Organization';
                 }
             });
         });
