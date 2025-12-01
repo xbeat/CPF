@@ -392,3 +392,66 @@ export function generateReport() {
         alert('❌ PDF generation failed: ' + error.message);
     }
 }
+
+// Reset assessment data (for integrated client) - clears fields but keeps indicator loaded
+export async function resetIntegratedClientData() {
+    if (!confirm('⚠️ Reset this assessment?\n\nThis will clear all form data.\n\nYou can undo this using the History button.')) {
+        return;
+    }
+
+    console.log('🗑️ Resetting integrated client data');
+
+    // Clear all form inputs
+    const containers = [document.getElementById('content'), document.getElementById('client-integrated-container')];
+    containers.forEach(container => {
+        if (container) {
+            const inputs = container.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                    input.checked = false;
+                    const parent = input.closest('.checkbox-item');
+                    if (parent) parent.classList.remove('checked');
+                } else if (input.type !== 'hidden') {
+                    input.value = '';
+                }
+            });
+        }
+    });
+
+    // Save fieldKit reference before reset
+    const savedFieldKit = currentData.fieldKit;
+
+    // Reset state but keep fieldKit
+    currentData.responses = {};
+    currentData.metadata = {
+        date: new Date().toISOString().split('T')[0],
+        auditor: '',
+        client: organizationContext.orgName || '',
+        status: 'in-progress',
+        notes: ''
+    };
+    currentData.score = null;
+    currentData.fieldKit = savedFieldKit; // Restore fieldKit
+
+    // Reset score
+    if (window.resetCurrentScore) {
+        window.resetCurrentScore();
+    }
+
+    // Remove score displays
+    const scoreBar = document.getElementById('score-bar');
+    if (scoreBar) scoreBar.remove();
+    const scoreSummary = document.getElementById('score-summary-section');
+    if (scoreSummary) scoreSummary.remove();
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    if (scoreDisplay) scoreDisplay.style.display = 'none';
+
+    // Re-render the form empty
+    if (savedFieldKit) {
+        renderFieldKit(savedFieldKit);
+    }
+
+    // Show feedback
+    showAutoSaveIndicator();
+    console.log('✅ Assessment reset complete');
+}

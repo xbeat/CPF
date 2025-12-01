@@ -4,34 +4,37 @@ import {
 import {
     setSelectedOrgId, selectedOrgData, getEditingOrgId, setEditingOrgId
 } from './state.js';
-import { 
-    renderOrganizations, filterAndSortOrganizations 
+import {
+    renderOrganizations, filterAndSortOrganizations
 } from './render-list.js';
-import { 
+import {
     closeOrgModal, openTrashModal, // <--- CORRETTO: openOrgModal RIMOSSO
-    closeTrashModal, openCategoryModal, 
+    closeTrashModal, openCategoryModal,
     closeCategoryModal, closeIndicatorModal, openIntegratedClient,
-    closeDeleteModal, confirmDelete, openHistoryModal, 
-    closeHistoryModal, revertToVersion, openCreateOrgModal, 
+    closeDeleteModal, confirmDelete, openHistoryModal,
+    closeHistoryModal, revertToVersion, openCreateOrgModal,
     editOrganization, deleteOrganization,
     viewAssessmentDetailsFromEdit, closeAssessmentDetailsModal,
     deleteAssessmentFromDetails, openHistoryModalFromDetails
 } from './modals.js';
-import { 
-    exportCurrentOrgXLSX, exportCurrentOrgPDF, exportCurrentOrgZIP 
+import {
+    exportCurrentOrgXLSX, exportCurrentOrgPDF, exportCurrentOrgZIP
 } from './export.js';
-import { 
-    setMatrixZoom 
+import {
+    setMatrixZoom
 } from './render-details.js';
-import { 
-    loadIndicatorForCompile, resetCompileForm, saveAssessmentToOrg 
+import {
+    loadIndicatorForCompile, resetCompileForm, saveAssessmentToOrg
 } from './compile.js';
-import { 
-    toggleDetailedAnalysis, toggleScoreDetails 
+import {
+    toggleDetailedAnalysis, toggleScoreDetails
 } from '../client/render.js';
-import { 
-    saveToAPI, exportData, generateReport, importJSON 
+import {
+    saveToAPI, exportData, generateReport, importJSON, resetIntegratedClientData
 } from '../client/api.js';
+import {
+    renderMaturityTab
+} from './maturity.js';
 
 export function setupDashboardEventDelegation() {
     
@@ -172,13 +175,13 @@ export function setupDashboardEventDelegation() {
             const tabId = target.dataset.tab;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             target.classList.add('active');
-            
+
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             const content = document.getElementById(tabId + 'Tab');
             if(content) content.classList.add('active');
-            
+
             if (tabId === 'maturity') {
-                import('./maturity.js').then(m => m.renderMaturityTab());
+                renderMaturityTab(); // Call directly like in original code
             }
         }
 
@@ -203,7 +206,10 @@ export function setupDashboardEventDelegation() {
 
         // 13. Client Actions
         if (action === 'save-data') {
-             saveToAPI().then(() => alert('Assessment Saved')).catch(e => console.error(e));
+             saveToAPI().catch(e => console.error(e)); // FIXED: Removed unnecessary alert (toast already shown)
+        }
+        if (action === 'reset-integrated-client') {
+             resetIntegratedClientData(); // FIXED: Reset only clears fields, doesn't close modal
         }
         if (action === 'export-data') exportData();
         if (action === 'generate-report') generateReport();
@@ -275,7 +281,7 @@ export function setupDashboardEventDelegation() {
                 saveBtn.textContent = 'Saving...';
             }
 
-            saveOrganizationAPI(orgData, !!editingId, fetchIndicators).then(success => {
+            saveOrganizationAPI(orgData, editingId, fetchIndicators).then(success => {
                 if (!success && saveBtn) {
                     saveBtn.disabled = false;
                     saveBtn.textContent = editingId ? 'Save Changes' : 'Create Organization';

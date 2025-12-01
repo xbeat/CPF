@@ -2,7 +2,7 @@ import { selectedOrgData, selectedOrgId, setSelectedOrgId, setEditingOrgId } fro
 import { showModal, closeModal, showAlert, escapeHtml } from '../shared/utils.js';
 import { CATEGORY_MAP } from '../shared/config.js';
 import { organizationContext, currentData, renderFieldKit, resetCurrentData } from '../client/index.js';
-import { loadAllData, deleteOrganizationAPI, loadOrganizationDetails } from './api.js';
+import { loadAllData, deleteOrganizationAPI, loadOrganizationDetails, loadTrashCount } from './api.js';
 import { renderOrganizations } from './render-list.js';
 
 // --- INTEGRATED CLIENT MODAL ---
@@ -37,7 +37,7 @@ export async function openIntegratedClient(indicatorId, orgId) {
         if(modalContent) {
             modalContent.innerHTML = `
                 <div class="cpf-client">
-                    <div class="container" id="client-integrated-container" style="max-width:100%;margin:0;box-shadow:none;">
+                    <div class="container" id="client-integrated-container" style="max-width:100%;margin:0;box-shadow:none;border-radius:0;">
                         <div class="header" id="header"></div>
                         <div class="toolbar" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
@@ -45,7 +45,7 @@ export async function openIntegratedClient(indicatorId, orgId) {
                                 <button class="btn btn-info" data-action="toggle-detailed-analysis">📊 Show/Hide Analysis</button>
                                 <button class="btn btn-light" data-action="trigger-file-input" data-file-input-id="file-input-integrated">📂 Import Data</button>
                                 <input type="file" id="file-input-integrated" accept=".json" data-action="import-json" style="display: none;">
-                                <button class="btn btn-danger" data-action="reset-compile-form" title="Reset assessment">🗑️ Reset</button>
+                                <button class="btn btn-danger" data-action="reset-integrated-client" title="Reset assessment">🗑️ Reset</button>
                                 <button class="btn btn-primary" data-action="view-assessment-details-from-edit" data-indicator-id="${indicatorId}">📋 View Details</button>
                                 <button class="btn btn-warning" data-action="open-history-modal-from-details">📜 History</button>
                             </div>
@@ -198,6 +198,7 @@ export async function editOrganization(orgId) {
 
 export function closeOrgModal() {
     closeModal('orgModal');
+    setEditingOrgId(null); // Reset editing state
     const fetchProgress = document.getElementById('fetchProgress');
     if(fetchProgress) fetchProgress.classList.add('hidden');
 }
@@ -294,12 +295,29 @@ export async function restoreFromTrash(orgId) {
 }
 
 export async function permanentDeleteOrg(orgId, orgName) {
-    if(!confirm(`Delete ${orgName} forever?`)) return;
+    if (!confirm(`⚠️ PERMANENTLY DELETE "${orgName}"?\n\nThis action CANNOT be undone!\n\nAll assessment data will be lost forever.`)) return;
+
+    // Double confirmation
+    if (!confirm(`Are you absolutely sure? Type the org ID to confirm: ${orgId}`)) return;
+
     try {
-        await fetch(`/api/organizations/${orgId}/permanent?user=Dashboard`, { method: 'DELETE' });
-        showAlert('Deleted forever', 'success');
-        openTrashModal();
-    } catch(e) { showAlert(e.message, 'error'); }
+        const response = await fetch(`/api/organizations/${orgId}/permanent?user=Dashboard%20User`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert('Organization permanently deleted', 'success');
+            closeTrashModal(); // FIXED: Close modal instead of opening it
+            await loadTrashCount(); // Update trash count
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error permanently deleting organization:', error);
+        showAlert(`Failed to delete: ${error.message}`, 'error');
+    }
 }
 
 // --- HISTORY MODALS ---
