@@ -44,6 +44,7 @@ export async function openIntegratedClient(indicatorId, orgId) {
                                 <button class="btn btn-light" data-action="trigger-file-input" data-file-input-id="file-input-integrated">📂 Import Data</button>
                                 <input type="file" id="file-input-integrated" accept=".json" data-action="import-json" style="display: none;">
                                 <button class="btn btn-danger" data-action="reset-compile-form" title="Reset assessment">🗑️ Reset</button>
+                                <button class="btn btn-primary" data-action="view-assessment-details-from-edit" data-indicator-id="${indicatorId}">📋 View Details</button>
                                 <button class="btn btn-warning" data-action="open-history-modal-from-details">📜 History</button>
                             </div>
                             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
@@ -378,8 +379,25 @@ export function closeHistoryModal() {
 
 export async function revertToVersion(version) {
     if(!confirm(`Revert to version ${version}?`)) return;
+
+    console.log('🔍 Debug revertToVersion:', {
+        currentHistoryOrgId,
+        currentHistoryIndicatorId,
+        organizationContext: organizationContext?.orgId,
+        selectedOrgId
+    });
+
+    // Fallback: se le variabili sono null, prova a recuperarle dal contesto
+    const orgId = currentHistoryOrgId || organizationContext?.orgId || selectedOrgId;
+    const indicatorId = currentHistoryIndicatorId || currentData?.fieldKit?.indicator;
+
+    if (!orgId || !indicatorId) {
+        showAlert('Cannot revert: missing organization or indicator context', 'error');
+        return;
+    }
+
     try {
-        const response = await fetch(`/api/organizations/${currentHistoryOrgId}/assessments/${currentHistoryIndicatorId}/revert`, {
+        const response = await fetch(`/api/organizations/${orgId}/assessments/${indicatorId}/revert`, {
             method: 'POST',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify({version: version, user: 'Dashboard'})
@@ -389,13 +407,16 @@ export async function revertToVersion(version) {
             showAlert('Reverted successfully', 'success');
             closeHistoryModal();
             // Reload the integrated client with new data
-            openIntegratedClient(currentHistoryIndicatorId, currentHistoryOrgId);
+            openIntegratedClient(indicatorId, orgId);
             // Refresh dashboard background
-            loadOrganizationDetails(currentHistoryOrgId);
+            loadOrganizationDetails(orgId);
         } else {
             throw new Error(res.error);
         }
-    } catch(e) { showAlert(e.message, 'error'); }
+    } catch(e) {
+        console.error('Revert error:', e);
+        showAlert(e.message, 'error');
+    }
 }
 
 // --- ASSESSMENT DETAILS MODAL ---
