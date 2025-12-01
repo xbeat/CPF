@@ -289,8 +289,9 @@ export function updateScoreDisplay() {
                     <div class="component-description">${currentScore.details.red_flags_list ? currentScore.details.red_flags_list.length : 0} flags detected</div>
                 </div>
                 <div class="score-component" style="border: 2px dashed #ccc; background: #fafafa;">
-                    <div class="component-label">Conversation</div>
+                    <div class="component-label">Conversation Completeness</div>
                     <div class="component-value" style="color: #666;">${(currentScore.details.conversation_breakdown ? currentScore.details.conversation_breakdown.completion_rate * 100 : 0).toFixed(0)}%</div>
+                    <div class="component-description" style="font-size: 12px; color: #666;">${currentScore.details.conversation_breakdown ? currentScore.details.conversation_breakdown.answered_questions : 0}/${currentScore.details.conversation_breakdown ? currentScore.details.conversation_breakdown.total_questions : 0} answered<br><em style="font-size: 11px;">(Informational only)</em></div>
                 </div>
             </div>
             
