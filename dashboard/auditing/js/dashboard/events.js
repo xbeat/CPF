@@ -79,12 +79,6 @@ export function setupDashboardEventDelegation() {
                 const btn = document.getElementById(id);
                 if(btn) btn.style.display = 'inline-block';
             });
-
-            // Close sidebar on mobile/tablet after selection
-            const sidebar = document.querySelector('.sidebar');
-            if (sidebar && window.innerWidth < 1024) {
-                sidebar.classList.remove('active');
-            }
         }
         
         // 2. Org CRUD Modals

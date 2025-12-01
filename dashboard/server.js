@@ -1090,9 +1090,13 @@ app.get('/api/organizations/:orgId/export/xlsx', async (req, res) => {
 
     console.log(`\n📊 [API] Generating XLSX export for: ${orgId}\n`);
 
+    // Safe filename with fallback
+    const orgName = (orgData && orgData.name) ? orgData.name.replace(/\s/g, '_') : orgId.replace(/\s/g, '_');
+    const timestamp = new Date().toISOString().split('T')[0];
+
     // Set headers for file download
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="CPF_Audit_${orgData.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx"`);
+    res.setHeader('Content-Disposition', `attachment; filename="CPF_Audit_${orgName}_${timestamp}.xlsx"`);
 
     // Write to response
     await workbook.xlsx.write(res);
@@ -1131,9 +1135,13 @@ app.get('/api/organizations/:orgId/export/pdf', async (req, res) => {
 
     console.log(`\n📄 [API] Generating PDF export for: ${orgId}\n`);
 
+    // Safe filename with fallback
+    const orgName = (orgData && orgData.name) ? orgData.name.replace(/\s/g, '_') : orgId.replace(/\s/g, '_');
+    const timestamp = new Date().toISOString().split('T')[0];
+
     // Set headers for file download
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="CPF_Audit_${orgData.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="CPF_Audit_${orgName}_${timestamp}.pdf"`);
 
     // Pipe PDF to response
     doc.pipe(res);
@@ -1172,9 +1180,13 @@ app.get('/api/organizations/:orgId/export/zip', async (req, res) => {
 
     console.log(`\n📦 [API] Generating ZIP export for: ${orgId}\n`);
 
+    // Safe filename with fallback
+    const orgName = (orgData && orgData.name) ? orgData.name.replace(/\s/g, '_') : orgId.replace(/\s/g, '_');
+    const timestamp = new Date().toISOString().split('T')[0];
+
     // Set headers for file download
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="CPF_Audit_${orgData.name.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.zip"`);
+    res.setHeader('Content-Disposition', `attachment; filename="CPF_Audit_${orgName}_${timestamp}.zip"`);
 
     // Pipe ZIP stream to response
     stream.pipe(res);
