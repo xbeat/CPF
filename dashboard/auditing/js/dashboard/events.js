@@ -53,11 +53,17 @@ export function setupDashboardEventDelegation() {
 
         // Sidebar Toggles
         if (action === 'open-sidebar') {
-            document.querySelector('.sidebar')?.classList.add('active');
+            const sidebar = document.querySelector('.sidebar');
+            const dashboardMain = document.querySelector('.dashboard-main');
+            if(sidebar) sidebar.classList.remove('sidebar-hidden');
+            if(dashboardMain) dashboardMain.classList.remove('sidebar-collapsed');
             return;
         }
         if (action === 'close-sidebar') {
-            document.querySelector('.sidebar')?.classList.remove('active');
+            const sidebar = document.querySelector('.sidebar');
+            const dashboardMain = document.querySelector('.dashboard-main');
+            if(sidebar) sidebar.classList.add('sidebar-hidden');
+            if(dashboardMain) dashboardMain.classList.add('sidebar-collapsed');
             return;
         }
 
