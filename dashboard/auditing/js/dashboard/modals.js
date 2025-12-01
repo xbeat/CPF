@@ -733,7 +733,7 @@ export async function openHistoryModalFromDetails() {
 
 // Category modal
 export function openCategoryModal(catKey) {
-    showModal('categoryModal');
+    showModal('category-modal');
     const title = document.getElementById('category-modal-title');
     const body = document.getElementById('category-modal-body');
 
@@ -794,7 +794,7 @@ export function openCategoryModal(catKey) {
     });
 }
 
-export function closeCategoryModal() { closeModal('categoryModal'); }
+export function closeCategoryModal() { closeModal('category-modal'); }
 
 // Helper per ottenere la lingua corrente
 function getCurrentLanguage() {

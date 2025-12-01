@@ -77,11 +77,9 @@ export function renderMaturityTab() {
     setText('sectorComparison', sectorComp);
 
     // 5. Domain Distribution (Green/Yellow/Red)
-    if (mm.domain_distribution) {
-        setText('greenDomainsCount', mm.domain_distribution.green || 0);
-        setText('yellowDomainsCount', mm.domain_distribution.yellow || 0);
-        setText('redDomainsCount', mm.domain_distribution.red || 0);
-    }
+    setText('greenDomainsCount', mm.green_domains_count || 0);
+    setText('yellowDomainsCount', mm.yellow_domains_count || 0);
+    setText('redDomainsCount', mm.red_domains_count || 0);
 
     // 6. Compliance Table
     const compTable = document.getElementById('complianceTableBody');
@@ -237,11 +235,9 @@ function computeBasicMaturityModel(org) {
         maturity_level: maturityLevel,
         level_name: levelNames[maturityLevel],
         convergence_index: convergenceIndex,
-        domain_distribution: {
-            green: greenCount,
-            yellow: yellowCount,
-            red: redCount
-        },
+        green_domains_count: greenCount,
+        yellow_domains_count: yellowCount,
+        red_domains_count: redCount,
         compliance,
         sector_benchmark: sectorBenchmark,
         certifications: true, // Flag to show certification path
