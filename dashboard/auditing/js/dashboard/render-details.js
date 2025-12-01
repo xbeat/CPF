@@ -185,7 +185,9 @@ export function renderRiskHeatmap(org) {
         if (data) {
             const risk = (data.avg_score * 100).toFixed(1);
             const riskClass = data.avg_score < 0.3 ? 'risk-low' : data.avg_score < 0.7 ? 'risk-medium' : 'risk-high';
-            
+            const riskColor = data.avg_score < 0.3 ? '#22c55e' : data.avg_score < 0.7 ? '#f59e0b' : '#ef4444';
+            const riskBadge = data.avg_score < 0.3 ? '🟢' : data.avg_score < 0.7 ? '🟡' : '🔴';
+
             html += `
                 <div class="category-card" style="position: relative;">
                     <div style="cursor: pointer;" data-action="filter-by-category" data-category-key="${catKey}">
@@ -193,11 +195,14 @@ export function renderRiskHeatmap(org) {
                             ${cat}. ${name}
                         </div>
                         <div class="category-stats">
-                            <div class="category-risk ${riskClass}">${risk}%</div>
-                            <div class="category-completion">${data.completion_percentage}%</div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 20px;">${riskBadge}</span>
+                                <span class="category-risk ${riskClass}">${risk}%</span>
+                            </div>
+                            <div class="category-completion">${data.completion_percentage}% complete</div>
                         </div>
                         <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width:${data.completion_percentage}%"></div>
+                            <div class="progress-bar-fill" style="width:${risk}%; background:${riskColor};"></div>
                         </div>
                         <div style="font-size:12px;color:var(--text-light);margin-top:8px;">
                             ${data.total_assessments}/10 assessed • Conf: ${(data.avg_confidence * 100).toFixed(0)}%
@@ -208,9 +213,10 @@ export function renderRiskHeatmap(org) {
             `;
         } else {
             html += `
-                <div class="category-card" style="opacity:0.5">
-                     <div class="category-title">${cat}. ${name} <span class="category-info-icon">❓</span></div>
+                <div class="category-card" style="opacity:0.5; position: relative;">
+                     <div class="category-title">${cat}. ${name}</div>
                      <div class="category-stats"><div>--</div><div>No data</div></div>
+                     <span data-action="open-category-modal" data-category-key="${catKey}" class="category-info-icon" style="position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 18px; z-index: 10;">❓</span>
                 </div>`;
         }
     }
