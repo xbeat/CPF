@@ -46,7 +46,8 @@ export async function openIntegratedClient(indicatorId, orgId) {
                                 <button class="btn btn-secondary" data-action="save-data">💾 Save</button>
                                 <button class="btn btn-success" data-action="export-data">📥 Export</button>
                                 <button class="btn btn-primary" data-action="generate-report">📄 Report</button>
-                                <button class="btn btn-warning" data-action="reset-compile-form">🗑️ Reset</button>
+                                <button class="btn btn-warning" data-action="open-history-modal-from-details">📜 History</button>
+                                <button class="btn btn-danger" data-action="reset-compile-form">🗑️ Reset</button>
                                 <button class="btn btn-dark" data-action="close-indicator-modal">❌ Close</button>
                             </div>
                         </div>
@@ -401,11 +402,16 @@ export async function deleteAssessmentFromDetails() {
     }
 }
 
-export function openHistoryModalFromDetails() {
-    // Similar to openHistoryModal but from details context
-    // We need to set context manually if variables are null
-    // Placeholder implementation
-    showAlert('History from details not fully implemented in refactor yet.', 'info');
+export async function openHistoryModalFromDetails() {
+    // When called from the client integrated modal, organizationContext and currentData
+    // should already be set by openIntegratedClient. Just delegate to openHistoryModal.
+    if (!organizationContext?.orgId || !currentData?.fieldKit?.indicator) {
+        showAlert('No assessment context found. Please open an indicator first.', 'error');
+        return;
+    }
+
+    // Keep the client modal open and show history on top
+    await openHistoryModal();
 }
 
 // Category modal
