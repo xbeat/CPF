@@ -2,14 +2,22 @@ import { getSelectedOrgData } from './state.js';
 
 export function renderMaturityTab() {
     const container = document.getElementById('maturityTab');
-    if (!container) return;
+    if (!container) {
+        console.error('❌ maturityTab container not found');
+        return;
+    }
 
     const selectedOrgData = getSelectedOrgData();
     console.log('🔍 renderMaturityTab called', selectedOrgData);
 
     if (!selectedOrgData || !selectedOrgData.aggregates) {
         console.warn('⚠️ No selectedOrgData or aggregates');
-        container.innerHTML = '<div style="padding:40px;text-align:center"><h3>⚠️ No Maturity Data</h3><p>Complete assessments to generate maturity model data.</p></div>';
+        // DON'T overwrite HTML - just show message
+        const messageDiv = container.querySelector('.matrix-header') || container;
+        const tempMsg = document.createElement('div');
+        tempMsg.style.cssText = 'padding:40px;text-align:center;background:white;border-radius:12px;margin:20px 0;';
+        tempMsg.innerHTML = '<h3>⚠️ No Maturity Data</h3><p>Complete assessments to generate maturity model data.</p>';
+        messageDiv.appendChild(tempMsg);
         return;
     }
 
