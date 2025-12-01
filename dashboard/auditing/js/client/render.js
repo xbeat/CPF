@@ -326,7 +326,11 @@ export function toggleScoreDetails() {
 
 export function toggleDetailedAnalysis() {
     const breakdown = document.getElementById('score-detailed-breakdown');
-    if (breakdown) breakdown.style.display = (breakdown.style.display === 'none') ? 'block' : 'none';
+    if (breakdown) {
+        breakdown.style.display = (breakdown.style.display === 'none') ? 'block' : 'none';
+    } else {
+        alert('⚠️ No score analysis available yet. Please complete the Quick Assessment section first.');
+    }
 }
 
 export function showAutoSaveIndicator() {
@@ -426,13 +430,19 @@ async function loadReferenceContent(container) {
 }
 
 export function toggleCategory(categoryId) {
+    console.log('🔍 toggleCategory called with:', categoryId);
     const body = document.getElementById(`category-${categoryId}`);
-    if (!body) return;
-    
+    console.log('🔍 Found body element:', body);
+    if (!body) {
+        console.warn('⚠️ Category body not found for:', categoryId);
+        return;
+    }
+
     // Toggle visibility
     const isVisible = body.style.display === 'block';
     body.style.display = isVisible ? 'none' : 'block';
-    
+    console.log('🔍 Toggled to:', body.style.display);
+
     // Rotate arrow
     const header = body.previousElementSibling;
     const arrow = header ? header.querySelector('.category-arrow') : null;
