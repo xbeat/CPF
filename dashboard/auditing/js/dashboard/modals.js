@@ -1,5 +1,5 @@
 import { selectedOrgData, selectedOrgId } from './state.js';
-import { showModal, closeModal, showAlert } from '../shared/utils.js';
+import { showModal, closeModal, showAlert, escapeHtml } from '../shared/utils.js';
 import { CATEGORY_MAP } from '../shared/config.js';
 import { organizationContext, currentData, renderFieldKit, resetCurrentData } from '../client/index.js';
 import { loadAllData, deleteOrganizationAPI, loadOrganizationDetails } from './api.js';
@@ -13,10 +13,12 @@ export async function openIntegratedClient(indicatorId, orgId) {
     const modalTitle = document.getElementById('indicatorModalTitle');
     const modalContent = document.getElementById('indicatorModalContent');
     const modalDialog = document.querySelector('#indicatorModal .modal-content');
-    
+    const modalActions = document.querySelector('#indicatorModal .modal-actions');
+
     if(modalTitle) modalTitle.style.display = 'none';
     if(modalDialog) modalDialog.classList.add('fullscreen-client');
-    
+    if(modalActions) modalActions.style.display = 'none'; // Hide bottom action bar
+
     showModal('indicatorModal');
     if(modalContent) modalContent.innerHTML = `<div class="loading-spinner"></div> Loading Indicator ${indicatorId}...`;
 
@@ -37,18 +39,21 @@ export async function openIntegratedClient(indicatorId, orgId) {
                 <div class="cpf-client">
                     <div class="container" id="client-integrated-container" style="max-width:100%;margin:0;box-shadow:none;">
                         <div class="header" id="header"></div>
-                        <div class="toolbar" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;padding:10px;background:#eee;">
-                            <div>
-                                <button class="btn btn-info" data-action="show-quick-reference">📚 Ref</button>
-                                <button class="btn btn-light" data-action="toggle-detailed-analysis">📊 Analysis</button>
-                            </div>
-                            <div>
-                                <button class="btn btn-secondary" data-action="save-data">💾 Save</button>
-                                <button class="btn btn-success" data-action="export-data">📥 Export</button>
-                                <button class="btn btn-primary" data-action="generate-report">📄 Report</button>
+                        <div class="toolbar" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                                <button class="btn btn-info" data-action="show-quick-reference">📚 Quick Reference</button>
+                                <button class="btn btn-info" data-action="toggle-detailed-analysis">📊 Show/Hide Analysis</button>
+                                <button class="btn btn-light" data-action="trigger-file-input" data-file-input-id="file-input-integrated">📂 Import Data</button>
+                                <input type="file" id="file-input-integrated" accept=".json" data-action="import-json" style="display: none;">
+                                <button class="btn btn-danger" data-action="reset-compile-form" title="Reset assessment">🗑️ Reset</button>
+                                <button class="btn btn-primary" data-action="view-assessment-details-from-edit" data-indicator-id="${indicatorId}">📋 View Details</button>
                                 <button class="btn btn-warning" data-action="open-history-modal-from-details">📜 History</button>
-                                <button class="btn btn-danger" data-action="reset-compile-form">🗑️ Reset</button>
-                                <button class="btn btn-dark" data-action="close-indicator-modal">❌ Close</button>
+                            </div>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                                <button class="btn btn-secondary" data-action="save-data">💾 Save</button>
+                                <button class="btn btn-success" data-action="export-data">💾 Export Data</button>
+                                <button class="btn btn-primary" data-action="generate-report">📊 Report</button>
+                                <button class="btn btn-secondary" data-action="close-indicator-modal">Close</button>
                             </div>
                         </div>
                         <div id="auto-save-status" class="hide">Auto-saved</div>
@@ -57,7 +62,13 @@ export async function openIntegratedClient(indicatorId, orgId) {
                         <div class="action-bar" id="action-bar" style="display:none;"></div>
                         
                         <div id="reference-modal" class="cpf-client modal" style="display:none;z-index:1100;">
-                             <div class="modal-content"><div class="modal-header"><h2>Reference</h2><button data-action="close-quick-reference">X</button></div><div class="modal-body" id="reference-content">Loading...</div></div>
+                             <div class="modal-content">
+                                <div class="modal-header">
+                                    <h2>📚 CPF Indicators Quick Reference</h2>
+                                    <button class="modal-close" data-action="close-quick-reference">✕</button>
+                                </div>
+                                <div class="modal-body" id="reference-content">Loading...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -71,19 +82,22 @@ export async function openIntegratedClient(indicatorId, orgId) {
 
         // 5. Load Data (Merge existing or Reset)
         const existing = selectedOrgData.assessments?.[indicatorId];
-        
-        resetCurrentData(); 
-        
+
+        resetCurrentData();
+
+        // Always set client name from dashboard's selected organization
+        currentData.metadata.client = selectedOrgData.name;
+
         if (existing && existing.raw_data?.client_conversation) {
             currentData.responses = existing.raw_data.client_conversation.responses || {};
             if(existing.raw_data.client_conversation.metadata) {
-                currentData.metadata = { ...currentData.metadata, ...existing.raw_data.client_conversation.metadata };
+                // Merge metadata but preserve client name from dashboard
+                const { client, ...otherMetadata } = existing.raw_data.client_conversation.metadata;
+                currentData.metadata = { ...currentData.metadata, ...otherMetadata };
             }
             if(existing.raw_data.client_conversation.scores) {
                 currentData.score = existing.raw_data.client_conversation.scores;
             }
-        } else {
-            currentData.metadata.client = selectedOrgData.name;
         }
         
         currentData.fieldKit = indicatorData;
@@ -100,9 +114,12 @@ export async function openIntegratedClient(indicatorId, orgId) {
 export function closeIndicatorModal() {
     closeModal('indicatorModal');
     const modalDialog = document.querySelector('#indicatorModal .modal-content');
-    if(modalDialog) modalDialog.classList.remove('fullscreen-client');
     const modalTitle = document.getElementById('indicatorModalTitle');
+    const modalActions = document.querySelector('#indicatorModal .modal-actions');
+
+    if(modalDialog) modalDialog.classList.remove('fullscreen-client');
     if(modalTitle) modalTitle.style.display = 'block';
+    if(modalActions) modalActions.style.display = 'flex'; // Restore bottom action bar
 }
 
 // --- ORGANIZATION MODALS ---
@@ -292,42 +309,79 @@ export async function openHistoryModal() {
     showModal('historyModal');
     const content = document.getElementById('historyContent');
     const title = document.getElementById('historyModalTitle');
-    if(title) title.textContent = `History: ${indicatorId}`;
-    
+    if(title) title.textContent = `📜 Version History - ${indicatorId}`;
+
     content.innerHTML = '<div class="loading-spinner"></div> Loading...';
 
     try {
         const response = await fetch(`/api/organizations/${orgId}/assessments/${indicatorId}/history`);
         const data = await response.json();
 
-        if (!data.success || !data.history?.versions?.length) {
-            content.innerHTML = `<div class="empty-state"><p>No history available.</p></div>`;
+        if (!data.success || data.history.versions.length === 0) {
+            content.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📜</div>
+                    <div class="empty-state-title">No History</div>
+                    <div class="empty-state-text">No previous versions found</div>
+                </div>
+            `;
             return;
         }
 
+        // Render history (newest first)
         const versions = [...data.history.versions].reverse();
-        let html = '<div style="padding:20px;">';
-        
-        versions.forEach((ver, idx) => {
-            const isCurrent = idx === 0;
-            const score = ver.data.bayesian_score;
-            const date = new Date(ver.timestamp).toLocaleString();
+
+        let html = '<div style="padding: 20px;">';
+
+        versions.forEach((version, index) => {
+            const isCurrent = index === 0;
+            const score = version.data.bayesian_score;
+            const confidence = version.data.confidence;
+            const timestamp = new Date(version.timestamp).toLocaleString();
+            const isReset = score === 0;
+
+            const resetBadgeRight = isCurrent ? '120px' : '10px';
             html += `
-                <div style="background:${isCurrent ? '#f0f9ff' : 'white'};border:1px solid var(--border);padding:15px;margin-bottom:10px;border-radius:8px;">
-                    <div style="display:flex;justify-content:space-between;">
-                        <div>
-                            <strong>Version ${ver.version}</strong> ${isCurrent ? '(Current)' : ''}<br>
-                            <small>${date} by ${ver.user}</small><br>
-                            Score: <strong>${score ? score.toFixed(2) : '0'}</strong>
+                <div style="background: ${isCurrent ? '#eff6ff' : 'var(--bg-gray)'}; border: 2px solid ${isCurrent ? 'var(--primary)' : 'var(--border)'}; border-radius: 10px; padding: 20px; margin-bottom: 15px; position: relative;">
+                    ${isCurrent ? '<div style="position: absolute; top: 10px; right: 10px; background: var(--primary); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">CURRENT</div>' : ''}
+                    ${isReset ? `<div style="position: absolute; top: 10px; right: ${resetBadgeRight}; background: var(--warning); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">🔄 RESET</div>` : ''}
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 18px; font-weight: 600; color: var(--primary); margin-bottom: 8px;">
+                                Version ${version.version}
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-light); margin-bottom: 12px;">
+                                <div>⏰ ${timestamp}</div>
+                                <div>👤 ${escapeHtml(version.user)}</div>
+                            </div>
+                            <div style="display: flex; gap: 20px; margin-top: 15px;">
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Score</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${score.toFixed(3)}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Confidence</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${confidence.toFixed(2)}</div>
+                                </div>
+                            </div>
                         </div>
-                        ${!isCurrent ? `<button class="btn btn-warning btn-small" data-action="revert-to-version" data-version="${ver.version}">Revert</button>` : ''}
+                        <div>
+                            <button class="btn ${isCurrent ? 'btn-primary' : 'btn-warning'} btn-small" data-action="revert-to-version" data-version="${version.version}">
+                                ${isCurrent ? '🔄 Reload This' : '↩️ Revert to This'}
+                            </button>
+                        </div>
                     </div>
-                </div>`;
+                </div>
+            `;
         });
+
         html += '</div>';
         content.innerHTML = html;
-    } catch(e) {
-        content.innerHTML = `Error: ${e.message}`;
+
+    } catch (error) {
+        console.error('Error loading history:', error);
+        showAlert('Failed to load history', 'error');
+        content.innerHTML = `<div style="padding:20px;color:red;">Error: ${error.message}</div>`;
     }
 }
 
@@ -338,45 +392,290 @@ export function closeHistoryModal() {
 }
 
 export async function revertToVersion(version) {
-    if(!confirm(`Revert to version ${version}?`)) return;
+    if(!confirm(`Revert to version ${version}?\n\nThis will create a new version based on the selected one.`)) return;
+
+    const orgId = currentHistoryOrgId || organizationContext?.orgId || selectedOrgId;
+    const indicatorId = currentHistoryIndicatorId || currentData?.fieldKit?.indicator;
+
+    if (!orgId || !indicatorId) {
+        showAlert('Cannot revert: missing organization or indicator context', 'error');
+        return;
+    }
+
     try {
-        const response = await fetch(`/api/organizations/${currentHistoryOrgId}/assessments/${currentHistoryIndicatorId}/revert`, {
+        const response = await fetch(`/api/organizations/${orgId}/assessments/${indicatorId}/revert`, {
             method: 'POST',
             headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({version: version, user: 'Dashboard'})
+            body: JSON.stringify({version: version, user: 'Dashboard User'})
         });
-        const res = await response.json();
-        if(res.success) {
-            showAlert('Reverted successfully', 'success');
+        const result = await response.json();
+
+        if(result.success && result.data) {
             closeHistoryModal();
-            // Reload the integrated client with new data
-            openIntegratedClient(currentHistoryIndicatorId, currentHistoryOrgId);
-            // Refresh dashboard background
-            loadOrganizationDetails(currentHistoryOrgId);
+
+            // Update selectedOrgData with data from server (DON'T reload from database!)
+            selectedOrgData.assessments[indicatorId] = result.data;
+
+            // If form is open, update it with reverted data
+            if (currentData && currentData.fieldKit && selectedOrgData) {
+                const revertedAssessment = selectedOrgData.assessments[indicatorId];
+
+                if (revertedAssessment?.raw_data?.client_conversation) {
+                    const conv = revertedAssessment.raw_data.client_conversation;
+
+                    // Update responses - ensure it's a valid object
+                    if (conv.responses && typeof conv.responses === 'object') {
+                        currentData.responses = conv.responses;
+                    } else {
+                        currentData.responses = {};
+                    }
+
+                    currentData.score = conv.scores || null;
+
+                    // Merge metadata carefully to preserve existing properties
+                    if (conv.metadata && typeof conv.metadata === 'object') {
+                        currentData.metadata = { ...currentData.metadata, ...conv.metadata };
+                    }
+
+                    // Force complete re-render by temporarily clearing fieldKit
+                    const tempFieldKit = currentData.fieldKit;
+                    currentData.fieldKit = null;
+
+                    // Use setTimeout to ensure DOM is cleared before re-rendering
+                    setTimeout(() => {
+                        currentData.fieldKit = tempFieldKit;
+                        renderFieldKit(currentData.fieldKit);
+                        showAlert(`✅ Reverted to version ${version} - Form updated`, 'success');
+                    }, 50);
+                } else {
+                    showAlert('⚠️ No data to restore', 'warning');
+                }
+            } else {
+                showAlert('Reverted', 'success');
+            }
+
+            // Reload only dashboard/sidebar to update stats
+            if (window.dashboardReloadOrganization) {
+                await window.dashboardReloadOrganization();
+            }
         } else {
-            throw new Error(res.error);
+            throw new Error(result.error || 'No data returned');
         }
-    } catch(e) { showAlert(e.message, 'error'); }
+    } catch(error) {
+        console.error('Error reverting version:', error);
+        showAlert(`Failed to revert: ${error.message}`, 'error');
+    }
 }
 
 // --- ASSESSMENT DETAILS MODAL ---
-export function viewAssessmentDetailsFromEdit(indicatorId) {
-    // This is the read-only view modal
+export async function viewAssessmentDetailsFromEdit(indicatorId) {
     if (!selectedOrgData || !selectedOrgData.assessments?.[indicatorId]) return;
     const assessment = selectedOrgData.assessments[indicatorId];
-    
+
+    const title = document.getElementById('assessmentDetailsTitle');
+    if(title) title.textContent = `Indicator ${indicatorId} - Assessment Details`;
+
     showModal('assessmentDetailsModal');
     const content = document.getElementById('assessmentDetailsContent');
-    if(content) {
+
+    const riskClass = assessment.bayesian_score < 0.33 ? 'risk-low' :
+                        assessment.bayesian_score < 0.66 ? 'risk-medium' : 'risk-high';
+    const riskLabel = assessment.bayesian_score < 0.33 ? '🟢 Low Risk' :
+                        assessment.bayesian_score < 0.66 ? '🟡 Medium Risk' : '🔴 High Risk';
+
+    // Show loading state first
+    content.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+            <p>Loading Field Kit details...</p>
+        </div>
+    `;
+
+    // Try to load Field Kit from GitHub
+    try {
+        const [categoryNum, indicatorNum] = indicatorId.split('.');
+        const categoryName = CATEGORY_MAP[categoryNum];
+        const language = selectedOrgData.metadata?.language || 'en-US';
+        const url = `/auditor-field-kit/interactive/${language}/${categoryNum}.x-${categoryName}/indicator_${indicatorId}.json`;
+
+        const response = await fetch(url);
+        let fieldKit = null;
+        if (response.ok) {
+            fieldKit = await response.json();
+        }
+
+        // Render full details with Field Kit
         content.innerHTML = `
-            <h3>${assessment.title}</h3>
-            <p>Score: ${(assessment.bayesian_score*100).toFixed(1)}%</p>
-            <p>Confidence: ${(assessment.confidence*100).toFixed(1)}%</p>
-            <p>Date: ${new Date(assessment.assessment_date).toLocaleString()}</p>
-            <hr>
-            <div>${JSON.stringify(assessment.raw_data?.client_conversation?.responses || {}, null, 2)}</div>
-            <div style="margin-top:20px;">
-                <button class="btn btn-danger" data-action="delete-assessment-from-details" data-indicator-id="${indicatorId}">Delete Assessment</button>
+            <div style="display: grid; gap: 20px;">
+                <!-- Assessment Summary -->
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: var(--primary);">${fieldKit?.title || assessment.title || 'Indicator ' + indicatorId}</h4>
+                    <p style="margin: 0; color: var(--text-light); font-size: 14px;">${fieldKit?.category || assessment.category || 'Category'}</p>
+                </div>
+
+                <!-- Risk Stats -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="stat-box">
+                        <div class="stat-label">Risk Score</div>
+                        <div class="stat-value ${riskClass}">${(assessment.bayesian_score * 100).toFixed(1)}%</div>
+                        <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">${riskLabel}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Confidence</div>
+                        <div class="stat-value">${(assessment.confidence * 100).toFixed(1)}%</div>
+                        <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Assessment reliability</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Maturity Level</div>
+                        <div class="stat-value" style="text-transform: uppercase;">${assessment.maturity_level || 'N/A'}</div>
+                        <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Control maturity</div>
+                    </div>
+                </div>
+
+                <!-- Assessment Information -->
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <div style="font-weight: 600; margin-bottom: 10px;">Assessment Information</div>
+                    <div style="display: grid; gap: 8px; font-size: 14px;">
+                        <div><strong>Assessor:</strong> ${assessment.assessor || 'Unknown'}</div>
+                        <div><strong>Assessment Date:</strong> ${new Date(assessment.assessment_date).toLocaleString()}</div>
+                    </div>
+                </div>
+
+                ${fieldKit && fieldKit.description ? `
+                <!-- Field Kit Description -->
+                <div style="background: #dbeafe; padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary);">
+                    <h4 style="margin: 0 0 10px 0; color: var(--primary);">📚 Description</h4>
+                    <p style="margin: 0 0 10px 0; line-height: 1.6;">${fieldKit.description.short || ''}</p>
+                    ${fieldKit.description.context ? `
+                        <div style="margin-top: 15px;">
+                            <strong>Context:</strong>
+                            <p style="margin: 5px 0 0 0; line-height: 1.6;">${fieldKit.description.context}</p>
+                        </div>
+                    ` : ''}
+                    ${fieldKit.description.impact ? `
+                        <div style="margin-top: 15px;">
+                            <strong>Impact:</strong>
+                            <p style="margin: 5px 0 0 0; line-height: 1.6;">${fieldKit.description.impact}</p>
+                        </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+
+                ${fieldKit && fieldKit.description && fieldKit.description.psychological_basis ? `
+                <!-- Psychological Basis -->
+                <div style="background: #e0e7ff; padding: 15px; border-radius: 8px; border-left: 4px solid #6366f1;">
+                    <h4 style="margin: 0 0 10px 0; color: #4338ca;">🧠 Psychological Basis</h4>
+                    <p style="margin: 0; line-height: 1.6; color: #1e1b4b;">${fieldKit.description.psychological_basis}</p>
+                </div>
+                ` : ''}
+
+                ${fieldKit && fieldKit.scoring && fieldKit.scoring.maturity_levels ? `
+                <!-- Maturity Levels -->
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: var(--primary);">📊 Maturity Levels</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                        ${Object.entries(fieldKit.scoring.maturity_levels).map(([level, data]) => {
+                            const bgColor = level === 'green' ? '#d4edda' : level === 'yellow' ? '#fff3cd' : '#f8d7da';
+                            const textColor = level === 'green' ? '#155724' : level === 'yellow' ? '#856404' : '#721c24';
+                            return '<div style="background: ' + bgColor + '; padding: 15px; border-radius: 8px;">' +
+                                '<h5 style="margin: 0 0 10px 0; color: ' + textColor + '; text-transform: capitalize;">' +
+                                    level + ' (' + (data.score_range ? data.score_range.join(' - ') : 'N/A') + ')' +
+                                '</h5>' +
+                                '<p style="margin: 0; font-size: 14px; color: ' + textColor + '; line-height: 1.5;">' +
+                                    (data.description || 'No description') +
+                                '</p>' +
+                            '</div>';
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                ${fieldKit && fieldKit.risk_scenarios && fieldKit.risk_scenarios.length > 0 ? `
+                <!-- Risk Scenarios -->
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 15px 0; color: #856404;">🔥 Risk Scenarios</h4>
+                    ${fieldKit.risk_scenarios.map((scenario, idx) => `
+                        <div style="background: #fff3cd; padding: 20px; border-left: 4px solid #f39c12; margin-bottom: 15px; border-radius: 6px;">
+                            <h5 style="margin: 0 0 10px 0; color: #856404; font-size: 16px;">
+                                ${scenario.title || 'Scenario ' + (idx + 1)}
+                            </h5>
+                            <p style="margin: 0 0 10px 0; line-height: 1.6; color: #856404;">
+                                ${scenario.description || ''}
+                            </p>
+                            ${scenario.likelihood ? '<p style="margin: 0; font-size: 14px;"><strong>Likelihood:</strong> ' + scenario.likelihood + '</p>' : ''}
+                            ${scenario.impact ? '<p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Impact:</strong> ' + scenario.impact + '</p>' : ''}
+                        </div>
+                    `).join('')}
+                </div>
+                ` : ''}
+
+                ${assessment.raw_data && assessment.raw_data.client_conversation && assessment.raw_data.client_conversation.metadata && assessment.raw_data.client_conversation.metadata.notes ? `
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <div style="font-weight: 600; margin-bottom: 10px;">📝 Notes</div>
+                    <p style="margin: 0; font-size: 14px; line-height: 1.6;">${assessment.raw_data.client_conversation.metadata.notes}</p>
+                </div>
+                ` : ''}
+
+                ${assessment.raw_data && assessment.raw_data.client_conversation && assessment.raw_data.client_conversation.red_flags && assessment.raw_data.client_conversation.red_flags.length > 0 ? `
+                <div style="background: #fee2e2; padding: 15px; border-radius: 8px; border: 1px solid var(--danger);">
+                    <div style="font-weight: 600; margin-bottom: 10px; color: var(--danger);">🚩 Red Flags Identified (${assessment.raw_data.client_conversation.red_flags.length})</div>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
+                        ${assessment.raw_data.client_conversation.red_flags.map(flag => `<li>${typeof flag === 'object' ? flag.flag : flag}</li>`).join('')}
+                    </ul>
+                </div>
+                ` : ''}
+
+                ${fieldKit ? `
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
+                    <a href="${url}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                        📄 View Full Field Kit JSON on GitHub →
+                    </a>
+                </div>
+                ` : ''}
+            </div>
+        `;
+
+    } catch (error) {
+        console.error('Error loading Field Kit:', error);
+
+        // Fallback to basic info if Field Kit not available
+        content.innerHTML = `
+            <div style="display: grid; gap: 20px;">
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: var(--primary);">${assessment.title || 'Indicator ' + indicatorId}</h4>
+                    <p style="margin: 0; color: var(--text-light); font-size: 14px;">${assessment.category || 'Category'}</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="stat-box">
+                        <div class="stat-label">Risk Score</div>
+                        <div class="stat-value ${riskClass}">${(assessment.bayesian_score * 100).toFixed(1)}%</div>
+                        <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">${riskLabel}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Confidence</div>
+                        <div class="stat-value">${(assessment.confidence * 100).toFixed(1)}%</div>
+                        <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Assessment reliability</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Maturity Level</div>
+                        <div class="stat-value" style="text-transform: uppercase;">${assessment.maturity_level || 'N/A'}</div>
+                        <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">Control maturity</div>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-gray); padding: 15px; border-radius: 8px;">
+                    <div style="font-weight: 600; margin-bottom: 10px;">Assessment Information</div>
+                    <div style="display: grid; gap: 8px; font-size: 14px;">
+                        <div><strong>Assessor:</strong> ${assessment.assessor || 'Unknown'}</div>
+                        <div><strong>Assessment Date:</strong> ${new Date(assessment.assessment_date).toLocaleString()}</div>
+                    </div>
+                </div>
+
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning);">
+                    <strong>⚠️ Field Kit Details Not Available</strong>
+                    <p style="margin-top: 10px;">Could not load full Field Kit from GitHub: ${error.message}</p>
+                </div>
             </div>
         `;
     }

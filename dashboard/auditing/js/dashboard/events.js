@@ -203,8 +203,7 @@ export function setupDashboardEventDelegation() {
         }
         if (action === 'export-data') exportData();
         if (action === 'generate-report') generateReport();
-        if (action === 'toggle-detailed-analysis') toggleDetailedAnalysis();
-        if (action === 'toggle-score-details') toggleScoreDetails();
+        // Note: toggle-detailed-analysis and toggle-score-details are handled by client/events.js
     });
 
     // --- CHANGE DELEGATION ---

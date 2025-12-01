@@ -34,6 +34,10 @@ export function renderFieldKit(data) {
     if (metadataBar) {
         metadataBar.style.display = 'grid';
         metadataBar.innerHTML = `
+            <div class="meta-field" style="grid-column: 1 / -1; background: #dbeafe; padding: 16px 20px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #3b82f6;">
+                <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #2563eb; font-weight: 700; display: block; margin-bottom: 6px;">Organization</label>
+                <div style="font-size: 24px; font-weight: 700; color: #1e40af;">${currentData.metadata.client}</div>
+            </div>
             <div class="meta-field">
                 <label>Assessment Date</label>
                 <input type="date" value="${currentData.metadata.date}" data-meta-field="date">
@@ -41,10 +45,6 @@ export function renderFieldKit(data) {
             <div class="meta-field">
                 <label>Auditor</label>
                 <input type="text" value="${currentData.metadata.auditor}" data-meta-field="auditor" placeholder="Your name">
-            </div>
-            <div class="meta-field">
-                <label>Client</label>
-                <input type="text" value="${currentData.metadata.client}" data-meta-field="client" placeholder="Client name">
             </div>
             <div class="meta-field">
                 <label>Status</label>
@@ -325,8 +325,53 @@ export function toggleScoreDetails() {
 }
 
 export function toggleDetailedAnalysis() {
+    console.log('🔍 toggleDetailedAnalysis called');
     const breakdown = document.getElementById('score-detailed-breakdown');
-    if (breakdown) breakdown.style.display = (breakdown.style.display === 'none') ? 'block' : 'none';
+    console.log('🔍 Found breakdown element:', breakdown);
+
+    if (!breakdown) {
+        alert('⚠️ No score analysis available yet. Please complete the Quick Assessment section first.');
+        return;
+    }
+
+    // Check if score has been calculated
+    if (!currentScore || !currentScore.final_score) {
+        alert('⚠️ Score not calculated yet. Please complete some questions first.');
+        return;
+    }
+
+    // Toggle visibility
+    const currentDisplay = breakdown.style.display;
+    const isHidden = (currentDisplay === 'none' || currentDisplay === '');
+
+    breakdown.style.display = isHidden ? 'block' : 'none';
+
+    // Debug: Check computed styles and dimensions
+    if (isHidden) {
+        setTimeout(() => {
+            const computed = window.getComputedStyle(breakdown);
+            console.log('🔍 After toggle - Computed styles:', {
+                display: computed.display,
+                height: computed.height,
+                maxHeight: computed.maxHeight,
+                overflow: computed.overflow,
+                opacity: computed.opacity,
+                visibility: computed.visibility
+            });
+            console.log('🔍 Element dimensions:', {
+                offsetHeight: breakdown.offsetHeight,
+                scrollHeight: breakdown.scrollHeight,
+                clientHeight: breakdown.clientHeight
+            });
+            console.log('🔍 Children count:', breakdown.children.length);
+        }, 100);
+    }
+
+    // Update button text
+    const button = document.querySelector('[data-action="toggle-detailed-analysis"]');
+    if (button) {
+        button.textContent = isHidden ? '📊 Hide Analysis' : '📊 Show/Hide Analysis';
+    }
 }
 
 export function showAutoSaveIndicator() {
@@ -366,7 +411,7 @@ export function closeQuickReference() {
 async function loadReferenceContent(container) {
     try {
         const lang = 'en-US'; // Potresti volerlo rendere dinamico
-        const response = await fetch(`./reference_guide_${lang}.json`);
+        const response = await fetch(`/dashboard/auditing/reference_guide_${lang}.json`);
         
         if (!response.ok) throw new Error('Reference guide file not found');
         const data = await response.json();
@@ -378,25 +423,26 @@ async function loadReferenceContent(container) {
         `;
 
         data.categories.forEach(category => {
+            console.log('🔍 Loading category:', category.id, 'with', category.indicators?.length || 0, 'indicators');
             html += `
                 <div class="category-accordion">
                     <div class="category-header" data-action="toggle-category" data-category-id="${category.id}">
-                        <div class="category-title" style="display:flex;align-items:center;cursor:pointer;">
-                            <span class="category-arrow" style="margin-right:10px;">▶</span>
+                        <div class="category-title">
+                            <span class="category-arrow">▶</span>
                             <span class="category-badge">${category.id}.x</span>
-                            <span style="margin-left:10px;">${category.name}</span>
+                            <span>${category.name}</span>
                         </div>
                     </div>
-                    <div class="category-body" id="category-${category.id}" style="display:none;padding-left:30px;">
+                    <div class="category-body" id="category-${category.id}">
                         <div class="indicator-list">
-                            ${category.indicators.map(indicator => `
-                                <div class="indicator-item" style="cursor:pointer;padding:5px;" 
-                                     data-action="load-indicator" 
+                            ${category.indicators && category.indicators.length > 0 ? category.indicators.map(indicator => `
+                                <div class="indicator-item"
+                                     data-action="load-indicator"
                                      data-indicator-id="${indicator.id}">
-                                    <span class="indicator-code"><strong>${indicator.id}</strong></span>
+                                    <span class="indicator-code">${indicator.id}</span>
                                     <span class="indicator-title">${indicator.title}</span>
                                 </div>
-                            `).join('')}
+                            `).join('') : '<div class="no-indicators">No indicators available</div>'}
                         </div>
                     </div>
                 </div>
@@ -426,17 +472,31 @@ async function loadReferenceContent(container) {
 }
 
 export function toggleCategory(categoryId) {
+    console.log('🔍 toggleCategory called with:', categoryId);
     const body = document.getElementById(`category-${categoryId}`);
-    if (!body) return;
-    
-    // Toggle visibility
-    const isVisible = body.style.display === 'block';
-    body.style.display = isVisible ? 'none' : 'block';
-    
+    const header = body ? body.previousElementSibling : null;
+
+    if (!body) {
+        console.warn('⚠️ Category body not found for:', categoryId);
+        return;
+    }
+
+    // Toggle active class (CSS handles max-height transition)
+    const isActive = body.classList.contains('active');
+    body.classList.toggle('active');
+
+    // Toggle header active class
+    if (header) {
+        header.classList.toggle('active');
+    }
+
     // Rotate arrow
-    const header = body.previousElementSibling;
     const arrow = header ? header.querySelector('.category-arrow') : null;
-    if (arrow) arrow.textContent = isVisible ? '▶' : '▼';
+    if (arrow) {
+        arrow.textContent = isActive ? '▶' : '▼';
+    }
+
+    console.log('🔍 Category toggled. Active:', !isActive);
 }
 
 export async function loadIndicatorFromReference(indicatorId) {
