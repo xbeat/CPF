@@ -457,7 +457,7 @@ async function updateOrganizationInIndex(orgData) {
  * Remove organization from index
  */
 function removeOrganizationFromIndex(orgId) {
-  const index = readOrganizationsIndex();
+  const index = readOrganizationsIndex(true); // Include deleted orgs for permanent deletion
   index.organizations = index.organizations.filter(o => o.id !== orgId);
   writeOrganizationsIndex(index);
 }

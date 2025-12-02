@@ -314,7 +314,7 @@ export async function permanentDeleteOrg(orgId, orgName) {
 
         if (result.success) {
             showAlert('Organization permanently deleted', 'success');
-            closeTrashModal(); // FIXED: Close modal instead of opening it
+            await openTrashModal(); // Refresh trash list to show updated state
             await loadTrashCount(); // Update trash count
         } else {
             throw new Error(result.error);
