@@ -628,5 +628,15 @@ module.exports = {
   saveIndicatorMetadata: async () => { console.warn('[DB-PG] saveIndicatorMetadata non è implementata in modo granulare, i dati vengono salvati con l\'intera organizzazione.'); },
   writeOrganizationsIndex: async () => {},
   updateOrganizationInIndex: async () => {},
-  removeOrganizationFromIndex: async () => {},
+  removeOrganizationFromIndex: async (orgId) => {
+    await initialize();
+    try {
+      const result = await pool.query('DELETE FROM organizations WHERE id = $1', [orgId]);
+      console.log(`[DB-PG] Permanently deleted organization ${orgId} from database (${result.rowCount} rows affected)`);
+      return { success: true, deletedCount: result.rowCount };
+    } catch (error) {
+      console.error(`[DB-PG] Error permanently deleting organization ${orgId}:`, error);
+      throw error;
+    }
+  },
 };

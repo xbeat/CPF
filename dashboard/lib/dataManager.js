@@ -586,7 +586,7 @@ async function permanentlyDeleteOrganization(orgId, user = 'System') {
   }
 
   // Remove from index
-  removeOrganizationFromIndex(orgId);
+  await removeOrganizationFromIndex(orgId);
 
   return { success: true, orgId };
 }
