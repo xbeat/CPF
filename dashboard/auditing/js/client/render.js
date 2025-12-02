@@ -442,8 +442,11 @@ export async function showQuickReference() {
     const modal = document.getElementById('reference-modal');
     if (modal) {
         modal.style.display = 'flex';
+        // Add to modal stack for ESC key handling
+        if (window.pushModal) window.pushModal('reference-modal');
+
         const content = document.getElementById('reference-content');
-        
+
         // Evita di ricaricare se già caricato
         if (content && !content.innerHTML.includes('category-accordion')) {
             content.innerHTML = '<p>Loading reference guide...</p>';
@@ -454,7 +457,11 @@ export async function showQuickReference() {
 
 export function closeQuickReference() {
     const modal = document.getElementById('reference-modal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+        // Remove from modal stack
+        if (window.popModal) window.popModal('reference-modal');
+    }
 }
 
 async function loadReferenceContent(container) {
