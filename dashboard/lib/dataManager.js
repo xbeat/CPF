@@ -580,39 +580,26 @@ async function restoreOrganization(orgId, user = 'System') {
 async function permanentlyDeleteOrganization(orgId, user = 'System') {
   console.log(`\n🔥 [DataManager] Starting permanent deletion for: ${orgId}`);
 
-  const orgData = await readOrganization(orgId);
+  const orgData = await db.readOrganization(orgId);
   console.log(`🔥 [DataManager] Organization data loaded:`, orgData ? 'exists' : 'NOT FOUND');
 
-  if (!orgData.metadata.deleted_at) {
+  if (!orgData || !orgData.metadata.deleted_at) {
     throw new Error('Organization must be in trash before permanent deletion');
   }
-
-  const filePath = path.join(ORGS_DIR, `${orgId}.json`);
-  console.log(`🔥 [DataManager] File path: ${filePath}`);
-  console.log(`🔥 [DataManager] File exists: ${fs.existsSync(filePath)}`);
 
   // Log audit event before deletion
   logAuditEvent('permanent_delete', 'organization', orgId, {
     name: orgData.name,
-    assessments_count: Object.keys(orgData.assessments).length
+    assessments_count: Object.keys(orgData.assessments || {}).length
   }, user);
 
-  // Delete file
-  if (fs.existsSync(filePath)) {
-    console.log(`🔥 [DataManager] Deleting file: ${filePath}`);
-    fs.unlinkSync(filePath);
-    console.log(`🔥 [DataManager] File deleted successfully`);
-  } else {
-    console.log(`🔥 [DataManager] File does not exist, skipping file deletion`);
-  }
-
-  // Remove from index
-  console.log(`🔥 [DataManager] Removing from index...`);
-  await removeOrganizationFromIndex(orgId);
-  console.log(`🔥 [DataManager] Removed from index successfully`);
+  // Use db layer to permanently delete (works for all storage backends - PostgreSQL, SQLite, JSON)
+  console.log(`🔥 [DataManager] Permanently deleting from database...`);
+  const result = await db.removeOrganizationFromIndex(orgId);
+  console.log(`🔥 [DataManager] Deleted from database successfully. Rows affected: ${result.deletedCount || 0}`);
 
   console.log(`🔥 [DataManager] Permanent deletion completed for: ${orgId}\n`);
-  return { success: true, orgId };
+  return { success: true, orgId, deletedCount: result.deletedCount || 0 };
 }
 
 /**

@@ -724,10 +724,26 @@ module.exports = {
   },
   removeOrganizationFromIndex: async (orgId) => {
     const index = await readOrganizationsIndex();
+    const beforeCount = index.organizations.length;
+
+    // Remove from index
     index.organizations = index.organizations.filter(o => o.id !== orgId);
+    const afterCount = index.organizations.length;
+    const deletedCount = beforeCount - afterCount;
+
     index.metadata.total_organizations = index.organizations.length;
     index.metadata.last_updated = new Date().toISOString();
     await writeOrganizationsIndex(index);
+
+    // Delete organization file
+    const orgPath = path.join(orgsDir, `${orgId}.json`);
+    if (fs.existsSync(orgPath)) {
+      fs.unlinkSync(orgPath);
+      console.log(`[DB-JSON] Permanently deleted organization file: ${orgPath}`);
+    }
+
+    console.log(`[DB-JSON] Permanently deleted organization ${orgId} (${deletedCount} removed from index)`);
+    return { success: true, deletedCount };
   },
   getAssessment: async () => null,
   deleteAssessment: async () => ({ success: true }),
