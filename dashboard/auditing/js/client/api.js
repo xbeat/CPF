@@ -398,7 +398,7 @@ export function generateReport() {
 export async function resetIntegratedClientData() {
     const confirmed = await showConfirm({
         title: '⚠️ Reset this assessment?',
-        message: 'This will clear all form data.\n\nYou can undo this using the History button.',
+        message: 'This will clear all form data and save an empty assessment.\n\nYou can undo this using the History button.',
         confirmText: 'Reset',
         cancelText: 'Cancel',
         confirmClass: 'btn-warning'
@@ -409,6 +409,65 @@ export async function resetIntegratedClientData() {
     }
 
     console.log('🗑️ Resetting integrated client data');
+
+    // Save empty assessment to history (before clearing UI)
+    if (organizationContext.orgId && currentData.fieldKit) {
+        const indicatorId = currentData.fieldKit.indicator;
+        const emptyAssessment = {
+            indicator_id: indicatorId,
+            title: currentData.fieldKit.title || '',
+            category: currentData.fieldKit.category || '',
+            bayesian_score: 0,
+            confidence: 0.5,
+            maturity_level: 'green',
+            assessor: '',
+            assessment_date: new Date().toISOString(),
+            raw_data: {
+                quick_assessment: {},
+                client_conversation: {
+                    responses: {},
+                    scores: null,
+                    metadata: {
+                        date: new Date().toISOString().split('T')[0],
+                        auditor: '',
+                        client: organizationContext.orgName || '',
+                        status: 'in-progress',
+                        notes: ''
+                    },
+                    notes: '',
+                    red_flags: []
+                }
+            }
+        };
+
+        try {
+            console.log('💾 Saving empty assessment to API for history tracking...');
+            const response = await fetch(`/api/organizations/${organizationContext.orgId}/assessments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(emptyAssessment)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                console.log('✅ Empty assessment saved to history');
+
+                // Refresh organization data in background to update matrix and history
+                if (window.dashboardReloadOrganization) {
+                    window.dashboardReloadOrganization().catch(err => {
+                        console.error('Failed to reload org data:', err);
+                    });
+                }
+            } else {
+                console.error('❌ Failed to save empty assessment:', result.error);
+            }
+        } catch (error) {
+            console.error('❌ Error saving reset state to history:', error);
+        }
+    } else {
+        console.warn('⚠️ Cannot save to history: missing organizationContext.orgId or currentData.fieldKit');
+    }
 
     // Clear all form inputs
     const containers = [document.getElementById('content'), document.getElementById('client-integrated-container')];
