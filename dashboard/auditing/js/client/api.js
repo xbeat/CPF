@@ -4,6 +4,9 @@ import { renderFieldKit, showAutoSaveIndicator } from './render.js';
 import { CATEGORY_MAP, LANG_MAP } from '../shared/config.js';
 import { showConfirm } from '../shared/utils.js';
 
+// Flag to prevent autosave during reset operation
+let isResetting = false;
+
 export async function loadJSON(indicatorId = null, languageOverride = null) {
     let input = indicatorId;
     let isoLang = languageOverride || organizationContext.language || 'en-US';
@@ -43,8 +46,15 @@ export async function loadJSON(indicatorId = null, languageOverride = null) {
 
 export async function autoSave() {
     if (!currentData.fieldKit) return;
+
+    // Skip autosave during reset operation
+    if (isResetting) {
+        console.log('⏭️ Skipping autosave during reset operation');
+        return;
+    }
+
     localStorage.setItem('cpf_current', JSON.stringify(currentData));
-    
+
     if (organizationContext.orgId) {
         try {
             await saveToAPI();
@@ -408,6 +418,8 @@ export async function resetIntegratedClientData() {
         return;
     }
 
+    // Set flag to prevent autosave during reset
+    isResetting = true;
     console.log('🗑️ Resetting integrated client data');
 
     // Save empty assessment to history (before clearing UI)
@@ -522,4 +534,10 @@ export async function resetIntegratedClientData() {
     // Show feedback
     showAutoSaveIndicator();
     console.log('✅ Assessment reset complete');
+
+    // Re-enable autosave after a short delay to let any pending events settle
+    setTimeout(() => {
+        isResetting = false;
+        console.log('✅ Autosave re-enabled after reset');
+    }, 500);
 }
