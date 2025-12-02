@@ -300,4 +300,44 @@ export function setupDashboardEventDelegation() {
             });
         });
     }
+
+    // --- ESC KEY HANDLER FOR MODALS ---
+    // Close modals on ESC key - always close the most recently opened modal
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && window.modalStack && window.modalStack.length > 0) {
+            // Get the most recently opened modal (last in stack)
+            const topModal = window.modalStack[window.modalStack.length - 1];
+
+            // Close it based on its ID
+            switch (topModal) {
+                case 'orgModal':
+                    closeOrgModal();
+                    break;
+                case 'deleteModal':
+                    closeDeleteModal();
+                    break;
+                case 'indicatorModal':
+                    closeIndicatorModal();
+                    break;
+                case 'assessmentDetailsModal':
+                    closeAssessmentDetailsModal();
+                    break;
+                case 'trashModal':
+                    closeTrashModal();
+                    break;
+                case 'historyModal':
+                    closeHistoryModal();
+                    break;
+                case 'category-modal':
+                    closeCategoryModal();
+                    break;
+                case 'reference-modal':
+                    // This is the Quick Reference modal inside the integrated client
+                    // We need to find and call its close function from client context
+                    const closeBtn = document.querySelector('[data-action="close-quick-reference"]');
+                    if (closeBtn) closeBtn.click();
+                    break;
+            }
+        }
+    });
 }
