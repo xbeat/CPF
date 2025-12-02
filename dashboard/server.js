@@ -901,12 +901,17 @@ app.delete('/api/organizations/:orgId/permanent', async (req, res) => {
 
     const result = await dataManager.permanentlyDeleteOrganization(orgId, user);
 
-    console.log(`\n🔥 [API] Permanently deleted: ${orgId}\n`);
+    console.log(`\n🔥 [API] Permanently deleted: ${orgId} (${result.deletedCount || 0} rows affected)\n`);
+
+    // Get updated trash count to return to frontend
+    const trashData = await dataManager.getTrash();
 
     res.json({
       success: true,
       message: 'Organization permanently deleted',
-      orgId
+      orgId,
+      deletedCount: result.deletedCount || 0,
+      remainingInTrash: trashData.length
     });
   } catch (error) {
     console.error(`[API] Error permanently deleting organization ${req.params.orgId}:`, error.message);
