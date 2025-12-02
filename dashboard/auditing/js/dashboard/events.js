@@ -245,7 +245,7 @@ export function setupDashboardEventDelegation() {
         if (target.id === 'org-search') filterAndSortOrganizations();
         
         // Org Name Auto-ID Generation
-        if (target.id === 'orgName' && !editingOrgId) {
+        if (target.id === 'orgName' && !getEditingOrgId()) {
             const name = target.value.trim();
             if (name) {
                 import('./state.js').then(({organizations}) => {
