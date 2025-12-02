@@ -457,9 +457,21 @@ async function updateOrganizationInIndex(orgData) {
  * Remove organization from index
  */
 function removeOrganizationFromIndex(orgId) {
+  console.log(`🔥 [DataManager] removeOrganizationFromIndex called for: ${orgId}`);
   const index = readOrganizationsIndex(true); // Include deleted orgs for permanent deletion
+  console.log(`🔥 [DataManager] Index loaded, total orgs: ${index.organizations.length}`);
+
+  const orgExists = index.organizations.some(o => o.id === orgId);
+  console.log(`🔥 [DataManager] Organization exists in index: ${orgExists}`);
+
+  const beforeCount = index.organizations.length;
   index.organizations = index.organizations.filter(o => o.id !== orgId);
+  const afterCount = index.organizations.length;
+
+  console.log(`🔥 [DataManager] Index filtered: ${beforeCount} -> ${afterCount} (removed: ${beforeCount - afterCount})`);
+
   writeOrganizationsIndex(index);
+  console.log(`🔥 [DataManager] Index written to disk`);
 }
 
 /**
@@ -566,13 +578,18 @@ async function restoreOrganization(orgId, user = 'System') {
  * Permanently delete organization (cannot be undone)
  */
 async function permanentlyDeleteOrganization(orgId, user = 'System') {
+  console.log(`\n🔥 [DataManager] Starting permanent deletion for: ${orgId}`);
+
   const orgData = await readOrganization(orgId);
+  console.log(`🔥 [DataManager] Organization data loaded:`, orgData ? 'exists' : 'NOT FOUND');
 
   if (!orgData.metadata.deleted_at) {
     throw new Error('Organization must be in trash before permanent deletion');
   }
 
   const filePath = path.join(ORGS_DIR, `${orgId}.json`);
+  console.log(`🔥 [DataManager] File path: ${filePath}`);
+  console.log(`🔥 [DataManager] File exists: ${fs.existsSync(filePath)}`);
 
   // Log audit event before deletion
   logAuditEvent('permanent_delete', 'organization', orgId, {
@@ -582,12 +599,19 @@ async function permanentlyDeleteOrganization(orgId, user = 'System') {
 
   // Delete file
   if (fs.existsSync(filePath)) {
+    console.log(`🔥 [DataManager] Deleting file: ${filePath}`);
     fs.unlinkSync(filePath);
+    console.log(`🔥 [DataManager] File deleted successfully`);
+  } else {
+    console.log(`🔥 [DataManager] File does not exist, skipping file deletion`);
   }
 
   // Remove from index
+  console.log(`🔥 [DataManager] Removing from index...`);
   await removeOrganizationFromIndex(orgId);
+  console.log(`🔥 [DataManager] Removed from index successfully`);
 
+  console.log(`🔥 [DataManager] Permanent deletion completed for: ${orgId}\n`);
   return { success: true, orgId };
 }
 

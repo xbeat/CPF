@@ -301,27 +301,40 @@ export async function restoreFromTrash(orgId) {
 }
 
 export async function permanentDeleteOrg(orgId, orgName) {
+    console.log('🔴 [DEBUG] permanentDeleteOrg called with:', { orgId, orgName });
+
     // Show custom dialog that requires typing the org ID
     const confirmed = await showPermanentDeleteDialog({ orgId, orgName });
+    console.log('🔴 [DEBUG] Dialog confirmed:', confirmed);
 
-    if (!confirmed) return;
+    if (!confirmed) {
+        console.log('🔴 [DEBUG] User cancelled, returning');
+        return;
+    }
 
     try {
+        console.log('🔴 [DEBUG] Calling API to delete:', orgId);
         const response = await fetch(`/api/organizations/${orgId}/permanent?user=Dashboard%20User`, {
             method: 'DELETE'
         });
+        console.log('🔴 [DEBUG] API response status:', response.status);
 
         const result = await response.json();
+        console.log('🔴 [DEBUG] API result:', result);
 
         if (result.success) {
+            console.log('🔴 [DEBUG] Deletion successful, updating UI');
             showAlert('Organization permanently deleted', 'success');
             closeTrashModal();
             await loadTrashCount();
+            // CRITICAL FIX: Reopen trash modal to refresh the list
+            await openTrashModal();
+            console.log('🔴 [DEBUG] Trash modal refreshed');
         } else {
             throw new Error(result.error);
         }
     } catch (error) {
-        console.error('Error permanently deleting organization:', error);
+        console.error('🔴 [ERROR] Error permanently deleting organization:', error);
         showAlert(`Failed to delete: ${error.message}`, 'error');
     }
 }
