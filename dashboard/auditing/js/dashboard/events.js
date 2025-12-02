@@ -35,6 +35,9 @@ import {
 import {
     renderMaturityTab
 } from './maturity.js';
+import {
+    closeModal
+} from '../shared/utils.js';
 
 export function setupDashboardEventDelegation() {
     
