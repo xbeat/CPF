@@ -155,12 +155,13 @@ export async function editOrganization(orgId) {
         const response = await fetch(`/api/organizations/${orgId}`);
         const result = await response.json();
 
-        if (!result.success || !result.data || !result.data.metadata) {
+        if (!result.success || !result.data) {
             console.error('Failed to load organization data');
             return;
         }
 
-        const org = result.data.metadata;
+        // FIXED: id and name are at root level, other fields are in metadata
+        const { id, name, metadata } = result.data;
 
         // Set editing mode BEFORE opening modal
         setEditingOrgId(orgId);
@@ -174,18 +175,18 @@ export async function editOrganization(orgId) {
             saveBtn.disabled = false;
         }
 
-        document.getElementById('orgId').value = org.id;
+        document.getElementById('orgId').value = id;
         document.getElementById('orgId').disabled = true;
-        document.getElementById('orgName').value = org.name;
-        document.getElementById('orgIndustry').value = org.industry;  // NO defaults - use exact values!
-        document.getElementById('orgSize').value = org.size;
-        document.getElementById('orgCountry').value = org.country;
-        document.getElementById('orgLanguage').value = org.language;
+        document.getElementById('orgName').value = name;
+        document.getElementById('orgIndustry').value = metadata.industry;  // NO defaults - use exact values!
+        document.getElementById('orgSize').value = metadata.size;
+        document.getElementById('orgCountry').value = metadata.country;
+        document.getElementById('orgLanguage').value = metadata.language;
 
         // Optional fields
-        if(document.getElementById('orgSedeSociale')) document.getElementById('orgSedeSociale').value = org.sede_sociale || '';
-        if(document.getElementById('orgPartitaIva')) document.getElementById('orgPartitaIva').value = org.partita_iva || '';
-        if(document.getElementById('orgNotes')) document.getElementById('orgNotes').value = org.notes || '';
+        if(document.getElementById('orgSedeSociale')) document.getElementById('orgSedeSociale').value = metadata.sede_sociale || '';
+        if(document.getElementById('orgPartitaIva')) document.getElementById('orgPartitaIva').value = metadata.partita_iva || '';
+        if(document.getElementById('orgNotes')) document.getElementById('orgNotes').value = metadata.notes || '';
 
         const fetchContainer = document.getElementById('fetchIndicators')?.parentElement?.parentElement;
         if(fetchContainer) fetchContainer.classList.add('hidden');
