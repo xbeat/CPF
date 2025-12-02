@@ -135,27 +135,37 @@ export function renderMaturityTab() {
     // 7. Sector Benchmark Visual
     if (mm.sector_benchmark) {
         const yourScore = mm.cpf_score || 0;
-        const sectorMean = mm.sector_benchmark.mean || 50;
-        const yourPosition = Math.min(100, Math.max(0, yourScore));
-        const meanPosition = Math.min(100, Math.max(0, sectorMean));
+        const sectorMean = mm.sector_benchmark.sector_mean || 50;
+        const yourScorePercent = (yourScore / 100) * 100;
+        const sectorMeanPercent = (sectorMean / 100) * 100;
 
-        setStyle('yourScoreMarker', 'left', yourPosition + '%');
-        setStyle('sectorMeanMarker', 'left', meanPosition + '%');
-        setText('yourScoreLabel', `Your Score: ${yourScore.toFixed(0)}`);
-        setText('sectorMeanLabel', `Sector Mean: ${sectorMean.toFixed(0)}`);
+        setStyle('yourScoreMarker', 'left', yourScorePercent + '%');
+        setStyle('sectorMeanMarker', 'left', sectorMeanPercent + '%');
+        setStyle('yourScoreLabel', 'left', yourScorePercent + '%');
+        setStyle('sectorMeanLabel', 'left', sectorMeanPercent + '%');
+        setText('yourScoreLabel', `Your Score: ${Math.round(yourScore)}`);
+        setText('sectorMeanLabel', `Sector Mean: ${sectorMean}`);
 
         // Benchmark Stats
         const statsEl = document.getElementById('benchmarkStats');
         if (statsEl) {
+            const selectedOrgData = getSelectedOrgData();
             statsEl.innerHTML = `
-                <div style="padding:10px;background:var(--bg-gray);border-radius:8px;">
-                    <strong>Percentile:</strong> ${mm.sector_benchmark.percentile?.toFixed(0) || 'N/A'}%
+                <div style="padding: 10px; background: var(--bg-gray); border-radius: 6px;">
+                    <div style="font-size: 12px; color: var(--text-light);">Sector Mean</div>
+                    <div style="font-size: 20px; font-weight: 600;">${sectorMean}</div>
                 </div>
-                <div style="padding:10px;background:var(--bg-gray);border-radius:8px;">
-                    <strong>Sample Size:</strong> ${mm.sector_benchmark.sample_size || 'N/A'} organizations
+                <div style="padding: 10px; background: var(--bg-gray); border-radius: 6px;">
+                    <div style="font-size: 12px; color: var(--text-light);">Your Score</div>
+                    <div style="font-size: 20px; font-weight: 600; color: var(--primary);">${Math.round(yourScore)}</div>
                 </div>
-                <div style="padding:10px;background:var(--bg-gray);border-radius:8px;">
-                    <strong>Your Position:</strong> ${yourScore > sectorMean ? 'Above average ⬆️' : yourScore < sectorMean ? 'Below average ⬇️' : 'Average ➡️'}
+                <div style="padding: 10px; background: var(--bg-gray); border-radius: 6px;">
+                    <div style="font-size: 12px; color: var(--text-light);">Percentile Rank</div>
+                    <div style="font-size: 20px; font-weight: 600;">${mm.sector_benchmark.percentile.toFixed(0)}th</div>
+                </div>
+                <div style="padding: 10px; background: var(--bg-gray); border-radius: 6px;">
+                    <div style="font-size: 12px; color: var(--text-light);">Sector</div>
+                    <div style="font-size: 16px; font-weight: 600;">${selectedOrgData.industry || 'N/A'}</div>
                 </div>
             `;
         }
@@ -163,34 +173,47 @@ export function renderMaturityTab() {
 
     // 8. Certification Path
     const certPath = document.getElementById('certificationPath');
-    if (certPath && mm.certifications) {
-        let html = '';
-        ['CPF Foundation', 'CPF Practitioner', 'CPF Advanced', 'CPF Expert', 'CPF Master'].forEach((cert, idx) => {
-            const reqLevel = idx + 1;
-            const achieved = mm.maturity_level >= reqLevel;
-            const color = achieved ? 'var(--success)' : 'var(--text-light)';
-            html += `
-                <div style="text-align:center;flex:1;min-width:120px;">
-                    <div style="width:80px;height:80px;margin:0 auto;border-radius:50%;background:${achieved ? 'var(--success)' : '#e5e7eb'};display:flex;align-items:center;justify-content:center;font-size:32px;color:white;">
-                        ${achieved ? '🏆' : '🔒'}
-                    </div>
-                    <div style="margin-top:10px;font-weight:600;color:${color};">${cert}</div>
-                    <div style="font-size:12px;color:var(--text-light);margin-top:5px;">Level ${reqLevel}+</div>
+    if (certPath && mm.certification_path) {
+        const certifications = [
+            { id: 'CPF-F', level: 1, name: 'Foundation', cost: '€500', duration: '2 days' },
+            { id: 'CPF-P', level: 2, name: 'Practitioner', cost: '€1,500', duration: '5 days' },
+            { id: 'CPF-E', level: 4, name: 'Expert', cost: '€3,500', duration: '10 days' },
+            { id: 'CPF-M', level: 5, name: 'Master', cost: 'Invitation only', duration: 'Research required' }
+        ];
+
+        let certPathHTML = '';
+        // Support both eligible_for (db_json) and eligible (dataManager) structures
+        const eligibleList = mm.certification_path.eligible_for || mm.certification_path.eligible || [];
+
+        certifications.forEach(cert => {
+            const isEligible = eligibleList.includes(cert.id);
+            const isCurrent = mm.certification_path.current_certification === cert.id;
+
+            certPathHTML += `
+                <div style="text-align: center; padding: 20px; background: ${isEligible ? 'var(--bg-success)' : 'var(--bg-gray)'}; border-radius: 12px; min-width: 150px; position: relative;">
+                    ${isCurrent ? '<div style="position: absolute; top: -10px; right: -10px; background: var(--primary); color: white; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">CURRENT</div>' : ''}
+                    <div style="font-size: 32px; margin-bottom: 10px;">${isEligible ? '🎖️' : '🔒'}</div>
+                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 5px;">${cert.id}</div>
+                    <div style="font-size: 14px; color: var(--text-light); margin-bottom: 10px;">${cert.name}</div>
+                    <div style="font-size: 12px; color: var(--text-light);">Level ${cert.level}+</div>
+                    <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">${cert.cost}</div>
+                    <div style="font-size: 11px; color: var(--text-light);">${cert.duration}</div>
                 </div>
             `;
         });
-        certPath.innerHTML = html;
+        certPath.innerHTML = certPathHTML;
     }
 
     // 9. ROI Analysis (if next level exists)
     if (mm.maturity_level < 5 && mm.roi_analysis) {
+        const roi = mm.roi_analysis;
         const roiContainer = document.getElementById('roiAnalysisContainer');
         if (roiContainer) roiContainer.style.display = 'block';
 
-        setText('roiInvestment', mm.roi_analysis.investment_required || 'N/A');
-        setText('roiAnnualBenefit', mm.roi_analysis.annual_benefit || 'N/A');
-        setText('roiPayback', mm.roi_analysis.payback_period || 'N/A');
-        setText('roiNPV', mm.roi_analysis.npv_5_year || 'N/A');
+        setText('roiInvestment', `€${(roi.estimated_investment / 1000).toFixed(0)}k`);
+        setText('roiAnnualBenefit', `€${(roi.annual_benefit / 1000).toFixed(0)}k`);
+        setText('roiPayback', `${roi.payback_months} months`);
+        setText('roiNPV', `€${(roi.npv_5yr / 1000000).toFixed(1)}M`);
     } else {
         const roiContainer = document.getElementById('roiAnalysisContainer');
         if (roiContainer) roiContainer.style.display = 'none';
@@ -248,18 +271,32 @@ function computeBasicMaturityModel(org) {
     };
 
     // Sector Benchmark (mock data)
+    const sectorMean = 50;
     const sectorBenchmark = {
         percentile: Math.min(99, Math.max(1, cpfScore * 0.7 + Math.random() * 10)), // Mock percentile
-        mean: 50,
+        sector_mean: sectorMean,
+        gap: cpfScore - sectorMean,
         sample_size: 'N/A'
+    };
+
+    // Certification Path
+    const eligibleCerts = [];
+    if (maturityLevel >= 1) eligibleCerts.push('CPF-F');
+    if (maturityLevel >= 2) eligibleCerts.push('CPF-P');
+    if (maturityLevel >= 4) eligibleCerts.push('CPF-E');
+    if (maturityLevel >= 5) eligibleCerts.push('CPF-M');
+
+    const certificationPath = {
+        eligible_for: eligibleCerts,
+        current_certification: eligibleCerts.length > 0 ? eligibleCerts[eligibleCerts.length - 1] : null
     };
 
     // ROI Analysis (mock data)
     const roiAnalysis = maturityLevel < 5 ? {
-        investment_required: 'N/A',
-        annual_benefit: '1500000',
-        payback_period: 'N/A',
-        npv_5_year: 'N/A'
+        estimated_investment: 50000,
+        annual_benefit: 150000,
+        payback_months: 4,
+        npv_5yr: 500000
     } : null;
 
     return {
@@ -272,7 +309,7 @@ function computeBasicMaturityModel(org) {
         red_domains_count: redCount,
         compliance,
         sector_benchmark: sectorBenchmark,
-        certifications: true, // Flag to show certification path
+        certification_path: certificationPath,
         roi_analysis: roiAnalysis
     };
 }
