@@ -154,13 +154,10 @@ export function setupDashboardEventDelegation() {
             // This is just here for documentation
         }
 
-        // 6c. Permanent Delete Dialog (handled by showPermanentDeleteDialog() promise)
+        // 6c. Permanent Delete Dialog
         if (action === 'close-permanent-delete-dialog') closeModal('permanentDeleteDialog');
         if (action === 'cancel-permanent-delete-dialog') closeModal('permanentDeleteDialog');
-        if (action === 'confirm-permanent-delete-dialog') {
-            // Handled internally by showPermanentDeleteDialog() promise
-            // This is just here for documentation
-        }
+        // Note: confirm button doesn't use data-action, handled by addEventListener in utils.js
 
         // 7. Exports
         if (action === 'export-xlsx') exportCurrentOrgXLSX();
