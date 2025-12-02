@@ -2,6 +2,7 @@ import { organizationContext, currentData, resetCurrentData } from './state.js';
 import { currentScore, calculateIndicatorScore, resetCurrentScore } from './scoring.js';
 import { renderFieldKit, showAutoSaveIndicator } from './render.js';
 import { CATEGORY_MAP, LANG_MAP } from '../shared/config.js';
+import { showConfirm } from '../shared/utils.js';
 
 export async function loadJSON(indicatorId = null, languageOverride = null) {
     let input = indicatorId;
@@ -395,7 +396,15 @@ export function generateReport() {
 
 // Reset assessment data (for integrated client) - clears fields but keeps indicator loaded
 export async function resetIntegratedClientData() {
-    if (!confirm('⚠️ Reset this assessment?\n\nThis will clear all form data.\n\nYou can undo this using the History button.')) {
+    const confirmed = await showConfirm({
+        title: '⚠️ Reset this assessment?',
+        message: 'This will clear all form data.\n\nYou can undo this using the History button.',
+        confirmText: 'Reset',
+        cancelText: 'Cancel',
+        confirmClass: 'btn-warning'
+    });
+
+    if (!confirmed) {
         return;
     }
 
