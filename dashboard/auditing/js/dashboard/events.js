@@ -143,6 +143,14 @@ export function setupDashboardEventDelegation() {
         if (action === 'close-history-modal') closeHistoryModal();
         if (action === 'revert-to-version') revertToVersion(target.dataset.version);
 
+        // 6b. Confirm Dialog (for reset and revert confirmations)
+        if (action === 'close-confirm-dialog') closeModal('confirmDialog');
+        if (action === 'cancel-confirm-dialog') closeModal('confirmDialog');
+        if (action === 'confirm-confirm-dialog') {
+            // Handled internally by showConfirm() promise
+            // This is just here for documentation
+        }
+
         // 7. Exports
         if (action === 'export-xlsx') exportCurrentOrgXLSX();
         if (action === 'export-pdf') exportCurrentOrgPDF();
