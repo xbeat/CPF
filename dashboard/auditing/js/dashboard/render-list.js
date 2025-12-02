@@ -4,9 +4,11 @@ import { escapeHtml, capitalizeFirst } from '../shared/utils.js';
 export function renderOrganizations() {
     const orgList = document.getElementById('org-list');
     const countEl = document.getElementById('org-count');
+    const sidebarCountEl = document.getElementById('sidebarOrgCount');
     const organizations = getOrganizations();
 
     if (countEl) countEl.textContent = organizations.length;
+    if (sidebarCountEl) sidebarCountEl.textContent = organizations.length;
     if (!orgList) return;
 
     orgList.innerHTML = '';
@@ -123,8 +125,10 @@ export function filterAndSortOrganizations() {
     // instead of the global unsorted one
     const orgList = document.getElementById('org-list');
     const countEl = document.getElementById('org-count');
-    
+    const sidebarCountEl = document.getElementById('sidebarOrgCount');
+
     if (countEl) countEl.textContent = filtered.length;
+    if (sidebarCountEl) sidebarCountEl.textContent = filtered.length;
     if (!orgList) return;
 
     orgList.innerHTML = '';
