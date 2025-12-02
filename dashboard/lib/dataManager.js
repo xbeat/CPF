@@ -744,6 +744,22 @@ function getAssessmentHistory(orgId, indicatorId) {
 }
 
 /**
+ * Check if two assessments are significantly different
+ * Returns true if they differ in important fields
+ */
+function assessmentsDiffer(assessment1, assessment2) {
+  if (!assessment1 || !assessment2) return true;
+
+  // Compare key fields that matter for versioning
+  return (
+    assessment1.bayesian_score !== assessment2.bayesian_score ||
+    assessment1.confidence !== assessment2.confidence ||
+    assessment1.maturity_level !== assessment2.maturity_level ||
+    JSON.stringify(assessment1.raw_data) !== JSON.stringify(assessment2.raw_data)
+  );
+}
+
+/**
  * Revert assessment to specific version
  */
 async function revertAssessment(orgId, indicatorId, versionNumber, user = 'System') {
@@ -767,8 +783,12 @@ async function revertAssessment(orgId, indicatorId, versionNumber, user = 'Syste
 
   const currentAssessment = orgData.assessments[indicatorId];
 
-  // SALVA la versione corrente nella history PRIMA di sovrascriverla!
-  if (currentAssessment) {
+  // Check if we need to save the current version before reverting
+  // Only save if it's different from the last version in history
+  const lastVersion = history.versions[history.versions.length - 1];
+  const needToSaveCurrent = currentAssessment && assessmentsDiffer(currentAssessment, lastVersion?.data);
+
+  if (needToSaveCurrent) {
     saveAssessmentVersion(orgId, indicatorId, currentAssessment, user);
   }
 
@@ -780,6 +800,16 @@ async function revertAssessment(orgId, indicatorId, versionNumber, user = 'Syste
 
   // Update index to reflect new stats/aggregates
   await updateOrganizationInIndex(orgData);
+
+  // CRITICAL: Save the reverted version to history so the matrix updates
+  // But only if it's different from the last saved version
+  const updatedHistory = getAssessmentHistory(orgId, indicatorId);
+  const newLastVersion = updatedHistory.versions[updatedHistory.versions.length - 1];
+  const needToSaveReverted = assessmentsDiffer(targetVersion.data, newLastVersion?.data);
+
+  if (needToSaveReverted) {
+    saveAssessmentVersion(orgId, indicatorId, targetVersion.data, user);
+  }
 
   // Log audit event
   logAuditEvent('revert', 'assessment', `${orgId}/${indicatorId}`, {
@@ -838,8 +868,16 @@ async function saveAssessment(orgId, assessmentData, user = 'System') {
   await updateOrganizationInIndex(orgData);
 
   // CRITICAL: Save current version to history AFTER saving
-  // This ensures every save (including the first one) is tracked in history
-  await saveAssessmentVersion(orgId, indicatorId, assessmentData, user);
+  // But only if it's different from the last version to avoid duplicates
+  const history = getAssessmentHistory(orgId, indicatorId);
+  const lastVersion = history.versions[history.versions.length - 1];
+  const needToSave = assessmentsDiffer(assessmentData, lastVersion?.data);
+
+  if (needToSave) {
+    await saveAssessmentVersion(orgId, indicatorId, assessmentData, user);
+  } else {
+    console.log(`📝 [DataManager] Skipping duplicate version for ${orgId}/${indicatorId} (no changes detected)`);
+  }
 
   // Log audit event
   logAuditEvent(isUpdate ? 'update' : 'create', 'assessment', `${orgId}/${indicatorId}`, {
