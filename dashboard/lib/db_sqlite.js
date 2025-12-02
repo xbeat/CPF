@@ -554,5 +554,15 @@ module.exports = {
   saveIndicatorMetadata: async () => ({ success: true }),
   writeOrganizationsIndex: async () => {},
   updateOrganizationInIndex: async () => {},
-  removeOrganizationFromIndex: async () => {},
+  removeOrganizationFromIndex: async (orgId) => {
+    await initialize();
+    try {
+      const result = await db.run('DELETE FROM organizations WHERE id = ?', orgId);
+      console.log(`[DB-SQLITE] Permanently deleted organization ${orgId} from database (${result.changes} rows affected)`);
+      return { success: true, deletedCount: result.changes };
+    } catch (error) {
+      console.error(`[DB-SQLITE] Error permanently deleting organization ${orgId}:`, error);
+      throw error;
+    }
+  },
 };
