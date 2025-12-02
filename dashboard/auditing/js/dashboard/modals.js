@@ -484,11 +484,7 @@ export async function openHistoryModal() {
                                 <button class="btn btn-warning btn-small" data-action="revert-to-version" data-version="${version.version}" style="width: 100%;">
                                     ↩️ Revert to This
                                 </button>
-                            ` : (isReset ? `
-                                <div style="color: #999; font-size: 13px; font-style: italic; padding: 8px;">
-                                    🔄 Reset point
-                                </div>
-                            ` : '')}
+                            ` : ''}
                         </div>
                     </div>
                 </div>
