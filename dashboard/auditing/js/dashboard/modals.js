@@ -1,5 +1,5 @@
 import { selectedOrgData, selectedOrgId, setSelectedOrgId, setEditingOrgId } from './state.js';
-import { showModal, closeModal, showAlert, escapeHtml, showConfirm } from '../shared/utils.js';
+import { showModal, closeModal, showAlert, escapeHtml, showConfirm, showPermanentDeleteDialog } from '../shared/utils.js';
 import { CATEGORY_MAP } from '../shared/config.js';
 import { organizationContext, currentData, renderFieldKit, resetCurrentData } from '../client/index.js';
 import { loadAllData, deleteOrganizationAPI, loadOrganizationDetails, loadTrashCount } from './api.js';
@@ -300,10 +300,10 @@ export async function restoreFromTrash(orgId) {
 }
 
 export async function permanentDeleteOrg(orgId, orgName) {
-    if (!confirm(`⚠️ PERMANENTLY DELETE "${orgName}"?\n\nThis action CANNOT be undone!\n\nAll assessment data will be lost forever.`)) return;
+    // Show custom dialog that requires typing the org ID
+    const confirmed = await showPermanentDeleteDialog({ orgId, orgName });
 
-    // Double confirmation
-    if (!confirm(`Are you absolutely sure? Type the org ID to confirm: ${orgId}`)) return;
+    if (!confirmed) return;
 
     try {
         const response = await fetch(`/api/organizations/${orgId}/permanent?user=Dashboard%20User`, {

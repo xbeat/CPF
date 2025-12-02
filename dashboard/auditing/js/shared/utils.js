@@ -163,3 +163,107 @@ export function showConfirm({
         showModal('confirmDialog');
     });
 }
+
+/**
+ * Show a permanent delete confirmation dialog that requires typing the organization ID
+ * Returns a Promise that resolves to true if confirmed (ID matches), false if cancelled
+ *
+ * @param {Object} options - Configuration options
+ * @param {string} options.orgId - Organization ID that must be typed to confirm
+ * @param {string} options.orgName - Organization name to display
+ * @returns {Promise<boolean>} - Resolves to true if confirmed with correct ID, false if cancelled
+ */
+export function showPermanentDeleteDialog({ orgId, orgName }) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('permanentDeleteDialog');
+        const orgNameEl = document.getElementById('permanentDeleteOrgName');
+        const orgIdEl = document.getElementById('permanentDeleteOrgId');
+        const inputEl = document.getElementById('permanentDeleteInput');
+        const confirmBtn = document.getElementById('permanentDeleteConfirmBtn');
+        const cancelBtn = document.getElementById('permanentDeleteCancelBtn');
+        const hintEl = document.getElementById('permanentDeleteInputHint');
+
+        if (!modal || !orgNameEl || !orgIdEl || !inputEl || !confirmBtn || !cancelBtn) {
+            console.error('Permanent delete dialog elements not found');
+            resolve(false);
+            return;
+        }
+
+        // Set organization info
+        orgNameEl.textContent = orgName;
+        orgIdEl.textContent = orgId;
+
+        // Reset input
+        inputEl.value = '';
+        confirmBtn.disabled = true;
+        hintEl.textContent = 'Please type the ID exactly as shown above';
+        hintEl.style.color = 'var(--text-light)';
+
+        // Handle input validation
+        const handleInput = () => {
+            const inputValue = inputEl.value.trim();
+
+            if (inputValue === orgId) {
+                confirmBtn.disabled = false;
+                hintEl.textContent = '✓ ID matches - you can proceed';
+                hintEl.style.color = 'var(--success)';
+            } else {
+                confirmBtn.disabled = true;
+                if (inputValue.length > 0) {
+                    hintEl.textContent = '✗ ID does not match';
+                    hintEl.style.color = 'var(--danger)';
+                } else {
+                    hintEl.textContent = 'Please type the ID exactly as shown above';
+                    hintEl.style.color = 'var(--text-light)';
+                }
+            }
+        };
+
+        // Handle confirm
+        const handleConfirm = () => {
+            if (inputEl.value.trim() === orgId) {
+                cleanup();
+                closeModal('permanentDeleteDialog');
+                resolve(true);
+            }
+        };
+
+        // Handle cancel
+        const handleCancel = () => {
+            cleanup();
+            closeModal('permanentDeleteDialog');
+            resolve(false);
+        };
+
+        // Cleanup listeners and reset form
+        const cleanup = () => {
+            inputEl.removeEventListener('input', handleInput);
+            confirmBtn.removeEventListener('click', handleConfirm);
+            cancelBtn.removeEventListener('click', handleCancel);
+            modal.removeEventListener('click', handleBackdropClick);
+            inputEl.value = '';
+            confirmBtn.disabled = true;
+        };
+
+        // Handle backdrop click
+        const handleBackdropClick = (e) => {
+            if (e.target === modal) {
+                handleCancel();
+            }
+        };
+
+        // Add listeners
+        inputEl.addEventListener('input', handleInput);
+        confirmBtn.addEventListener('click', handleConfirm);
+        cancelBtn.addEventListener('click', handleCancel);
+        modal.addEventListener('click', handleBackdropClick);
+
+        // Show modal and focus input
+        showModal('permanentDeleteDialog');
+
+        // Focus input after a short delay to ensure modal is visible
+        setTimeout(() => {
+            inputEl.focus();
+        }, 100);
+    });
+}

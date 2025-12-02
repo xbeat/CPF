@@ -154,6 +154,14 @@ export function setupDashboardEventDelegation() {
             // This is just here for documentation
         }
 
+        // 6c. Permanent Delete Dialog (handled by showPermanentDeleteDialog() promise)
+        if (action === 'close-permanent-delete-dialog') closeModal('permanentDeleteDialog');
+        if (action === 'cancel-permanent-delete-dialog') closeModal('permanentDeleteDialog');
+        if (action === 'confirm-permanent-delete-dialog') {
+            // Handled internally by showPermanentDeleteDialog() promise
+            // This is just here for documentation
+        }
+
         // 7. Exports
         if (action === 'export-xlsx') exportCurrentOrgXLSX();
         if (action === 'export-pdf') exportCurrentOrgPDF();
@@ -341,6 +349,12 @@ export function setupDashboardEventDelegation() {
                     break;
                 case 'category-modal':
                     closeCategoryModal();
+                    break;
+                case 'permanentDeleteDialog':
+                    closeModal('permanentDeleteDialog');
+                    break;
+                case 'confirmDialog':
+                    closeModal('confirmDialog');
                     break;
                 case 'reference-modal':
                     // This is the Quick Reference modal inside the integrated client
