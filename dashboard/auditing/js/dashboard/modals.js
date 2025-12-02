@@ -475,6 +475,11 @@ export async function revertToVersion(version) {
             // Update selectedOrgData with data from server (DON'T reload from database!)
             selectedOrgData.assessments[indicatorId] = result.data;
 
+            // CRITICAL: Update aggregates to refresh the matrix immediately
+            if (result.aggregates) {
+                selectedOrgData.aggregates = result.aggregates;
+            }
+
             // If form is open, update it with reverted data
             if (currentData && currentData.fieldKit && selectedOrgData) {
                 const revertedAssessment = selectedOrgData.assessments[indicatorId];

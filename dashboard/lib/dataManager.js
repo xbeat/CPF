@@ -801,15 +801,9 @@ async function revertAssessment(orgId, indicatorId, versionNumber, user = 'Syste
   // Update index to reflect new stats/aggregates
   await updateOrganizationInIndex(orgData);
 
-  // CRITICAL: Save the reverted version to history so the matrix updates
-  // But only if it's different from the last saved version
-  const updatedHistory = getAssessmentHistory(orgId, indicatorId);
-  const newLastVersion = updatedHistory.versions[updatedHistory.versions.length - 1];
-  const needToSaveReverted = assessmentsDiffer(targetVersion.data, newLastVersion?.data);
-
-  if (needToSaveReverted) {
-    saveAssessmentVersion(orgId, indicatorId, targetVersion.data, user);
-  }
+  // No need to save a new version after revert - the version we reverted to
+  // is already in history. The revert itself updates the current assessment,
+  // database, and matrix correctly (lines above).
 
   // Log audit event
   logAuditEvent('revert', 'assessment', `${orgId}/${indicatorId}`, {
@@ -868,15 +862,24 @@ async function saveAssessment(orgId, assessmentData, user = 'System') {
   await updateOrganizationInIndex(orgData);
 
   // CRITICAL: Save current version to history AFTER saving
-  // But only if it's different from the last version to avoid duplicates
+  // If data is different from last version: save a new version
+  // If data is identical: update the timestamp of the last version
   const history = getAssessmentHistory(orgId, indicatorId);
   const lastVersion = history.versions[history.versions.length - 1];
   const needToSave = assessmentsDiffer(assessmentData, lastVersion?.data);
 
   if (needToSave) {
     await saveAssessmentVersion(orgId, indicatorId, assessmentData, user);
+  } else if (lastVersion) {
+    // Update timestamp of existing version instead of creating duplicate
+    const historyFile = path.join(HISTORY_DIR, `${orgId}_${indicatorId}.json`);
+    lastVersion.timestamp = new Date().toISOString();
+    lastVersion.user = user;
+    writeJsonFile(historyFile, history);
+    console.log(`📝 [DataManager] Updated timestamp for ${orgId}/${indicatorId} (no changes detected)`);
   } else {
-    console.log(`📝 [DataManager] Skipping duplicate version for ${orgId}/${indicatorId} (no changes detected)`);
+    // No history exists yet, create first version
+    await saveAssessmentVersion(orgId, indicatorId, assessmentData, user);
   }
 
   // Log audit event
