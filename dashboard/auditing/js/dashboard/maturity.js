@@ -113,23 +113,44 @@ export function renderMaturityTab() {
     setText('yellowDomainsCount', mm.yellow_domains_count || 0);
     setText('redDomainsCount', mm.red_domains_count || 0);
 
-    // 7. Compliance Table
-    const compTable = document.getElementById('complianceTableBody');
-    if (compTable && mm.compliance) {
-        let html = '';
-        Object.entries(mm.compliance).forEach(([key, val]) => {
-            const statusIcon = val.status === 'compliant' ? '✅' : val.status === 'at_risk' ? '⚠️' : '❌';
-            const statusColor = val.status === 'compliant' ? 'var(--success)' : val.status === 'at_risk' ? 'var(--warning)' : 'var(--danger)';
-            html += `
-                <tr>
-                    <td style="padding:12px;"><strong>${key.toUpperCase()}</strong></td>
-                    <td style="padding:12px;text-align:center;color:${statusColor};">${statusIcon} ${val.status.replace('_', ' ')}</td>
-                    <td style="padding:12px;text-align:center;">Lvl ${val.min_level_required || 0}</td>
-                    <td style="padding:12px;text-align:center;">Lvl ${val.recommended_level || val.min_level_required || 1}</td>
-                    <td style="padding:12px;text-align:center;font-weight:bold;">Lvl ${mm.maturity_level}</td>
-                </tr>`;
+    // 7. Regulatory Compliance Table
+    const complianceTableBody = document.getElementById('complianceTableBody');
+    if (complianceTableBody && mm.compliance) {
+        const regulations = [
+            { name: 'GDPR Article 32', key: 'GDPR', description: 'Data Protection Regulation' },
+            { name: 'NIS2 Directive', key: 'NIS2', description: 'Network & Information Security' },
+            { name: 'DORA', key: 'DORA', description: 'Digital Operational Resilience (Financial)' },
+            { name: 'ISO 27001:2022', key: 'ISO27001', description: 'Information Security Management' }
+        ];
+
+        let complianceHTML = '';
+        regulations.forEach(reg => {
+            const compliance = mm.compliance[reg.key];
+            if (!compliance) return;
+
+            const statusIcon = compliance.status === 'compliant' ? '✅' :
+                compliance.status === 'at_risk' ? '⚠️' : '❌';
+            const statusText = compliance.status === 'compliant' ? 'Compliant' :
+                compliance.status === 'at_risk' ? 'At Risk' : 'Non-Compliant';
+            const statusColor = compliance.status === 'compliant' ? 'var(--success)' :
+                compliance.status === 'at_risk' ? 'var(--warning)' : 'var(--danger)';
+
+            complianceHTML += `
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 12px;">
+                        <div style="font-weight: 600;">${reg.name}</div>
+                        <div style="font-size: 12px; color: var(--text-light);">${reg.description}</div>
+                    </td>
+                    <td style="padding: 12px; text-align: center;">
+                        <span style="color: ${statusColor}; font-weight: 600;">${statusIcon} ${statusText}</span>
+                    </td>
+                    <td style="padding: 12px; text-align: center;">Level ${compliance.min_level_required}</td>
+                    <td style="padding: 12px; text-align: center;">Level ${compliance.recommended_level}</td>
+                    <td style="padding: 12px; text-align: center; font-weight: 600; color: var(--primary);">Level ${mm.maturity_level}</td>
+                </tr>
+            `;
         });
-        compTable.innerHTML = html;
+        complianceTableBody.innerHTML = complianceHTML;
     }
 
     // 7. Sector Benchmark Visual
