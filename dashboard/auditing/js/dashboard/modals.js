@@ -1,5 +1,5 @@
 import { selectedOrgData, selectedOrgId, setSelectedOrgId, setEditingOrgId } from './state.js';
-import { showModal, closeModal, showAlert, escapeHtml } from '../shared/utils.js';
+import { showModal, closeModal, showAlert, escapeHtml, showConfirm } from '../shared/utils.js';
 import { CATEGORY_MAP } from '../shared/config.js';
 import { organizationContext, currentData, renderFieldKit, resetCurrentData } from '../client/index.js';
 import { loadAllData, deleteOrganizationAPI, loadOrganizationDetails, loadTrashCount } from './api.js';
@@ -443,7 +443,15 @@ export function closeHistoryModal() {
 }
 
 export async function revertToVersion(version) {
-    if(!confirm(`Revert to version ${version}?\n\nThis will create a new version based on the selected one.`)) return;
+    const confirmed = await showConfirm({
+        title: '↩️ Revert to version ' + version,
+        message: `This will create a new version based on the selected one.\n\nAre you sure you want to continue?`,
+        confirmText: 'Revert',
+        cancelText: 'Cancel',
+        confirmClass: 'btn-warning'
+    });
+
+    if (!confirmed) return;
 
     const orgId = currentHistoryOrgId || organizationContext?.orgId || selectedOrgId;
     const indicatorId = currentHistoryIndicatorId || currentData?.fieldKit?.indicator;

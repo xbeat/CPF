@@ -84,3 +84,82 @@ export function showAlert(message, type = 'info') {
         }, 300);
     }, 3000);
 }
+
+/**
+ * Show a confirmation dialog with custom title, message and buttons
+ * Returns a Promise that resolves to true if confirmed, false if cancelled
+ *
+ * @param {Object} options - Configuration options
+ * @param {string} options.title - Dialog title
+ * @param {string} options.message - Dialog message
+ * @param {string} [options.confirmText='Confirm'] - Text for confirm button
+ * @param {string} [options.cancelText='Cancel'] - Text for cancel button
+ * @param {string} [options.confirmClass='btn-primary'] - CSS class for confirm button (btn-primary, btn-danger, btn-warning)
+ * @returns {Promise<boolean>} - Resolves to true if confirmed, false if cancelled
+ */
+export function showConfirm({
+    title = 'Confirm Action',
+    message = 'Are you sure?',
+    confirmText = 'Confirm',
+    cancelText = 'Cancel',
+    confirmClass = 'btn-primary'
+}) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('confirmDialog');
+        const titleEl = document.getElementById('confirmDialogTitle');
+        const messageEl = document.getElementById('confirmDialogMessage');
+        const confirmBtn = document.getElementById('confirmOkBtn');
+        const cancelBtn = document.getElementById('confirmCancelBtn');
+
+        if (!modal || !titleEl || !messageEl || !confirmBtn || !cancelBtn) {
+            console.error('Confirm dialog elements not found');
+            resolve(false);
+            return;
+        }
+
+        // Set content
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        confirmBtn.textContent = confirmText;
+        cancelBtn.textContent = cancelText;
+
+        // Update confirm button style
+        confirmBtn.className = `btn ${confirmClass}`;
+
+        // Handle confirm
+        const handleConfirm = () => {
+            cleanup();
+            closeModal('confirmDialog');
+            resolve(true);
+        };
+
+        // Handle cancel
+        const handleCancel = () => {
+            cleanup();
+            closeModal('confirmDialog');
+            resolve(false);
+        };
+
+        // Cleanup listeners
+        const cleanup = () => {
+            confirmBtn.removeEventListener('click', handleConfirm);
+            cancelBtn.removeEventListener('click', handleCancel);
+            modal.removeEventListener('click', handleBackdropClick);
+        };
+
+        // Handle backdrop click
+        const handleBackdropClick = (e) => {
+            if (e.target === modal) {
+                handleCancel();
+            }
+        };
+
+        // Add listeners
+        confirmBtn.addEventListener('click', handleConfirm);
+        cancelBtn.addEventListener('click', handleCancel);
+        modal.addEventListener('click', handleBackdropClick);
+
+        // Show modal
+        showModal('confirmDialog');
+    });
+}
