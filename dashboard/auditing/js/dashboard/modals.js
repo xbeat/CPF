@@ -63,7 +63,9 @@ export async function openIntegratedClient(indicatorId, orgId) {
                         
                         <div id="reference-modal" class="cpf-client modal" style="display:none;z-index:1100;">
                              <div class="modal-content" style="position: relative;">
-                                <button class="close-btn" data-action="close-quick-reference" style="position: sticky; top: 15px; float: right; margin-bottom: -50px; z-index: 10;">×</button>
+                                <div style="text-align: right;">
+                                    <button class="close-btn" data-action="close-quick-reference" style="position: sticky; top: 15px; display: inline-block; margin-bottom: -50px; z-index: 10;">×</button>
+                                </div>
                                 <div style="clear: both;">
                                     <div class="modal-header">
                                         <h2>📚 CPF Indicators Quick Reference</h2>
