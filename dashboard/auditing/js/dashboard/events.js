@@ -154,6 +154,11 @@ export function setupDashboardEventDelegation() {
             // This is just here for documentation
         }
 
+        // 6c. Permanent Delete Dialog
+        if (action === 'close-permanent-delete-dialog') closeModal('permanentDeleteDialog');
+        if (action === 'cancel-permanent-delete-dialog') closeModal('permanentDeleteDialog');
+        // Note: confirm button doesn't use data-action, handled by addEventListener in utils.js
+
         // 7. Exports
         if (action === 'export-xlsx') exportCurrentOrgXLSX();
         if (action === 'export-pdf') exportCurrentOrgPDF();
@@ -341,6 +346,12 @@ export function setupDashboardEventDelegation() {
                     break;
                 case 'category-modal':
                     closeCategoryModal();
+                    break;
+                case 'permanentDeleteDialog':
+                    closeModal('permanentDeleteDialog');
+                    break;
+                case 'confirmDialog':
+                    closeModal('confirmDialog');
                     break;
                 case 'reference-modal':
                     // This is the Quick Reference modal inside the integrated client
