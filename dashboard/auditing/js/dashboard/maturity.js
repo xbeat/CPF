@@ -117,10 +117,10 @@ export function renderMaturityTab() {
     const complianceTableBody = document.getElementById('complianceTableBody');
     if (complianceTableBody && mm.compliance) {
         const regulations = [
-            { name: 'GDPR Article 32', key: 'GDPR', description: 'Data Protection Regulation' },
-            { name: 'NIS2 Directive', key: 'NIS2', description: 'Network & Information Security' },
-            { name: 'DORA', key: 'DORA', description: 'Digital Operational Resilience (Financial)' },
-            { name: 'ISO 27001:2022', key: 'ISO27001', description: 'Information Security Management' }
+            { name: 'GDPR Article 32', key: 'gdpr', description: 'Data Protection Regulation' },
+            { name: 'NIS2 Directive', key: 'nis2', description: 'Network & Information Security' },
+            { name: 'DORA', key: 'dora', description: 'Digital Operational Resilience (Financial)' },
+            { name: 'ISO 27001:2022', key: 'iso27001', description: 'Information Security Management' }
         ];
 
         let complianceHTML = '';
@@ -285,10 +285,10 @@ function computeBasicMaturityModel(org) {
 
     // Compliance (mock data)
     const compliance = {
-        'GDPR': { status: maturityLevel >= 2 ? 'compliant' : 'not_compliant', min_level_required: 1, recommended_level: 2 },
-        'NIS2': { status: maturityLevel >= 2 ? 'compliant' : 'not_compliant', min_level_required: 2, recommended_level: 3 },
-        'DORA': { status: maturityLevel >= 2 ? 'compliant' : 'at_risk', min_level_required: 2, recommended_level: 3 },
-        'ISO27001': { status: maturityLevel >= 1 ? 'compliant' : 'not_compliant', min_level_required: 1, recommended_level: 2 }
+        'gdpr': { status: maturityLevel >= 2 ? 'compliant' : 'not_compliant', min_level_required: 1, recommended_level: 2 },
+        'nis2': { status: maturityLevel >= 2 ? 'compliant' : 'not_compliant', min_level_required: 2, recommended_level: 3 },
+        'dora': { status: maturityLevel >= 2 ? 'compliant' : 'at_risk', min_level_required: 2, recommended_level: 3 },
+        'iso27001': { status: maturityLevel >= 1 ? 'compliant' : 'not_compliant', min_level_required: 1, recommended_level: 2 }
     };
 
     // Sector Benchmark (mock data)
