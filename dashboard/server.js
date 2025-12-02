@@ -838,7 +838,7 @@ app.post('/api/organizations/:orgId/restore', async (req, res) => {
     const { orgId } = req.params;
     const user = req.body.user || 'System';
 
-    if (!dataManager.organizationExists(orgId)) {
+    if (!(await dataManager.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -886,12 +886,12 @@ app.post('/api/organizations/:orgId/restore', async (req, res) => {
  * Permanently delete organization (cannot be undone)
  * Query: ?user=username (optional)
  */
-app.delete('/api/organizations/:orgId/permanent', (req, res) => {
+app.delete('/api/organizations/:orgId/permanent', async (req, res) => {
   try {
     const { orgId } = req.params;
     const user = req.query.user || req.body.user || 'System';
 
-    if (!dataManager.organizationExists(orgId)) {
+    if (!(await dataManager.organizationExists(orgId))) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -899,7 +899,7 @@ app.delete('/api/organizations/:orgId/permanent', (req, res) => {
       });
     }
 
-    const result = dataManager.permanentlyDeleteOrganization(orgId, user);
+    const result = await dataManager.permanentlyDeleteOrganization(orgId, user);
 
     console.log(`\n🔥 [API] Permanently deleted: ${orgId}\n`);
 
