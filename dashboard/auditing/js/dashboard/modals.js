@@ -4,6 +4,7 @@ import { CATEGORY_MAP } from '../shared/config.js';
 import { organizationContext, currentData, renderFieldKit, resetCurrentData } from '../client/index.js';
 import { loadAllData, deleteOrganizationAPI, loadOrganizationDetails, loadTrashCount } from './api.js';
 import { renderOrganizations } from './render-list.js';
+import { renderProgressMatrix } from './render-details.js';
 
 // --- INTEGRATED CLIENT MODAL ---
 export async function openIntegratedClient(indicatorId, orgId) {
@@ -388,38 +389,106 @@ export async function openHistoryModal() {
             const isCurrent = index === 0;
             const score = version.data.bayesian_score;
             const confidence = version.data.confidence;
+            const maturityLevel = version.data.maturity_level || 'green';
             const timestamp = new Date(version.timestamp).toLocaleString();
-            const isReset = score === 0;
+
+            // Maturity colors
+            const maturityColors = {
+                'green': '#22c55e',
+                'yellow': '#eab308',
+                'red': '#ef4444'
+            };
+            const maturityColor = maturityColors[maturityLevel] || '#888';
+            const scorePercentage = (score * 100).toFixed(1);
+            const confidencePercentage = (confidence * 100).toFixed(1);
+
+            // Better reset detection: score=0 + maturity=green + empty responses
+            const responses = version.data.raw_data?.client_conversation?.responses || {};
+            const isReset = score === 0 &&
+                           maturityLevel === 'green' &&
+                           Object.keys(responses).length === 0;
+
+            // Calculate changes from previous version
+            let changeText = '';
+            if (index < versions.length - 1) {
+                const prevVersion = versions[index + 1];
+                const scoreDiff = score - prevVersion.data.bayesian_score;
+                const prevMaturity = prevVersion.data.maturity_level || 'green';
+
+                const changes = [];
+                if (Math.abs(scoreDiff) > 0.001) {
+                    const sign = scoreDiff > 0 ? '+' : '';
+                    changes.push(`${sign}${(scoreDiff * 100).toFixed(1)}%`);
+                }
+                if (maturityLevel !== prevMaturity) {
+                    changes.push(`${prevMaturity.toUpperCase()} → ${maturityLevel.toUpperCase()}`);
+                }
+
+                if (changes.length > 0) {
+                    changeText = `<div style="font-size: 12px; color: #666; margin-top: 8px; padding: 6px 10px; background: #f0f9ff; border-radius: 6px; display: inline-block;">
+                        📝 ${changes.join(' | ')}
+                    </div>`;
+                }
+            }
+
+            // Red flags count
+            const redFlags = version.data.raw_data?.client_conversation?.red_flags || [];
+            const redFlagsText = redFlags.length > 0 ? `
+                <div style="font-size: 12px; color: #ef4444; margin-top: 6px;">
+                    🚩 ${redFlags.length} red flag${redFlags.length > 1 ? 's' : ''}
+                </div>
+            ` : '';
+
+            // Show revert button only if: not current AND not reset
+            const showRevertButton = !isCurrent && !isReset;
 
             const resetBadgeRight = isCurrent ? '120px' : '10px';
             html += `
                 <div style="background: ${isCurrent ? '#eff6ff' : 'var(--bg-gray)'}; border: 2px solid ${isCurrent ? 'var(--primary)' : 'var(--border)'}; border-radius: 10px; padding: 20px; margin-bottom: 15px; position: relative;">
                     ${isCurrent ? '<div style="position: absolute; top: 10px; right: 10px; background: var(--primary); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">CURRENT</div>' : ''}
                     ${isReset ? `<div style="position: absolute; top: 10px; right: ${resetBadgeRight}; background: var(--warning); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">🔄 RESET</div>` : ''}
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
                         <div style="flex: 1;">
                             <div style="font-size: 18px; font-weight: 600; color: var(--primary); margin-bottom: 8px;">
                                 Version ${version.version}
                             </div>
-                            <div style="font-size: 13px; color: var(--text-light); margin-bottom: 12px;">
+                            <div style="font-size: 13px; color: var(--text-light); margin-bottom: 8px;">
                                 <div>⏰ ${timestamp}</div>
                                 <div>👤 ${escapeHtml(version.user)}</div>
+                                ${changeText}
+                                ${redFlagsText}
                             </div>
-                            <div style="display: flex; gap: 20px; margin-top: 15px;">
+                            <div style="display: flex; gap: 20px; margin-top: 15px; flex-wrap: wrap;">
                                 <div>
                                     <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Score</div>
-                                    <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${score.toFixed(3)}</div>
+                                    <div style="font-size: 24px; font-weight: 700; color: ${maturityColor};">
+                                        ${scorePercentage}%
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Maturity</div>
+                                    <div style="display: inline-block; padding: 6px 14px; background: ${maturityColor}; color: white; border-radius: 16px; font-weight: 700; text-transform: uppercase; font-size: 13px; margin-top: 5px;">
+                                        ${maturityLevel}
+                                    </div>
                                 </div>
                                 <div>
                                     <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px;">Confidence</div>
-                                    <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${confidence.toFixed(2)}</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--primary);">
+                                        ${confidencePercentage}%
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <button class="btn ${isCurrent ? 'btn-primary' : 'btn-warning'} btn-small" data-action="revert-to-version" data-version="${version.version}">
-                                ${isCurrent ? '🔄 Reload This' : '↩️ Revert to This'}
-                            </button>
+                        <div style="min-width: 140px; text-align: right;">
+                            ${showRevertButton ? `
+                                <button class="btn btn-warning btn-small" data-action="revert-to-version" data-version="${version.version}" style="width: 100%;">
+                                    ↩️ Revert to This
+                                </button>
+                            ` : `
+                                <div style="color: #999; font-size: 13px; font-style: italic; padding: 8px;">
+                                    ${isCurrent ? '📍 Current' : '🔄 Reset point'}
+                                </div>
+                            `}
                         </div>
                     </div>
                 </div>
@@ -478,6 +547,13 @@ export async function revertToVersion(version) {
             // CRITICAL: Update aggregates to refresh the matrix immediately
             if (result.aggregates) {
                 selectedOrgData.aggregates = result.aggregates;
+                console.log('✅ Revert: aggregates updated from API');
+
+                // FORCE matrix re-render immediately
+                renderProgressMatrix(selectedOrgData);
+                console.log('✅ Revert: matrix re-rendered with new aggregates');
+            } else {
+                console.warn('⚠️ Revert: No aggregates received from API - matrix may not update');
             }
 
             // If form is open, update it with reverted data
@@ -509,6 +585,11 @@ export async function revertToVersion(version) {
                     setTimeout(() => {
                         currentData.fieldKit = tempFieldKit;
                         renderFieldKit(currentData.fieldKit);
+
+                        // CRITICAL: Save to localStorage to persist the revert
+                        localStorage.setItem('cpf_current', JSON.stringify(currentData));
+                        console.log('✅ Revert: localStorage updated');
+
                         showAlert(`✅ Reverted to version ${version} - Form updated`, 'success');
                     }, 50);
                 } else {
