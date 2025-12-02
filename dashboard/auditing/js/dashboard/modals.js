@@ -484,11 +484,11 @@ export async function openHistoryModal() {
                                 <button class="btn btn-warning btn-small" data-action="revert-to-version" data-version="${version.version}" style="width: 100%;">
                                     ↩️ Revert to This
                                 </button>
-                            ` : `
+                            ` : (isReset ? `
                                 <div style="color: #999; font-size: 13px; font-style: italic; padding: 8px;">
-                                    ${isCurrent ? '📍 Current' : '🔄 Reset point'}
+                                    🔄 Reset point
                                 </div>
-                            `}
+                            ` : '')}
                         </div>
                     </div>
                 </div>
@@ -599,10 +599,10 @@ export async function revertToVersion(version) {
                 showAlert('Reverted', 'success');
             }
 
-            // Reload only dashboard/sidebar to update stats
-            if (window.dashboardReloadOrganization) {
-                await window.dashboardReloadOrganization();
-            }
+            // DON'T call dashboardReloadOrganization() here!
+            // It would reload from backend and overwrite our just-updated data
+            // The matrix has already been updated by renderProgressMatrix() above
+            console.log('✅ Revert complete - matrix updated without backend reload');
         } else {
             throw new Error(result.error || 'No data returned');
         }
