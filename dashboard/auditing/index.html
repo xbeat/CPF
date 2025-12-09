@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
     <link rel="stylesheet" href="../shared/styles.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="client-integrated.css">
@@ -189,6 +190,9 @@
                 </button>
                 <button class="tab" data-action="switch-tab" data-tab="maturity" data-i18n="tab.maturity">
                     🎖️ Maturity Model
+                </button>
+                <button class="tab" data-action="switch-tab" data-tab="predictive" data-i18n="tab.predictive">
+                    🧠 Predictive Dynamics
                 </button>
                 <!-- Compile Assessment tab removed - use matrix to create/edit assessments -->
                 <button class="tab" data-action="switch-tab" data-tab="compile" style="display: none;" data-i18n="tab.compile">
@@ -476,6 +480,195 @@
                             <div style="text-align: center;">
                                 <div style="font-size: 12px; color: var(--text-light); margin-bottom: 5px;">5-Year NPV</div>
                                 <div id="roiNPV" style="font-size: 28px; font-weight: 700; color: var(--primary);">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Predictive Dynamics Tab -->
+            <div id="predictiveTab" class="tab-content">
+                <div class="predictive-dynamics-container">
+                    <!-- Header with Simulation Mode Toggle -->
+                    <div class="predictive-header">
+                        <div class="predictive-header-left">
+                            <h3 class="matrix-title" data-i18n="predictive.title">🧠 Synaptic Connectome - Risk Propagation Network</h3>
+                            <p style="font-size: 14px; color: var(--text-light); margin-top: 10px;" data-i18n="predictive.subtitle">
+                                Bayesian network visualization of 100 security indicators across 10 psychological vulnerability categories
+                            </p>
+                        </div>
+                        <div class="predictive-header-right">
+                            <div class="simulation-toggle-container">
+                                <span class="simulation-label" data-i18n="predictive.normal-mode">Normal Mode</span>
+                                <label class="simulation-toggle">
+                                    <input type="checkbox" id="simulationModeToggle">
+                                    <span class="simulation-slider"></span>
+                                </label>
+                                <span class="simulation-label simulation-label-active" data-i18n="predictive.simulation-mode">Simulation Mode</span>
+                            </div>
+                            <div id="simulationModeIndicator" class="simulation-mode-indicator" style="display: none;">
+                                <span class="pulse-dot"></span>
+                                <span data-i18n="predictive.simulation-active">Click any node to simulate compromise</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Content: Graph + Sidebar -->
+                    <div class="predictive-main">
+                        <!-- Graph Container -->
+                        <div class="predictive-graph-container">
+                            <div id="predictiveGraph" class="predictive-graph">
+                                <!-- D3.js Force-Directed Graph will render here -->
+                            </div>
+                            <!-- Graph Controls -->
+                            <div class="graph-controls">
+                                <button class="graph-control-btn" data-action="zoom-in-graph" title="Zoom In">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        <line x1="11" y1="8" x2="11" y2="14"></line>
+                                        <line x1="8" y1="11" x2="14" y2="11"></line>
+                                    </svg>
+                                </button>
+                                <button class="graph-control-btn" data-action="zoom-out-graph" title="Zoom Out">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        <line x1="8" y1="11" x2="14" y2="11"></line>
+                                    </svg>
+                                </button>
+                                <button class="graph-control-btn" data-action="reset-graph-view" title="Reset View">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                        <path d="M3 3v5h5"></path>
+                                    </svg>
+                                </button>
+                                <div class="graph-control-divider"></div>
+                                <button class="graph-control-btn" data-action="reset-simulation" title="Reset Simulation" id="resetSimulationBtn" style="display: none;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="1 4 1 10 7 10"></polyline>
+                                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <!-- Legend -->
+                            <div class="graph-legend">
+                                <div class="legend-title" data-i18n="predictive.legend">Legend</div>
+                                <div class="legend-items">
+                                    <div class="legend-item">
+                                        <span class="legend-node legend-node-category"></span>
+                                        <span data-i18n="predictive.legend.category">Category Node</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="legend-node legend-node-indicator"></span>
+                                        <span data-i18n="predictive.legend.indicator">Indicator Node</span>
+                                    </div>
+                                    <div class="legend-separator"></div>
+                                    <div class="legend-item">
+                                        <span class="legend-color legend-color-low"></span>
+                                        <span data-i18n="predictive.legend.low">Low Risk (&lt;33%)</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="legend-color legend-color-medium"></span>
+                                        <span data-i18n="predictive.legend.medium">Medium Risk (33-66%)</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="legend-color legend-color-high"></span>
+                                        <span data-i18n="predictive.legend.high">High Risk (&gt;66%)</span>
+                                    </div>
+                                    <div class="legend-separator"></div>
+                                    <div class="legend-item">
+                                        <span class="legend-color legend-color-compromised"></span>
+                                        <span data-i18n="predictive.legend.compromised">Compromised (Sim)</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="legend-color legend-color-affected"></span>
+                                        <span data-i18n="predictive.legend.affected">Affected (Sim)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Impact Analysis Sidebar -->
+                        <div class="predictive-sidebar" id="predictiveSidebar">
+                            <div class="sidebar-panel">
+                                <h4 class="panel-title" data-i18n="predictive.impact-panel">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                    </svg>
+                                    Impact Analysis Panel
+                                </h4>
+
+                                <!-- No Selection State -->
+                                <div id="noNodeSelected" class="no-selection-state">
+                                    <div class="no-selection-icon">🎯</div>
+                                    <p data-i18n="predictive.select-node">Select a node to view its impact analysis and connected risks</p>
+                                </div>
+
+                                <!-- Node Details (shown when node selected) -->
+                                <div id="nodeDetailsPanel" class="node-details-panel" style="display: none;">
+                                    <!-- Node Header -->
+                                    <div class="node-header">
+                                        <div class="node-badge" id="selectedNodeBadge">1.1</div>
+                                        <div class="node-info">
+                                            <div class="node-name" id="selectedNodeName">Authority Compliance</div>
+                                            <div class="node-category" id="selectedNodeCategory">Category 1: Authority</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Risk Status -->
+                                    <div class="risk-status-card" id="riskStatusCard">
+                                        <div class="risk-status-header">
+                                            <span data-i18n="predictive.current-risk">Current Risk Level</span>
+                                            <span class="risk-badge" id="riskBadge">--</span>
+                                        </div>
+                                        <div class="risk-bar-container">
+                                            <div class="risk-bar" id="riskBar" style="width: 0%"></div>
+                                        </div>
+                                        <div class="risk-value" id="riskValue">-- %</div>
+                                    </div>
+
+                                    <!-- OFTLISRV Metrics -->
+                                    <div class="oftlisrv-section">
+                                        <h5 class="section-title" data-i18n="predictive.oftlisrv">OFTLISRV Metrics</h5>
+                                        <div class="oftlisrv-grid" id="oftlisrvGrid">
+                                            <!-- Populated dynamically -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Connected Risks -->
+                                    <div class="connected-risks-section">
+                                        <h5 class="section-title" data-i18n="predictive.top-connected">Top 3 Connected Risks</h5>
+                                        <div class="connected-risks-list" id="connectedRisksList">
+                                            <!-- Populated dynamically -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Simulation Impact (shown only in simulation mode) -->
+                                    <div id="simulationImpactSection" class="simulation-impact-section" style="display: none;">
+                                        <h5 class="section-title simulation-title">
+                                            <span class="pulse-dot-small"></span>
+                                            <span data-i18n="predictive.probabilistic-impact">Probabilistic Impact</span>
+                                        </h5>
+                                        <div class="impact-stats" id="impactStats">
+                                            <div class="impact-stat">
+                                                <div class="impact-stat-value" id="affectedNodesCount">0</div>
+                                                <div class="impact-stat-label" data-i18n="predictive.affected-nodes">Affected Nodes</div>
+                                            </div>
+                                            <div class="impact-stat">
+                                                <div class="impact-stat-value" id="avgRiskIncrease">+0%</div>
+                                                <div class="impact-stat-label" data-i18n="predictive.avg-risk-increase">Avg Risk Increase</div>
+                                            </div>
+                                            <div class="impact-stat">
+                                                <div class="impact-stat-value" id="cascadeDepth">0</div>
+                                                <div class="impact-stat-label" data-i18n="predictive.cascade-depth">Cascade Depth</div>
+                                            </div>
+                                        </div>
+                                        <div class="cascade-chain" id="cascadeChain">
+                                            <!-- Cascade visualization -->
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
