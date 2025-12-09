@@ -36,6 +36,14 @@ import {
     renderMaturityTab
 } from './maturity.js';
 import {
+    renderPredictiveTab,
+    toggleSimulationMode,
+    resetSimulation,
+    zoomIn,
+    zoomOut,
+    resetView
+} from './predictive-dynamics.js';
+import {
     closeModal
 } from '../shared/utils.js';
 
@@ -199,7 +207,16 @@ export function setupDashboardEventDelegation() {
             if (tabId === 'maturity') {
                 renderMaturityTab(); // Call directly like in original code
             }
+            if (tabId === 'predictive') {
+                renderPredictiveTab(); // Render Predictive Dynamics graph
+            }
         }
+
+        // 9b. Predictive Dynamics Controls
+        if (action === 'zoom-in-graph') zoomIn();
+        if (action === 'zoom-out-graph') zoomOut();
+        if (action === 'reset-graph-view') resetView();
+        if (action === 'reset-simulation') resetSimulation();
 
         // 10. Zoom Controls
         if (action === 'set-matrix-zoom') {
@@ -235,6 +252,13 @@ export function setupDashboardEventDelegation() {
     // --- CHANGE DELEGATION ---
     document.addEventListener('change', (e) => {
         const target = e.target;
+
+        // Handle simulation mode toggle (no data-action attribute)
+        if (target.id === 'simulationModeToggle') {
+            toggleSimulationMode(target.checked);
+            return;
+        }
+
         const action = target.dataset.action;
         if (!action) return;
 
