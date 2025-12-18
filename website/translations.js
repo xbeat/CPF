@@ -65,6 +65,9 @@ const translations = {
 		'assessment.implementation.title': 'Implementation Guide',
 		'assessment.implementation.description': 'Systematic methodology for deploying all 100 CPF indicators in SOC environments. Practical guide for integrating <strong>cognitive bias cybersecurity</strong> detection into existing security operations.',
 		'assessment.implementation.button': 'Implementation Guide',
+		'assessment.interactive.title': 'Maturity Level Assessment',
+		'assessment.interactive.description': 'Access the complete digital assessment suite to evaluate your organization\'s maturity level. This <strong>interactive dashboard</strong> covers over 2,300 specific indicators, allowing you to track progress, visualize gaps, and apply the CPF3 maturity model in real-time.',
+		'assessment.interactive.button': 'Launch Assessment Dashboard',
 
 		// Strategic Pages Navigation
 		'strategic.title': 'Explore CPF3 Methodology',
@@ -240,6 +243,9 @@ const translations = {
 		'assessment.implementation.title': 'Guida di Implementazione',
 		'assessment.implementation.description': 'Metodologia sistematica per il deployment di tutti i 100 indicatori CPF in ambienti SOC. Guida pratica per integrare la detection di <strong>cognitive bias cybersecurity</strong> nelle operazioni di sicurezza esistenti.',
 		'assessment.implementation.button': 'Guida di Implementazione',
+		'assessment.interactive.title': 'Valutazione Livello di Maturità',
+		'assessment.interactive.description': 'Misura la postura di sicurezza del fattore umano con il nostro Auditor Field Kit completamente interattivo. Naviga attraverso un <strong>set completo di oltre 2.300 domande</strong>, monitora l\'avanzamento della valutazione e ottieni analisi dettagliate basate sugli standard del framework CPF3.',
+		'assessment.interactive.button': 'Avvia il Dashboard di Valutazione',
 
 		// Strategic Pages Navigation
 		'strategic.title': 'Esplora la Metodologia CPF3',
