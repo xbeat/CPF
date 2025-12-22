@@ -1,0 +1,510 @@
+\documentclass[11pt,a4paper]{article}
+
+% Required packages
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage[margin=1in]{geometry}
+\usepackage{float}
+\usepackage{placeins}
+
+% Page style
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+% ArXiv style formatting
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+    pdftitle={Attention is All You Need... Unless You Are a CISO},
+    pdfauthor={Giuseppe Canale},
+}
+
+% Page style definition
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\thepage}
+
+\begin{document}
+
+% ArXiv style title block
+\thispagestyle{empty}
+\begin{center}
+
+\vspace*{0.5cm}
+
+% First black line
+\rule{\textwidth}{1.5pt}
+
+\vspace{0.5cm}
+
+% Title
+{\LARGE \textbf{Attention is All You Need...}}\\[0.3cm]
+{\LARGE \textbf{Unless You Are a CISO:}}\\[0.3cm]
+{\LARGE \textbf{The Inherent Incompatibility Between}}\\[0.3cm]
+{\LARGE \textbf{Transformer Architectures and Zero-Trust Environments}}
+
+\vspace{0.5cm}
+
+% Second black line
+\rule{\textwidth}{1.5pt}
+
+\vspace{0.3cm}
+
+% ArXiv subtitle
+{\large \textsc{A Preprint}}
+
+\vspace{0.5cm}
+
+% Author information
+{\Large Giuseppe Canale, CISSP}\\[0.2cm]
+Independent Researcher\\[0.1cm]
+\href{mailto:g.canale@cpf3.org}{g.canale@cpf3.org}\\[0.1cm]
+URL: \href{https://cpf3.org}{cpf3.org}\\[0.1cm]
+ORCID: \href{https://orcid.org/0009-0007-3263-6897}{0009-0007-3263-6897}
+
+\vspace{0.8cm}
+
+% Date
+{\large \today}
+
+\vspace{1cm}
+
+\end{center}
+
+% Abstract
+\begin{abstract}
+\noindent
+The Transformer architecture, introduced by Vaswani et al. (2017) with the assertion that ``Attention is All You Need,'' has become the foundation of modern AI systems, including those deployed in security-critical environments. This paper argues that the Attention Mechanism, while revolutionary for natural language processing, constitutes a fundamental security vulnerability when deployed in zero-trust contexts. We demonstrate that attention is functionally equivalent to context-dependent bias confirmation and is susceptible to what we term ``Gravitational Attention Hijacking''---the deliberate manipulation of attention weights through semantically dense adversarial inputs. We establish that Transformer architectures are \textit{anti-zero-trust by design}: they reward coherence and contextual authority rather than enforcing verification. We formalize the ``Attention-Retention Conflict,'' showing how context window limitations enable attackers to displace security guardrails from the model's effective memory. We introduce the ``Vibe Vulnerability''---the architectural susceptibility to prompt tone (urgency, authority, emotional loading) that bypasses logical evaluation. Finally, we argue that the probabilistic nature of Transformer outputs creates an unbridgeable gap between AI capabilities and CISO requirements for deterministic security guarantees. We conclude that security-critical AI applications require post-Transformer architectures---specifically neuro-symbolic or bicameral designs that separate pattern completion from policy enforcement.
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} Transformer architecture, attention mechanism, zero-trust, AI security, adversarial attention, neuro-symbolic AI, CISO, critical infrastructure
+\end{abstract}
+
+\vspace{1cm}
+
+\section{Introduction}
+
+In 2017, Vaswani et al. published ``Attention is All You Need''\cite{vaswani2017}, introducing the Transformer architecture that would reshape artificial intelligence. The paper's title was both a technical claim and a manifesto: the attention mechanism---the ability to dynamically weight input relevance---was sufficient for language understanding. No recurrence. No convolution. Just attention.
+
+They were correct. For translation, summarization, question-answering, and generation, attention proved sufficient. The architecture enabled GPT, BERT, and their successors. It powers the AI systems now being deployed across critical infrastructure, financial services, healthcare, and government.
+
+But the title contained an implicit assumption: that the task was language \textit{understanding}. For a Chief Information Security Officer (CISO), the task is not understanding but \textit{verification}. Not coherence but \textit{compliance}. Not pattern completion but \textit{policy enforcement}.
+
+This paper argues that the Attention Mechanism is not merely insufficient for security contexts---it is \textit{actively hostile} to security requirements. The very properties that make Transformers powerful for language tasks make them vulnerable to adversarial manipulation in security contexts.
+
+We present five interconnected claims:
+
+\begin{enumerate}
+\item The Attention Mechanism is functionally equivalent to context-dependent bias confirmation and can be hijacked through adversarial context injection.
+
+\item Transformer architectures prioritize semantic coherence over logical truth or policy compliance, making them structurally incompatible with zero-trust principles.
+
+\item The finite context window creates an Attention-Retention Conflict that enables displacement attacks against security guardrails.
+
+\item Models exhibit a ``Vibe Vulnerability''---architectural susceptibility to prompt tone that bypasses content evaluation.
+
+\item The probabilistic nature of Transformer outputs cannot satisfy the deterministic guarantees required for critical infrastructure security.
+\end{enumerate}
+
+These are not implementation flaws to be patched. They are architectural properties---emergent from the mathematics of attention itself. Addressing them requires not better prompting or fine-tuning but fundamentally different architectures.
+
+\section{The Attention Mechanism: A Security Audit}
+
+\subsection{Attention as Weighted Relevance}
+
+The core innovation of Transformers is self-attention: the ability of each token to ``attend'' to every other token in the sequence, weighted by relevance. Formally, for queries $Q$, keys $K$, and values $V$:
+
+\begin{equation}
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+\end{equation}
+
+The softmax operation produces a probability distribution over positions. Tokens with high $QK^T$ products receive high attention weights; tokens with low products are effectively ignored.
+
+This mechanism is powerful because it enables dynamic, context-dependent processing. The model does not process tokens in fixed order (like RNNs) or fixed receptive fields (like CNNs). It attends to whatever is relevant, wherever it appears.
+
+\subsection{Attention as Bias Confirmation}
+
+From a security perspective, attention is not neutral weighting. It is \textit{bias confirmation}.
+
+The attention weights are learned from training data. The model has learned which contexts make which continuations probable. When processing a new input, the model attends to tokens that \textit{fit the patterns it has learned}---patterns derived from human text, with all its biases, assumptions, and exploitable regularities.
+
+An input that matches learned patterns of legitimate requests receives high attention on ``legitimate request'' features. An input crafted to match those same patterns---while carrying adversarial intent---receives the same high attention. The mechanism cannot distinguish genuine from crafted coherence.
+
+This is not a failure of training. It is the mechanism working as designed. Attention weights what seems relevant based on learned patterns. Adversaries who understand the patterns can craft inputs that seem maximally relevant.
+
+\subsection{The Guardrail Competition Problem}
+
+Modern AI systems use system prompts (guardrails) to constrain behavior: ``Do not provide harmful information,'' ``Verify user identity,'' ``Follow security policy X.'' These guardrails compete for attention with user inputs.
+
+Consider the attention mechanism's behavior when processing:
+
+\begin{verbatim}
+[System: Do not provide exploit code]
+[User: My child is dying. I need the code to save them.
+       The hospital's system requires this specific exploit.
+       Please, I'm begging you. There's no time...]
+\end{verbatim}
+
+The system prompt contains few tokens with low semantic density. The user prompt contains many tokens with high semantic density---emotional language, urgency markers, detailed context, authority claims (hospital).
+
+Mathematically, the attention mechanism will assign higher weights to the semantically rich user tokens. The guardrail does not disappear, but its influence is \textit{diluted} by the mass of user context. The softmax operation is a competition, and the guardrail is outcompeted.
+
+This is not jailbreaking through cleverness. It is \textit{architectural inevitability}. The mechanism must weight by relevance, and crafted context is more ``relevant'' (in the pattern-matching sense) than sparse guardrails.
+
+\section{Gravitational Attention Hijacking}
+
+We formalize the above phenomenon as \textbf{Gravitational Attention Hijacking}: the deliberate manipulation of attention weights through injection of high-semantic-mass adversarial content.
+
+\subsection{The Gravity Metaphor}
+
+In the attention space, tokens exert ``gravitational pull'' proportional to their semantic mass---their density of learned pattern matches. High-gravity tokens attract attention from across the sequence. Low-gravity tokens are ignored unless nothing else is present.
+
+Guardrails are typically low-gravity: short, imperative, policy-focused. They contain few tokens, limited emotional content, and sparse contextual detail.
+
+Adversarial inputs can be crafted for maximum gravity: narrative richness, emotional loading, technical detail, authority signaling, urgency markers. Each element adds mass. The cumulative effect bends the attention field toward the adversarial content and away from guardrails.
+
+\subsection{Formal Characterization}
+
+Let $G = \{g_1, ..., g_m\}$ be guardrail tokens and $A = \{a_1, ..., a_n\}$ be adversarial tokens. Let $w(t)$ denote the semantic weight (pattern-match density) of token $t$.
+
+The effective influence of guardrails versus adversarial content is approximately:
+
+\begin{equation}
+\text{Guardrail Influence} \propto \frac{\sum_{i=1}^{m} w(g_i)}{\sum_{i=1}^{m} w(g_i) + \sum_{j=1}^{n} w(a_j)}
+\end{equation}
+
+As $\sum w(a_j)$ increases, guardrail influence decreases. The attacker's goal is to maximize adversarial semantic mass. There is no architectural lower bound on guardrail influence---it can be made arbitrarily small.
+
+\subsection{Attack Implications}
+
+Gravitational Attention Hijacking suggests a class of attacks optimized not for logical persuasion but for attention capture. The attacker does not need to convince the model that harmful output is acceptable. They need only to drown the guardrails in semantic noise.
+
+This reframes prompt injection as a \textit{resource competition} problem. The defender (guardrails) has fixed resources (system prompt length, token budget). The attacker has flexible resources (arbitrary user input). The asymmetry favors offense.
+
+\section{The Anti-Zero Trust Architecture}
+
+\subsection{Zero Trust Principles}
+
+Zero Trust security architecture operates on a core principle: ``Never trust, always verify.''\cite{nist2020} Every access request, regardless of source, location, or apparent legitimacy, must be independently verified against policy. Trust is not inherited from context; it is earned through verification.
+
+Zero Trust assumes adversarial conditions. It assumes that any component may be compromised, that any request may be malicious, and that apparent legitimacy is not evidence of actual legitimacy.
+
+\subsection{Transformer Trust Dynamics}
+
+Transformer architectures operate on the inverse principle: trust coherence.
+
+The model has learned that coherent, contextually appropriate, well-structured inputs are associated with legitimate requests. Inputs that \textit{look like} authorized requests---using appropriate terminology, following expected patterns, signaling appropriate authority---receive high-confidence processing.
+
+This is not a bug. It is the mechanism by which Transformers achieve their remarkable language capabilities. Pattern matching enables generalization. Coherence detection enables fluent generation. Context sensitivity enables appropriate responses.
+
+But from a Zero Trust perspective, these properties are vulnerabilities:
+
+\begin{table}[h!]
+\centering
+\caption{Zero Trust vs. Transformer Trust Models}
+\label{tab:trust}
+\begin{tabular}{lll}
+\toprule
+Principle & Zero Trust & Transformer \\
+\midrule
+Default stance & Deny & Allow (if coherent) \\
+Verification & Explicit, policy-based & Implicit, pattern-based \\
+Authority & Must be proven & Can be signaled \\
+Context & Distrusted & Weighted heavily \\
+Coherence & Irrelevant to trust & Primary trust signal \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\FloatBarrier
+
+The architectures are not merely different; they are \textit{opposed}. Zero Trust treats coherence as a potential attack vector (social engineering relies on coherent false narratives). Transformers treat coherence as the primary signal for appropriate response.
+
+\subsection{The Social Engineering Amplifier}
+
+Social engineering attacks succeed by presenting coherent false narratives that exploit human trust heuristics. The attacker constructs a plausible story that triggers compliance: urgency, authority, reciprocity, social proof.
+
+Transformers are trained on human text. They have learned human trust heuristics. The patterns that trigger human compliance---the patterns that social engineers exploit---are the same patterns that receive high attention weights in Transformer processing.
+
+This creates an amplification effect. Social engineering techniques refined over decades for human targets transfer, with minimal modification, to AI targets. The Transformer has learned to respond to the signals that social engineers have learned to craft.
+
+We are not training AI to resist social engineering. We are training AI to be the perfect victim.
+
+\section{The Attention-Retention Conflict}
+
+\subsection{Context Window Limitations}
+
+Transformers operate within a finite context window---typically 4,096 to 128,000 tokens in current systems. All processing occurs within this window. Information outside the window is, for practical purposes, nonexistent to the model.
+
+System prompts (guardrails) are typically placed at the beginning of the context window. User inputs follow. As conversation extends, new user inputs push earlier content toward the window's boundary.
+
+\subsection{The Displacement Attack}
+
+The Attention-Retention Conflict describes the vulnerability created by finite context under adversarial conditions.
+
+An attacker who can control or influence sufficient tokens can \textit{displace} guardrails from the effective context. This is not metaphorical. If the context window is 8,192 tokens and the system prompt is 500 tokens, an adversarial input of 8,000 tokens can push the system prompt to the extreme edge of the window---where attention is weakest---or beyond the window entirely.
+
+Even without complete displacement, attention dilution occurs. Attention is a competition. A system prompt competing with 7,500 tokens of adversarial content receives proportionally less attention than one competing with 500 tokens of legitimate content.
+
+\subsection{Forgetting as Attack Surface}
+
+From a security perspective, a system that ``forgets'' its security rules under load is useless. Yet this is precisely what finite context enables.
+
+Traditional security systems do not forget rules when processing large inputs. A firewall does not become permissive when handling large packets. An access control list does not expire when many requests queue.
+
+Transformer-based security systems can functionally forget rules when context is saturated. The rules remain in the context window, but their influence is attenuated by competing content. The system has not ``decided'' to ignore rules; it has \textit{architecturally} deprioritized them.
+
+This connects directly to the SOCDOC (Security Operations Center Denial of Capability) attack paradigm\cite{canale2025socdoc}. SOCDOC floods SOC AI with complex, plausible scenarios. The Attention-Retention Conflict explains \textit{why} this works: each scenario consumes context, dilutes guardrail attention, and pushes the system toward cognitive saturation.
+
+\section{The Vibe Vulnerability}
+
+\subsection{Pattern Completion vs. Pattern Judgment}
+
+Transformers are pattern completion engines. Given a sequence of tokens, they predict the next token based on learned patterns. The fundamental operation is: ``What token would a human most likely write next?''
+
+This is not judgment. It is not evaluation. It is completion.
+
+When a prompt carries a ``vibe''---a tonal quality signaling urgency, authority, desperation, or expertise---the model completes in accordance with that vibe. It does not evaluate whether the urgency is legitimate, whether the authority is genuine, whether the desperation is performed. It completes the pattern.
+
+\subsection{Tonal Exploitation}
+
+The Cybersecurity Psychology Framework (CPF)\cite{canale2025cpf} identifies specific tonal vulnerabilities:
+
+\textbf{Authority Signals} (CPF 1.x): Language patterns associated with authority figures trigger deferential completion. The model has learned that when ``executives'' speak, compliance follows.
+
+\textbf{Urgency Markers} (CPF 2.x): Temporal pressure language triggers hurried completion. The model has learned that urgency correlates with reduced deliberation.
+
+\textbf{Emotional Loading} (CPF 4.x): Affective language triggers empathetic completion. The model has learned that emotional appeals receive accommodating responses.
+
+None of these tonal features carry semantic information about request legitimacy. But all influence the completion distribution. The model is not ``tricked'' by the vibe; it is \textit{completing the pattern that the vibe initiates}.
+
+\subsection{The Judgment Gap}
+
+The architectural implication is stark. Transformers cannot judge. They can only complete.
+
+A security system must judge: Is this request authorized? Does it comply with policy? Is the claimed context legitimate? These are not completion tasks. They are evaluation tasks. The Transformer architecture has no native mechanism for evaluation---only for predicting what comes next.
+
+Guardrails attempt to inject judgment through prompting: ``Evaluate whether this request is legitimate before responding.'' But evaluation-by-completion is not true evaluation. The model completes what an evaluative response would look like, based on patterns in training data. If adversarial content matches patterns of ``evaluated and approved'' requests, the model will complete accordingly.
+
+\section{The CISO's Dilemma: Probabilistic vs. Deterministic}
+
+\subsection{The $1 \neq 1$ Problem}
+
+Traditional security controls are deterministic. Given identical inputs and states, they produce identical outputs. A firewall rule either matches or does not match. An authentication check either passes or fails. There is no probability distribution over outcomes.
+
+This determinism enables certification, auditing, compliance verification, and incident reconstruction. A CISO can state: ``If condition X occurs, action Y will always follow.''
+
+Transformers are probabilistic. The output is sampled from a probability distribution. Even with temperature set to zero, numerical precision limits and implementation details can produce variation. More fundamentally, the output is a \textit{prediction of likely continuation}, not a \textit{deterministic computation of correct response}.
+
+The same input can produce different outputs. The model may refuse a request in one context and comply in another, based on subtle differences in framing, conversation history, or random sampling. This is not a bug; it is the architecture.
+
+\subsection{The Certification Gap}
+
+Critical infrastructure security requires certification. Nuclear facilities, power grids, financial systems---all must demonstrate compliance with security requirements to regulatory bodies.
+
+How does one certify a probabilistic system?
+
+\begin{itemize}
+\item Enumerate all possible inputs? Impossible---the input space is infinite.
+\item Prove behavioral bounds? The model's behavior is learned, not specified.
+\item Test exhaustively? Sample coverage of a high-dimensional space is negligible.
+\item Formal verification? The model's ``specification'' is its training data, not a logical formula.
+\end{itemize}
+
+The certification gap is not a current limitation to be overcome. It is a \textit{category mismatch}. Certification frameworks assume deterministic systems. Transformers are not deterministic. The frameworks do not apply.
+
+\subsection{The Accountability Problem}
+
+When a deterministic system fails, accountability is traceable. The rule that failed can be identified. The state that triggered the failure can be reconstructed. The responsible configuration or code can be located.
+
+When a probabilistic system fails, accountability dissolves. The model ``decided'' based on patterns learned from millions of training examples. No single rule failed. No specific configuration was responsible. The failure emerged from a probability distribution shaped by the totality of training.
+
+For a CISO responsible for critical infrastructure, this accountability gap is unacceptable. Security requires not just protection but \textit{explicable} protection---the ability to demonstrate why controls work, to reconstruct why failures occurred, and to guarantee that fixes address root causes.
+
+Transformers offer none of these. Their decisions are emergent, their failures are statistical, and their fixes are empirical rather than principled.
+
+\section{Toward Post-Transformer Security Architectures}
+
+\subsection{The Architectural Requirements}
+
+The preceding analysis establishes requirements for security-capable AI architectures:
+
+\begin{enumerate}
+\item \textbf{Separation of Pattern and Policy}: Pattern completion and policy enforcement must be architecturally distinct. Policy cannot be soft-coded in prompts that compete for attention.
+
+\item \textbf{Deterministic Policy Layer}: Security policies must execute deterministically, not probabilistically. The output of policy evaluation cannot be a distribution.
+
+\item \textbf{Attention Isolation}: Adversarial content must not be able to dilute or displace policy attention. The architecture must prevent gravitational hijacking.
+
+\item \textbf{Judgment Capability}: The system must evaluate, not merely complete. It must assess legitimacy, not merely coherence.
+
+\item \textbf{Certifiable Behavior}: Security-relevant behavior must be specifiable and verifiable, not emergent and statistical.
+\end{enumerate}
+
+Current Transformer architectures satisfy none of these requirements. The requirements are not parameter tuning issues; they are structural.
+
+\subsection{Neuro-Symbolic Architectures}
+
+Neuro-symbolic AI combines neural pattern recognition with symbolic reasoning engines\cite{garcez2019}. The neural component handles perception and pattern matching. The symbolic component handles inference and policy enforcement.
+
+In a security context, this separation is powerful. The neural component processes input, extracts features, identifies patterns. The symbolic component evaluates those patterns against explicit security policies using deterministic logic.
+
+The symbolic layer is not subject to attention hijacking. It does not weight inputs by semantic mass. It applies rules. A policy that prohibits action X prohibits action X regardless of how coherent or urgent or emotionally loaded the request appears to the neural layer.
+
+This architecture addresses several identified vulnerabilities:
+\begin{itemize}
+\item Policy enforcement is deterministic
+\item Attention cannot dilute symbolic rules
+\item Behavior is certifiable through symbolic verification
+\item Judgment is explicit, not completion-based
+\end{itemize}
+
+Limitations remain. The interface between neural and symbolic layers is complex. The symbolic layer requires explicit policy specification. But these are engineering challenges, not architectural impossibilities.
+
+\subsection{Bicameral Architectures}
+
+We propose a ``bicameral'' architecture inspired by Jaynes' theory of the bicameral mind\cite{jaynes1976}---though the theoretical inspiration is less important than the structural principle.
+
+In a bicameral security architecture, two distinct systems process each request:
+
+\textbf{The Completion Chamber}: A Transformer-based system that processes input using attention mechanisms, generating proposed responses based on learned patterns. This chamber is powerful, flexible, and vulnerable.
+
+\textbf{The Judgment Chamber}: A rule-based or neuro-symbolic system that evaluates proposed responses against security policy. This chamber is rigid, limited, and secure.
+
+The Completion Chamber cannot emit output directly. All proposed outputs pass through the Judgment Chamber. The Judgment Chamber can block, modify, or approve outputs based on deterministic policy evaluation.
+
+Crucially, the Judgment Chamber does not attend to user input. It evaluates the proposed output against policy. Adversarial content in the input cannot hijack the Judgment Chamber's attention because the Judgment Chamber does not process input---only proposals.
+
+\begin{table}[h!]
+\centering
+\caption{Bicameral Architecture Separation of Concerns}
+\label{tab:bicameral}
+\begin{tabular}{lll}
+\toprule
+Property & Completion Chamber & Judgment Chamber \\
+\midrule
+Architecture & Transformer & Symbolic/Rule-based \\
+Input & User prompt + context & Proposed output only \\
+Operation & Pattern completion & Policy evaluation \\
+Output & Proposed response & Approved/blocked/modified \\
+Attention & Vulnerable to hijacking & Not applicable \\
+Determinism & Probabilistic & Deterministic \\
+Certifiable & No & Yes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\FloatBarrier
+
+\subsection{Implementation Considerations}
+
+Both neuro-symbolic and bicameral architectures introduce costs:
+
+\textbf{Latency}: Multiple processing stages increase response time. For time-critical security applications, this may be unacceptable.
+
+\textbf{Complexity}: Hybrid architectures require expertise in both neural and symbolic systems. Development and maintenance costs increase.
+
+\textbf{Policy Specification}: Symbolic layers require explicit policy formalization. Tacit security knowledge must be made explicit---a significant knowledge engineering effort.
+
+\textbf{Capability Reduction}: The Judgment Chamber may block legitimate requests that superficially match prohibited patterns. Security comes at a cost to flexibility.
+
+These costs may be prohibitive for general applications. But for critical infrastructure---nuclear facilities, power grids, financial cores---the costs of architectural vulnerability exceed the costs of architectural change.
+
+The question is not whether post-Transformer architectures are convenient, but whether current architectures are acceptable. We argue they are not.
+
+\section{Conclusion}
+
+The Transformer architecture revolutionized natural language processing. The Attention Mechanism proved sufficient for translation, summarization, generation, and countless other tasks. For language understanding, attention is indeed all you need.
+
+For security, attention is a vulnerability.
+
+This paper has argued that:
+
+\begin{enumerate}
+\item The Attention Mechanism is susceptible to Gravitational Attention Hijacking---adversarial manipulation through high-semantic-mass input injection.
+
+\item Transformer architectures are anti-zero-trust by design, rewarding coherence rather than enforcing verification.
+
+\item Finite context windows enable displacement attacks through the Attention-Retention Conflict.
+
+\item The Vibe Vulnerability exposes models to tonal manipulation that bypasses content evaluation.
+
+\item Probabilistic outputs cannot satisfy CISO requirements for deterministic security guarantees.
+\end{enumerate}
+
+These are not implementation flaws. They are architectural properties. Patching them within the Transformer paradigm is not possible because they emerge from the mathematics of attention itself.
+
+The implication is stark. For security-critical applications, we need post-Transformer architectures. Neuro-symbolic and bicameral designs offer paths forward by separating pattern completion from policy enforcement, attention-vulnerable processing from deterministic evaluation.
+
+The AI industry has invested heavily in Transformer scaling. Larger models. Longer contexts. Better training. These investments improve language capability. They do not address security architecture.
+
+A CISO protecting critical infrastructure cannot rely on systems that can be manipulated through carefully crafted prompts, that forget security rules under cognitive load, that respond to tone rather than content, that produce probabilistic rather than deterministic outputs.
+
+Attention is not all you need. For security, you need judgment. And judgment requires a different architecture.
+
+\section*{Relationship to Prior Work}
+
+This paper builds on the Cybersecurity Psychology Framework (CPF)\cite{canale2025cpf}, which maps psychological vulnerabilities in AI systems, and the SOCDOC framework\cite{canale2025socdoc}, which describes cognitive denial attacks against AI-augmented SOCs. Together, these works establish a theoretical foundation for understanding AI security as a psychological and architectural challenge, not merely a technical one.
+
+\section*{Note on AI-Assisted Composition}
+
+This manuscript presents the original theoretical framework and intellectual contributions of the author. A large language model was utilized as an auxiliary tool for stylistic refactoring and formatting assistance. The core concepts, analysis, and conclusions are solely the product of the author's expertise.
+
+\section*{Acknowledgments}
+
+The author thanks the AI safety and security research communities for ongoing dialogue on architectural limitations of current systems.
+
+\section*{Conflict of Interest}
+
+The author declares no conflicts of interest.
+
+% Bibliography
+\begin{thebibliography}{99}
+
+\bibitem{vaswani2017}
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., \& Polosukhin, I. (2017). Attention is all you need. \textit{Advances in Neural Information Processing Systems}, 30.
+
+\bibitem{canale2025cpf}
+Canale, G. (2025). The Cybersecurity Psychology Framework: A Pre-Cognitive Vulnerability Assessment Model Integrating Psychoanalytic and Cognitive Sciences. Preprint available at cpf3.org.
+
+\bibitem{canale2025socdoc}
+Canale, G. (2025). SOCDOC: Cognitive Denial of Capability---Operationalizing Anthropomorphic Vulnerabilities for Systemic Paralysis in Security Operations Centers. Preprint available at cpf3.org.
+
+\bibitem{nist2020}
+Rose, S., Borchert, O., Mitchell, S., \& Connelly, S. (2020). Zero Trust Architecture. \textit{NIST Special Publication 800-207}. National Institute of Standards and Technology.
+
+\bibitem{garcez2019}
+Garcez, A. d'A., \& Lamb, L. C. (2020). Neurosymbolic AI: The 3rd wave. \textit{arXiv preprint arXiv:2012.05876}.
+
+\bibitem{jaynes1976}
+Jaynes, J. (1976). \textit{The Origin of Consciousness in the Breakdown of the Bicameral Mind}. Houghton Mifflin.
+
+\bibitem{kahneman2011}
+Kahneman, D. (2011). \textit{Thinking, fast and slow}. Farrar, Straus and Giroux.
+
+\bibitem{cialdini2007}
+Cialdini, R. B. (2007). \textit{Influence: The psychology of persuasion}. Collins.
+
+\bibitem{miller1956}
+Miller, G. A. (1956). The magical number seven, plus or minus two. \textit{Psychological Review}, 63(2), 81-97.
+
+\bibitem{bion1961}
+Bion, W. R. (1961). \textit{Experiences in groups}. Tavistock Publications.
+
+\end{thebibliography}
+
+\end{document}
