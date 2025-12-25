@@ -363,10 +363,23 @@ function clearErrors() {
 function handleApiError(error) {
     console.error('API Error:', error);
 
-    let message = error.error || error.message || getText ? getText('error.generic') : 'An error occurred';
+    let message;
 
+    // Handle rate limiting
     if (error.code === 'RATE_LIMITED') {
-        message = getText ? getText('error.rateLimit') : 'Too many attempts. Please try again later.';
+        message = getText ? getText('error.rateLimit') : { en: 'Too many attempts. Please try again later.', it: 'Troppi tentativi. Riprova più tardi.' };
+    }
+    // Handle validation errors (array of errors)
+    else if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {
+        message = error.errors[0]; // Take first error
+    }
+    // Handle single error object
+    else if (error.error) {
+        message = error.error;
+    }
+    // Fallback
+    else {
+        message = error.message || (getText ? getText('error.generic') : { en: 'An error occurred. Please try again.', it: 'Si è verificato un errore. Riprova.' });
     }
 
     showAlert('error', message);
