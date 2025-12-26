@@ -39,6 +39,9 @@ const AdminApp = {
             // Setup event listeners
             this.setupEventListeners();
 
+            // Setup action delegation for dynamic content
+            this.setupActionDelegation();
+
             // Load initial data
             await Promise.all([
                 this.loadUsers(),
@@ -196,40 +199,40 @@ const AdminApp = {
                 </td>
                 <td>
                     <div class="actions-dropdown">
-                        <button class="actions-btn" onclick="AdminApp.toggleActionsMenu(event, '${user.id}')">
+                        <button class="actions-btn" data-action="toggle-menu" data-user-id="${user.id}">
                             Actions ▼
                         </button>
                         <div class="actions-menu" id="actions-${user.id}">
-                            <button class="actions-menu-item" onclick="AdminApp.viewUser('${user.id}')">
+                            <button class="actions-menu-item" data-action="view" data-user-id="${user.id}">
                                 View
                             </button>
-                            <button class="actions-menu-item" onclick="AdminApp.showRoleModal('${user.id}')">
+                            <button class="actions-menu-item" data-action="change-role" data-user-id="${user.id}">
                                 Change Role
                             </button>
-                            <button class="actions-menu-item" onclick="AdminApp.showExtendModal('${user.id}')">
+                            <button class="actions-menu-item" data-action="extend" data-user-id="${user.id}">
                                 Extend
                             </button>
                             <div class="actions-menu-divider"></div>
                             ${user.status === 'locked' ? `
-                                <button class="actions-menu-item" onclick="AdminApp.unlockUser('${user.id}')">
+                                <button class="actions-menu-item" data-action="unlock" data-user-id="${user.id}">
                                     Unlock
                                 </button>
                             ` : `
-                                <button class="actions-menu-item" onclick="AdminApp.lockUser('${user.id}')">
+                                <button class="actions-menu-item" data-action="lock" data-user-id="${user.id}">
                                     Lock
                                 </button>
                             `}
                             ${user.status === 'suspended' ? `
-                                <button class="actions-menu-item" onclick="AdminApp.activateUser('${user.id}')">
+                                <button class="actions-menu-item" data-action="activate" data-user-id="${user.id}">
                                     Activate
                                 </button>
                             ` : `
-                                <button class="actions-menu-item" onclick="AdminApp.suspendUser('${user.id}')">
+                                <button class="actions-menu-item" data-action="suspend" data-user-id="${user.id}">
                                     Suspend
                                 </button>
                             `}
                             <div class="actions-menu-divider"></div>
-                            <button class="actions-menu-item danger" onclick="AdminApp.deleteUser('${user.id}')">
+                            <button class="actions-menu-item danger" data-action="delete" data-user-id="${user.id}">
                                 Delete
                             </button>
                         </div>
@@ -277,10 +280,10 @@ const AdminApp = {
                             </td>
                             <td>
                                 <div class="flex gap-1">
-                                    <button class="btn btn-primary btn-sm" onclick="AdminApp.approveUser('${user.id}')">
+                                    <button class="btn btn-primary btn-sm" data-action="approve" data-user-id="${user.id}">
                                         Approve
                                     </button>
-                                    <button class="btn btn-danger btn-sm" onclick="AdminApp.rejectUser('${user.id}')">
+                                    <button class="btn btn-danger btn-sm" data-action="reject" data-user-id="${user.id}">
                                         Reject
                                     </button>
                                 </div>
@@ -461,6 +464,55 @@ const AdminApp = {
 
         // Close mobile menu
         document.getElementById('adminSidebar').classList.remove('open');
+    },
+
+    // Setup global action delegation (called once during init)
+    setupActionDelegation() {
+        // Delegate all data-action clicks from the main content area
+        document.querySelector('.admin-main').addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+
+            e.stopPropagation();
+            const action = btn.dataset.action;
+            const userId = btn.dataset.userId;
+
+            switch (action) {
+                case 'toggle-menu':
+                    this.toggleActionsMenu(e, userId);
+                    break;
+                case 'view':
+                    this.viewUser(userId);
+                    break;
+                case 'change-role':
+                    this.showRoleModal(userId);
+                    break;
+                case 'extend':
+                    this.showExtendModal(userId);
+                    break;
+                case 'lock':
+                    this.lockUser(userId);
+                    break;
+                case 'unlock':
+                    this.unlockUser(userId);
+                    break;
+                case 'suspend':
+                    this.suspendUser(userId);
+                    break;
+                case 'activate':
+                    this.activateUser(userId);
+                    break;
+                case 'delete':
+                    this.deleteUser(userId);
+                    break;
+                case 'approve':
+                    this.approveUser(userId);
+                    break;
+                case 'reject':
+                    this.rejectUser(userId);
+                    break;
+            }
+        });
     },
 
     // Toggle actions menu
