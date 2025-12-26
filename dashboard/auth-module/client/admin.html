@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Admin Panel - CPF Dashboard</title>
+    <link rel="stylesheet" href="css/auth.css">
+    <style>
+        /* Admin-specific overrides */
+        body {
+            background: var(--bg-gray);
+            display: block;
+            padding: 0;
+        }
+
+        /* Mobile menu toggle */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1001;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: var(--radius);
+            cursor: pointer;
+        }
+
+        /* Sidebar user info */
+        .sidebar-user {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-user-avatar {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .sidebar-user-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar-user-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar-user-role {
+            font-size: 12px;
+            opacity: 0.7;
+            text-transform: capitalize;
+        }
+
+        /* Nav sections */
+        .nav-section {
+            padding: 16px 24px 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-item .badge {
+            margin-left: auto;
+            background: var(--danger);
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+        }
+
+        /* Search & Filters */
+        .filters-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+        }
+
+        .filter-select {
+            padding: 10px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            background: white;
+            min-width: 150px;
+        }
+
+        /* User avatar in table */
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--primary-light);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-info-cell {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 500;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Actions dropdown */
+        .actions-dropdown {
+            position: relative;
+        }
+
+        .actions-btn {
+            background: none;
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .actions-btn:hover {
+            background: var(--bg-gray);
+        }
+
+        .actions-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 4px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            min-width: 160px;
+            z-index: 100;
+            display: none;
+        }
+
+        .actions-menu.show {
+            display: block;
+        }
+
+        .actions-menu-item {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            text-align: left;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .actions-menu-item:hover {
+            background: var(--bg-gray);
+        }
+
+        .actions-menu-item.danger {
+            color: var(--danger);
+        }
+
+        .actions-menu-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+
+        /* Fix for dropdown inside table with overflow */
+        table td {
+            position: relative;
+        }
+
+        table .actions-dropdown {
+            position: static;
+        }
+
+        table .actions-menu {
+            position: absolute;
+            right: 16px;
+            top: auto;
+            z-index: 1000;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-light);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+        }
+
+        .tab:hover {
+            color: var(--text);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Settings form */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .settings-section {
+            background: var(--bg-gray);
+            padding: 20px;
+            border-radius: var(--radius);
+        }
+
+        .settings-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            font-size: 14px;
+        }
+
+        .setting-description {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Toggle switch */
+        .toggle {
+            position: relative;
+            width: 48px;
+            height: 26px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: var(--transition-fast);
+            border-radius: 26px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: var(--transition-fast);
+            border-radius: 50%;
+        }
+
+        .toggle input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+
+        .toggle input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Audit log */
+        .audit-entry {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .audit-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .audit-icon.login { background: var(--success-light); }
+        .audit-icon.logout { background: var(--info-light); }
+        .audit-icon.failed { background: var(--danger-light); }
+        .audit-icon.change { background: var(--warning-light); }
+        .audit-icon.admin { background: var(--primary); color: white; }
+
+        .audit-content {
+            flex: 1;
+        }
+
+        .audit-action {
+            font-weight: 500;
+        }
+
+        .audit-details {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        .audit-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        /* Loading spinner */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .admin-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 1000;
+            }
+
+            .admin-sidebar.open {
+                transform: translateX(0);
+            }
+
+            .admin-main {
+                margin-left: 0;
+                padding: 80px 16px 16px;
+            }
+
+            .filters-bar {
+                flex-direction: column;
+            }
+
+            .search-input, .filter-select {
+                width: 100%;
+            }
+
+            .table-responsive {
+                overflow-x: auto;
+                overflow-y: visible;
+            }
+
+            .actions-dropdown {
+                position: static;
+            }
+
+            .actions-menu {
+                position: fixed;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
+
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-logo">
+                <span>🧠</span> CPF Admin
+            </div>
+
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar" id="userAvatar">--</div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name" id="userName">Loading...</div>
+                    <div class="sidebar-user-role" id="userRole">--</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section" data-i18n="admin.navigation">Navigation</div>
+
+                <a href="#users" class="nav-item active" data-section="users">
+                    <span>👥</span>
+                    <span data-i18n="admin.users">Users</span>
+                </a>
+
+                <a href="#pending" class="nav-item" data-section="pending">
+                    <span>⏳</span>
+                    <span data-i18n="admin.pendingApprovals">Pending Approvals</span>
+                    <span class="badge hidden" id="pendingBadge">0</span>
+                </a>
+
+                <a href="#audit" class="nav-item" data-section="audit">
+                    <span>📋</span>
+                    <span data-i18n="admin.auditLog">Audit Log</span>
+                </a>
+
+                <div class="nav-section super-admin-only" data-i18n="admin.administration">Administration</div>
+
+                <a href="#settings" class="nav-item super-admin-only" data-section="settings">
+                    <span>⚙️</span>
+                    <span data-i18n="admin.settings">Settings</span>
+                </a>
+
+                <div class="nav-section" data-i18n="admin.account">Account</div>
+
+                <a href="/profile" class="nav-item">
+                    <span>👤</span>
+                    <span data-i18n="dashboard.profile">Profile</span>
+                </a>
+
+                <a href="/dashboard" class="nav-item">
+                    <span>🏠</span>
+                    <span data-i18n="profile.dashboard">Dashboard</span>
+                </a>
+
+                <a href="#" class="nav-item" id="logoutBtn">
+                    <span>🚪</span>
+                    <span data-i18n="admin.logout">Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Header -->
+            <header class="admin-header">
+                <div>
+                    <h1 id="pageTitle" data-i18n="admin.title">User Management</h1>
+                    <p class="text-muted text-small" id="pageSubtitle"></p>
+                </div>
+                <div class="flex gap-1">
+                    <!-- Language Selector -->
+                    <div class="language-selector" style="position: relative; top: auto; right: auto;">
+                        <button class="btn btn-secondary" id="langBtn" style="padding: 8px 12px;">
+                            <span id="currentLang">EN</span>
+                            <span>▼</span>
+                        </button>
+                        <div class="language-dropdown" id="langDropdown">
+                            <a href="#" class="language-option active" data-lang="en-US">🇺🇸 English</a>
+                            <a href="#" class="language-option" data-lang="it-IT">🇮🇹 Italiano</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Alert Container -->
+            <div id="alertContainer"></div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-value" id="statTotalUsers">--</div>
+                    <div class="stat-label" data-i18n="admin.stats.totalUsers">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statActiveUsers">--</div>
+                    <div class="stat-label" data-i18n="admin.stats.activeUsers">Active Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statPendingUsers">--</div>
+                    <div class="stat-label" data-i18n="admin.stats.pendingApproval">Pending Approval</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statLockedUsers">--</div>
+                    <div class="stat-label" data-i18n="admin.stats.lockedUsers">Locked Users</div>
+                </div>
+            </div>
+
+            <!-- Users Section -->
+            <section class="card tab-content active" id="usersSection">
+                <div class="card-header">
+                    <h2 class="card-title" data-i18n="admin.allUsers">All Users</h2>
+                    <button class="btn btn-primary btn-sm" id="refreshUsersBtn">
+                        <span>🔄</span>
+                        <span data-i18n="admin.refresh">Refresh</span>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Filters -->
+                    <div class="filters-bar">
+                        <input type="text" class="search-input" id="searchInput" placeholder="Search by name or email...">
+                        <select class="filter-select" id="statusFilter">
+                            <option value="" data-i18n="admin.filter.allStatuses">All Statuses</option>
+                            <option value="active" data-i18n="admin.filter.active">Active</option>
+                            <option value="pending_verification" data-i18n="admin.filter.pendingVerification">Pending Verification</option>
+                            <option value="pending_approval" data-i18n="admin.filter.pendingApproval">Pending Approval</option>
+                            <option value="locked" data-i18n="admin.filter.locked">Locked</option>
+                            <option value="suspended" data-i18n="admin.filter.suspended">Suspended</option>
+                            <option value="expired" data-i18n="admin.filter.expired">Expired</option>
+                            <option value="deactivated" data-i18n="admin.filter.deactivated">Deactivated</option>
+                        </select>
+                        <select class="filter-select" id="roleFilter">
+                            <option value="" data-i18n="admin.filter.allRoles">All Roles</option>
+                            <option value="super_admin">Super Admin</option>
+                            <option value="admin">Admin</option>
+                            <option value="auditor">Auditor</option>
+                            <option value="viewer">Viewer</option>
+                        </select>
+                    </div>
+
+                    <!-- Users Table -->
+                    <div class="table-responsive">
+                        <table class="table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="admin.table.user">User</th>
+                                    <th data-i18n="admin.table.role">Role</th>
+                                    <th data-i18n="admin.table.status">Status</th>
+                                    <th data-i18n="admin.table.lastLogin">Last Login</th>
+                                    <th data-i18n="admin.table.expiresAt">Expires</th>
+                                    <th data-i18n="admin.table.actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination" id="usersPagination">
+                        <div class="pagination-info" id="paginationInfo">
+                            Showing 0 of 0 users
+                        </div>
+                        <div class="pagination-buttons">
+                            <button class="btn btn-secondary btn-sm" id="prevPageBtn" disabled>
+                                <span data-i18n="admin.pagination.prev">Previous</span>
+                            </button>
+                            <button class="btn btn-secondary btn-sm" id="nextPageBtn" disabled>
+                                <span data-i18n="admin.pagination.next">Next</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pending Approvals Section -->
+            <section class="card tab-content" id="pendingSection">
+                <div class="card-header">
+                    <h2 class="card-title" data-i18n="admin.pendingApprovals">Pending Approvals</h2>
+                    <button class="btn btn-primary btn-sm" id="refreshPendingBtn">
+                        <span>🔄</span>
+                        <span data-i18n="admin.refresh">Refresh</span>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="pendingList">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                    <div class="empty-state hidden" id="pendingEmpty">
+                        <div class="empty-state-icon">✅</div>
+                        <div class="empty-state-title" data-i18n="admin.noPending">No Pending Approvals</div>
+                        <p data-i18n="admin.noPendingDesc">All user registrations have been processed.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Audit Log Section -->
+            <section class="card tab-content" id="auditSection">
+                <div class="card-header">
+                    <h2 class="card-title" data-i18n="admin.auditLog">Audit Log</h2>
+                    <div class="flex gap-1">
+                        <select class="filter-select" id="auditActionFilter" style="margin: 0;">
+                            <option value="" data-i18n="admin.filter.allActions">All Actions</option>
+                            <option value="login">Login</option>
+                            <option value="logout">Logout</option>
+                            <option value="login_failed">Login Failed</option>
+                            <option value="password_reset">Password Reset</option>
+                            <option value="user_created">User Created</option>
+                            <option value="user_approved">User Approved</option>
+                            <option value="user_rejected">User Rejected</option>
+                            <option value="user_locked">User Locked</option>
+                            <option value="user_unlocked">User Unlocked</option>
+                            <option value="role_changed">Role Changed</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" id="refreshAuditBtn">
+                            <span>🔄</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div id="auditList">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                    <div class="empty-state hidden" id="auditEmpty">
+                        <div class="empty-state-icon">📋</div>
+                        <div class="empty-state-title" data-i18n="admin.noAudit">No Audit Entries</div>
+                        <p data-i18n="admin.noAuditDesc">No activity has been recorded yet.</p>
+                    </div>
+                </div>
+                <div class="pagination" style="padding: 16px 24px;">
+                    <div class="pagination-info" id="auditPaginationInfo">--</div>
+                    <div class="pagination-buttons">
+                        <button class="btn btn-secondary btn-sm" id="auditPrevBtn" disabled>Previous</button>
+                        <button class="btn btn-secondary btn-sm" id="auditNextBtn" disabled>Next</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section (Super Admin Only) -->
+            <section class="card tab-content super-admin-only" id="settingsSection">
+                <div class="card-header">
+                    <h2 class="card-title" data-i18n="admin.settings">Settings</h2>
+                    <button class="btn btn-primary btn-sm" id="saveSettingsBtn">
+                        <span>💾</span>
+                        <span data-i18n="admin.saveSettings">Save Settings</span>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="settings-grid">
+                        <!-- Registration Settings -->
+                        <div class="settings-section">
+                            <h3 class="settings-section-title" data-i18n="admin.settings.registration">Registration</h3>
+
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label" data-i18n="admin.settings.allowRegistration">Allow Registration</div>
+                                    <div class="setting-description" data-i18n="admin.settings.allowRegistrationDesc">Enable public user registration</div>
+                                </div>
+                                <label class="toggle">
+                                    <input type="checkbox" id="settingAllowRegistration" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label" data-i18n="admin.settings.requireApproval">Require Approval</div>
+                                    <div class="setting-description" data-i18n="admin.settings.requireApprovalDesc">New users need admin approval</div>
+                                </div>
+                                <label class="toggle">
+                                    <input type="checkbox" id="settingRequireApproval" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label" data-i18n="admin.settings.requireEmailVerification">Require Email Verification</div>
+                                    <div class="setting-description" data-i18n="admin.settings.requireEmailVerificationDesc">Users must verify email before access</div>
+                                </div>
+                                <label class="toggle">
+                                    <input type="checkbox" id="settingRequireEmailVerification" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label" data-i18n="admin.settings.defaultRole">Default Role</div>
+                                    <div class="setting-description" data-i18n="admin.settings.defaultRoleDesc">Role assigned to new users</div>
+                                </div>
+                                <select class="filter-select" id="settingDefaultRole" style="min-width: 120px;">
+                                    <option value="viewer">Viewer</option>
+                                    <option value="auditor">Auditor</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Security Settings -->
+                        <div class="settings-section">
+                            <h3 class="settings-section-title" data-i18n="admin.settings.security">Security</h3>
+
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label" data-i18n="admin.settings.maxLoginAttempts">Max Login Attempts</div>
+                                    <div class="setting-description" data-i18n="admin.settings.maxLoginAttemptsDesc">Before account lockout</div>
+                                </div>
+                                <input type="number" class="form-input" id="settingMaxLoginAttempts" value="5" min="3" max="10" style="width: 80px;">
+                            </div>
+
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label" data-i18n="admin.settings.sessionTimeout">Session Timeout (hours)</div>
+                                    <div class="setting-description" data-i18n="admin.settings.sessionTimeoutDesc">Auto-logout after inactivity</div>
+                                </div>
+                                <input type="number" class="form-input" id="settingSessionTimeout" value="24" min="1" max="168" style="width: 80px;">
+                            </div>
+
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label" data-i18n="admin.settings.passwordExpiry">Password Expiry (days)</div>
+                                    <div class="setting-description" data-i18n="admin.settings.passwordExpiryDesc">0 = never expires</div>
+                                </div>
+                                <input type="number" class="form-input" id="settingPasswordExpiry" value="0" min="0" max="365" style="width: 80px;">
+                            </div>
+                        </div>
+
+                        <!-- Account Settings -->
+                        <div class="settings-section">
+                            <h3 class="settings-section-title" data-i18n="admin.settings.accounts">Accounts</h3>
+
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label" data-i18n="admin.settings.defaultExpiry">Default Account Expiry (days)</div>
+                                    <div class="setting-description" data-i18n="admin.settings.defaultExpiryDesc">0 = never expires</div>
+                                </div>
+                                <input type="number" class="form-input" id="settingDefaultExpiry" value="365" min="0" max="3650" style="width: 80px;">
+                            </div>
+
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label" data-i18n="admin.settings.expiryWarning">Expiry Warning (days)</div>
+                                    <div class="setting-description" data-i18n="admin.settings.expiryWarningDesc">Days before expiry to warn user</div>
+                                </div>
+                                <input type="number" class="form-input" id="settingExpiryWarning" value="14" min="1" max="90" style="width: 80px;">
+                            </div>
+                        </div>
+
+                        <!-- Notification Settings -->
+                        <div class="settings-section">
+                            <h3 class="settings-section-title" data-i18n="admin.settings.notifications">Notifications</h3>
+
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label" data-i18n="admin.settings.notifyNewUser">Notify on New Registration</div>
+                                    <div class="setting-description" data-i18n="admin.settings.notifyNewUserDesc">Email admins when new user registers</div>
+                                </div>
+                                <label class="toggle">
+                                    <input type="checkbox" id="settingNotifyNewUser" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label" data-i18n="admin.settings.notifyLocked">Notify on Account Lock</div>
+                                    <div class="setting-description" data-i18n="admin.settings.notifyLockedDesc">Email admins when account is locked</div>
+                                </div>
+                                <label class="toggle">
+                                    <input type="checkbox" id="settingNotifyLocked" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- User Details Modal -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="admin.modal.userDetails">User Details</h3>
+                <button class="modal-close" id="closeUserModal">&times;</button>
+            </div>
+            <div class="modal-body" id="userModalBody">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closeUserModalBtn" data-i18n="admin.close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Action Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="confirmModalTitle">Confirm Action</h3>
+                <button class="modal-close" id="closeConfirmModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmModalMessage">Are you sure you want to perform this action?</p>
+                <div class="form-group mt-2 hidden" id="confirmReasonGroup">
+                    <label class="form-label" data-i18n="admin.modal.reason">Reason (optional)</label>
+                    <input type="text" class="form-input" id="confirmReason" placeholder="Enter reason...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelConfirmBtn" data-i18n="admin.cancel">Cancel</button>
+                <button class="btn btn-danger" id="confirmActionBtn" data-i18n="admin.confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Change Modal -->
+    <div class="modal-overlay" id="roleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="admin.modal.changeRole">Change Role</h3>
+                <button class="modal-close" id="closeRoleModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="roleModalMessage">Select new role for user:</p>
+                <div class="form-group mt-2">
+                    <label class="form-label" data-i18n="admin.modal.newRole">New Role</label>
+                    <select class="form-input" id="newRoleSelect">
+                        <option value="viewer">Viewer</option>
+                        <option value="auditor">Auditor</option>
+                        <option value="admin">Admin</option>
+                        <option value="super_admin">Super Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelRoleBtn" data-i18n="admin.cancel">Cancel</button>
+                <button class="btn btn-primary" id="confirmRoleBtn" data-i18n="admin.save">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extend Expiry Modal -->
+    <div class="modal-overlay" id="extendModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" data-i18n="admin.modal.extendExpiry">Extend Account Expiry</h3>
+                <button class="modal-close" id="closeExtendModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="extendModalMessage">Extend account expiry by:</p>
+                <div class="form-group mt-2">
+                    <label class="form-label" data-i18n="admin.modal.days">Days</label>
+                    <input type="number" class="form-input" id="extendDays" value="365" min="1" max="3650">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelExtendBtn" data-i18n="admin.cancel">Cancel</button>
+                <button class="btn btn-primary" id="confirmExtendBtn" data-i18n="admin.extend">Extend</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/i18n.js"></script>
+    <script src="js/auth-client.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
