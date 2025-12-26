@@ -102,13 +102,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function getDashboardUrl(role) {
-    const dashboardBaseUrl = localStorage.getItem('dashboardUrl') || 'http://localhost:3000';
-
     switch (role) {
         case 'super_admin':
         case 'admin':
             return '/admin';
         default:
-            return dashboardBaseUrl + '/auditing/';
+            return '/dashboard';
     }
 }

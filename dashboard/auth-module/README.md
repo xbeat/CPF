@@ -31,6 +31,9 @@ Sistema di autenticazione top-tier per CPF Dashboard con supporto multi-tenancy,
 - ✅ Sospensione account
 - ✅ Scadenza account (default 1 anno)
 - ✅ Estensione scadenza
+- ✅ Pagina profilo utente (modifica dati personali)
+- ✅ Gestione sessioni attive (visualizza e revoca)
+- ✅ Cambio password con validazione
 
 ### Email (Resend)
 - ✅ Email di verifica
@@ -79,7 +82,8 @@ auth-module/
 │   ├── schemas/
 │   │   ├── auth_schema.sql       # Schema database
 │   │   ├── init-db.js            # Script inizializzazione
-│   │   └── seed-admin.js         # Creazione super admin
+│   │   ├── seed-admin.js         # Creazione super admin
+│   │   └── seed-test-data.js     # Dati di test (sviluppo)
 │   └── utils/
 │       ├── crypto.js             # Hashing, encryption
 │       └── validation.js         # Input validation
@@ -92,12 +96,21 @@ auth-module/
 │   ├── reset-password.html       # Form reset password
 │   ├── verify-email.html         # Verifica email
 │   ├── account-locked.html       # Account bloccato
+│   ├── dashboard.html            # Dashboard principale (post-login)
+│   ├── profile.html              # Pagina profilo utente
+│   ├── admin.html                # Pannello admin
 │   ├── 404.html                  # Pagina non trovata
 │   ├── css/
-│   │   └── auth.css              # Stili (matching dashboard)
+│   │   ├── auth.css              # Stili autenticazione
+│   │   └── dashboard.css         # Stili dashboard e profilo
 │   └── js/
 │       ├── i18n.js               # Internazionalizzazione
-│       └── auth-client.js        # API client
+│       ├── auth-client.js        # API client
+│       ├── login.js              # Logica login
+│       ├── register.js           # Logica registrazione
+│       ├── dashboard.js          # Logica dashboard
+│       ├── profile.js            # Logica profilo
+│       └── admin.js              # Logica admin panel
 │
 └── tests/                        # TEST (futuro)
     ├── auth.test.js
@@ -178,11 +191,46 @@ npm run dev
 
 Il server parte su `http://localhost:3001`
 
-### 6. Testa
+### 6. Carica Dati di Test (opzionale)
+
+Per sviluppo/testing, puoi caricare utenti di test:
+
+```bash
+npm run seed:test
+```
+
+Questo crea 10 utenti di test con diversi ruoli e stati:
+| Email | Ruolo | Stato |
+|-------|-------|-------|
+| super.admin@test.local | super_admin | active |
+| admin@test.local | admin | active |
+| auditor1@test.local | auditor | active |
+| auditor2@test.local | auditor | active |
+| viewer@test.local | viewer | active |
+| pending@test.local | auditor | pending_approval |
+| locked@test.local | auditor | locked |
+| suspended@test.local | viewer | suspended |
+| expired@test.local | auditor | expired |
+| expiring.soon@test.local | auditor | active (scade tra 5 giorni) |
+
+**Password per tutti gli utenti di test: `TestPassword123!`**
+
+### 7. Testa
 
 Apri `http://localhost:3001/login` e accedi con:
-- Email: (valore in INITIAL_ADMIN_EMAIL)
-- Password: (valore in INITIAL_ADMIN_PASSWORD)
+- Email: (valore in INITIAL_ADMIN_EMAIL o un utente di test)
+- Password: (valore in INITIAL_ADMIN_PASSWORD o `TestPassword123!`)
+
+### Pagine Disponibili
+
+| URL | Descrizione | Accesso |
+|-----|-------------|---------|
+| `/login` | Pagina di login | Pubblico |
+| `/register` | Registrazione nuovo utente | Pubblico |
+| `/forgot-password` | Recupero password | Pubblico |
+| `/dashboard` | Dashboard principale | Utenti autenticati |
+| `/profile` | Profilo utente (modifica dati, password, sessioni) | Utenti autenticati |
+| `/admin` | Pannello amministrazione | Admin/Super Admin |
 
 ---
 
