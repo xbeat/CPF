@@ -117,7 +117,7 @@ app.use('/api/auth/users', usersRoutes);
 // =============================================================================
 
 // Serve HTML pages
-const pages = ['login', 'register', 'forgot-password', 'reset-password', 'verify-email', 'account-locked'];
+const pages = ['login', 'register', 'forgot-password', 'reset-password', 'verify-email', 'account-locked', 'dashboard', 'profile'];
 
 pages.forEach(page => {
     app.get(`/${page}`, (req, res) => {

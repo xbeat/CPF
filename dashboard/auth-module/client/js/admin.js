@@ -80,13 +80,13 @@ const AdminApp = {
         try {
             const response = await adminApi.getUsers({ limit: 1 });
             // These would come from a dedicated stats endpoint in production
-            document.getElementById('statTotalUsers').textContent = response.total || '--';
+            document.getElementById('statTotalUsers').textContent = response.pagination?.total || '--';
 
             const activeResponse = await adminApi.getUsers({ status: 'active', limit: 1 });
-            document.getElementById('statActiveUsers').textContent = activeResponse.total || '--';
+            document.getElementById('statActiveUsers').textContent = activeResponse.pagination?.total || '--';
 
             const lockedResponse = await adminApi.getUsers({ status: 'locked', limit: 1 });
-            document.getElementById('statLockedUsers').textContent = lockedResponse.total || '--';
+            document.getElementById('statLockedUsers').textContent = lockedResponse.pagination?.total || '--';
 
             document.getElementById('statPendingUsers').textContent = this.pendingUsers.length;
         } catch (error) {
@@ -110,7 +110,7 @@ const AdminApp = {
             });
 
             this.users = response.users || [];
-            this.totalUsers = response.total || 0;
+            this.totalUsers = response.pagination?.total || 0;
             this.renderUsersTable();
             this.updatePagination();
         } catch (error) {
