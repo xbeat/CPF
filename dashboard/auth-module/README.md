@@ -234,6 +234,94 @@ Apri `http://localhost:3001/login` e accedi con:
 
 ---
 
+## ❓ FAQ - Domande Frequenti
+
+### 1. Posso deployare l'auth-module senza toccare la dashboard esistente?
+
+**SÌ.** L'auth-module è completamente separato e autonomo:
+
+- Cartella isolata: `dashboard/auth-module/`
+- Server separato (porta 3001 di default)
+- Non modifica nessun file della dashboard principale
+- La dashboard continua a funzionare esattamente come prima
+
+Puoi deployare l'auth-module in parallelo e integrarlo gradualmente.
+
+### 2. Se non configuro/avvio il server auth, cosa succede?
+
+**Nulla.** La dashboard funziona normalmente senza protezione:
+
+- Nessun middleware auth è attivo di default
+- Tutte le API restano pubbliche
+- Nessun impatto sulle funzionalità esistenti
+
+L'auth è un **modulo opzionale** che aggiungi quando sei pronto.
+
+### 3. Come aggiorno le tabelle su un database di produzione esistente?
+
+Vedi la sezione successiva **"Upgrade Database Produzione"**.
+
+---
+
+## 🔄 Upgrade Database Produzione
+
+Se hai già un database PostgreSQL in produzione (es. Render, Railway, Supabase) e vuoi aggiungere le tabelle auth:
+
+### Comando Unico (dal tuo terminale locale)
+
+```bash
+# Sostituisci con la tua connection string
+psql "postgres://USER:PASSWORD@HOST:PORT/DATABASE" \
+  -f dashboard/auth-module/server/schemas/auth_schema.sql
+```
+
+**Esempio con Render:**
+```bash
+psql "postgres://cpf_user:xxxxx@oregon-postgres.render.com:5432/cpf_db" \
+  -f dashboard/auth-module/server/schemas/auth_schema.sql
+```
+
+### Alternativa: Da Render Dashboard
+
+1. Vai su Render → Database → **Shell** (o **PSQL**)
+2. Copia-incolla il contenuto di `auth_schema.sql`
+3. Esegui
+
+### Cosa viene creato
+
+| Tabella | Descrizione |
+|---------|-------------|
+| `auth_users` | Utenti con password hash, ruoli, status |
+| `auth_sessions` | Sessioni attive (refresh tokens) |
+| `auth_settings` | Configurazione globale (lockout, policy) |
+| `auth_audit_log` | Log di tutte le azioni auth |
+| `auth_password_resets` | Token per reset password |
+| `auth_email_verifications` | Token per verifica email |
+| `auth_user_organizations` | Accesso multi-organizzazione |
+| `auth_rate_limits` | Rate limiting persistente |
+
+### Cosa NON viene toccato
+
+Le tabelle esistenti della dashboard **non vengono modificate**:
+- `organizations` ✓ intatta
+- `assessments` ✓ intatta
+- `indicators_metadata` ✓ intatta
+
+### Dopo l'upgrade
+
+1. Crea il super admin iniziale:
+```bash
+cd dashboard/auth-module
+npm run seed:admin
+```
+
+2. (Opzionale) Carica dati di test:
+```bash
+npm run seed:test
+```
+
+---
+
 ## 📚 API Reference
 
 ### Endpoints Pubblici
