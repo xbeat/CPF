@@ -79,10 +79,18 @@ const SecurityUtils = {
             /[<>]/,                          // HTML tags
             /javascript:/i,                   // JavaScript protocol
             /on\w+\s*=/i,                    // Event handlers
-            /(;|--|\||\$\(|`)/,              // SQL/Command injection
-            /\.\.\/|\.\.\\|%2e%2e/i,         // Path traversal
+            /(;|--|\||\$\(|`)/,              // SQL/Command injection (pipe, backtick, semicolon, comment)
+            /&&|\|\|/,                       // Command chaining operators
+            /\.\.\/|\.\.\\|%2e%2e|%2f/i,     // Path traversal (relative, URL encoded)
+            /^\/etc\//,                      // Absolute path to /etc/
             /union.*select/i,                 // SQL UNION
             /drop|insert|update|delete/i,    // SQL DML
+            /['"\s]or['"\s].*=/i,            // SQL OR injection (e.g., ' OR '1'='1)
+            /['"\s]and['"\s].*=/i,           // SQL AND injection
+            /alert\s*\(/i,                   // JavaScript alert() function
+            /confirm\s*\(/i,                 // JavaScript confirm() function
+            /prompt\s*\(/i,                  // JavaScript prompt() function
+            /eval\s*\(/i,                    // JavaScript eval() function
         ];
 
         return patterns.some(pattern => pattern.test(input));
