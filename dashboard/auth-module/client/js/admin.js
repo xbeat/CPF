@@ -69,9 +69,9 @@ const AdminApp = {
         this.currentUser = response.user;
 
         // Update sidebar user info
-        const initials = (this.currentUser.first_name?.[0] || '') + (this.currentUser.last_name?.[0] || '');
+        const initials = (this.currentUser.firstName?.[0] || '') + (this.currentUser.lastName?.[0] || '');
         document.getElementById('userAvatar').textContent = initials.toUpperCase() || '??';
-        document.getElementById('userName').textContent = `${this.currentUser.first_name || ''} ${this.currentUser.last_name || ''}`.trim() || this.currentUser.email;
+        document.getElementById('userName').textContent = `${this.currentUser.firstName || ''} ${this.currentUser.lastName || ''}`.trim() || this.currentUser.email;
         document.getElementById('userRole').textContent = this.currentUser.role.replace('_', ' ');
     },
 
@@ -177,7 +177,7 @@ const AdminApp = {
                     <div class="user-cell">
                         <div class="user-avatar">${this.getInitials(user)}</div>
                         <div class="user-info-cell">
-                            <span class="user-name">${this.escapeHtml(user.first_name || '')} ${this.escapeHtml(user.last_name || '')}</span>
+                            <span class="user-name">${this.escapeHtml(user.firstName || '')} ${this.escapeHtml(user.lastName || '')}</span>
                             <span class="user-email">${this.escapeHtml(user.email)}</span>
                         </div>
                     </div>
@@ -189,10 +189,10 @@ const AdminApp = {
                     <span class="badge status-${user.status}">${this.formatStatus(user.status)}</span>
                 </td>
                 <td>
-                    <span class="text-small">${user.last_login_at ? this.formatDate(user.last_login_at) : '--'}</span>
+                    <span class="text-small">${user.lastLoginAt ? this.formatDate(user.lastLoginAt) : '--'}</span>
                 </td>
                 <td>
-                    <span class="text-small ${this.isExpiringSoon(user.expires_at) ? 'text-warning' : ''}">${user.expires_at ? this.formatDate(user.expires_at) : 'Never'}</span>
+                    <span class="text-small ${this.isExpiringSoon(user.expiresAt) ? 'text-warning' : ''}">${user.expiresAt ? this.formatDate(user.expiresAt) : 'Never'}</span>
                 </td>
                 <td>
                     <div class="actions-dropdown">
@@ -267,13 +267,13 @@ const AdminApp = {
                                 <div class="user-cell">
                                     <div class="user-avatar">${this.getInitials(user)}</div>
                                     <div class="user-info-cell">
-                                        <span class="user-name">${this.escapeHtml(user.first_name || '')} ${this.escapeHtml(user.last_name || '')}</span>
+                                        <span class="user-name">${this.escapeHtml(user.firstName || '')} ${this.escapeHtml(user.lastName || '')}</span>
                                         <span class="user-email">${this.escapeHtml(user.email)}</span>
                                     </div>
                                 </div>
                             </td>
                             <td>
-                                <span class="text-small">${this.formatDate(user.created_at)}</span>
+                                <span class="text-small">${this.formatDate(user.createdAt)}</span>
                             </td>
                             <td>
                                 <div class="flex gap-1">
@@ -317,7 +317,7 @@ const AdminApp = {
                         ${entry.details ? `<br><small>${this.escapeHtml(JSON.stringify(entry.details))}</small>` : ''}
                     </div>
                     <div class="audit-meta">
-                        ${this.formatDate(entry.created_at)} • IP: ${entry.ip_address || 'Unknown'}
+                        ${this.formatDate(entry.createdAt || entry.created_at)} • IP: ${entry.ipAddress || entry.ip_address || 'Unknown'}
                     </div>
                 </div>
             </div>
@@ -489,18 +489,18 @@ const AdminApp = {
                     </div>
                 </div>
                 <div class="text-center mb-3">
-                    <h3>${this.escapeHtml(user.first_name || '')} ${this.escapeHtml(user.last_name || '')}</h3>
+                    <h3>${this.escapeHtml(user.firstName || '')} ${this.escapeHtml(user.lastName || '')}</h3>
                     <p class="text-muted">${this.escapeHtml(user.email)}</p>
                     <span class="badge role-${user.role}">${user.role.replace('_', ' ')}</span>
                     <span class="badge status-${user.status}">${this.formatStatus(user.status)}</span>
                 </div>
                 <table class="table">
                     <tr><td><strong>ID</strong></td><td>${user.id}</td></tr>
-                    <tr><td><strong>Created</strong></td><td>${this.formatDate(user.created_at)}</td></tr>
-                    <tr><td><strong>Last Login</strong></td><td>${user.last_login_at ? this.formatDate(user.last_login_at) : 'Never'}</td></tr>
-                    <tr><td><strong>Expires</strong></td><td>${user.expires_at ? this.formatDate(user.expires_at) : 'Never'}</td></tr>
-                    <tr><td><strong>Email Verified</strong></td><td>${user.email_verified_at ? 'Yes' : 'No'}</td></tr>
-                    <tr><td><strong>Failed Logins</strong></td><td>${user.failed_login_attempts || 0}</td></tr>
+                    <tr><td><strong>Created</strong></td><td>${this.formatDate(user.createdAt)}</td></tr>
+                    <tr><td><strong>Last Login</strong></td><td>${user.lastLoginAt ? this.formatDate(user.lastLoginAt) : 'Never'}</td></tr>
+                    <tr><td><strong>Expires</strong></td><td>${user.expiresAt ? this.formatDate(user.expiresAt) : 'Never'}</td></tr>
+                    <tr><td><strong>Email Verified</strong></td><td>${user.isEmailVerified ? 'Yes' : 'No'}</td></tr>
+                    <tr><td><strong>Failed Logins</strong></td><td>${user.failedLoginAttempts || 0}</td></tr>
                 </table>
             `;
 
@@ -716,7 +716,7 @@ const AdminApp = {
 
     // Utility functions
     getInitials(user) {
-        return ((user.first_name?.[0] || '') + (user.last_name?.[0] || '')).toUpperCase() || '??';
+        return ((user.firstName?.[0] || '') + (user.lastName?.[0] || '')).toUpperCase() || '??';
     },
 
     escapeHtml(str) {
