@@ -291,7 +291,7 @@ router.get('/sessions', authenticate, async (req, res, next) => {
             id: s.id,
             ipAddress: s.ip_address,
             userAgent: s.user_agent,
-            deviceInfo: s.device_info ? JSON.parse(s.device_info) : null,
+            deviceInfo: s.device_info || null,
             createdAt: s.created_at,
             lastUsedAt: s.last_used_at,
             expiresAt: s.expires_at,
