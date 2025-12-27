@@ -44,6 +44,12 @@ import {
     resetView
 } from './predictive-dynamics.js';
 import {
+    renderInterventionTab,
+    selectCpifPhase,
+    toggleResistanceSources,
+    generateInterventionReport
+} from './intervention.js';
+import {
     closeModal
 } from '../shared/utils.js';
 
@@ -210,6 +216,25 @@ export function setupDashboardEventDelegation() {
             if (tabId === 'predictive') {
                 renderPredictiveTab(); // Render Predictive Dynamics graph
             }
+            if (tabId === 'intervention') {
+                renderInterventionTab(); // Render CPIF Intervention tab
+            }
+        }
+
+        // 9c. Intervention Tab Actions
+        if (action === 'select-cpif-phase') {
+            const phaseId = target.dataset.phase;
+            selectCpifPhase(phaseId);
+        }
+        if (action === 'toggle-resistance-sources') {
+            toggleResistanceSources();
+        }
+        if (action === 'generate-intervention-report') {
+            generateInterventionReport();
+        }
+        if (action === 'export-intervention-plan') {
+            // Export intervention plan as JSON
+            generateInterventionReport(); // Reuse report generation for now
         }
 
         // 9b. Predictive Dynamics Controls
