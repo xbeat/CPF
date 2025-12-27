@@ -47,6 +47,7 @@ const auditingTranslations = {
 		'tab.risk': '🔥 Risk Analysis',
 		'tab.maturity': '🎖️ Maturity Model',
 		'tab.predictive': '🧠 Predictive Dynamics',
+		'tab.intervention': '🩺 Intervention',
 		'tab.compile': '✏️ Compile Assessment',
 
 		// Predictive Dynamics Tab
@@ -72,6 +73,33 @@ const auditingTranslations = {
 		'predictive.affected-nodes': 'Affected Nodes',
 		'predictive.avg-risk-increase': 'Avg Risk Increase',
 		'predictive.cascade-depth': 'Cascade Depth',
+
+		// Intervention Tab (CPIF)
+		'intervention.title': '🩺 CPIF Intervention Framework',
+		'intervention.subtitle': 'Systematic methodology for designing and implementing psychological security interventions',
+		'intervention.readiness-score': 'Readiness Score',
+		'intervention.critical-areas': 'Critical Areas',
+		'intervention.resistance-signals': 'Resistance Signals',
+		'intervention.empty.title': 'No Organization Selected',
+		'intervention.empty.subtitle': 'Select an organization to view intervention planning and recommendations.',
+		'intervention.readiness.title': 'Phase 1: Readiness Assessment',
+		'intervention.readiness.recommended': 'Recommended:',
+		'intervention.matching.title': 'Phase 2: Vulnerability-Intervention Matching',
+		'intervention.matching.recommended-approaches': 'Recommended Approaches:',
+		'intervention.matching.no-data': 'Complete assessments to generate intervention recommendations',
+		'intervention.resistance.title': 'Phase 5: Resistance Navigation',
+		'intervention.resistance.approach': 'Approach:',
+		'intervention.resistance.none-detected': 'No significant resistance signals detected',
+		'intervention.resistance.continue-monitoring': 'Continue monitoring as interventions proceed',
+		'intervention.resistance.sources-ref': '📚 Resistance Sources Reference',
+		'intervention.verification.title': 'Phase 6: Verification & Integration',
+		'intervention.verification.cpf-score': 'CPF Score',
+		'intervention.verification.convergence': 'Convergence Index',
+		'intervention.verification.assessments': 'Assessments',
+		'intervention.verification.domain-distribution': 'Domain Distribution',
+		'intervention.verification.cycle': 'Diagnostic-Intervention-Verification Cycle',
+		'intervention.verification.sustainment': 'Sustainment Planning',
+		'intervention.planner.title': 'Intervention Planner',
 
 		// Progress Tab
 		'progress.title': 'Assessment Progress Matrix',
@@ -265,6 +293,7 @@ const auditingTranslations = {
 		'tab.risk': '🔥 Analisi Rischio',
 		'tab.maturity': '🎖️ Maturity Model',
 		'tab.predictive': '🧠 Dinamiche Predittive',
+		'tab.intervention': '🩺 Intervento',
 		'tab.compile': '✏️ Compila Assessment',
 
 		// Predictive Dynamics Tab
@@ -290,6 +319,33 @@ const auditingTranslations = {
 		'predictive.affected-nodes': 'Nodi Impattati',
 		'predictive.avg-risk-increase': 'Aumento Rischio Medio',
 		'predictive.cascade-depth': 'Profondità Cascata',
+
+		// Intervention Tab (CPIF)
+		'intervention.title': '🩺 Framework di Intervento CPIF',
+		'intervention.subtitle': 'Metodologia sistematica per progettare e implementare interventi di sicurezza psicologica',
+		'intervention.readiness-score': 'Punteggio Prontezza',
+		'intervention.critical-areas': 'Aree Critiche',
+		'intervention.resistance-signals': 'Segnali di Resistenza',
+		'intervention.empty.title': 'Nessuna Organizzazione Selezionata',
+		'intervention.empty.subtitle': 'Seleziona un\'organizzazione per visualizzare la pianificazione degli interventi e le raccomandazioni.',
+		'intervention.readiness.title': 'Fase 1: Valutazione Prontezza',
+		'intervention.readiness.recommended': 'Raccomandato:',
+		'intervention.matching.title': 'Fase 2: Abbinamento Vulnerabilità-Intervento',
+		'intervention.matching.recommended-approaches': 'Approcci Raccomandati:',
+		'intervention.matching.no-data': 'Completa gli assessment per generare raccomandazioni di intervento',
+		'intervention.resistance.title': 'Fase 5: Navigazione della Resistenza',
+		'intervention.resistance.approach': 'Approccio:',
+		'intervention.resistance.none-detected': 'Nessun segnale di resistenza significativo rilevato',
+		'intervention.resistance.continue-monitoring': 'Continua il monitoraggio durante l\'avanzamento degli interventi',
+		'intervention.resistance.sources-ref': '📚 Riferimento Fonti di Resistenza',
+		'intervention.verification.title': 'Fase 6: Verifica e Integrazione',
+		'intervention.verification.cpf-score': 'Punteggio CPF',
+		'intervention.verification.convergence': 'Indice di Convergenza',
+		'intervention.verification.assessments': 'Assessment',
+		'intervention.verification.domain-distribution': 'Distribuzione Domini',
+		'intervention.verification.cycle': 'Ciclo Diagnostica-Intervento-Verifica',
+		'intervention.verification.sustainment': 'Pianificazione Sostenibilità',
+		'intervention.planner.title': 'Pianificatore Interventi',
 
 		// Progress Tab
 		'progress.title': 'Matrice Progressi Assessment',
