@@ -1,6 +1,7 @@
 import { getSelectedOrgData, getCategoryFilter } from './state.js';
 import { renderSecurityRadarChart } from './charts.js';
 import { renderMaturityTab } from './maturity.js';
+import { renderInterventionTab } from './intervention.js';
 import { renderPrioritizationTable } from './render-details-table.js';
 
 export function renderAssessmentDetails() {
@@ -26,6 +27,12 @@ export function renderAssessmentDetails() {
     const matTab = document.querySelector('.tab[data-tab="maturity"]');
     if (matTab && matTab.classList.contains('active')) {
         renderMaturityTab();
+    }
+
+    // Refresh Intervention Tab if active
+    const intTab = document.querySelector('.tab[data-tab="intervention"]');
+    if (intTab && intTab.classList.contains('active')) {
+        renderInterventionTab();
     }
 
     // Restore Zoom
