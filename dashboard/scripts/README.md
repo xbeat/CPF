@@ -242,3 +242,57 @@ DATABASE_TYPE=sqlite node dashboard/server.js
 # Passa a PostgreSQL
 DATABASE_TYPE=postgres node dashboard/server.js
 ```
+
+---
+
+## 🐘 PostgreSQL Cloud (Neon, Supabase, Render, etc.)
+
+Per database PostgreSQL cloud, passa le variabili direttamente dalla riga di comando:
+
+### Generare dati demo (5 organizzazioni)
+
+```bash
+DATABASE_TYPE=postgres \
+DATABASE_URL='postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=require' \
+node dashboard/scripts/test_backend.js
+```
+
+**Esempio con Neon:**
+```bash
+DATABASE_TYPE=postgres \
+DATABASE_URL='postgresql://dashboard_user:xxxxx@ep-ancient-sunset-xxxxx-pooler.eu-central-1.aws.neon.tech/cpf_dashboard_db?sslmode=require' \
+node dashboard/scripts/test_backend.js
+```
+
+### Creare utenti Auth (richiede auth-module)
+
+```bash
+cd dashboard/auth-module
+
+# Super Admin (interattivo)
+DATABASE_TYPE=postgres \
+DATABASE_URL='postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=require' \
+npm run seed:admin
+
+# 10 Utenti Test (password: TestPassword123!)
+DATABASE_TYPE=postgres \
+DATABASE_URL='postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=require' \
+npm run seed:test
+```
+
+### Utenti di test disponibili
+
+| Email | Ruolo | Stato |
+|-------|-------|-------|
+| super.admin@test.local | super_admin | active |
+| admin@test.local | admin | active |
+| auditor1@test.local | auditor | active |
+| auditor2@test.local | auditor | active |
+| viewer@test.local | viewer | active |
+| pending@test.local | auditor | pending_approval |
+| locked@test.local | auditor | locked |
+| suspended@test.local | viewer | suspended |
+| expired@test.local | auditor | expired |
+| expiring.soon@test.local | auditor | active (5 giorni) |
+
+**Password:** `TestPassword123!`
