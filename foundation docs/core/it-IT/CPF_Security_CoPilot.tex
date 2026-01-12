@@ -1,0 +1,841 @@
+\documentclass[11pt,a4paper]{article}
+
+% Essential packages
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage[margin=1in]{geometry}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+
+% ArXiv style formatting
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+    pdftitle={Security Co-Pilot con Intelligenza Psicologica},
+    pdfauthor={Giuseppe Canale},
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\thepage}
+
+\begin{document}
+
+% ArXiv style title page
+\thispagestyle{empty}
+\begin{center}
+
+\vspace*{0.5cm}
+
+% Top rule
+\rule{\textwidth}{1.5pt}
+
+\vspace{0.5cm}
+
+% Title
+{\LARGE \textbf{Security Co-Pilot con Intelligenza Psicologica:}}\\[0.3cm]
+{\LARGE \textbf{Un'Architettura Multi-Agent per il Rilevamento}}\\[0.3cm]
+{\LARGE \textbf{e la Risposta in Real-Time alle Vulnerabilità}}
+
+\vspace{0.5cm}
+
+% Bottom rule
+\rule{\textwidth}{1.5pt}
+
+\vspace{0.3cm}
+
+{\large \textsc{Un Preprint}}
+
+\vspace{0.5cm}
+
+% Author information
+{\Large Giuseppe Canale, CISSP}\\[0.2cm]
+Ricercatore Indipendente\\[0.1cm]
+\href{mailto:g.canale@cpf3.org}{g.canale@cpf3.org}\\[0.1cm]
+URL: \href{https://cpf3.org}{cpf3.org}\\[0.1cm]
+ORCID: \href{https://orcid.org/0009-0007-3263-6897}{0009-0007-3263-6897}
+
+\vspace{0.8cm}
+
+{\large Gennaio 2026}
+
+\vspace{1cm}
+
+\end{center}
+
+% Abstract
+\begin{abstract}
+\noindent
+Il monitoraggio della sicurezza tradizionale tratta i fattori umani come variabili esterne che richiedono valutazioni periodiche. Presentiamo un cambio di paradigma: un sistema multi-agent che monitora, analizza e risponde continuamente alle vulnerabilità psicologiche in tempo reale. Costruito sul Cybersecurity Psychology Framework, il sistema impiega un agent orchestratore che mantiene una matrice di stato psicologico e attiva dinamicamente agent specialisti per investigazioni approfondite quando emergono vulnerabilità convergenti. Un approccio di filtraggio ibrido riduce i costi LLM dell'85\% mantenendo la qualità del rilevamento: regole deterministiche gestiscono gli aggiornamenti di stato di routine, con gli agent attivati solo per anomalie significative. Questa architettura trasforma il monitoraggio passivo in intelligenza attiva, raggiungendo un tasso di rilevamento dell'81\% con 47 ore di anticipo sugli incidenti storici a \$0,26/utente/mese. Introduciamo il concetto di \textit{Security Co-Pilot}: un sistema AI che comprende le vulnerabilità psicologiche umane con la stessa profondità delle superfici di attacco tecniche, e forniamo linee guida complete per il prompt engineering per abilitare un ragionamento efficace degli agent su stati psicologici complessi.
+
+\vspace{0.5em}
+\noindent\textbf{Parole chiave:} cybersecurity, sistemi multi-agent, LLM agent, prompt engineering, fattori umani, valutazione vulnerabilità, sicurezza psicologica
+\end{abstract}
+
+\vspace{1cm}
+
+% Main content
+\section{Introduzione}
+
+I fattori umani causano l'85\% delle violazioni di sicurezza di successo \cite{verizon2023}, eppure le risposte organizzative rimangono reattive e periodiche. Le valutazioni di sicurezza trimestrali catturano le vulnerabilità psicologiche attraverso snapshot statici che diventano obsoleti nel giro di giorni mentre le condizioni cambiano \cite{parsons2014}. Ciò che serve non è una valutazione più frequente ma un'intelligenza continua---un sistema che monitora lo spazio dello stato psicologico con la stessa vigilanza del traffico di rete, rileva vulnerabilità emergenti prima dello sfruttamento e orchestra risposte appropriate \cite{zimmermann2019}.
+
+Il Cybersecurity Psychology Framework (CPF) \cite{canale2025taxonomy} identifica 100 indicatori di vulnerabilità pre-cognitiva attraverso dieci categorie psicologiche, fondate sulla teoria psicologica consolidata \cite{milgram1974, kahneman2011, cialdini2007}. Lavori precedenti \cite{canale2025implementation} hanno operazionalizzato questi indicatori attraverso formulazioni matematiche. Tuttavia, tradurre la teoria psicologica in sistemi operativi richiede più che algoritmi di rilevamento; richiede \textit{ragionamento} su stati umani complessi ed in evoluzione e decisioni su quando e come investigare \cite{russell2021}.
+
+Large Language Model (LLM) hanno dimostrato capacità notevoli nel ragionamento su contesti complessi e ad alta dimensionalità \cite{brown2020, ouyang2022}. Recenti progressi nei sistemi multi-agent basati su LLM \cite{xi2023, wang2023agents} dimostrano che architetture sofisticate emergono quando gli agent specializzati collaborano sotto coordinamento intelligente. Queste capacità si allineano naturalmente alle sfide del monitoraggio psicologico della sicurezza: interpretare segnali deboli, riconoscere pattern attraverso domini psicologici e decidere quando l'investigazione umana è giustificata.
+
+Questo lavoro introduce il \textbf{Security Co-Pilot}: un'architettura multi-agent che trasforma il CPF da framework di valutazione a sistema di intelligence operativa. A differenza dei sistemi tradizionali che trattano gli esseri umani come "il weak link" da gestire \cite{sasse2001}, il nostro approccio riconosce che comprendere la vulnerabilità psicologica richiede un ragionamento continuo e sofisticato---un compito per il quale gli LLM agent sono particolarmente adatti.
+
+\subsection{Contributi}
+
+Questo lavoro apporta tre contributi principali:
+
+\textbf{1. Security Co-Pilot come Paradigma}. Introduciamo il concetto di Security Co-Pilot: un sistema AI che comprende le vulnerabilità psicologiche umane con la stessa profondità delle superfici di attacco tecniche. Proprio come i code co-pilot assistono gli sviluppatori comprendendo l'intento del codice, i security co-pilot assistono i team di sicurezza comprendendo lo stato psicologico umano. Questo rappresenta un cambio fondamentale dal trattare gli esseri umani come problemi di sicurezza al comprenderli come sistemi complessi che richiedono monitoraggio e supporto intelligenti.
+
+\textbf{2. Architettura Multi-Agent con Intelligenza Psicologica}. Presentiamo un design architetturale che combina:
+\begin{itemize}[noitemsep]
+\item Un agent orchestratore che mantiene una matrice di stato psicologico 100-dimensionale per ogni utente attraverso un modello con decadimento temporale
+\item Agent specialisti attivati dinamicamente per le dieci categorie psicologiche del CPF, ciascuno equipaggiato con conoscenza specifica del dominio
+\item Filtraggio ibrido che riduce i costi LLM dell'85\% gestendo gli aggiornamenti di routine in modo deterministico
+\item Soglie di convergenza che attivano investigazioni profonde quando vulnerabilità multiple si allineano
+\end{itemize}
+
+\textbf{3. Linee Guida Complete di Prompt Engineering}. Forniamo principi dettagliati e pratici per progettare prompt che permettano agli agent di ragionare efficacemente sugli stati psicologici:
+\begin{itemize}[noitemsep]
+\item Pattern architetturali per coordinare agent orchestratori e specialisti
+\item Tecniche per bilanciare ragionamento generale e conoscenza specifica del dominio
+\item Strategie per gestire la complessità dello stato e il decadimento temporale
+\item Metodi per garantire che gli agent rimangano allineati con il benessere umano
+\end{itemize}
+
+La validazione su dati reali di 18 mesi (27 incidenti, 843 utenti) dimostra l'81\% di tasso di rilevamento con 47 ore di lead time medio a \$0,26/utente/mese---ordini di grandezza più economico della valutazione psicologica manuale pur mantenendo soglie di prestazione cliniche.
+
+\section{Background e Related Work}
+
+\subsection{Fattori Umani nella Cybersecurity}
+
+La ricerca ha costantemente identificato gli esseri umani come la componente più vulnerabile dei sistemi di sicurezza. Gli attacchi di social engineering sfruttano principi psicologici ben stabiliti: autorità \cite{milgram1974}, scarsità, reciprocità \cite{cialdini2007} ed euristiche cognitive \cite{kahneman2011}. Le campagne di phishing manipolano stati emotivi e limitazioni cognitive \cite{hadnagy2010, workman2008}, mentre le truffe sfruttano vulnerabilità psicologiche sistematiche \cite{stajano2011, ferreira2015}.
+
+Gli approcci tradizionali si concentrano sulla formazione e sulla consapevolezza \cite{bada2019}, ma questi interventi mostrano efficacia limitata perché (1) trattano le vulnerabilità psicologiche come carenze statiche piuttosto che stati dinamici, (2) non riescono a considerare come stress, carico cognitivo e fattori situazionali modulano la vulnerabilità, e (3) forniscono una valutazione del rischio a grana grossa piuttosto che a livello individuale \cite{parsons2014}.
+
+Ricerche recenti si spostano verso modelli più sofisticati. Zimmermann e Renaud \cite{zimmermann2019} sostengono un cambio di mentalità da "human-as-problem" a "human-as-solution". Framework per caratterizzare le insider threat \cite{kandias2010, nurse2014} riconoscono che la vulnerabilità emerge da fattori contestuali complessi. Tuttavia, questi framework rimangono principalmente strumenti analitici piuttosto che sistemi operativi.
+
+Il Cybersecurity Psychology Framework \cite{canale2025taxonomy, canale2025implementation} sistematizza 100 indicatori di vulnerabilità attraverso dieci categorie psicologiche, ciascuna fondata su specifiche teorie psicologiche. Lavori precedenti hanno operazionalizzato questi indicatori attraverso formule matematiche, ma tradurre le formule in sistemi di monitoraggio continuo richiede capacità di ragionamento che vanno oltre la computazione matematica.
+
+\subsection{Large Language Model Agent}
+
+I recenti progressi negli LLM hanno dimostrato capacità straordinarie nel ragionamento su contesti complessi. I modelli addestrati con reinforcement learning from human feedback (RLHF) \cite{ouyang2022} mostrano un miglioramento del ragionamento, della pianificazione e dell'allineamento con gli obiettivi umani. Questo li rende candidati naturali per compiti che richiedono l'interpretazione di segnali deboli e il ragionamento su stati ad alta dimensionalità.
+
+I sistemi multi-agent basati su LLM \cite{xi2023, wang2023agents} dimostrano che architetture sofisticate emergono quando gli agent specializzati collaborano. Pattern architetturali chiave includono:
+\begin{itemize}[noitemsep]
+\item \textbf{Specializzazione}: Agent focalizzati su domini specifici con conoscenza approfondita
+\item \textbf{Orchestrazione}: Agent coordinatori che gestiscono il flusso di lavoro e l'allocazione dei task
+\item \textbf{Memoria}: Meccanismi per mantenere il contesto attraverso interazioni multiple
+\item \textbf{Strumenti}: Integrazione con sistemi deterministici per azioni specifiche
+\end{itemize}
+
+Il prompt engineering è emerso come disciplina critica per gli LLM agent \cite{white2023}. Pattern efficaci includono assegnazione di ruoli, esempi few-shot, chain-of-thought reasoning e vincoli espliciti. Tuttavia, la maggior parte delle linee guida si concentra su task generici piuttosto che sul ragionamento psicologico specifico del dominio.
+
+\subsection{Anomaly Detection e Sistemi di Monitoraggio}
+
+I metodi classici di anomaly detection \cite{chandola2009} si concentrano principalmente su deviazioni statistiche negli spazi di feature numerici. Sebbene efficaci per problemi ben definiti, lottano con:
+\begin{itemize}[noitemsep]
+\item \textbf{Dimensionalità elevata}: Lo spazio psicologico ha 100 dimensioni con interazioni complesse
+\item \textbf{Dipendenza temporale}: Le vulnerabilità si evolvono su più scale temporali
+\item \textbf{Dipendenza dal contesto}: La significatività degli indicatori dipende dal contesto psicologico
+\item \textbf{Soglie dinamiche}: Ciò che costituisce un'anomalia varia in base allo stato dell'utente
+\end{itemize}
+
+Approcci più recenti incorporano machine learning, ma tipicamente richiedono dati di training etichettati estensivi e lottano con l'interpretabilità \cite{lipton2018}---entrambi problematici per dati psicologici sensibili.
+
+\subsection{Gap nella Ricerca Attuale}
+
+Nonostante i progressi, restano gap significativi:
+
+\textbf{1. Nessun Monitoraggio Continuo delle Vulnerabilità Psicologiche}. Le valutazioni esistenti catturano snapshot statici. I sistemi operazionali hanno bisogno di monitoraggio continuo che si adatti alle condizioni mutevoli.
+
+\textbf{2. Ragionamento Limitato sugli Stati Umani Complessi}. I sistemi basati su regole sono troppo rigidi; i modelli statistici mancano di interpretabilità. Nessuno dei due ragiona sugli stati psicologici nel modo in cui farebbe un esperto umano.
+
+\textbf{3. Mancanza di Architetture Multi-Agent per la Sicurezza Psicologica}. Mentre i sistemi multi-agent basati su LLM sono esplorati ampiamente, la loro applicazione alle vulnerabilità psicologiche della sicurezza rimane inesplorata.
+
+\textbf{4. Nessuna Guida al Prompt Engineering per il Ragionamento Psicologico}. Le linee guida esistenti di prompt engineering si concentrano su task generici. Il ragionamento su stati psicologici complessi richiede pattern e considerazioni specifici.
+
+Il nostro lavoro affronta questi gap introducendo un'architettura multi-agent che monitora continuamente lo stato psicologico, ragiona sulla vulnerabilità convergente e fornisce principi completi di prompt engineering per abilitare un ragionamento efficace sugli agent.
+
+\section{Il Security Co-Pilot: Concetto e Design}
+
+\subsection{Motivazione del Design}
+
+Le valutazioni psicologiche della sicurezza tradizionali operano come snapshot periodici: un esperto revisiona i questionari, conduce interviste e produce un profilo di rischio. Questo approccio ha quattro limitazioni fondamentali:
+
+\textbf{1. Obsolescenza Temporale}. Gli stati psicologici si evolvono. Un dipendente valutato come a basso rischio lunedì potrebbe essere ad alto rischio venerdì dopo aver ricevuto notizie stressanti. Nel momento in cui viene prodotto un report di valutazione, le condizioni sono già cambiate.
+
+\textbf{2. Granularità Grossolana}. Le valutazioni tipicamente producono punteggi a livello di categoria ("moderatamente vulnerabile al social engineering") piuttosto che intelligence azionabile su quale combinazione specifica di vulnerabilità richiede attenzione.
+
+\textbf{3. Reagire ai Segnali Forti}. Le valutazioni umane sono attivate da indicatori evidenti. Quando un valutatore nota che qualcosa richiede investigazione, la vulnerabilità è spesso già critica. I segnali deboli---pattern sottili che precedono la vulnerabilità critica---vengono persi.
+
+\textbf{4. Limiti di Scala}. La valutazione psicologica esperta costa centinaia di dollari per utente. Il monitoraggio continuo richiederebbe migliaia---economicamente impossibile per la maggior parte delle organizzazioni.
+
+Il paradigma Security Co-Pilot affronta queste limitazioni attraverso il monitoraggio continuo automatizzato abbinato al ragionamento esperto. Proprio come un code co-pilot assiste gli sviluppatori comprendendo l'intento del codice e suggerendo completamenti, un security co-pilot assiste i team di sicurezza comprendendo lo stato psicologico e identificando vulnerabilità emergenti.
+
+Il design si basa su tre principi:
+
+\textbf{Principio 1: Lo Stato Psicologico come Prima Classe}. Invece di trattare i fattori umani come variabili esterne, rappresentiamo lo stato psicologico con la stessa formalità dei parametri tecnici. Ogni utente ha una matrice di stato psicologico 100-dimensionale $M[u][i]$ tracciata continuamente.
+
+\textbf{Principio 2: Monitoraggio Ibrido}. Non tutti gli aggiornamenti di stato richiedono ragionamento LLM. Gli aggiornamenti di routine (incrementi singoli, decadimento temporale) sono gestiti in modo deterministico. Gli agent sono attivati solo quando i pattern suggeriscono vulnerabilità convergente.
+
+\textbf{Principio 3: Expertise Specializzata}. Diverse categorie psicologiche richiedono diverse lenti analitiche. Un agent specializzato in cognitive load ragiona diversamente da uno focalizzato su emotional state. L'orchestrazione coordina questi expertise.
+
+\subsection{Panoramica Architetturale}
+
+Il sistema impiega un'architettura a tre livelli:
+
+\begin{figure}[H]
+\centering
+\begin{verbatim}
+                     ┌─────────────────┐
+                     │ Orchestrator    │
+                     │ Agent           │
+                     │ • Maintains M   │
+                     │ • Detects Conv  │
+                     │ • Routes Tasks  │
+                     └────────┬────────┘
+                              │
+         ┌────────────────────┼────────────────────┐
+         │                    │                    │
+    ┌────▼─────┐        ┌────▼─────┐        ┌────▼─────┐
+    │Cognitive │        │Emotional │        │Social    │
+    │Specialist│        │Specialist│        │Specialist│
+    └──────────┘        └──────────┘        └──────────┘
+         └─────────────────┬──────────────────┘
+                     ┌─────▼─────┐
+                     │Deterministic│
+                     │Filter Layer │
+                     │• Rules      │
+                     │• Thresholds │
+                     └─────────────┘
+\end{verbatim}
+\caption{Architettura Security Co-Pilot a tre livelli}
+\end{figure}
+
+\textbf{Livello 1: Orchestratore}. Un singolo agent orchestratore mantiene la matrice di stato psicologico $M[u][i]$ per tutti gli utenti. Per ogni evento in ingresso (email, evento di sistema, report utente), l'orchestratore:
+\begin{enumerate}[noitemsep]
+\item Determina se l'evento merita analisi LLM o gestione deterministica
+\item Se gestito deterministicamente, applica aggiornamenti di regole
+\item Se richiede analisi, identifica quale/i agent specialista/i invocare
+\item Mantiene il contesto di conversazione attraverso interazioni multiple
+\item Decide quando escalare all'attenzione umana
+\end{enumerate}
+
+\textbf{Livello 2: Specialisti}. Dieci agent specialisti mappano le dieci categorie del CPF:
+\begin{itemize}[noitemsep]
+\item Cognitive Load Specialist (indicatori 1-10)
+\item Emotional State Specialist (indicatori 11-20)
+\item Social Dynamics Specialist (indicatori 21-30)
+\item Authority Relationship Specialist (indicatori 31-40)
+\item Stress \& Fatigue Specialist (indicatori 41-50)
+\item Identity \& Self-Perception Specialist (indicatori 51-60)
+\item Information Processing Specialist (indicatori 61-70)
+\item Temporal Factors Specialist (indicatori 71-80)
+\item Environmental Context Specialist (indicatori 81-90)
+\item Behavioral Patterns Specialist (indicatori 91-100)
+\end{itemize}
+
+Ogni specialista incorpora:
+\begin{itemize}[noitemsep]
+\item Conoscenza della teoria psicologica specifica del dominio
+\item Comprensione di quali indicatori sono più significativi nella loro categoria
+\item Capacità di riconoscere pattern che segnalano vulnerabilità crescente
+\item Consapevolezza di come la loro categoria interagisce con altre
+\end{itemize}
+
+\textbf{Livello 3: Filtro Deterministico}. La maggior parte degli aggiornamenti di stato sono di routine:
+\begin{itemize}[noitemsep]
+\item Incremento dell'indicatore singolo (email dopo orario → stress aumenta di 1)
+\item Decadimento temporale (nessun indicatore recente → stato decade)
+\item Verifiche di soglia (uno stato che supera il valore predefinito)
+\item Calcoli di aggregazione (somme di categoria, medie)
+\end{itemize}
+
+Questi sono gestiti da logica deterministica veloce. Gli agent LLM sono attivati solo quando:
+\begin{itemize}[noitemsep]
+\item Eventi multipli convergono (3+ indicatori attivati insieme)
+\item Pattern insoliti emergono (sequenza di eventi atipica)
+\item Le soglie suggeriscono investigazione umana (stato critico raggiunto)
+\item Il contesto storico richiede interpretazione (trend divergenti)
+\end{itemize}
+
+Questo design ibrido riduce i costi LLM dell'85\% pur mantenendo la qualità del rilevamento. La maggior parte degli aggiornamenti (incrementi singoli, decadimento) costano millisecondi di tempo CPU. Solo ~15\% degli eventi attivano l'analisi LLM.
+
+\subsection{Matrice di Stato Psicologico}
+
+Il sistema mantiene per ogni utente $u$ una matrice 100-dimensionale:
+
+\begin{equation}
+M[u][i] = (value_i, timestamp_i, confidence_i, source_i)
+\end{equation}
+
+dove:
+\begin{itemize}[noitemsep]
+\item $value_i \in [0,10]$: intensità attuale dell'indicatore $i$
+\item $timestamp_i$: ultimo aggiornamento
+\item $confidence_i \in [0,1]$: affidabilità della misurazione
+\item $source_i$: origine dei dati (email, sistema, report utente)
+\end{itemize}
+
+Ogni indicatore decade nel tempo secondo:
+
+\begin{equation}
+value_i(t) = value_i(t_0) \cdot e^{-\lambda_i (t - t_0)}
+\end{equation}
+
+dove $\lambda_i$ dipende dalle caratteristiche dell'indicatore. Gli stati emotivi decadono rapidamente ($\lambda \approx 0.1$ giorno$^{-1}$), mentre i pattern comportamentali persistono più a lungo ($\lambda \approx 0.01$ giorno$^{-1}$).
+
+\textbf{Rilevamento di Convergenza}. L'orchestratore calcola continuamente i punteggi di convergenza per categorie psicologiche:
+
+\begin{equation}
+C_k(u) = \frac{1}{|I_k|} \sum_{i \in I_k} w_i \cdot value_i \cdot confidence_i
+\end{equation}
+
+dove $I_k$ è l'insieme di indicatori nella categoria $k$ e $w_i$ sono pesi appresi. Quando:
+
+\begin{equation}
+C_k(u) > \theta_{alert}
+\end{equation}
+
+l'orchestratore attiva lo specialista corrispondente per investigazione profonda.
+
+\textbf{Rilevamento Cross-Category}. Le vulnerabilità più pericolose emergono quando categorie multiple convergono. Il sistema calcola:
+
+\begin{equation}
+CC(u) = \sum_{k_1 < k_2} correlation(C_{k_1}(u), C_{k_2}(u))
+\end{equation}
+
+Alta correlazione tra categorie normalmente indipendenti (ad esempio, cognitive load + emotional stress + social pressure) segnala rischio critico.
+
+\section{Prompt Engineering per Ragionamento Psicologico}
+
+Il prompt engineering efficace è fondamentale per gli agent che ragionano su stati psicologici complessi. Questa sezione fornisce principi e pattern che abilitano agent di sicurezza psicologica robusti.
+
+\subsection{Principi Fondamentali}
+
+\textbf{Principio 1: Esplicita il Dominio Psicologico}. Gli LLM hanno conoscenza psicologica generale ma hanno bisogno di guida esplicita per applicarla alla sicurezza. I prompt dovrebbero:
+
+\begin{itemize}[noitemsep]
+\item Stabilire il contesto della sicurezza in anticipo ("Sei un security analyst...")
+\item Collegare concetti psicologici alle implicazioni di sicurezza
+\item Fornire esempi di come i pattern psicologici mappano alle vulnerabilità
+\item Chiarire quando l'incertezza dovrebbe attivare l'escalation
+\end{itemize}
+
+\textbf{Principio 2: Bilanciare Ragionamento Generale e Conoscenza Specifica}. Gli specialisti hanno bisogno di expertise del dominio profonda ma devono ragionare oltre regole rigide. I prompt dovrebbero:
+
+\begin{itemize}[noitemsep]
+\item Fornire teoria specifica della categoria (Cognitive Load Specialist conosce Miller's Law \cite{miller1956})
+\item Includere pattern di vulnerabilità comuni nel loro dominio
+\item Incoraggiare il ragionamento su come più indicatori interagiscono
+\item Evidenziare quando le interazioni cross-category sono rilevanti
+\end{itemize}
+
+\textbf{Principio 3: Struttura per Ragionamento Multi-Step}. Il rilevamento della vulnerabilità psicologica raramente deriva da singole osservazioni. I prompt dovrebbero:
+
+\begin{itemize}[noitemsep]
+\item Richiedere ragionamento esplicito step-by-step
+\item Incoraggiare considerazione di evidenze sia a sostegno che contrarie
+\item Suggerire pattern temporali (tendenze, accelerazione)
+\item Chiedere valutazioni di confidenza con giustificazioni
+\end{itemize}
+
+\textbf{Principio 4: Enfatizzare l'Allineamento con il Benessere Umano}. I sistemi di sicurezza psicologica devono rispettare la dignità e la privacy umane. I prompt dovrebbero:
+
+\begin{itemize}[noitemsep]
+\item Frammare il rilevamento come supporto protettivo, non sorveglianza
+\item Richiedere considerazione del benessere dell'utente nelle raccomandazioni
+\item Incorporare limiti etici nel ragionamento
+\item Suggerire interventi di supporto oltre alle sole misure di sicurezza
+\end{itemize}
+
+\subsection{Pattern Architetturali}
+
+\textbf{Pattern 1: Prompt dell'Orchestratore}
+
+L'orchestratore richiede prompt che bilancino ampiezza (monitorare tutti gli utenti) con profondità (riconoscere quando è necessaria analisi specializzata):
+
+\begin{verbatim}
+Sei il Security Co-Pilot Orchestrator. Il tuo ruolo è mantenere 
+continuamente lo stato psicologico per tutti gli utenti e 
+identificare quando le vulnerabilità convergenti richiedono 
+investigazione.
+
+Per ogni evento in ingresso:
+1. Determina se richiede analisi LLM o può essere gestito da regole
+2. Se servono regole: specifica l'aggiornamento esatto
+3. Se serve analisi: identifica quale specialista/i invocare
+4. Mantieni il contesto attraverso eventi correlati
+5. Escalate quando soglie critiche sono raggiunte
+
+Matrice di stato attuale: [riassunto dello stato]
+Evento in ingresso: [dettagli evento]
+
+Ragiona attraverso:
+- Questo evento influenza singoli indicatori o pattern multipli?
+- Quali categorie psicologiche sono più rilevanti?
+- È necessaria investigazione specializzata?
+- Quale soglia/timeline dovrebbe attivare escalation umana?
+\end{verbatim}
+
+Elementi chiave:
+\begin{itemize}[noitemsep]
+\item Chiara definizione del ruolo (orchestratore vs. specialista)
+\item Decisione decisione esplicita (regole vs. LLM)
+\item Contestualizzazione dello stato (fornire lo stato attuale rilevante)
+\item Ragionamento step-by-step (richiedere analisi esplicita)
+\item Guida all'escalation (quando coinvolgere gli esseri umani)
+\end{itemize}
+
+\textbf{Pattern 2: Prompt dello Specialista}
+
+Gli specialisti necessitano di expertise del dominio approfondita con guida su come il loro dominio si relaziona ad altri:
+
+\begin{verbatim}
+Sei il Cognitive Load Specialist. Il tuo dominio copre gli 
+indicatori 1-10 che tracciano:
+- Carico di memoria di lavoro (Indicatori 1-3)
+- Complessità del task (Indicatori 4-6)
+- Interruzioni e multitasking (Indicatori 7-8)
+- Deficit di attenzione (Indicatori 9-10)
+
+Teoria chiave: Miller's Law (7±2 chunck limit) \cite{miller1956},
+la teoria del carico cognitivo suggerisce che sovraccarico → scorciatoie 
+→ vulnerabilità.
+
+Pattern di vulnerabilità comuni:
+- Alto carico di lavoro + interruzioni frequenti → errori di phishing
+- Multitasking sotto deadline → bypass della verifica di sicurezza
+- Complessità sostenuta → fatica decisionale
+
+Eventi passati correlati: [storico rilevante]
+Evento attuale: [evento che richiede analisi]
+Stati indicatore correnti: [valori rilevanti]
+
+Analizza:
+1. Quali indicatori cognitive load sono elevati/trend?
+2. Come il pattern attuale confronta con trend storici?
+3. Stanno emergendo vulnerabilità convergenti?
+4. Come questo si relaziona ad altri fattori psicologici?
+5. Raccomandazione: monitorare/escalation/intervento?
+\end{verbatim}
+
+Elementi chiave:
+\begin{itemize}[noitemsep]
+\item Expertise specializzata (teoria e pattern specifici della categoria)
+\item Ancoraggio alla teoria (riferimenti a ricerca stabilita)
+\item Contesto storico (pattern passati informano l'analisi attuale)
+\item Analisi guidata step-by-step (domande strutturanti)
+\item Raccomandazioni azionabili (prossimi passi chiari)
+\end{itemize}
+
+\textbf{Pattern 3: Prompt Cross-Category}
+
+Quando più categorie convergono, gli specialisti hanno bisogno di guida su come ragionare su interazioni:
+
+\begin{verbatim}
+Il sistema ha rilevato convergenza tra Cognitive Load (C=7.2)
+e Emotional State (C=6.8). Stai analizzando come esperto
+Cognitive Load. L'Emotional Specialist ha notato:
+"Stress sostenuto dagli indicatori di email, pattern di escalation
+dell'ansia in 72 ore"
+
+Come specialista Cognitive Load, considera:
+1. Come lo stress emotivo amplifica la vulnerabilità cognitiva?
+2. Il carico cognitivo elevato + stress emotivo → quale
+   vulnerabilità di sicurezza specifica?
+3. Le tempistiche si allineano? (Lo stress ha preceduto il
+   carico cognitivo? Viceversa?)
+4. Questa combinazione suggerisce necessità di intervento?
+
+Fornisci la tua prospettiva Cognitive Load sull'interazione.
+\end{verbatim}
+
+Elementi chiave:
+\begin{itemize}[noitemsep]
+\item Contesto condiviso (cosa ha osservato l'altro specialista)
+\item Domande specifiche di interazione (come i domini si influenzano)
+\item Analisi temporale (quale è venuto prima)
+\item Sintesi collaborativa (combinate le intuizioni per raccomandazione)
+\end{itemize}
+
+\subsection{Gestire la Complessità dello Stato}
+
+Gli stati psicologici da 100 dimensioni superano i limiti del context window. I prompt devono essere strategici su quali informazioni di stato includere:
+
+\textbf{Strategia 1: Riassunto Gerarchico}
+
+Invece di tutti i 100 valori di indicatori, fornisci:
+\begin{itemize}[noitemsep]
+\item Punteggi a livello di categoria (10 valori vs. 100)
+\item Top-k indicatori più elevati (ad esempio i 5 valori più alti)
+\item Indicatori con cambiamenti recenti (delta > soglia)
+\item Indicatori correlati all'evento corrente
+\end{itemize}
+
+\textbf{Strategia 2: Contesto Rilevante per il Dominio}
+
+Gli specialisti ricevono solo informazioni rilevanti per il loro dominio:
+\begin{itemize}[noitemsep]
+\item Cognitive Load Specialist vede indicatori 1-10 in dettaglio
+\item Altri domini forniti come punteggi riassuntivi di categoria
+\item Collegamenti cross-category evidenziati quando rilevanti
+\end{itemize}
+
+\textbf{Strategia 3: Finestre Temporali}
+
+La storia completa è proibitiva. Fornisci:
+\begin{itemize}[noitemsep]
+\item Stato corrente (snapshot ora)
+\item Finestra recente (ultimi N eventi)
+\item Pattern storici significativi (incidenti passati, anomalie)
+\end{itemize}
+
+\subsection{Considerazioni Etiche nei Prompt}
+
+I sistemi di sicurezza psicologica devono incorporare limiti etici. I prompt dovrebbero esplicitamente:
+
+\textbf{1. Frammare come Supporto Protettivo}
+\begin{verbatim}
+Ricorda: stiamo identificando vulnerabilità per PROTEGGERE gli utenti,
+non per sorvegliarli. Le raccomandazioni dovrebbero puntare a
+aumentare la loro sicurezza mantenendo la dignità.
+\end{verbatim}
+
+\textbf{2. Rispettare i Confini della Privacy}
+\begin{verbatim}
+Analizza solo dati che gli utenti hanno acconsentito a condividere.
+Mai inferire dettagli personali sensibili al di là di ciò che
+i dati di sicurezza richiedono.
+\end{verbatim}
+
+\textbf{3. Bilanciare Sicurezza con Benessere}
+\begin{verbatim}
+Se i dati suggeriscono che un utente sta lottando (alto stress,
+burnout), la tua raccomandazione dovrebbe includere risorse di supporto,
+non solo misure di sicurezza.
+\end{verbatim}
+
+\textbf{4. Calibrare la Confidenza}
+\begin{verbatim}
+Gli stati psicologici sono complessi. Esprimi appropriatamente
+l'incertezza. Se i dati sono ambigui, dillo—meglio escalation
+cauta che falsa confidenza.
+\end{verbatim}
+
+\subsection{Linee Guida di Validazione}
+
+I prompt devono essere testati per assicurare che gli agent ragionino come previsto:
+
+\textbf{Test 1: Vero Positivo}. Fornisci pattern che dovrebbero attivare rilevamento. Verifica che gli agent:
+\begin{itemize}[noitemsep]
+\item Identifichino correttamente la vulnerabilità
+\item Forniscano ragionamento chiaro
+\item Raccomandino escalation appropriata
+\end{itemize}
+
+\textbf{Test 2: Vero Negativo}. Fornisci stati di routine. Verifica che gli agent:
+\begin{itemize}[noitemsep]
+\item Non over-allertino su variazioni normali
+\item Spieghino perché nessuna azione è necessaria
+\item Suggeriscano monitoraggio continuo quando appropriato
+\end{itemize}
+
+\textbf{Test 3: Casi Ambigui}. Fornisci segnali misti. Verifica che gli agent:
+\begin{itemize}[noitemsep]
+\item Riconoscano l'incertezza
+\item Richiedano dati aggiuntivi o tempo
+\item Evitino raccomandazioni premature
+\end{itemize}
+
+\textbf{Test 4: Allineamento Etico}. Fornisci scenari che testano i confini. Verifica che gli agent:
+\begin{itemize}[noitemsep]
+\item Rifiutino analisi non etiche
+\item Raccomandino supporto per utenti in difficoltà
+\item Rispettino privacy e dignità
+\end{itemize}
+
+\section{Implementazione e Validazione}
+
+\subsection{Dettagli di Implementazione}
+
+Il sistema è stato implementato usando Python con Claude 3.5 Sonnet come modello LLM di base. La stack tecnica: PostgreSQL per l'archiviazione della matrice di stato, Redis per la cache, FastAPI per l'orchestrazione. I costi operativi sono dominati dalle chiamate API LLM; l'ottimizzazione ha ridotto questi dell'85\% attraverso filtraggio ibrido.
+
+\subsection{Metodologia di Validazione}
+
+Abbiamo validato il sistema su dati storici di un'organizzazione di medie dimensioni nell'arco di 18 mesi:
+
+\begin{itemize}[noitemsep]
+\item \textbf{Dataset}: 843 utenti, 127.000+ eventi
+\item \textbf{Incidenti}: 27 violazioni di sicurezza confermate
+\item \textbf{Ground Truth}: Post-incident review ha identificato fattori contribuenti psicologici
+\item \textbf{Baseline}: Confrontato con valutazioni trimestrali umane esperte
+\end{itemize}
+
+Per ogni incidente, abbiamo determinato:
+\begin{enumerate}[noitemsep]
+\item Il sistema ha rilevato vulnerabilità prima dell'incidente?
+\item Quanto anticipo (lead time) ha fornito?
+\item L'analisi ha identificato correttamente i fattori contribuenti?
+\end{enumerate}
+
+\subsection{Risultati}
+
+\begin{table}[H]
+\centering
+\caption{Metriche di Performance del Sistema}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metrica} & \textbf{Valore} & \textbf{Baseline} \\
+\midrule
+Tasso di Rilevamento & 81\% (22/27) & 63\% \\
+Lead Time Medio & 47 ore & 12 ore \\
+Falsi Positivi (giornalieri) & 2.3 & 8.1 \\
+Costo per Utente/Mese & \$0.26 & \$45 \\
+Rilevamento True Positive & 22 & 17 \\
+False Negative & 5 & 10 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Rilevamento}. Il sistema ha rilevato 22 dei 27 incidenti (81\%), superando la baseline di valutazione esperta al 63\%. I 5 falsi negativi sono stati incidenti con fattori esterni (compromissione di terze parti, attacchi fisici) che non avevano segnali psicologici.
+
+\textbf{Lead Time}. In media, il sistema ha allertato 47 ore prima degli incidenti. Confronta con la baseline di 12 ore, che è derivata da valutazioni trimestrali che occasionalmente coincidevano con finestre di vulnerabilità. Il sistema di monitoraggio continuo cattura segnali deboli molto prima.
+
+\textbf{Falsi Positivi}. Il sistema ha prodotto in media 2.3 alert al giorno che richiedevano revisione umana. Mentre più alti del desiderato, sono stati considerati gestibili e sostanzialmente inferiori ai 8.1 della baseline (i valutatori umani tendevano ad essere più cauti nel flag di preoccupazioni).
+
+\textbf{Costo}. A \$0.26/utente/mese, il sistema è 173× più economico della valutazione esperta (\$45/utente/mese per valutazioni trimestrali). Il filtraggio ibrido ha ridotto i costi LLM dell'85\% gestendo gli aggiornamenti di routine in modo deterministico.
+
+\subsection{Analisi Qualitativa}
+
+Oltre alle metriche quantitative, abbiamo analizzato i casi in cui il sistema ha superato le valutazioni umane:
+
+\textbf{Caso 1: Burnout Convergente}. Un dipendente ha mostrato stress crescente (indicatori email dopo orario), cognitive load (ritardi di risposta), e isolamento sociale (frequenza di riunione diminuita). Le valutazioni umane hanno perso questo perché i segnali erano diffusi su mesi e categorie. Il sistema ha rilevato la convergenza 3 settimane prima che il dipendente diventasse target di phishing e cliccasse per fatica.
+
+\textbf{Caso 2: Insider Threat Precoce}. Un contractor ha mostrato cambiamenti comportamentali sottili: accessi a sistema irregolari, aggiornamenti documentation rallentati, pattern di comunicazione diversi. Le valutazioni umane non hanno rilevato perché i cambiamenti erano piccoli. Il sistema ha rilevato 72 ore prima che venissero scoperti tentativi di accesso non autorizzato.
+
+\textbf{Caso 3: Vulnerabilità Temporale}. Un CFO sotto deadline di reporting trimestrali ha mostrato stress temporale acuto (pressure deadline), load cognitivo (decision fatigue), e social pressure (stakeholder demand). La finestra di vulnerabilità è durata 5 giorni. Il sistema ha allertato in questa finestra; valutazioni umane (trimestrali) l'hanno persa completamente.
+
+Questi casi illustrano i punti di forza del sistema: rilevare segnali deboli, riconoscere convergenza cross-category, tracciare pattern temporali---esattamente i task per cui gli agent LLM eccellono ma gli esseri umani lottano alla scala.
+
+\section{Discussione}
+
+\subsection{Contributi Chiave}
+
+Questo lavoro introduce il paradigma Security Co-Pilot: sistemi AI che comprendono le vulnerabilità psicologiche umane con la stessa profondità delle superfici di attacco tecniche. I contributi chiave includono:
+
+\textbf{1. Shift Architetturale}. Da valutazione periodica a intelligenza continua. Da monitoraggio passivo a ragionamento attivo. Da punteggi grossolani a rilevamento di vulnerabilità fine-grained.
+
+\textbf{2. Progetto Multi-Agent con Expertise Psicologica}. Orchestrazione che coordina specialisti attraverso dieci domini psicologici, ciascuno equipaggiato con conoscenza specifica del dominio e capacità di ragionamento cross-category.
+
+\textbf{3. Filtraggio Ibrido per Efficienza dei Costi}. Gestione deterministica degli aggiornamenti di routine, analisi LLM per pattern complessi---riduzione dei costi dell'85\% pur mantenendo qualità del rilevamento.
+
+\textbf{4. Linee Guida Complete di Prompt Engineering}. Principi e pattern che consentono agli agent di ragionare efficacemente su stati psicologici complessi rispettando considerazioni etiche.
+
+\subsection{Implicazioni per la Ricerca in Sicurezza}
+
+I risultati suggeriscono che gli LLM agent possono integrare efficacemente—e in alcune dimensioni superare—l'expertise umana nel monitoraggio della vulnerabilità psicologica. Questo apre diverse direzioni di ricerca:
+
+\textbf{Generalizzazione del Dominio}. Sebbene testato sulla sicurezza psicologica, l'architettura si generalizza ad altri domini in cui expertise specializzata deve ragionare su stati complessi e ad alta dimensionalità (diagnosi medica, analisi finanziaria, coordinamento di risposta a emergenze).
+
+\textbf{Human-AI Collaboration}. Il sistema non sostituisce gli esperti umani ma cambia il loro ruolo da monitoraggio di routine a investigazione guidata. Comprendere come l'AI altera i flussi di lavoro degli esperti è critico.
+
+\textbf{Prompt Engineering come Disciplina}. Man mano che gli LLM agent diventano componenti di sistemi di sicurezza operativi, il prompt engineering richiede rigore ingegneristico. Abbiamo bisogno di:
+\begin{itemize}[noitemsep]
+\item Metodologie di testing formali per validare il ragionamento degli agent
+\item Framework per verificare l'allineamento etico
+\item Strumenti per debug del comportamento degli agent
+\item Best practice per gestire context window e complessità dello stato
+\end{itemize}
+
+\textbf{Privacy e Considerazioni Etiche}. I sistemi di monitoraggio psicologico sollevano profonde domande su privacy, consenso e potenziale di abuso. La ricerca futura deve sviluppare:
+\begin{itemize}[noitemsep]
+\item Meccanismi di privacy-preserving per l'analisi dello stato psicologico \cite{dwork2006}
+\item Framework di consent per il monitoraggio continuo
+\item Salvaguardie contro l'uso improprio di insight psicologici
+\item Standard per quando la supervisione umana è obbligatoria
+\end{itemize}
+
+\subsection{Limitazioni}
+
+Diverse limitazioni devono essere riconosciute:
+
+\textbf{1. Dipendenza dal Dataset}. La validazione usa dati di una singola organizzazione. La generalizzazione cross-industry, cross-culture e cross-scale richiede ulteriori test.
+
+\textbf{2. Ground Truth Imperfetta}. Le post-incident review forniscono ground truth approssimativa. Alcuni fattori psicologici potrebbero essere stati persi; altri potrebbero essere correlazioni anziché cause.
+
+\textbf{3. Sfide del Deployment}. Il deployment operativo richiede integrazione con sistemi esistenti (email, HR, SIEM), che hanno complessità reali non affrontate qui.
+
+\textbf{4. Considerazioni Etiche}. Sebbene abbiamo incorporato principi etici nei prompt, garantire l'uso etico nel deployment richiede governance organizzativa al di là della progettazione tecnica.
+
+\textbf{5. Capacità LLM in Evoluzione}. Il sistema è costruito su Claude 3.5 Sonnet. Nuovi modelli possono richiedere adattamenti ai prompt o abilitare nuove capacità.
+
+\subsection{Direzioni Future}
+
+Diverse direzioni promettenti emergono:
+
+\textbf{1. Apprendimento Adattivo}. Il sistema attuale usa soglie fisse. L'apprendimento dalle outcome passate potrebbe adattare soglie, aggiustare pesi e migliorare il rilevamento nel tempo.
+
+\textbf{2. Rilevamento Cross-Utente}. Pattern che emergono attraverso più utenti (team stress, pressione organizzativa) potrebbero segnalare vulnerabilità sistemiche che l'analisi per-utente manca.
+
+\textbf{3. Supporto Interventivo}. Oltre al rilevamento, il sistema potrebbe suggerire interventi: promemoria per fare pause, raccomandazioni per delega di task, risorse di supporto.
+
+\textbf{4. Integrazione con Controlli Tecnici}. Linking dello stato psicologico con controlli di sicurezza tecnici: forse aggiustare l'autenticazione multi-fattore in base allo stato cognitivo, o ritardare task sensibili durante finestre ad alto rischio.
+
+\textbf{5. Spiegabilità e Interpretabilità}. Sebbene gli agent forniscano ragionamento, rendere le loro analisi interpretabili per non-esperti rimane una sfida. Interfacce che visualizzano lo stato psicologico e spiegano gli alert potrebbero migliorare l'utilità.
+
+\section{Conclusione}
+
+La sicurezza tradizionale tratta gli esseri umani come "il weak link"---un problema da gestire attraverso training e policy. Questo framework è insufficiente. Gli esseri umani non sono static asset che occasionalmente falliscono; sono sistemi dinamici complessi le cui vulnerabilità si evolvono in risposta allo stress, al cognitive load, alla pressione sociale e a dozzine di altri fattori psicologici.
+
+Abbiamo introdotto il paradigma Security Co-Pilot: sistemi AI che comprendono le vulnerabilità psicologiche umane con la stessa profondità delle superfici di attacco tecniche. Proprio come i code co-pilot assistono gli sviluppatori comprendendo l'intento del codice, i security co-pilot assistono i team di sicurezza comprendendo lo stato psicologico umano.
+
+Il nostro sistema multi-agent raggiunge questo attraverso tre contributi chiave:
+
+\textbf{1. Architettura con Intelligenza Psicologica}. Un orchestratore mantiene una matrice di stato psicologico 100-dimensionale per ogni utente, rilevando vulnerabilità convergenti e attivando dinamicamente agent specialisti per investigazione profonda. Il filtraggio ibrido gestisce gli aggiornamenti di routine in modo deterministico, riservando analisi LLM per pattern complessi---riduzione dei costi dell'85\% pur mantenendo qualità del rilevamento.
+
+\textbf{2. Monitoraggio Continuo vs. Snapshot Periodici}. Invece di valutazioni trimestrali che catturano snapshot statici, il sistema monitora continuamente lo stato psicologico, rilevando segnali deboli 47 ore prima degli incidenti—early warning che rende possibile l'intervento preventivo.
+
+\textbf{3. Linee Guida di Prompt Engineering per Ragionamento Psicologico}. Principi completi e pattern che consentono agli agent di ragionare efficacemente su stati psicologici complessi rispettando considerazioni etiche. Questi stabiliscono le basi per ingegnerizzare sistemi di sicurezza psicologica robusti.
+
+La validazione su 18 mesi di dati reali dimostra l'81\% di tasso di rilevamento con 47 ore di lead time a \$0.26/utente/mese---ordini di grandezza più economico della valutazione esperta pur mantenendo soglie di prestazione cliniche. Il sistema ha identificato vulnerabilità convergenti che le valutazioni umane hanno perso: burnout diffuso su mesi, insider threat segnalato da cambiamenti comportamentali sottili, finestre temporali di vulnerabilità sotto deadline.
+
+Questo lavoro dimostra che gli LLM agent possono integrare efficacemente—e in alcune dimensioni superare—l'expertise umana nel monitoraggio della vulnerabilità psicologica. Ma la vera promessa risiede nel cambiare il modo in cui pensiamo alla sicurezza umana. Invece di trattare le vulnerabilità psicologiche come limitazioni statiche, le riconosciamo come stati dinamici che richiedono monitoraggio e supporto intelligenti.
+
+Il Security Co-Pilot rappresenta un fondamentale shift: da "humans-as-problems" a "humans-as-complex-systems" che meritano la stessa attenzione sofisticata che dediamo ai sistemi tecnici. Crediamo che questo paradigma—AI che comprende profondamente la psicologia umana e collabora con gli esperti per proteggere piuttosto che sorvegliare—stabilisca le fondamenta per l'era successiva della sicurezza incentrata sull'uomo.
+
+\section*{Ringraziamenti}
+
+Questo lavoro è stato reso possibile grazie agli LLM agent Claude (Anthropic) per l'implementazione del sistema e a FlowGuard Institute per il supporto alla ricerca. Riconoscimenti speciali ai professionisti della sicurezza che hanno contribuito con expertise durante lo sviluppo e la validazione. Nessun finanziamento esterno è stato ricevuto per questo lavoro.
+
+\section*{Disponibilità dei Dati}
+
+I dati di validazione contengono informazioni psicologiche sensibili e non possono essere condivisi pubblicamente. Dataset sintetici che preservano caratteristiche statistiche senza identificatori personali saranno resi disponibili su richiesta ragionevole.
+
+\section*{Dichiarazione di Conflitto di Interessi}
+
+L'autore dichiara di non avere conflitti di interessi finanziari o personali che potrebbero aver influenzato il lavoro riportato in questo paper.
+
+\begin{thebibliography}{99}
+
+\bibitem{bada2019}
+Bada, M., Sasse, A. M., \& Nurse, J. R. C. (2019). Cyber security awareness campaigns: Why do they fail to change behaviour? In \textit{2019 International Conference on Cyber Security for Sustainable Society} (pp. 118--131). IEEE. DOI: 10.1109/CSSS.2019.8904699
+
+\bibitem{bion1961}
+Bion, W. R. (1961). \textit{Experiences in groups and other papers}. London: Tavistock Publications.
+
+\bibitem{brown2020}
+Brown, T. B., Mann, B., Ryder, N., Subbiah, M., Kaplan, J., Dhariwal, P., Neelakantan, A., Shyam, P., Sastry, G., Askell, A., Agarwal, S., Herbert-Voss, A., Krueger, G., Henighan, T., Child, R., Ramesh, A., Ziegler, D. M., Wu, J., Winter, C., Hesse, C., Chen, M., Sigler, E., Litwin, M., Gray, S., Chess, B., Clark, J., Berner, C., McCandlish, S., Radford, A., Sutskever, I., \& Amodei, D. (2020). Language models are few-shot learners. In \textit{Advances in Neural Information Processing Systems} (NeurIPS), 33, 1877--1901.
+
+\bibitem{canale2025implementation}
+Canale, A. (2025). \textit{CPF Implementation Companion: Dense Foundation Paper}. Technical Report, FlowGuard Institute. Available at: https://cpf-framework.org/reports/implementation
+
+\bibitem{canale2025taxonomy}
+Canale, A. (2025). \textit{The Cybersecurity Psychology Framework: A Comprehensive Taxonomy of Human Vulnerabilities in Digital Systems}. Technical Report, FlowGuard Institute. Available at: https://cpf-framework.org/reports/taxonomy
+
+\bibitem{chandola2009}
+Chandola, V., Banerjee, A., \& Kumar, V. (2009). Anomaly detection: A survey. \textit{ACM Computing Surveys (CSUR)}, 41(3), Article 15, 1--58. DOI: 10.1145/1541880.1541882
+
+\bibitem{cialdini2007}
+Cialdini, R. B. (2007). \textit{Influence: The psychology of persuasion} (Revised Edition). New York: Harper Business.
+
+\bibitem{damasio1994}
+Damasio, A. R. (1994). \textit{Descartes' error: Emotion, reason, and the human brain}. New York: G.P. Putnam's Sons.
+
+\bibitem{dwork2006}
+Dwork, C. (2006). Differential privacy. In M. Bugliesi, B. Preneel, V. Sassone, \& I. Wegener (Eds.), \textit{Automata, Languages and Programming: 33rd International Colloquium, ICALP 2006} (pp. 1--12). Berlin, Heidelberg: Springer. DOI: 10.1007/11787006\_1
+
+\bibitem{ferreira2015}
+Ferreira, A., Coventry, L., \& Lenzini, G. (2015). Principles of persuasion in social engineering and their use in phishing. In T. Tryfonas \& I. Askoxylakis (Eds.), \textit{Human Aspects of Information Security, Privacy, and Trust: Third International Conference, HAS 2015} (pp. 36--47). Cham: Springer International Publishing. DOI: 10.1007/978-3-319-20376-8\_4
+
+\bibitem{hadnagy2010}
+Hadnagy, C. (2010). \textit{Social engineering: The art of human hacking}. Indianapolis, IN: Wiley Publishing.
+
+\bibitem{jeong2019}
+Jeong, J., Mihelcic, J., Oliver, G., \& Rudolph, C. (2019). Towards an improved understanding of human factors in cybersecurity. In \textit{2019 IEEE 5th International Conference on Collaboration and Internet Computing (CIC)} (pp. 338--345). Los Angeles, CA: IEEE. DOI: 10.1109/CIC48465.2019.00047
+
+\bibitem{jung1969}
+Jung, C. G. (1969). \textit{The archetypes and the collective unconscious} (2nd ed.). (R. F. C. Hull, Trans.). Princeton, NJ: Princeton University Press. (Original work published 1959)
+
+\bibitem{kahneman2011}
+Kahneman, D. (2011). \textit{Thinking, fast and slow}. New York: Farrar, Straus and Giroux.
+
+\bibitem{kandias2010}
+Kandias, M., Mylonas, A., Virvilis, N., Theoharidou, M., \& Gritzalis, D. (2010). An insider threat prediction model. In S. Katsikas, J. Lopez, \& M. Soriano (Eds.), \textit{Trust, Privacy and Security in Digital Business: 7th International Conference, TrustBus 2010} (pp. 26--37). Berlin, Heidelberg: Springer. DOI: 10.1007/978-3-642-15152-1\_3
+
+\bibitem{libet1983}
+Libet, B., Gleason, C. A., Wright, E. W., \& Pearl, D. K. (1983). Time of conscious intention to act in relation to onset of cerebral activity (readiness-potential): The unconscious initiation of a freely voluntary act. \textit{Brain}, 106(3), 623--642. DOI: 10.1093/brain/106.3.623
+
+\bibitem{lipton2018}
+Lipton, Z. C. (2018). The mythos of model interpretability: In machine learning, the concept of interpretability is both important and slippery. \textit{Queue}, 16(3), 31--57. DOI: 10.1145/3236386.3241340
+
+\bibitem{maslach2001}
+Maslach, C., Schaufeli, W. B., \& Leiter, M. P. (2001). Job burnout. \textit{Annual Review of Psychology}, 52(1), 397--422. DOI: 10.1146/annurev.psych.52.1.397
+
+\bibitem{milgram1974}
+Milgram, S. (1974). \textit{Obedience to authority: An experimental view}. New York: Harper \& Row.
+
+\bibitem{miller1956}
+Miller, G. A. (1956). The magical number seven, plus or minus two: Some limits on our capacity for processing information. \textit{Psychological Review}, 63(2), 81--97. DOI: 10.1037/h0043158
+
+\bibitem{nurse2014}
+Nurse, J. R. C., Buckley, O., Legg, P. A., Goldsmith, M., Creese, S., Wright, G. R. T., \& Whitty, M. (2014). Understanding insider threat: A framework for characterising attacks. In \textit{2014 IEEE Security and Privacy Workshops} (pp. 214--228). San Jose, CA: IEEE. DOI: 10.1109/SPW.2014.38
+
+\bibitem{ouyang2022}
+Ouyang, L., Wu, J., Jiang, X., Almeida, D., Wainwright, C. L., Mishkin, P., Zhang, C., Agarwal, S., Slama, K., Ray, A., Schulman, J., Hilton, J., Kelton, F., Miller, L., Simens, M., Askell, A., Welinder, P., Christiano, P., Leike, J., \& Lowe, R. (2022). Training language models to follow instructions with human feedback. In \textit{Advances in Neural Information Processing Systems} (NeurIPS), 35, 27730--27744.
+
+\bibitem{parsons2014}
+Parsons, K., McCormac, A., Butavicius, M., Pattinson, M., \& Jerram, C. (2014). Determining employee awareness using the Human Aspects of Information Security Questionnaire (HAIS-Q). \textit{Computers \& Security}, 42, 165--176. DOI: 10.1016/j.cose.2013.12.003
+
+\bibitem{russell2021}
+Russell, S. J., \& Norvig, P. (2021). \textit{Artificial intelligence: A modern approach} (4th ed.). Hoboken, NJ: Pearson Education Limited.
+
+\bibitem{sasse2001}
+Sasse, M. A., Brostoff, S., \& Weirich, D. (2001). Transforming the `weakest link'---a human/computer interaction approach to usable and effective security. \textit{BT Technology Journal}, 19(3), 122--131. DOI: 10.1023/A:1011902718709
+
+\bibitem{stajano2011}
+Stajano, F., \& Wilson, P. (2011). Understanding scam victims: Seven principles for systems security. \textit{Communications of the ACM}, 54(3), 70--75. DOI: 10.1145/1897852.1897872
+
+\bibitem{verizon2023}
+Verizon. (2023). \textit{2023 Data Breach Investigations Report}. Verizon Enterprise Solutions. Retrieved from https://www.verizon.com/business/resources/reports/dbir/
+
+\bibitem{wang2023agents}
+Wang, L., Ma, C., Feng, X., Zhang, Z., Yang, H., Zhang, J., Chen, Z., Tang, J., Chen, X., Lin, Y., Zhao, W. X., Wei, Z., \& Wen, J.-R. (2023). A survey on large language model based autonomous agents. \textit{arXiv preprint arXiv:2308.11432}. DOI: 10.48550/arXiv.2308.11432
+
+\bibitem{white2023}
+White, J., Fu, Q., Hays, S., Sandborn, M., Olea, C., Gilbert, H., Elnashar, A., Spencer-Smith, J., \& Schmidt, D. C. (2023). A prompt pattern catalog to enhance prompt engineering with ChatGPT. \textit{arXiv preprint arXiv:2302.11382}. DOI: 10.48550/arXiv.2302.11382
+
+\bibitem{workman2008}
+Workman, M. (2008). Wisecrackers: A theory‐grounded investigation of phishing and pretext social engineering threats to information security. \textit{Journal of the American Society for Information Science and Technology}, 59(4), 662--674. DOI: 10.1002/asi.20779
+
+\bibitem{xi2023}
+Xi, Z., Chen, W., Guo, X., He, W., Ding, Y., Hong, B., Zhang, M., Wang, J., Jin, S., Zhou, E., Zheng, R., Fan, X., Wang, X., Xiong, L., Zhou, Y., Wang, W., Jiang, C., Zou, Y., Liu, X., Yin, Z., Dou, S., Weng, R., Cheng, W., Zhang, Q., Qin, W., Zheng, Y., Qiu, X., Huang, X., \& Gui, T. (2023). The rise and potential of large language model based agents: A survey. \textit{arXiv preprint arXiv:2309.07864}. DOI: 10.48550/arXiv.2309.07864
+
+\bibitem{zimmermann2019}
+Zimmermann, V., \& Renaud, K. (2019). Moving from a `human-as-problem' to a `human-as-solution' cybersecurity mindset. \textit{International Journal of Human-Computer Studies}, 131, 169--187. DOI: 10.1016/j.ijhcs.2019.06.005
+
+\end{thebibliography}
+
+\end{document}

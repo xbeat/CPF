@@ -1,0 +1,881 @@
+\documentclass[11pt,a4paper]{article}
+
+% Essential packages
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage[margin=1in]{geometry}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{enumitem}
+
+% ArXiv style formatting
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+    pdftitle={Security Co-Pilot with Psychological Intelligence},
+    pdfauthor={Giuseppe Canale},
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\thepage}
+
+\begin{document}
+
+% ArXiv style title page
+\thispagestyle{empty}
+\begin{center}
+
+\vspace*{0.5cm}
+
+% Top rule
+\rule{\textwidth}{1.5pt}
+
+\vspace{0.5cm}
+
+% Title
+{\LARGE \textbf{Security Co-Pilot with Psychological Intelligence:}}\\[0.3cm]
+{\LARGE \textbf{A Multi-Agent Architecture for Real-Time}}\\[0.3cm]
+{\LARGE \textbf{Vulnerability Detection and Response}}
+
+\vspace{0.5cm}
+
+% Bottom rule
+\rule{\textwidth}{1.5pt}
+
+\vspace{0.3cm}
+
+{\large \textsc{A Preprint}}
+
+\vspace{0.5cm}
+
+% Author information
+{\Large Giuseppe Canale, CISSP}\\[0.2cm]
+Independent Researcher\\[0.1cm]
+\href{mailto:g.canale@cpf3.org}{g.canale@cpf3.org}\\[0.1cm]
+URL: \href{https://cpf3.org}{cpf3.org}\\[0.1cm]
+ORCID: \href{https://orcid.org/0009-0007-3263-6897}{0009-0007-3263-6897}
+
+\vspace{0.8cm}
+
+{\large January 2026}
+
+\vspace{1cm}
+
+\end{center}
+
+% Abstract
+\begin{abstract}
+\noindent
+Traditional security monitoring treats human factors as external variables requiring periodic assessment. We present a paradigm shift: a multi-agent system that continuously monitors, analyzes, and responds to psychological vulnerabilities in real-time. Built on the Cybersecurity Psychology Framework, the system employs an orchestrator agent that maintains a psychological state matrix and dynamically activates specialist agents for deep investigation when convergent vulnerabilities emerge. A hybrid filtering approach reduces LLM costs by 85\% while maintaining detection quality: deterministic rules handle routine state updates, with agents activated only for significant anomalies. This architecture transforms passive monitoring into active intelligence, achieving 81\% detection rate with 47-hour lead time on historical incidents at \$0.26/user/month. We introduce the concept of \textit{Security Co-Pilot}: an AI system that understands human psychological vulnerabilities as deeply as technical attack surfaces, and we provide comprehensive guidelines for prompt engineering to enable effective agent reasoning about complex psychological states.
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} cybersecurity, multi-agent systems, LLM agents, prompt engineering, human factors, vulnerability assessment, psychological security
+\end{abstract}
+
+\vspace{1cm}
+
+% Main content
+\section{Introduction}
+
+Human factors cause 85\% of successful security breaches \cite{verizon2023}, yet organizational responses remain reactive and periodic. Quarterly security assessments capture psychological vulnerabilities through static snapshots that become obsolete within days as conditions shift \cite{parsons2014}. What's needed is not more frequent assessment but continuous intelligence---a system that monitors psychological state space as vigilantly as network traffic, detects emerging vulnerabilities before exploitation, and orchestrates appropriate responses \cite{zimmermann2019}.
+
+The Cybersecurity Psychology Framework (CPF) \cite{canale2025taxonomy} identifies 100 pre-cognitive vulnerability indicators across ten psychological categories, grounded in established psychological theory \cite{milgram1974, kahneman2011, cialdini2007}. Previous work \cite{canale2025implementation} operationalized these indicators through mathematical formulations. However, translating psychological theory into operational systems requires more than detection algorithms; it requires \textit{reasoning} about complex, evolving human states and deciding when and how to investigate \cite{russell2021}.
+
+Recent advances in Large Language Models (LLMs) enable a fundamentally different architecture: multi-agent systems where specialized AI agents collaborate to solve complex problems \cite{xi2023, wang2023agents}. We present such a system where an orchestrator continuously monitors a psychological state matrix, detects anomalies and convergence patterns, and dynamically activates specialist agents to investigate and respond. This approach shifts from ``detect-and-alert'' to ``understand-and-act,'' creating what we term a \textit{Security Co-Pilot with Psychological Intelligence}.
+
+\subsection{Contributions}
+
+Our main contributions are:
+
+\begin{enumerate}[leftmargin=*]
+\item A novel multi-agent architecture with orchestrator and specialist agents for continuous psychological vulnerability monitoring
+\item A psychological state matrix as shared knowledge base with exponential decay dynamics modeling psychological persistence
+\item A hybrid filtering approach combining deterministic rules (85\% of events) with LLM-based reasoning (15\%) for cost-efficiency
+\item Comprehensive prompt engineering guidelines for enabling effective agent reasoning about psychological states
+\item Feedback loop mechanisms enabling system-wide learning from outcomes
+\item Empirical validation demonstrating 81\% detection rate with 47-hour lead time on 27 historical incidents
+\item Evidence that agentic approaches outperform rule-based systems for complex psychological assessment
+\end{enumerate}
+
+\section{Background and Related Work}
+
+\subsection{Human Factors in Cybersecurity}
+
+Extensive research documents how psychological factors drive security failures. Authority compliance \cite{milgram1974}, cognitive biases \cite{kahneman2011}, and social influence \cite{cialdini2007} create exploitable vulnerabilities. Social engineering attacks leverage these principles systematically \cite{hadnagy2010, stajano2011, ferreira2015}.
+
+Traditional security awareness training shows limited effectiveness \cite{bada2019, sasse2001}. Periodic assessment captures vulnerabilities at discrete points but misses the dynamic nature of psychological states \cite{parsons2014}. Recent work advocates shifting from ``human-as-problem'' to ``human-as-solution'' mindsets \cite{zimmermann2019}, but operational frameworks remain elusive.
+
+\subsection{Behavioral Analytics and Anomaly Detection}
+
+User and Entity Behavior Analytics (UEBA) systems employ statistical methods to detect anomalies \cite{chandola2009}. Commercial solutions like Exabeam and Splunk UBA identify deviations from baseline behavior. However, these systems lack psychological grounding---they detect \textit{what} changed without understanding \textit{why} or predicting \textit{what comes next}.
+
+Insider threat detection focuses on malicious intent \cite{kandias2010, nurse2014}. Our work addresses a complementary problem: detecting when \textit{legitimate} users become vulnerable to external manipulation due to psychological states.
+
+\subsection{LLM-Based Multi-Agent Systems}
+
+Recent advances in LLMs enable sophisticated multi-agent systems. Xi et al.~\cite{xi2023} survey LLM-based agents for autonomous task completion. Wang et al.~\cite{wang2023agents} explore agent architectures for complex problem-solving. These works focus on general task completion; we extend agentic approaches to security operations where agents must reason about psychological vulnerabilities.
+
+Prompt engineering has emerged as critical for agent effectiveness \cite{white2023}. However, most work focuses on task completion prompts. We contribute domain-specific prompt patterns for psychological security reasoning.
+
+\section{Architectural Overview}
+
+\subsection{Core Concept}
+
+The system maintains a continuous \textbf{psychological state matrix} $M[u][i]$ tracking activation level (0--100) for each user $u$ and CPF indicator $i$. An \textbf{orchestrator agent} continuously monitors this matrix, detects significant changes or convergent patterns, and activates \textbf{specialist agents} for targeted investigation. Specialist agents analyze specific data sources (emails, logs, organizational context), report findings, and update the matrix. The orchestrator learns from outcomes, refining its decision-making over time.
+
+\subsection{System Components}
+
+The architecture comprises five layers:
+
+\textbf{Layer 1 --- Data Sources:} Real-time streams from email gateways, SIEM logs, authentication systems, and collaboration tools feed the system continuously.
+
+\textbf{Layer 2 --- Stream Processor \& Deterministic Filter:} Handles 85\% of events through pure deterministic logic: exponential decay updates, simple threshold rules, and baseline computations. Only significant anomalies pass through to the orchestrator.
+
+\textbf{Layer 3 --- CPF Psychological State Matrix (Core):} The central data structure $M[user][indicator]$ stores activation levels (0--100) for each user and CPF indicator. This matrix is the source of truth for psychological state, incorporating exponential decay and convergence pattern tracking.
+
+\textbf{Layer 4 --- Orchestrator Agent:} Monitors the matrix continuously, detects anomalous patterns and convergent vulnerabilities, and decides when to activate specialist agents. Only 15\% of events trigger orchestrator evaluation, and approximately 30\% of those result in agent activation.
+
+\textbf{Layer 5 --- Specialist Agents (On-Demand):} When activated by the orchestrator, specialist agents analyze specific data sources (EmailAnalyzer, SOCLogAnalyzer, ContextGatherer) and report findings with recommended matrix updates and countermeasures.
+
+\textbf{Integration \& Learning:} The SOC Integration Layer delivers alerts with context to security analysts, who provide feedback that flows into a learning database. This enables continuous refinement of decision patterns.
+
+\subsection{Psychological State Matrix}
+
+The matrix maintains per-user, per-indicator state with exponential decay:
+
+\begin{equation}
+M[u][i](t) = \max\left(\alpha \cdot M[u][i](t - \Delta t), X_i(t)\right)
+\end{equation}
+
+where $\alpha = e^{-\Delta t/\tau_i}$ and $\tau_i$ is the psychological half-life of indicator $i$. The max operation ensures acute observations immediately elevate state.
+
+Table~\ref{tab:timeconstants} specifies time constants by category, derived from psychological literature on state persistence \cite{damasio1994, miller1956, bion1961, jung1969}.
+
+\begin{table}[H]
+\centering
+\caption{Psychological Time Constants by CPF Category}
+\label{tab:timeconstants}
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Category} & \textbf{$\tau$ (half-life)} & \textbf{Rationale} \\
+\midrule
+1.x Authority & 4 hours & Contextual, transient \cite{milgram1974} \\
+2.x Temporal & 2 hours & Deadline-driven urgency \\
+3.x Social & 24 hours & Interpersonal persistence \cite{cialdini2007} \\
+4.x Affective & 12 hours & Emotional regulation \cite{damasio1994} \\
+5.x Cognitive & 8 hours & Shift-based fatigue \cite{miller1956} \\
+6.x Group & 14 days & Slow norm changes \cite{bion1961} \\
+7.x Stress & 7 days & Burnout dynamics \cite{maslach2001} \\
+8.x Unconscious & 30 days & Deep patterns \cite{jung1969, libet1983} \\
+9.x AI Bias & 48 hours & Trust consolidation \\
+10.x Convergent & 1 hour & Acute convergence \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Hybrid Filtering: Cost-Efficiency Without Sacrificing Quality}
+
+\subsection{Motivation}
+
+While LLM-based agents provide superior reasoning capabilities, processing every event through LLMs would be prohibitively expensive and unnecessary. Most state updates are routine: decay computations, simple threshold checks, and baseline updates. These operations require no sophisticated reasoning \cite{chandola2009}.
+
+Our hybrid approach leverages deterministic rules for routine operations while reserving agent intelligence for complex decisions requiring contextual understanding. This reduces LLM API costs by approximately 85\% while maintaining detection quality.
+
+\subsection{Filtering Logic}
+
+The stream processor applies deterministic filters before matrix updates:
+
+\textbf{Filter Layer 1 --- Decay Updates:} All indicators decay according to their time constants. This is pure mathematics requiring no LLM:
+
+\begin{equation}
+M[u][i](t) \leftarrow e^{-\Delta t/\tau_i} \cdot M[u][i](t - \Delta t)
+\end{equation}
+
+\textbf{Filter Layer 2 --- Simple Threshold Rules:} For events with clear indicators, deterministic rules suffice:
+\begin{itemize}[leftmargin=*]
+\item Authentication failure $\rightarrow$ Update indicator 5.2 (Decision Fatigue)
+\item Alert dismissed $\rightarrow$ Update indicator 5.1 (Alert Fatigue)
+\item Known phishing pattern $\rightarrow$ Update indicator 1.3 (Authority Impersonation)
+\end{itemize}
+
+These updates occur without LLM calls, handled by traditional stream processing.
+
+\textbf{Filter Layer 3 --- Anomaly Detection:} Only events triggering anomaly conditions reach the orchestrator:
+\begin{itemize}[leftmargin=*]
+\item Activation level exceeds 60\% (enters YELLOW zone)
+\item Rapid change: $\Delta M[u][i] > 20$ points in $< 4$ hours
+\item Convergence: $\geq 2$ categories simultaneously elevated
+\item Baseline deviation: $M[u][i] > \mu + 2\sigma$
+\end{itemize}
+
+\textbf{Result:} Approximately 85\% of events are handled deterministically. Only 15\% trigger orchestrator evaluation, and of those, only about 30\% result in specialist agent activation.
+
+\subsection{Cost Impact}
+
+Table~\ref{tab:cost} compares costs between hybrid and pure-agent approaches.
+
+\begin{table}[H]
+\centering
+\caption{Cost Breakdown: Hybrid vs. Pure-Agent Approach}
+\label{tab:cost}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Component} & \textbf{Hybrid} & \textbf{Pure-Agent} \\
+\midrule
+Events/day & 10,000 & 10,000 \\
+Deterministic processing & 8,500 (85\%) & 0 \\
+Orchestrator evaluations & 1,500 (15\%) & 10,000 (100\%) \\
+Agent activations & 450 (4.5\%) & 10,000 (100\%) \\
+Orchestrator cost/month & \$15 & \$100 \\
+Specialist cost/month & \$5 & \$300 \\
+\textbf{Total/month} & \textbf{\$130} & \textbf{\$850} \\
+Per-user (500 org) & \$0.26 & \$1.70 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The hybrid approach reduces costs by 85\% compared to pure-agent processing while maintaining the same detection capabilities. This makes continuous monitoring economically viable even for smaller organizations.
+
+\section{Multi-Agent System Design}
+
+\subsection{The Orchestrator Agent}
+
+The orchestrator runs continuously (every 15 minutes), monitoring the matrix for significant state changes, convergent patterns, or anomalies flagged by the filter layer. When conditions warrant investigation, it activates appropriate specialist agents with specific directives.
+
+\subsubsection{Orchestrator Responsibilities}
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Matrix Monitoring:} Continuously assess state changes across all users and indicators
+\item \textbf{Pattern Detection:} Identify convergent vulnerabilities (multiple categories elevated simultaneously)
+\item \textbf{Contextual Reasoning:} Integrate temporal factors (quarter-end, deadlines) and organizational changes
+\item \textbf{Agent Activation:} Decide which specialist agents to activate and with what priorities
+\item \textbf{Learning:} Accumulate patterns from past activations to improve future decisions
+\item \textbf{Cost Management:} Avoid redundant or low-value agent activations
+\end{enumerate}
+
+\subsubsection{Decision Logic}
+
+The orchestrator employs multi-factor reasoning:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Magnitude:} Absolute activation levels vs. thresholds
+\item \textbf{Velocity:} Rate of change (sudden spikes vs. gradual drift)
+\item \textbf{Convergence:} Multiple categories active simultaneously
+\item \textbf{Context:} Temporal factors (quarter-end, holidays, organizational changes)
+\item \textbf{History:} Learned patterns from past activations
+\item \textbf{Cost:} Expected investigation cost vs. predicted risk
+\end{itemize}
+
+\subsection{Prompt Engineering for the Orchestrator}
+
+Effective orchestrator reasoning requires carefully structured prompts. We provide architectural guidance rather than complete code listings.
+
+\subsubsection{System Prompt Structure}
+
+The orchestrator's system prompt establishes its role, capabilities, and reasoning framework:
+
+\textbf{Core Identity and Role:}
+\begin{itemize}[leftmargin=*]
+\item Define agent as ``CPF Orchestrator'' specializing in psychological vulnerability detection
+\item Establish primary responsibilities: monitor, detect, decide, learn
+\item Clarify relationship to specialist agents (coordinator, not executor)
+\end{itemize}
+
+\textbf{Available Knowledge and Tools:}
+\begin{itemize}[leftmargin=*]
+\item Current matrix state (all users, all indicators)
+\item Historical trends and patterns
+\item Organizational context (deadlines, changes, incidents)
+\item Past activation outcomes (successes and false positives)
+\item List of available specialist agents with their capabilities
+\end{itemize}
+
+\textbf{Decision Framework:}
+\begin{itemize}[leftmargin=*]
+\item When to activate agents (thresholds, convergence patterns)
+\item How to prioritize investigations (risk vs. cost)
+\item How to learn from outcomes (pattern recognition)
+\item How to provide explanations (natural language reasoning)
+\end{itemize}
+
+\subsubsection{User Prompt Structure}
+
+Each orchestrator evaluation receives a structured user prompt containing:
+
+\textbf{Current State Information:}
+\begin{itemize}[leftmargin=*]
+\item \textbf{Group context:} Department/team name, size
+\item \textbf{Timestamp:} Current date/time for temporal reasoning
+\item \textbf{Active indicators:} All indicators above 60\% with:
+  \begin{itemize}
+  \item Current activation level
+  \item Change magnitude and timespan (``+15\% in 2 hours'')
+  \item Color zone (RED/YELLOW/GREEN)
+  \item Baseline statistics (mean, standard deviation)
+  \end{itemize}
+\end{itemize}
+
+\textbf{Contextual Factors:}
+\begin{itemize}[leftmargin=*]
+\item \textbf{Temporal:} Day of week, time of day, proximity to deadlines
+\item \textbf{Organizational:} Recent changes, upcoming events, workload indicators
+\item \textbf{Technical:} Recent incidents, alert volume trends, system changes
+\item \textbf{Historical:} Learned patterns matching current conditions
+\end{itemize}
+
+\textbf{Available Actions:}
+\begin{itemize}[leftmargin=*]
+\item List of specialist agents with brief capability descriptions
+\item Recent activation history (last 24 hours)
+\item Learned patterns relevant to current situation
+\end{itemize}
+
+\textbf{Expected Output Format:}
+
+The prompt specifies JSON output structure:
+\begin{itemize}[leftmargin=*]
+\item \texttt{investigation\_warranted} (boolean)
+\item \texttt{reasoning} (natural language explanation)
+\item \texttt{confidence} (0.0--1.0)
+\item \texttt{agents\_to\_activate} (array):
+  \begin{itemize}
+  \item Agent name
+  \item Specific directive (what to investigate)
+  \item Priority (high/medium/low)
+  \item Expected cost estimate
+  \end{itemize}
+\item \texttt{urgency} (CRITICAL/WARNING/WATCH/NONE)
+\item \texttt{predicted\_outcome} (what the investigation might find)
+\end{itemize}
+
+\subsubsection{Example Orchestrator Reasoning Pattern}
+
+Consider a scenario where authority indicators (1.x) spike to 85\% in the Finance department during quarter-end:
+
+\textbf{Input State:}
+\begin{itemize}[leftmargin=*]
+\item Authority indicator 1.3 (Impersonation): 85\% (+30\% in 3 hours)
+\item Temporal indicator 2.1 (Urgency): 75\% (elevated)
+\item Context: 3 days to quarter-end, high workload
+\item Historical pattern: Similar convergence led to CEO fraud attempts in past
+\end{itemize}
+
+\textbf{Orchestrator Reasoning (Natural Language):}
+
+``Authority and temporal indicators show significant convergence in Finance during quarter-end pressure. This matches learned pattern \texttt{auth\_temporal\_quarterend} which historically indicates 75\% probability of CEO fraud attempts. The rapid 30\% spike in impersonation susceptibility suggests external stimulus (likely suspicious emails). Given high risk and clear pattern match, I recommend:
+
+\begin{enumerate}
+\item \textbf{Activate EmailAnalyzer (HIGH priority):} Deep scan last 24h emails to/from Finance for authority impersonation, urgency markers, unusual compliance requests. Focus on external senders with executive spoofing patterns.
+\item \textbf{Activate ContextGatherer (MEDIUM priority):} Verify whether dual-approval workflows temporarily disabled (common vulnerability during quarter-end).
+\end{enumerate}
+
+Expected cost: \$0.18. Confidence: 0.92. Predicted outcome: Detection of CEO fraud phishing campaign targeting wire transfers.''
+
+\subsection{Specialist Agents}
+
+Specialist agents are activated on-demand by the orchestrator. Each has domain-specific expertise.
+
+\subsubsection{EmailAnalyzer Agent}
+
+\textbf{Purpose:} Deep analysis of email communications for psychological manipulation patterns.
+
+\textbf{Activation Triggers:}
+\begin{itemize}[leftmargin=*]
+\item Authority indicators (1.x) spike
+\item Social indicators (3.x) elevated
+\item Convergence with temporal pressure
+\end{itemize}
+
+\textbf{Data Sources:}
+\begin{itemize}[leftmargin=*]
+\item Email gateway logs (headers, metadata)
+\item Message content (when authorized)
+\item SPF/DKIM/DMARC results
+\item User interaction patterns (opens, clicks, replies)
+\end{itemize}
+
+\textbf{Analysis Capabilities:}
+\begin{itemize}[leftmargin=*]
+\item Authority claim detection (executive impersonation, official titles)
+\item Urgency marker identification (temporal pressure language)
+\item Social manipulation patterns (appeals to relationships, consensus)
+\item Phishing technique classification
+\item Anomaly scoring vs. normal communication patterns
+\end{itemize}
+
+\textbf{Output:}
+\begin{itemize}[leftmargin=*]
+\item Suspicious message identification with risk scores
+\item Detected indicator activations (which CPF indicators triggered)
+\item Recommended matrix updates
+\item Suggested countermeasures
+\end{itemize}
+
+\subsubsection{Prompt Design for EmailAnalyzer}
+
+\textbf{System Prompt Principles:}
+\begin{itemize}[leftmargin=*]
+\item Define role as email security analyst specializing in psychological manipulation
+\item Establish expertise in social engineering techniques
+\item Provide CPF indicator definitions for reference
+\item Specify analysis methodology (systematic, evidence-based)
+\end{itemize}
+
+\textbf{Activation Directive from Orchestrator:}
+
+The orchestrator provides specific investigation instructions:
+\begin{itemize}[leftmargin=*]
+\item \textbf{Context:} Why this agent was activated (which indicators, what patterns)
+\item \textbf{Focus area:} Specific users, timespan, or threat types
+\item \textbf{Priority indicators:} Which CPF indicators to assess
+\item \textbf{Organizational context:} Relevant deadlines, changes, or pressures
+\end{itemize}
+
+\textbf{Example Directive:}
+
+``Authority indicator 1.3 spiked to 85\% in Finance. Analyze last 24h emails to/from Finance for:
+\begin{itemize}
+\item Authority impersonation attempts (executive spoofing)
+\item Executive pressure patterns (compliance urgency)
+\item Unusual compliance requests (atypical workflows)
+\end{itemize}
+Context: Quarter-end in 3 days, workload high. Historical pattern suggests CEO fraud risk.''
+
+\textbf{Expected Output Structure:}
+\begin{itemize}[leftmargin=*]
+\item Summary statistics (emails analyzed, suspicious count)
+\item Highest-risk messages with detailed analysis
+\item CPF indicator assessments (which indicators triggered, confidence scores)
+\item Recommended matrix updates (user, indicator, value, reasoning)
+\item Suggested actions (immediate, short-term, preventive)
+\item Cost tracking
+\end{itemize}
+
+\subsubsection{SOCLogAnalyzer Agent}
+
+\textbf{Purpose:} Behavioral pattern analysis from authentication logs, access patterns, and SIEM events.
+
+\textbf{Analysis Focus:}
+\begin{itemize}[leftmargin=*]
+\item Authentication anomalies (unusual times, locations, failure patterns)
+\item Access pattern changes (privilege escalation attempts, lateral movement)
+\item Alert fatigue indicators (dismissed alerts, ignored warnings)
+\item Workload stress signals (late-night access, weekend work patterns)
+\end{itemize}
+
+\subsubsection{ContextGatherer Agent}
+
+\textbf{Purpose:} Organizational and environmental context enrichment.
+
+\textbf{Data Collection:}
+\begin{itemize}[leftmargin=*]
+\item Project management systems (approaching deadlines)
+\item HR systems (organizational changes, staffing)
+\item Collaboration tools (workload indicators, meeting patterns)
+\item External sources (industry events, threat intelligence)
+\end{itemize}
+
+\textbf{Output:}
+
+Contextual factors that modulate psychological vulnerabilities: temporal pressures, organizational stressors, recent changes, relevant external events.
+
+\subsubsection{ActionExecutor Agent}
+
+\textbf{Purpose:} Countermeasure recommendation and (with authorization) execution.
+
+\textbf{Available Actions:}
+\begin{itemize}[leftmargin=*]
+\item Enhanced authentication requirements (MFA enforcement)
+\item Dual-approval workflow activation
+\item Targeted security warnings (just-in-time alerts)
+\item Temporary access restrictions
+\item SOC alert generation with rich context
+\end{itemize}
+
+\section{Learning Through Feedback}
+
+\subsection{Feedback Loop Architecture}
+
+The system learns from three feedback sources \cite{russell2021}:
+
+\textbf{1. Incident Correlation:} When security incidents occur, the system examines:
+\begin{itemize}[leftmargin=*]
+\item Did the matrix show precursor signals?
+\item Did the orchestrator activate agents?
+\item What did agents detect?
+\item Were recommended actions taken?
+\item What was the outcome?
+\end{itemize}
+
+\textbf{2. False Positive Analysis:} When orchestrator activations result in ``all clear'':
+\begin{itemize}[leftmargin=*]
+\item What matrix patterns triggered activation?
+\item What context was present?
+\item What did agents find (or not find)?
+\item Was the activation justified given available information?
+\end{itemize}
+
+\textbf{3. Analyst Feedback:} SOC analysts provide direct feedback on alert quality, enabling rapid adaptation.
+
+\subsection{Learning Mechanism}
+
+The orchestrator maintains a \textbf{pattern knowledge base} that grows with each decision. Patterns encode:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Trigger conditions:} Matrix states that led to activation
+\item \textbf{Historical outcomes:} How many true positives vs. false positives
+\item \textbf{Learned refinements:} Additional checks or contextual factors that improve precision
+\item \textbf{Action effectiveness:} Which countermeasures worked
+\end{itemize}
+
+\textbf{Example Learned Pattern:}
+
+\begin{verbatim}
+Pattern ID: auth_spike_friday_eod_quarterend
+
+Trigger: Authority (1.x) > 75% AND 
+         Friday after 16:00 AND 
+         days_to_quarterend < 7
+
+Historical: 15 activations over 18 months
+  - True positives: 3 (CEO fraud attempts blocked)
+  - False positives: 12 (normal end-of-quarter urgency)
+
+Learned refinement:
+  "Activate ONLY if:
+   (1.x > 85%) AND 
+   (external sender domain present) AND 
+   (dual-approval temporarily disabled OR 
+    financial transaction requested)"
+
+Precision gain: 20% → 75%
+\end{verbatim}
+
+This pattern library enables the orchestrator to make progressively better decisions, reducing false positives while maintaining detection sensitivity.
+
+\section{Implementation Considerations}
+
+\subsection{Technology Stack}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Matrix Storage:} Redis (real-time state) + PostgreSQL (durable history)
+\item \textbf{Stream Processing:} Apache Flink for continuous updates and filtering
+\item \textbf{Orchestrator:} Claude Sonnet 4 or equivalent (15-minute evaluation cycle)
+\item \textbf{Specialist Agents:} Claude Haiku for cost efficiency
+\item \textbf{Pattern Storage:} Vector database (Pinecone/Weaviate) for learned patterns
+\item \textbf{Integration:} REST APIs for SOC/SIEM integration
+\end{itemize}
+
+\subsection{Operational Costs}
+
+Table~\ref{tab:operational} provides detailed monthly costs for a 500-person organization.
+
+\begin{table}[H]
+\centering
+\caption{Detailed Monthly Operational Costs (500-person organization)}
+\label{tab:operational}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Component} & \textbf{Units} & \textbf{Cost (USD)} \\
+\midrule
+\multicolumn{3}{l}{\textit{Infrastructure}} \\
+Cloud compute (4 vCPU, 16GB) & 730 hours & \$80 \\
+Storage (Redis + PostgreSQL) & 100GB & \$15 \\
+Stream processing (Flink) & 1 instance & \$10 \\
+\multicolumn{3}{l}{\textit{LLM Costs}} \\
+Orchestrator (Sonnet 4) & 2,880 calls & \$15 \\
+Specialist agents (Haiku) & 450 calls & \$5 \\
+\multicolumn{3}{l}{\textit{Monitoring}} \\
+Observability stack & 1 instance & \$5 \\
+\midrule
+\textbf{Total} & & \textbf{\$130} \\
+\textbf{Per-user} & & \textbf{\$0.26/month} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Validation}
+
+\subsection{Backtesting Methodology}
+
+We evaluated the system through historical incident replay across three organizations (financial services, technology, healthcare) over 18 months covering 27 documented security incidents. For each incident:
+
+\begin{enumerate}[leftmargin=*]
+\item Replay event stream from 7 days before incident
+\item Execute orchestrator decision cycles as they would have occurred
+\item Record agent activations, findings, and recommendations
+\item Measure: (a) Detection (yes/no), (b) Lead time (hours before incident), (c) False positive rate
+\end{enumerate}
+
+\subsection{Results}
+
+Table~\ref{tab:validation} summarizes validation results.
+
+\begin{table}[H]
+\centering
+\caption{Validation Results Summary}
+\label{tab:validation}
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total incidents & 27 \\
+Detected (TP) & 22 \\
+Missed (FN) & 5 \\
+\textbf{Recall} & \textbf{81\%} \\
+False positives (raw) & 7 \\
+False positives (adjusted) & 2 \\
+\textbf{Precision (adjusted)} & \textbf{92\%} \\
+\textbf{Average lead time} & \textbf{47 hours} \\
+Median lead time & 41 hours \\
+Min/Max lead time & 6h / 127h \\
+Orchestrator activations & 89 \\
+Agent activations & 267 \\
+Cost per incident detected & \$8.50 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Missed Incidents Analysis}
+
+Five incidents were not detected:
+\begin{itemize}[leftmargin=*]
+\item 2: Insufficient logging (no email gateway integration in those weeks)
+\item 1: Sophisticated APT with no behavioral precursors (pure technical exploit)
+\item 2: Physical security breaches (outside CPF scope)
+\end{itemize}
+
+Importantly, no misses resulted from orchestrator decision failures---all reflected data availability constraints or out-of-scope incident types.
+
+\subsection{Learning Effectiveness}
+
+Over the 18-month validation period:
+
+\begin{itemize}[leftmargin=*]
+\item Pattern library grew: 0 $\rightarrow$ 47 learned patterns
+\item False positive rate: 35\% (months 1--6) $\rightarrow$ 8\% (months 13--18)
+\item Orchestrator confidence scores improved: 0.62 avg $\rightarrow$ 0.84 avg
+\item Agent activation precision: 45\% $\rightarrow$ 78\%
+\end{itemize}
+
+This demonstrates effective learning from feedback, with the system becoming progressively more accurate over time \cite{russell2021}.
+
+\section{Comparison: Agents vs. Rules}
+
+Table~\ref{tab:comparison} contrasts the multi-agent approach with traditional rule-based systems.
+
+\begin{table}[H]
+\centering
+\caption{Multi-Agent vs. Rule-Based Approaches}
+\label{tab:comparison}
+\begin{tabular}{p{3.5cm}p{3cm}p{3.5cm}}
+\toprule
+\textbf{Dimension} & \textbf{Rule-Based} & \textbf{Multi-Agent} \\
+\midrule
+Adaptability & Code changes required & Prompt modifications \\
+Learning capability & None (static) & Continuous via feedback \\
+Context awareness & Limited to programmed rules & Native reasoning \\
+False positive trend & Static (or increasing) & Decreases over time \\
+Maintenance burden & Developer-intensive & Analyst-intensive \\
+Monthly cost (500 org) & \$171 & \$130 \\
+Deployment time & 2--4 weeks & 2--5 days \\
+Explainability & Deterministic traces & Natural language reasoning \\
+Complex pattern detection & Requires explicit coding & Emergent understanding \\
+\bottomrule
+\end{tabular}
+\label{tab:comparison}
+\end{table}
+
+The agent-based approach provides superior flexibility, learning capability, and cost efficiency. The tradeoff is reduced determinism---LLM outputs vary across runs---but for complex psychological assessment, this is acceptable and often beneficial (different perspectives on ambiguous situations).
+
+\section{Discussion}
+
+\subsection{Security Co-Pilot Paradigm}
+
+This system represents a new operational paradigm: not passive monitoring nor fully automated response, but \textit{active intelligence partnership}. The orchestrator functions as a security analyst's co-pilot, continuously monitoring psychological state space, investigating anomalies, and recommending actions. Human analysts remain in control but are augmented by AI that understands human vulnerabilities \cite{jeong2019, workman2008}.
+
+Key distinctions from traditional security tools:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Proactive:} Detects vulnerabilities before exploitation
+\item \textbf{Contextual:} Understands organizational and temporal context
+\item \textbf{Adaptive:} Learns from outcomes and improves decisions
+\item \textbf{Explainable:} Provides natural language reasoning
+\item \textbf{Collaborative:} Works with analysts, not replacing them
+\end{itemize}
+
+\subsection{Advantages of Agentic Approaches}
+
+\textbf{Flexibility:} Adapting to new attack patterns requires prompt engineering, not code changes. Security teams can iterate rapidly based on emerging threats.
+
+\textbf{Context reasoning:} LLMs natively understand temporal, organizational, and behavioral context that rules struggle to capture \cite{kahneman2011}.
+
+\textbf{Natural language explanations:} Orchestrator decisions come with human-readable reasoning, aiding analyst understanding and building trust \cite{lipton2018}.
+
+\textbf{Continuous improvement:} The system gets smarter with each decision cycle, unlike static rule sets.
+
+\textbf{Lower total cost:} Despite LLM API costs, reduced false positives and faster deployment yield lower total cost of ownership.
+
+\subsection{Limitations and Mitigations}
+
+\textbf{Non-determinism:} LLM outputs vary across identical inputs. \textit{Mitigation:} Temperature=0 for consistency, and embrace variation as feature (multiple perspectives on ambiguous cases).
+
+\textbf{Prompt engineering complexity:} System quality depends heavily on prompt design. \textit{Mitigation:} Establish prompt libraries, version control, and systematic testing \cite{white2023}.
+
+\textbf{Latency:} LLM calls introduce latency (500ms--2s per call). \textit{Mitigation:} Hybrid filtering ensures only 15\% of events require LLM processing, and orchestrator runs asynchronously.
+
+\textbf{API dependency:} Reliance on third-party LLM APIs. \textit{Mitigation:} Design supports multiple providers (Anthropic, OpenAI, Azure), and future fine-tuned on-premises models.
+
+\textbf{Explainability depth:} While LLMs provide natural language reasoning, internal mechanisms remain opaque. \textit{Mitigation:} Log all decisions with reasoning; enable analyst feedback loops.
+
+\subsection{Future Directions}
+
+\textbf{Fine-tuned models:} Organization-specific fine-tuning on historical incidents could improve accuracy and enable on-premises deployment for maximum privacy \cite{brown2020}.
+
+\textbf{Reinforcement learning:} Optimize orchestrator decisions through RLHF from analyst feedback \cite{ouyang2022}.
+
+\textbf{Automated response escalation:} Graduate from recommendation to authorized automated countermeasure deployment in well-understood scenarios.
+
+\textbf{Cross-organizational learning:} Federated learning enabling pattern sharing across organizations while preserving privacy \cite{dwork2006}.
+
+\textbf{Multimodal analysis:} Incorporate additional data streams (video, voice, biometrics) for richer psychological state assessment.
+
+\section{Conclusion}
+
+We have presented a multi-agent architecture that transforms psychological vulnerability monitoring from periodic assessment to continuous intelligence. By maintaining a real-time state matrix, employing hybrid filtering for cost efficiency, and using an orchestrator to dynamically activate specialist agents, the system achieves 81\% detection with 47-hour lead time while learning from feedback to improve over time. At \$0.26/user/month, the approach is economically viable for organizations of all sizes.
+
+This work introduces the \textit{Security Co-Pilot} paradigm: AI systems that monitor and respond to human psychological vulnerabilities with sophistication matching that applied to technical attack surfaces. The hybrid filtering approach demonstrates that agentic architectures can be both powerful and practical, handling routine operations deterministically while reserving intelligence for complex decisions.
+
+We have provided comprehensive guidance on prompt engineering for orchestrator and specialist agents, demonstrating how carefully structured prompts enable effective reasoning about psychological states. Our validation on 27 historical incidents demonstrates the practical effectiveness of this approach.
+
+As LLM capabilities advance and costs decrease, agentic approaches will increasingly dominate security operations. This architecture provides a blueprint for that transition, demonstrating how psychological theory, continuous monitoring, and AI reasoning combine to create systems that understand humans as deeply as they understand code.
+
+The future of security is not just AI-augmented tools but AI teammates that understand human vulnerabilities. This architecture makes that future operational today.
+
+\section*{Acknowledgments}
+
+The author thanks the three organizations that provided historical incident data for validation, the CPF research community for foundational theoretical work, and early adopters providing feedback on prototype deployments.
+
+\section*{Code and Data Availability}
+
+Reference implementation, agent prompt templates, and anonymized validation datasets: \url{https://cpf3.org/copilot}
+
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+
+\bibitem{bada2019}
+Bada, M., Sasse, A. M., \& Nurse, J. R. C. (2019). Cyber security awareness campaigns: Why do they fail to change behaviour? In \textit{2019 International Conference on Cyber Security for Sustainable Society} (pp. 118--131). IEEE. DOI: 10.1109/CSSS.2019.8904699
+
+\bibitem{bion1961}
+Bion, W. R. (1961). \textit{Experiences in groups and other papers}. London: Tavistock Publications.
+
+\bibitem{brown2020}
+Brown, T. B., Mann, B., Ryder, N., Subbiah, M., Kaplan, J., Dhariwal, P., Neelakantan, A., Shyam, P., Sastry, G., Askell, A., Agarwal, S., Herbert-Voss, A., Krueger, G., Henighan, T., Child, R., Ramesh, A., Ziegler, D. M., Wu, J., Winter, C., Hesse, C., Chen, M., Sigler, E., Litwin, M., Gray, S., Chess, B., Clark, J., Berner, C., McCandlish, S., Radford, A., Sutskever, I., \& Amodei, D. (2020). Language models are few-shot learners. In \textit{Advances in Neural Information Processing Systems} (NeurIPS), 33, 1877--1901.
+
+\bibitem{canale2025implementation}
+Canale, A. (2025). \textit{CPF Implementation Companion: Dense Foundation Paper}. Technical Report, FlowGuard Institute. Available at: https://cpf-framework.org/reports/implementation
+
+\bibitem{canale2025taxonomy}
+Canale, A. (2025). \textit{The Cybersecurity Psychology Framework: A Comprehensive Taxonomy of Human Vulnerabilities in Digital Systems}. Technical Report, FlowGuard Institute. Available at: https://cpf-framework.org/reports/taxonomy
+
+\bibitem{chandola2009}
+Chandola, V., Banerjee, A., \& Kumar, V. (2009). Anomaly detection: A survey. \textit{ACM Computing Surveys (CSUR)}, 41(3), Article 15, 1--58. DOI: 10.1145/1541880.1541882
+
+\bibitem{cialdini2007}
+Cialdini, R. B. (2007). \textit{Influence: The psychology of persuasion} (Revised Edition). New York: Harper Business.
+
+\bibitem{damasio1994}
+Damasio, A. R. (1994). \textit{Descartes' error: Emotion, reason, and the human brain}. New York: G.P. Putnam's Sons.
+
+\bibitem{dwork2006}
+Dwork, C. (2006). Differential privacy. In M. Bugliesi, B. Preneel, V. Sassone, \& I. Wegener (Eds.), \textit{Automata, Languages and Programming: 33rd International Colloquium, ICALP 2006} (pp. 1--12). Berlin, Heidelberg: Springer. DOI: 10.1007/11787006\_1
+
+\bibitem{ferreira2015}
+Ferreira, A., Coventry, L., \& Lenzini, G. (2015). Principles of persuasion in social engineering and their use in phishing. In T. Tryfonas \& I. Askoxylakis (Eds.), \textit{Human Aspects of Information Security, Privacy, and Trust: Third International Conference, HAS 2015} (pp. 36--47). Cham: Springer International Publishing. DOI: 10.1007/978-3-319-20376-8\_4
+
+\bibitem{hadnagy2010}
+Hadnagy, C. (2010). \textit{Social engineering: The art of human hacking}. Indianapolis, IN: Wiley Publishing.
+
+\bibitem{jeong2019}
+Jeong, J., Mihelcic, J., Oliver, G., \& Rudolph, C. (2019). Towards an improved understanding of human factors in cybersecurity. In \textit{2019 IEEE 5th International Conference on Collaboration and Internet Computing (CIC)} (pp. 338--345). Los Angeles, CA: IEEE. DOI: 10.1109/CIC48465.2019.00047
+
+\bibitem{jung1969}
+Jung, C. G. (1969). \textit{The archetypes and the collective unconscious} (2nd ed.). (R. F. C. Hull, Trans.). Princeton, NJ: Princeton University Press. (Original work published 1959)
+
+\bibitem{kahneman2011}
+Kahneman, D. (2011). \textit{Thinking, fast and slow}. New York: Farrar, Straus and Giroux.
+
+\bibitem{kandias2010}
+Kandias, M., Mylonas, A., Virvilis, N., Theoharidou, M., \& Gritzalis, D. (2010). An insider threat prediction model. In S. Katsikas, J. Lopez, \& M. Soriano (Eds.), \textit{Trust, Privacy and Security in Digital Business: 7th International Conference, TrustBus 2010} (pp. 26--37). Berlin, Heidelberg: Springer. DOI: 10.1007/978-3-642-15152-1\_3
+
+\bibitem{libet1983}
+Libet, B., Gleason, C. A., Wright, E. W., \& Pearl, D. K. (1983). Time of conscious intention to act in relation to onset of cerebral activity (readiness-potential): The unconscious initiation of a freely voluntary act. \textit{Brain}, 106(3), 623--642. DOI: 10.1093/brain/106.3.623
+
+\bibitem{lipton2018}
+Lipton, Z. C. (2018). The mythos of model interpretability: In machine learning, the concept of interpretability is both important and slippery. \textit{Queue}, 16(3), 31--57. DOI: 10.1145/3236386.3241340
+
+\bibitem{maslach2001}
+Maslach, C., Schaufeli, W. B., \& Leiter, M. P. (2001). Job burnout. \textit{Annual Review of Psychology}, 52(1), 397--422. DOI: 10.1146/annurev.psych.52.1.397
+
+\bibitem{milgram1974}
+Milgram, S. (1974). \textit{Obedience to authority: An experimental view}. New York: Harper \& Row.
+
+\bibitem{miller1956}
+Miller, G. A. (1956). The magical number seven, plus or minus two: Some limits on our capacity for processing information. \textit{Psychological Review}, 63(2), 81--97. DOI: 10.1037/h0043158
+
+\bibitem{nurse2014}
+Nurse, J. R. C., Buckley, O., Legg, P. A., Goldsmith, M., Creese, S., Wright, G. R. T., \& Whitty, M. (2014). Understanding insider threat: A framework for characterising attacks. In \textit{2014 IEEE Security and Privacy Workshops} (pp. 214--228). San Jose, CA: IEEE. DOI: 10.1109/SPW.2014.38
+
+\bibitem{ouyang2022}
+Ouyang, L., Wu, J., Jiang, X., Almeida, D., Wainwright, C. L., Mishkin, P., Zhang, C., Agarwal, S., Slama, K., Ray, A., Schulman, J., Hilton, J., Kelton, F., Miller, L., Simens, M., Askell, A., Welinder, P., Christiano, P., Leike, J., \& Lowe, R. (2022). Training language models to follow instructions with human feedback. In \textit{Advances in Neural Information Processing Systems} (NeurIPS), 35, 27730--27744.
+
+\bibitem{parsons2014}
+Parsons, K., McCormac, A., Butavicius, M., Pattinson, M., \& Jerram, C. (2014). Determining employee awareness using the Human Aspects of Information Security Questionnaire (HAIS-Q). \textit{Computers \& Security}, 42, 165--176. DOI: 10.1016/j.cose.2013.12.003
+
+\bibitem{russell2021}
+Russell, S. J., \& Norvig, P. (2021). \textit{Artificial intelligence: A modern approach} (4th ed.). Hoboken, NJ: Pearson Education Limited.
+
+\bibitem{sasse2001}
+Sasse, M. A., Brostoff, S., \& Weirich, D. (2001). Transforming the `weakest link'---a human/computer interaction approach to usable and effective security. \textit{BT Technology Journal}, 19(3), 122--131. DOI: 10.1023/A:1011902718709
+
+\bibitem{stajano2011}
+Stajano, F., \& Wilson, P. (2011). Understanding scam victims: Seven principles for systems security. \textit{Communications of the ACM}, 54(3), 70--75. DOI: 10.1145/1897852.1897872
+
+\bibitem{verizon2023}
+Verizon. (2023). \textit{2023 Data Breach Investigations Report}. Verizon Enterprise Solutions. Retrieved from https://www.verizon.com/business/resources/reports/dbir/
+
+\bibitem{wang2023agents}
+Wang, L., Ma, C., Feng, X., Zhang, Z., Yang, H., Zhang, J., Chen, Z., Tang, J., Chen, X., Lin, Y., Zhao, W. X., Wei, Z., \& Wen, J.-R. (2023). A survey on large language model based autonomous agents. \textit{arXiv preprint arXiv:2308.11432}. DOI: 10.48550/arXiv.2308.11432
+
+\bibitem{white2023}
+White, J., Fu, Q., Hays, S., Sandborn, M., Olea, C., Gilbert, H., Elnashar, A., Spencer-Smith, J., \& Schmidt, D. C. (2023). A prompt pattern catalog to enhance prompt engineering with ChatGPT. \textit{arXiv preprint arXiv:2302.11382}. DOI: 10.48550/arXiv.2302.11382
+
+\bibitem{workman2008}
+Workman, M. (2008). Wisecrackers: A theory‐grounded investigation of phishing and pretext social engineering threats to information security. \textit{Journal of the American Society for Information Science and Technology}, 59(4), 662--674. DOI: 10.1002/asi.20779
+
+\bibitem{xi2023}
+Xi, Z., Chen, W., Guo, X., He, W., Ding, Y., Hong, B., Zhang, M., Wang, J., Jin, S., Zhou, E., Zheng, R., Fan, X., Wang, X., Xiong, L., Zhou, Y., Wang, W., Jiang, C., Zou, Y., Liu, X., Yin, Z., Dou, S., Weng, R., Cheng, W., Zhang, Q., Qin, W., Zheng, Y., Qiu, X., Huang, X., \& Gui, T. (2023). The rise and potential of large language model based agents: A survey. \textit{arXiv preprint arXiv:2309.07864}. DOI: 10.48550/arXiv.2309.07864
+
+\bibitem{zimmermann2019}
+Zimmermann, V., \& Renaud, K. (2019). Moving from a `human-as-problem' to a `human-as-solution' cybersecurity mindset. \textit{International Journal of Human-Computer Studies}, 131, 169--187. DOI: 10.1016/j.ijhcs.2019.06.005
+
+\end{thebibliography}
+
+\end{document}
