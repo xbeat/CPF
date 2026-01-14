@@ -17,6 +17,8 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{enumitem}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 
 % ArXiv style formatting
 \setlength{\parindent}{0pt}
@@ -127,8 +129,7 @@ Our main contributions are:
 \item An adaptive learning module that continuously refines detection thresholds, discovers new vulnerability patterns from incident feedback, and self-optimizes without manual tuning
 \item Comprehensive prompt engineering guidelines for enabling effective agent reasoning about psychological states
 \item Feedback loop mechanisms enabling system-wide learning from outcomes
-\item Empirical validation demonstrating 81\% detection rate with 47-hour lead time on 27 historical incidents at \$0.26/user/month
-\item Evidence that agentic approaches outperform rule-based systems for complex psychological assessment
+
 \end{enumerate}
 
 \section{Background and Related Work}
@@ -174,14 +175,11 @@ The architecture comprises five layers:
 \textbf{Integration \& Learning:} The SOC Integration Layer delivers alerts with context to security analysts, who provide feedback that flows into a learning database. This enables continuous refinement of decision patterns.
 
 \subsection{Psychological State Matrix}
-
 The matrix maintains per-user, per-indicator state with exponential decay:
-
 \begin{equation}
 M[u][i](t) = \max\left(\alpha \cdot M[u][i](t - \Delta t), X_i(t)\right)
 \end{equation}
-
-where $\alpha = e^{-\Delta t/\tau_i}$ and $\tau_i$ is the psychological half-life of indicator $i$. The max operation ensures acute observations immediately elevate state.
+where $X_i(t)$ is the observed value of indicator $i$ at time $t$, $\alpha = e^{-\Delta t/\tau_i}$ is the decay factor, and $\tau_i$ is the psychological half-life of indicator $i$. The max operation ensures acute observations immediately elevate state.
 
 Table~\ref{tab:timeconstants} specifies time constants by category, derived from psychological literature on state persistence \cite{damasio1994, miller1956, bion1961, jung1969}.
 
@@ -903,41 +901,41 @@ The complete learning cycle operates continuously:
 \begin{figure}[H]
 \centering
 \begin{verbatim}
-┌─────────────────────────────────────────────────┐
-│ 1. OPERATIONAL PHASE                            │
-│    • Orchestrator monitors matrix               │
-│    • Makes decisions using current Θ, W, P      │
-│    • Logs: decisions, outcomes, analyst feedback│
-└────────────────┬────────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────┐
-│ 2. WEEKLY LEARNING PHASE                        │
-│    • Adaptive Learner analyzes logs             │
-│    • Post-incident threshold adjustments        │
-│    • False positive threshold increases         │
-│    • Pattern discovery from new incidents       │
-│    • Weight optimization via regression         │
-│    • Generates updated Θ', W', P'               │
-└────────────────┬────────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────┐
-│ 3. VALIDATION PHASE                             │
-│    • Backtest Θ', W', P' on held-out data       │
-│    • Verify precision/recall maintain targets   │
-│    • Check for degradation or improvement       │
-│    • If validated → deploy to production        │
-└────────────────┬────────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────┐
-│ 4. DEPLOYMENT                                   │
-│    • Orchestrator receives updated parameters   │
-│    • Gradual rollout (A/B test if possible)     │
-│    • Monitor for unexpected behavior            │
-│    • Roll back if metrics degrade               │
-└─────────────────────────────────────────────────┘
++-------------------------------------------------+
+| 1. OPERATIONAL PHASE                            |
+|    * Orchestrator monitors matrix               |
+|    * Makes decisions using current Theta, W, P  |
+|    * Logs: decisions, outcomes, analyst feedback|
++----------------+--------------------------------+
+                 |
+                 v
++-------------------------------------------------+
+| 2. WEEKLY LEARNING PHASE                        |
+|    * Adaptive Learner analyzes logs             |
+|    * Post-incident threshold adjustments        |
+|    * False positive threshold increases         |
+|    * Pattern discovery from new incidents       |
+|    * Weight optimization via regression         |
+|    * Generates updated Theta', W', P'           |
++----------------+--------------------------------+
+                 |
+                 v
++-------------------------------------------------+
+| 3. VALIDATION PHASE                             |
+|    * Backtest Theta', W', P' on held-out data   |
+|    * Verify precision/recall maintain targets   |
+|    * Check for degradation or improvement       |
+|    * If validated -> deploy to production       |
++----------------+--------------------------------+
+                 |
+                 v
++-------------------------------------------------+
+| 4. DEPLOYMENT                                   |
+|    * Orchestrator receives updated parameters   |
+|    * Gradual rollout (A/B test if possible)     |
+|    * Monitor for unexpected behavior            |
+|    * Roll back if metrics degrade               |
++-------------------------------------------------+
 \end{verbatim}
 \caption{Continuous Learning and Optimization Cycle}
 \end{figure}
@@ -949,36 +947,6 @@ The complete learning cycle operates continuously:
 \item \textbf{Rollback:} If false positive rate spikes ($>$ 15\%), revert to previous parameters
 \item \textbf{Human Oversight:} Major threshold changes ($>$ 0.1) require analyst approval
 \end{itemize}
-
-\subsection{Learning Outcomes from Validation}
-
-During our 18-month validation, the adaptive learner made 47 parameter adjustments:
-
-\begin{table}[H]
-\centering
-\caption{Adaptive Learning Impact}
-\begin{tabular}{lcc}
-\toprule
-\textbf{Metric} & \textbf{Initial} & \textbf{After Learning} \\
-\midrule
-True Positive Rate & 73\% & 81\% \\
-False Positive Rate & 18\% & 11\% \\
-Average Lead Time & 38 hours & 47 hours \\
-Threshold Adjustments & 0 & 47 \\
-Discovered Patterns & 12 (manual) & 28 (23 auto) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{Key Learnings:}
-\begin{itemize}[leftmargin=*]
-\item Cognitive load + stress convergence threshold lowered from 0.70 → 0.62 (caught 4 additional incidents)
-\item Authority + deadline pressure pattern discovered automatically (prevented 3 CEO fraud attempts)
-\item Social isolation indicators received 30\% higher weights after learning (improved insider threat detection)
-\item Quarter-end false positives reduced by raising stress thresholds during predictable high-workload periods
-\end{itemize}
-
-The system demonstrates continuous improvement without manual tuning, adapting to the specific psychological vulnerability patterns of each organization.
 
 \section{Learning Through Feedback}
 
@@ -1082,71 +1050,7 @@ Observability stack & 1 instance & \$5 \\
 \end{tabular}
 \end{table}
 
-\section{Validation}
 
-\subsection{Backtesting Methodology}
-
-We evaluated the system through historical incident replay across three organizations (financial services, technology, healthcare) over 18 months covering 27 documented security incidents. For each incident:
-
-\begin{enumerate}[leftmargin=*]
-\item Replay event stream from 7 days before incident
-\item Execute orchestrator decision cycles as they would have occurred
-\item Record agent activations, findings, and recommendations
-\item Measure: (a) Detection (yes/no), (b) Lead time (hours before incident), (c) False positive rate
-\end{enumerate}
-
-\subsection{Results}
-
-Table~\ref{tab:validation} summarizes validation results.
-
-\begin{table}[H]
-\centering
-\caption{Validation Results Summary}
-\label{tab:validation}
-\begin{tabular}{lc}
-\toprule
-\textbf{Metric} & \textbf{Value} \\
-\midrule
-Total incidents & 27 \\
-Detected (TP) & 22 \\
-Missed (FN) & 5 \\
-\textbf{Recall} & \textbf{81\%} \\
-False positives (raw) & 7 \\
-False positives (adjusted) & 2 \\
-\textbf{Precision (adjusted)} & \textbf{92\%} \\
-\textbf{Average lead time} & \textbf{47 hours} \\
-Median lead time & 41 hours \\
-Min/Max lead time & 6h / 127h \\
-Orchestrator activations & 89 \\
-Agent activations & 267 \\
-Cost per incident detected & \$8.50 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Missed Incidents Analysis}
-
-Five incidents were not detected:
-\begin{itemize}[leftmargin=*]
-\item 2: Insufficient logging (no email gateway integration in those weeks)
-\item 1: Sophisticated APT with no behavioral precursors (pure technical exploit)
-\item 2: Physical security breaches (outside CPF scope)
-\end{itemize}
-
-Importantly, no misses resulted from orchestrator decision failures---all reflected data availability constraints or out-of-scope incident types.
-
-\subsection{Learning Effectiveness}
-
-Over the 18-month validation period:
-
-\begin{itemize}[leftmargin=*]
-\item Pattern library grew: 0 $\rightarrow$ 47 learned patterns
-\item False positive rate: 35\% (months 1--6) $\rightarrow$ 8\% (months 13--18)
-\item Orchestrator confidence scores improved: 0.62 avg $\rightarrow$ 0.84 avg
-\item Agent activation precision: 45\% $\rightarrow$ 78\%
-\end{itemize}
-
-This demonstrates effective learning from feedback, with the system becoming progressively more accurate over time \cite{russell2021}.
 
 \section{Comparison: Agents vs. Rules}
 
@@ -1234,7 +1138,7 @@ We have presented a multi-agent architecture that transforms psychological vulne
 
 This work introduces the \textit{Security Orchestrator} paradigm: AI systems that monitor and respond to human psychological vulnerabilities with sophistication matching that applied to technical attack surfaces. The hybrid filtering approach demonstrates that agentic architectures can be both powerful and practical, handling routine operations deterministically while reserving intelligence for complex decisions.
 
-We have provided comprehensive guidance on prompt engineering for orchestrator and specialist agents, demonstrating how carefully structured prompts enable effective reasoning about psychological states. Our validation on 27 historical incidents demonstrates the practical effectiveness of this approach.
+We have provided comprehensive guidance on prompt engineering for orchestrator and specialist agents, demonstrating how carefully structured prompts enable effective reasoning about psychological states.
 
 As LLM capabilities advance and costs decrease, agentic approaches will increasingly dominate security operations. This architecture provides a blueprint for that transition, demonstrating how psychological theory, continuous monitoring, and AI reasoning combine to create systems that understand humans as deeply as they understand code.
 
@@ -1242,11 +1146,11 @@ The future of security is not just AI-augmented tools but AI teammates that unde
 
 \section*{Acknowledgments}
 
-The author thanks the three organizations that provided historical incident data for validation, the CPF research community for foundational theoretical work, and early adopters providing feedback on prototype deployments.
+The author thanks the CPF research community for foundational theoretical work, and early adopters providing feedback on prototype deployments.
 
 \section*{Code and Data Availability}
 
-Reference implementation, agent prompt templates, and anonymized validation datasets: \url{https://cpf3.org/copilot}
+Reference implementation, agent prompt templates, and anonymized datasets: \url{https://cpf3.org/orchestrator}
 
 \bibliographystyle{plain}
 \begin{thebibliography}{99}

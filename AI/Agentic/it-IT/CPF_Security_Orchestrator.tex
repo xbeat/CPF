@@ -17,6 +17,8 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{enumitem}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 
 % ArXiv style formatting
 \setlength{\parindent}{0pt}
@@ -27,7 +29,7 @@
     linkcolor=blue,
     citecolor=blue,
     urlcolor=blue,
-    pdftitle={Security Orchestrator con Intelligenza Psicologica},
+    pdftitle={Orchestratore di Sicurezza con Intelligenza Psicologica},
     pdfauthor={Giuseppe Canale, Kashyap Thimmaraju},
 }
 
@@ -50,9 +52,9 @@
 \vspace{0.5cm}
 
 % Title
-{\LARGE \textbf{Security Orchestrator con Intelligenza Psicologica:}}\\[0.3cm]
-{\LARGE \textbf{Un'Architettura Multi-Agent per il Rilevamento}}\\[0.3cm]
-{\LARGE \textbf{e la Risposta in Real-Time alle Vulnerabilità}}
+{\LARGE \textbf{Orchestratore di Sicurezza con Intelligenza Psicologica:}}\\[0.3cm]
+{\LARGE \textbf{Un'Architettura Multi-Agente per il Rilevamento}}\\[0.3cm]
+{\LARGE \textbf{e la Risposta alle Vulnerabilità in Tempo Reale}}
 
 \vspace{0.5cm}
 
@@ -95,10 +97,10 @@ ORCID: \href{https://orcid.org/0009-0006-1507-3896}{0009-0006-1507-3896}
 % Abstract
 \begin{abstract}
 \noindent
-Il monitoraggio della sicurezza tradizionale tratta i fattori umani come variabili esterne che richiedono valutazioni periodiche. Presentiamo un cambio di paradigma: un sistema multi-agent che monitora, analizza e risponde continuamente alle vulnerabilità psicologiche in tempo reale. Costruito sul Cybersecurity Psychology Framework, il sistema impiega un agent orchestratore che mantiene una matrice di stato psicologico e attiva dinamicamente agent specialisti per investigazioni approfondite quando emergono vulnerabilità convergenti. Un approccio di filtraggio ibrido riduce i costi LLM dell'85\% mantenendo la qualità del rilevamento (accuracy e completeness): regole deterministiche gestiscono gli aggiornamenti di stato di routine, con gli agent attivati solo per anomalie significative. L'orchestratore implementa un framework decisionale a quattro livelli (monitor, investigare, alert, critico) con decision logic esplicita e analisi temporale dei trend per early warning. Un modulo di adaptive learning raffina continuamente le soglie di detection e scopre nuovi pattern di vulnerabilità dal feedback incidenti. Questa architettura trasforma il monitoraggio passivo in intelligenza attiva, raggiungendo un tasso di rilevamento dell'81\% con 47 ore di anticipo sugli incidenti storici a \$0,26/utente/mese. Introduciamo il concetto di \textit{Security Orchestrator}: un sistema AI che comprende le vulnerabilità psicologiche umane con la stessa profondità delle superfici di attacco tecniche, e forniamo linee guida complete per il prompt engineering per abilitare un ragionamento efficace degli agent su stati psicologici complessi.
+Il monitoraggio della sicurezza tradizionale tratta i fattori umani come variabili esterne che richiedono valutazioni periodiche. Presentiamo un cambio di paradigma: un sistema multi-agente che monitora, analizza e risponde continuamente alle vulnerabilità psicologiche in tempo reale. Costruito sul Cybersecurity Psychology Framework, il sistema impiega un agente orchestratore che mantiene una matrice di stato psicologico e attiva dinamicamente agenti specialisti per indagini approfondite quando emergono vulnerabilità convergenti. Un approccio di filtraggio ibrido riduce i costi dei LLM dell'85\% mantenendo la qualità del rilevamento (accuratezza e completezza): regole deterministiche gestiscono gli aggiornamenti di stato di routine, con agenti attivati solo per anomalie significative. L'orchestratore implementa un framework decisionale a quattro livelli (monitora, indaga, allerta, critico) con logica di escalation esplicita e analisi delle tendenze temporali per l'allerta precoce. Un modulo di apprendimento adattivo raffina continuamente le soglie di rilevamento e scopre nuovi pattern di vulnerabilità dal feedback degli incidenti. Questa architettura trasforma il monitoraggio passivo in intelligenza attiva, raggiungendo un tasso di rilevamento dell'81\% con 47 ore di anticipo sugli incidenti storici a \$0,26/utente/mese. Introduciamo il concetto di \textit{Orchestratore di Sicurezza}: un sistema AI che comprende le vulnerabilità psicologiche umane tanto profondamente quanto le superfici di attacco tecniche, e forniamo linee guida complete per il prompt engineering per abilitare il ragionamento efficace degli agenti su stati psicologici complessi.
 
 \vspace{0.5em}
-\noindent\textbf{Parole chiave:} cybersecurity, sistemi multi-agent, LLM agent, prompt engineering, fattori umani, valutazione vulnerabilità, sicurezza psicologica, adaptive learning, anomaly detection
+\noindent\textbf{Parole chiave:} cybersecurity, multi-agent systems, LLM agents, prompt engineering, human factors, vulnerability assessment, psychological security, adaptive learning, anomaly detection
 \end{abstract}
 
 \vspace{1cm}
@@ -106,674 +108,648 @@ Il monitoraggio della sicurezza tradizionale tratta i fattori umani come variabi
 % Main content
 \section{Introduzione}
 
-I fattori umani causano l'85\% delle violazioni di sicurezza di successo \cite{verizon2023}, eppure le risposte organizzative rimangono reattive e periodiche. Ampie ricerche documentano come i fattori psicologici guidino i fallimenti di sicurezza, inclusi gli effetti dello stress e del benessere tra i professionisti SOC \cite{thimmaraju2025}. Le valutazioni di sicurezza trimestrali catturano le vulnerabilità psicologiche attraverso snapshot statici che diventano obsoleti nel giro di giorni mentre le condizioni cambiano \cite{parsons2014}. Ciò che serve non è una valutazione più frequente ma un'intelligenza continua---un sistema che monitora lo spazio dello stato psicologico con la stessa vigilanza del traffico di rete, rileva vulnerabilità emergenti prima dello sfruttamento e orchestra risposte appropriate \cite{zimmermann2019}.
+I fattori umani causano l'85\% delle violazioni della sicurezza riuscite \cite{verizon2023}, tuttavia le risposte organizzative rimangono reattive e periodiche. Ricerche estese documentano come i fattori psicologici guidino i fallimenti della sicurezza, inclusi gli effetti dello stress e del benessere tra i professionisti del SOC \cite{thimmaraju2025}. Le valutazioni trimestrali della sicurezza catturano le vulnerabilità psicologiche attraverso istantanee statiche che diventano obsolete entro giorni mentre le condizioni cambiano \cite{parsons2014}. Ciò che serve non è una valutazione più frequente ma un'intelligenza continua---un sistema che monitori lo spazio degli stati psicologici con la stessa vigilanza del traffico di rete, rilevi vulnerabilità emergenti prima dello sfruttamento e orchestri risposte appropriate \cite{zimmermann2019}.
 
-Il Cybersecurity Psychology Framework (CPF) \cite{canale2025taxonomy} identifica 100 indicatori di vulnerabilità pre-cognitiva attraverso dieci categorie psicologiche, fondate sulla teoria psicologica consolidata \cite{milgram1974, kahneman2011, cialdini2007}. Lavori precedenti \cite{canale2025implementation} hanno operazionalizzato questi indicatori attraverso formulazioni matematiche. Tuttavia, tradurre la teoria psicologica in sistemi operativi richiede più che algoritmi di rilevamento; richiede \textit{ragionamento} su stati umani complessi ed in evoluzione e decisioni su quando e come investigare \cite{russell2021}.
+Il Cybersecurity Psychology Framework (CPF) \cite{canale2025taxonomy} identifica 100 indicatori di vulnerabilità pre-cognitivi attraverso dieci categorie psicologiche, radicati in teoria psicologica consolidata \cite{milgram1974, kahneman2011, cialdini2007}. Lavori precedenti \cite{canale2025implementation} hanno operazionalizzato questi indicatori attraverso formulazioni matematiche. Tuttavia, tradurre la teoria psicologica in sistemi operativi richiede più di algoritmi di rilevamento; richiede \textit{ragionamento} su stati umani complessi e in evoluzione e decidere quando e come investigare \cite{russell2021}.
 
-Un aspetto critico ma trascurato è il rilevamento di quando utenti legittimi diventano vulnerabili alla manipolazione esterna a causa di stati psicologici. Questo è un problema di lunga data che non è stato risolto efficacemente. I programmi di security awareness training, per esempio, sono ampiamente inefficaci secondo i professionisti del settore \cite{bada2019}—falliscono nel riconoscere che la vulnerabilità psicologica è dinamica e dipendente dal contesto, non una carenza di conoscenza statica. Con l'introduzione di agenti LLM nelle organizzazioni, questo problema si amplifica: gli agenti stessi sono suscettibili alla manipolazione psicologica, sia da parte di agenti malevoli che di umani malevoli. La superficie di attacco si espande da umani vulnerabili a sistemi umano-agente vulnerabili, rendendo ancora più urgente il monitoraggio continuo dello stato psicologico.
+Un aspetto critico ma trascurato è rilevare quando gli utenti legittimi diventano vulnerabili alla manipolazione esterna a causa di stati psicologici. Questo è un problema di lunga data che non è stato risolto efficacemente. I programmi di formazione sulla consapevolezza della sicurezza, ad esempio, sono in gran parte inefficaci secondo i professionisti del settore \cite{bada2019}---non riescono a riconoscere che la vulnerabilità psicologica è dinamica e dipendente dal contesto, non una carenza di conoscenza statica. Con l'introduzione di LLM agentici nelle organizzazioni, questo problema si amplifica: gli agenti stessi sono inclini alla manipolazione psicologica, sia da parte di agenti malevoli che di umani malevoli. La superficie di attacco si espande dagli umani vulnerabili ai sistemi umano-agente vulnerabili, rendendo il monitoraggio continuo dello stato psicologico ancora più urgente.
 
-Large Language Model (LLM) hanno dimostrato capacità notevoli nel ragionamento su contesti complessi e ad alta dimensionalità \cite{brown2020, ouyang2022}. Recenti progressi nei sistemi multi-agent basati su LLM \cite{xi2023, wang2023agents} dimostrano che architetture sofisticate emergono quando gli agent specializzati collaborano sotto coordinamento intelligente. Queste capacità si allineano naturalmente alle sfide del monitoraggio psicologico della sicurezza: interpretare segnali deboli, riconoscere pattern attraverso domini psicologici e decidere quando l'investigazione umana è giustificata.
-
-Questo lavoro introduce il \textbf{Security Orchestrator}: un'architettura multi-agent che trasforma il CPF da framework di valutazione a sistema di intelligence operativa. A differenza dei sistemi tradizionali che trattano gli esseri umani come "il weak link" da gestire \cite{sasse2001}, il nostro approccio riconosce che comprendere la vulnerabilità psicologica richiede un ragionamento continuo e sofisticato---un compito per il quale gli LLM agent sono particolarmente adatti.
+I recenti progressi nei Large Language Models (LLM) abilitano un'architettura fondamentalmente diversa: sistemi multi-agente dove agenti AI specializzati collaborano per risolvere problemi complessi \cite{xi2023, wang2023agents}. Presentiamo un tale sistema dove un orchestratore monitora continuamente una matrice di stato psicologico, rileva anomalie e pattern di convergenza, e attiva dinamicamente agenti specialisti per investigare e rispondere. Questo approccio passa da ``rileva-e-allerta'' a ``comprendi-e-agisci'', creando quello che definiamo un \textit{Orchestratore di Sicurezza con Intelligenza Psicologica}.
 
 \subsection{Contributi}
 
-Questo lavoro apporta i seguenti contributi principali:
+I nostri contributi principali sono:
 
-\textbf{1. Security Orchestrator come Paradigma}. Introduciamo il concetto di Security Orchestrator: un sistema AI che comprende le vulnerabilità psicologiche umane con la stessa profondità delle superfici di attacco tecniche. Proprio come i code co-pilot assistono gli sviluppatori comprendendo l'intento del codice, i security orchestrator assistono i team di sicurezza comprendendo lo stato psicologico umano. Questo rappresenta un cambio fondamentale dal trattare gli esseri umani come problemi di sicurezza al comprenderli come sistemi complessi che richiedono monitoraggio e supporto intelligenti.
+\begin{enumerate}[leftmargin=*]
+\item Un'architettura multi-agente innovativa con orchestratore e agenti specialisti per il monitoraggio continuo delle vulnerabilità psicologiche
+\item Una matrice di stato psicologico come base di conoscenza condivisa con dinamiche di decadimento esponenziale che modellano la persistenza psicologica
+\item Un framework decisionale a quattro livelli (monitora, indaga, allerta, critico) con logica di escalation esplicita che determina quando attivare gli agenti e quando allertare le operazioni di sicurezza
+\item Algoritmi di analisi delle tendenze temporali che rilevano pattern di escalation, accelerazione e finestre di vulnerabilità—fornendo allerta precoce prima che gli stati psicologici raggiungano soglie critiche
+\item Un approccio di filtraggio ibrido che combina regole deterministiche (85\% degli eventi) con ragionamento basato su LLM (15\%) per l'efficienza dei costi
+\item Un modulo di apprendimento adattivo che raffina continuamente le soglie di rilevamento, scopre nuovi pattern di vulnerabilità dal feedback degli incidenti e si auto-ottimizza senza regolazione manuale
+\item Linee guida complete di prompt engineering per abilitare il ragionamento efficace degli agenti sugli stati psicologici
+\item Meccanismi di ciclo di feedback che abilitano l'apprendimento a livello di sistema dai risultati
 
-\textbf{2. Architettura Multi-Agent con Intelligenza Psicologica}. Presentiamo un design architetturale che combina:
-\begin{itemize}[noitemsep]
-\item Un agent orchestratore che mantiene una matrice di stato psicologico 100-dimensionale per ogni utente attraverso un modello con decadimento temporale
-\item Framework decisionale a quattro livelli (monitor, investigare, alert, critico) con decision logic esplicita che determina quando attivare agent e quando allertare security operations
-\item Algoritmi di analisi temporale dei trend che rilevano pattern di escalation, accelerazione e finestre di vulnerabilità—fornendo early warning prima che gli stati psicologici raggiungano soglie critiche
-\item Agent specialisti attivati dinamicamente per le dieci categorie psicologiche del CPF, ciascuno equipaggiato con conoscenza specifica del dominio
-\item Filtraggio ibrido che riduce i costi LLM dell'85\% gestendo gli aggiornamenti di routine in modo deterministico
-\item Modulo di adaptive learning che raffina continuamente le soglie di detection, scopre nuovi pattern di vulnerabilità dal feedback incidenti e si auto-ottimizza senza tuning manuale
-\end{itemize}
+\end{enumerate}
 
-\textbf{3. Linee Guida Complete di Prompt Engineering}. Forniamo principi dettagliati e pratici per progettare prompt che permettano agli agent di ragionare efficacemente sugli stati psicologici:
-\begin{itemize}[noitemsep]
-\item Pattern architetturali per coordinare agent orchestratori e specialisti
-\item Tecniche per bilanciare ragionamento generale e conoscenza specifica del dominio
-\item Strategie per gestire la complessità dello stato e il decadimento temporale
-\item Metodi per garantire che gli agent rimangano allineati con il benessere umano
-\end{itemize}
-
-La validazione su dati reali di 18 mesi (27 incidenti, 843 utenti) dimostra l'81\% di tasso di rilevamento con 47 ore di lead time medio a \$0,26/utente/mese---ordini di grandezza più economico della valutazione psicologica manuale pur mantenendo soglie di prestazione cliniche.
-
-\section{Background e Related Work}
+\section{Background e Lavori Correlati}
 
 \subsection{Fattori Umani nella Cybersecurity}
 
-La ricerca ha costantemente identificato gli esseri umani come la componente più vulnerabile dei sistemi di sicurezza. Gli attacchi di social engineering sfruttano principi psicologici ben stabiliti: autorità \cite{milgram1974}, scarsità, reciprocità \cite{cialdini2007} ed euristiche cognitive \cite{kahneman2011}. Le campagne di phishing manipolano stati emotivi e limitazioni cognitive \cite{hadnagy2010, workman2008}, mentre le truffe sfruttano vulnerabilità psicologiche sistematiche \cite{stajano2011, ferreira2015}. Ricerche documentano come i fattori psicologici guidino i fallimenti di sicurezza, inclusi gli effetti dello stress e del benessere tra i professionisti SOC \cite{thimmaraju2025}.
+Ricerche estese documentano come i fattori psicologici guidino i fallimenti della sicurezza. La conformità all'autorità \cite{milgram1974}, i bias cognitivi \cite{kahneman2011} e l'influenza sociale \cite{cialdini2007} creano vulnerabilità sfruttabili. Gli attacchi di ingegneria sociale sfruttano questi principi sistematicamente \cite{hadnagy2010, stajano2011, ferreira2015}. La ricerca documenta gli effetti dello stress e del benessere tra i professionisti del SOC sui risultati della sicurezza \cite{thimmaraju2025}.
 
-Gli approcci tradizionali si concentrano sulla formazione e sulla consapevolezza \cite{bada2019}, ma questi interventi mostrano efficacia limitata perché (1) trattano le vulnerabilità psicologiche come carenze statiche piuttosto che stati dinamici, (2) non riescono a considerare come stress, carico cognitivo e fattori situazionali modulano la vulnerabilità, e (3) forniscono una valutazione del rischio a grana grossa piuttosto che a livello individuale \cite{parsons2014}.
+La formazione tradizionale sulla consapevolezza della sicurezza mostra efficacia limitata \cite{bada2019, sasse2001}. La valutazione periodica cattura le vulnerabilità a punti discreti ma manca la natura dinamica degli stati psicologici \cite{parsons2014}. Lavori recenti sostengono il passaggio da mentalità ``umano-come-problema'' a ``umano-come-soluzione'' \cite{zimmermann2019}, ma i framework operativi rimangono elusivi.
 
-Ricerche recenti si spostano verso modelli più sofisticati. Zimmermann e Renaud \cite{zimmermann2019} sostengono un cambio di mentalità da "human-as-problem" a "human-as-solution". Framework per caratterizzare le insider threat \cite{kandias2010, nurse2014} riconoscono che la vulnerabilità emerge da fattori contestuali complessi. Tuttavia, questi framework rimangono principalmente strumenti analitici piuttosto che sistemi operativi.
+\subsection{Analisi Comportamentale e Rilevamento delle Anomalie}
 
-Il Cybersecurity Psychology Framework \cite{canale2025taxonomy, canale2025implementation} sistematizza 100 indicatori di vulnerabilità attraverso dieci categorie psicologiche, ciascuna fondata su specifiche teorie psicologiche. Lavori precedenti hanno operazionalizzato questi indicatori attraverso formule matematiche, ma tradurre le formule in sistemi di monitoraggio continuo richiede capacità di ragionamento che vanno oltre la computazione matematica.
+I sistemi User and Entity Behavior Analytics (UEBA) impiegano metodi statistici per rilevare anomalie \cite{chandola2009}. Soluzioni commerciali come Exabeam e Splunk UBA identificano deviazioni dal comportamento baseline. Tuttavia, questi sistemi mancano di fondamenta psicologiche---rilevano \textit{cosa} è cambiato senza comprendere \textit{perché} o predire \textit{cosa verrà dopo}.
 
-\subsection{Large Language Model Agent}
+Il rilevamento delle minacce interne si concentra sull'intento malevolo \cite{kandias2010, nurse2014}. Il nostro lavoro affronta un problema complementare: rilevare quando gli utenti \textit{legittimi} diventano vulnerabili alla manipolazione esterna a causa di stati psicologici.
 
-I recenti progressi negli LLM hanno dimostrato capacità straordinarie nel ragionamento su contesti complessi. I modelli addestrati con reinforcement learning from human feedback (RLHF) \cite{ouyang2022} mostrano un miglioramento del ragionamento, della pianificazione e dell'allineamento con gli obiettivi umani. Questo li rende candidati naturali per compiti che richiedono l'interpretazione di segnali deboli e il ragionamento su stati ad alta dimensionalità.
+\subsection{Sistemi Multi-Agente Basati su LLM}
 
-I sistemi multi-agent basati su LLM \cite{xi2023, wang2023agents} dimostrano che architetture sofisticate emergono quando gli agent specializzati collaborano. Pattern architetturali chiave includono:
-\begin{itemize}[noitemsep]
-\item \textbf{Specializzazione}: Agent focalizzati su domini specifici con conoscenza approfondita
-\item \textbf{Orchestrazione}: Agent coordinatori che gestiscono il flusso di lavoro e l'allocazione dei task
-\item \textbf{Memoria}: Meccanismi per mantenere il contesto attraverso interazioni multiple
-\item \textbf{Strumenti}: Integrazione con sistemi deterministici per azioni specifiche
-\end{itemize}
+I recenti progressi nei LLM abilitano sistemi multi-agente sofisticati. Xi et al.~\cite{xi2023} recensiscono agenti basati su LLM per il completamento autonomo di compiti. Wang et al.~\cite{wang2023agents} esplorano architetture di agenti per la risoluzione di problemi complessi. Questi lavori si concentrano sul completamento generale dei compiti; noi estendiamo gli approcci agentici alle operazioni di sicurezza dove gli agenti devono ragionare sulle vulnerabilità psicologiche.
 
-Il prompt engineering è emerso come disciplina critica per gli LLM agent \cite{white2023}. Pattern efficaci includono assegnazione di ruoli, esempi few-shot, chain-of-thought reasoning e vincoli espliciti. Tuttavia, la maggior parte delle linee guida si concentra su task generici piuttosto che sul ragionamento psicologico specifico del dominio.
+Il prompt engineering è emerso come critico per l'efficacia degli agenti \cite{white2023}. Tuttavia, la maggior parte del lavoro si concentra su prompt di completamento dei compiti. Contribuiamo pattern di prompt specifici del dominio per il ragionamento sulla sicurezza psicologica.
 
-\subsection{Anomaly Detection e Sistemi di Monitoraggio}
+\section{Panoramica dell'Architettura}
 
-I metodi classici di anomaly detection \cite{chandola2009} si concentrano principalmente su deviazioni statistiche negli spazi di feature numerici. Sebbene efficaci per problemi ben definiti, lottano con:
-\begin{itemize}[noitemsep]
-\item \textbf{Dimensionalità elevata}: Lo spazio psicologico ha 100 dimensioni con interazioni complesse
-\item \textbf{Dipendenza temporale}: Le vulnerabilità si evolvono su più scale temporali
-\item \textbf{Dipendenza dal contesto}: La significatività degli indicatori dipende dal contesto psicologico
-\item \textbf{Soglie dinamiche}: Ciò che costituisce un'anomalia varia in base allo stato dell'utente
-\end{itemize}
+\subsection{Concetto Base}
 
-Approcci più recenti incorporano machine learning, ma tipicamente richiedono dati di training etichettati estensivi e lottano con l'interpretabilità \cite{lipton2018}---entrambi problematici per dati psicologici sensibili.
+Il sistema mantiene una \textbf{matrice di stato psicologico} continua $M[u][i]$ che traccia il livello di attivazione (0--100) per ogni utente $u$ e indicatore CPF $i$. Un \textbf{agente orchestratore} monitora continuamente questa matrice, rileva cambiamenti significativi o pattern convergenti, e attiva \textbf{agenti specialisti} per indagini mirate. Gli agenti specialisti analizzano specifiche sorgenti dati (email, log, contesto organizzativo), riportano risultati e aggiornano la matrice. L'orchestratore impara dai risultati, raffinando il suo processo decisionale nel tempo.
 
-\subsection{Gap nella Ricerca Attuale}
+\subsection{Componenti del Sistema}
 
-Nonostante i progressi, restano gap significativi:
+L'architettura comprende cinque strati:
 
-\textbf{1. Nessun Monitoraggio Continuo delle Vulnerabilità Psicologiche}. Le valutazioni esistenti catturano snapshot statici. I sistemi operazionali hanno bisogno di monitoraggio continuo che si adatti alle condizioni mutevoli.
+\textbf{Strato 1 --- Sorgenti Dati:} Flussi in tempo reale da gateway email, log SIEM, sistemi di autenticazione e strumenti di collaborazione alimentano il sistema continuamente.
 
-\textbf{2. Ragionamento Limitato sugli Stati Umani Complessi}. I sistemi basati su regole sono troppo rigidi; i modelli statistici mancano di interpretabilità. Nessuno dei due ragiona sugli stati psicologici nel modo in cui farebbe un esperto umano.
+\textbf{Strato 2 --- Processore di Stream e Filtro Deterministico:} Gestisce l'85\% degli eventi attraverso logica puramente deterministica: aggiornamenti di decadimento esponenziale, regole di soglia semplici e calcoli baseline. Solo anomalie significative passano all'orchestratore.
 
-\textbf{3. Mancanza di Architetture Multi-Agent per la Sicurezza Psicologica}. Mentre i sistemi multi-agent basati su LLM sono esplorati ampiamente, la loro applicazione alle vulnerabilità psicologiche della sicurezza rimane inesplorata.
+\textbf{Strato 3 --- Matrice di Stato Psicologico CPF (Core):} La struttura dati centrale $M[user][indicator]$ memorizza i livelli di attivazione (0--100) per ogni utente e indicatore CPF. Questa matrice è la fonte di verità per lo stato psicologico, incorporando il decadimento esponenziale e il tracciamento dei pattern di convergenza.
 
-\textbf{4. Nessuna Guida al Prompt Engineering per il Ragionamento Psicologico}. Le linee guida esistenti di prompt engineering si concentrano su task generici. Il ragionamento su stati psicologici complessi richiede pattern e considerazioni specifici.
+\textbf{Strato 4 --- Agente Orchestratore:} Monitora la matrice continuamente, rileva pattern anomali e vulnerabilità convergenti, e decide quando attivare agenti specialisti. Solo il 15\% degli eventi attiva la valutazione dell'orchestratore, e approssimativamente il 30\% di questi risulta in attivazione di agenti.
 
-Il nostro lavoro affronta questi gap introducendo un'architettura multi-agent che monitora continuamente lo stato psicologico, ragiona sulla vulnerabilità convergente e fornisce principi completi di prompt engineering per abilitare un ragionamento efficace sugli agent.
+\textbf{Strato 5 --- Agenti Specialisti (On-Demand):} Quando attivati dall'orchestratore, gli agenti specialisti analizzano specifiche sorgenti dati (EmailAnalyzer, SOCLogAnalyzer, ContextGatherer) e riportano risultati con aggiornamenti della matrice raccomandati e contromisure.
 
-\section{Il Security Orchestrator: Concetto e Design}
-
-\subsection{Motivazione del Design}
-
-Le valutazioni psicologiche della sicurezza tradizionali operano come snapshot periodici: un esperto revisiona i questionari, conduce interviste e produce un profilo di rischio. Questo approccio ha quattro limitazioni fondamentali:
-
-\textbf{1. Obsolescenza Temporale}. Gli stati psicologici si evolvono. Un dipendente valutato come a basso rischio lunedì potrebbe essere ad alto rischio venerdì dopo aver ricevuto notizie stressanti. Nel momento in cui viene prodotto un report di valutazione, le condizioni sono già cambiate.
-
-\textbf{2. Granularità Grossolana}. Le valutazioni tipicamente producono punteggi a livello di categoria ("moderatamente vulnerabile al social engineering") piuttosto che intelligence azionabile su quale combinazione specifica di vulnerabilità richiede attenzione.
-
-\textbf{3. Reagire ai Segnali Forti}. Le valutazioni umane sono attivate da indicatori evidenti. Quando un valutatore nota che qualcosa richiede investigazione, la vulnerabilità è spesso già critica. I segnali deboli---pattern sottili che precedono la vulnerabilità critica---vengono persi.
-
-\textbf{4. Limiti di Scala}. La valutazione psicologica esperta costa centinaia di dollari per utente. Il monitoraggio continuo richiederebbe migliaia---economicamente impossibile per la maggior parte delle organizzazioni.
-
-Il paradigma Security Orchestrator affronta queste limitazioni attraverso il monitoraggio continuo automatizzato abbinato al ragionamento esperto. Proprio come un code co-pilot assiste gli sviluppatori comprendendo l'intento del codice e suggerendo completamenti, un security orchestrator assiste i team di sicurezza comprendendo lo stato psicologico e identificando vulnerabilità emergenti.
-
-Il design si basa su tre principi:
-
-\textbf{Principio 1: Lo Stato Psicologico come Prima Classe}. Invece di trattare i fattori umani come variabili esterne, rappresentiamo lo stato psicologico con la stessa formalità dei parametri tecnici. Ogni utente ha una matrice di stato psicologico 100-dimensionale $M[u][i]$ tracciata continuamente.
-
-\textbf{Principio 2: Monitoraggio Ibrido}. Non tutti gli aggiornamenti di stato richiedono ragionamento LLM. Gli aggiornamenti di routine (incrementi singoli, decadimento temporale) sono gestiti in modo deterministico. Gli agent sono attivati solo quando i pattern suggeriscono vulnerabilità convergente.
-
-\textbf{Principio 3: Expertise Specializzata}. Diverse categorie psicologiche richiedono diverse lenti analitiche. Un agent specializzato in cognitive load ragiona diversamente da uno focalizzato su emotional state. L'orchestrazione coordina questi expertise.
-
-\subsection{Panoramica Architetturale}
-
-Il sistema impiega un'architettura a tre livelli:
-
-\begin{figure}[H]
-\centering
-\begin{verbatim}
-                     ┌─────────────────┐
-                     │ Orchestrator    │
-                     │ Agent           │
-                     │ • Maintains M   │
-                     │ • Detects Conv  │
-                     │ • Routes Tasks  │
-                     └────────┬────────┘
-                              │
-         ┌────────────────────┼────────────────────┐
-         │                    │                    │
-    ┌────▼─────┐        ┌────▼─────┐        ┌────▼─────┐
-    │Cognitive │        │Emotional │        │Social    │
-    │Specialist│        │Specialist│        │Specialist│
-    └──────────┘        └──────────┘        └──────────┘
-         └─────────────────┬──────────────────┘
-                     ┌─────▼─────┐
-                     │Deterministic│
-                     │Filter Layer │
-                     │• Rules      │
-                     │• Thresholds │
-                     └─────────────┘
-\end{verbatim}
-\caption{Architettura Security Orchestrator a tre livelli}
-\end{figure}
-
-\textbf{Livello 1: Orchestratore}. Un singolo agent orchestratore mantiene la matrice di stato psicologico $M[u][i]$ per tutti gli utenti. Per ogni evento in ingresso (email, evento di sistema, report utente), l'orchestratore:
-\begin{enumerate}[noitemsep]
-\item Determina se l'evento merita analisi LLM o gestione deterministica
-\item Se gestito deterministicamente, applica aggiornamenti di regole
-\item Se richiede analisi, identifica quale/i agent specialista/i invocare
-\item Mantiene il contesto di conversazione attraverso interazioni multiple
-\item Decide quando escalare all'attenzione umana
-\end{enumerate}
-
-\textbf{Livello 2: Specialisti}. Dieci agent specialisti mappano le dieci categorie del CPF:
-\begin{itemize}[noitemsep]
-\item Cognitive Load Specialist (indicatori 1-10)
-\item Emotional State Specialist (indicatori 11-20)
-\item Social Dynamics Specialist (indicatori 21-30)
-\item Authority Relationship Specialist (indicatori 31-40)
-\item Stress \& Fatigue Specialist (indicatori 41-50)
-\item Identity \& Self-Perception Specialist (indicatori 51-60)
-\item Information Processing Specialist (indicatori 61-70)
-\item Temporal Factors Specialist (indicatori 71-80)
-\item Environmental Context Specialist (indicatori 81-90)
-\item Behavioral Patterns Specialist (indicatori 91-100)
-\end{itemize}
-
-Ogni specialista incorpora:
-\begin{itemize}[noitemsep]
-\item Conoscenza della teoria psicologica specifica del dominio
-\item Comprensione di quali indicatori sono più significativi nella loro categoria
-\item Capacità di riconoscere pattern che segnalano vulnerabilità crescente
-\item Consapevolezza di come la loro categoria interagisce con altre
-\end{itemize}
-
-\textbf{Livello 3: Filtro Deterministico}. La maggior parte degli aggiornamenti di stato sono di routine:
-\begin{itemize}[noitemsep]
-\item Incremento dell'indicatore singolo (email dopo orario → stress aumenta di 1)
-\item Decadimento temporale (nessun indicatore recente → stato decade)
-\item Verifiche di soglia (uno stato che supera il valore predefinito)
-\item Calcoli di aggregazione (somme di categoria, medie)
-\end{itemize}
-
-Questi sono gestiti da logica deterministica veloce. Gli agent LLM sono attivati solo quando:
-\begin{itemize}[noitemsep]
-\item Eventi multipli convergono (3+ indicatori attivati insieme)
-\item Pattern insoliti emergono (sequenza di eventi atipica)
-\item Le soglie suggeriscono investigazione umana (stato critico raggiunto)
-\item Il contesto storico richiede interpretazione (trend divergenti)
-\end{itemize}
-
-Questo design ibrido riduce i costi LLM dell'85\% pur mantenendo la qualità del rilevamento (accuracy e completeness). La maggior parte degli aggiornamenti (incrementi singoli, decadimento) costano millisecondi di tempo CPU. Solo ~15\% degli eventi attivano l'analisi LLM.
+\textbf{Integrazione e Apprendimento:} Lo Strato di Integrazione SOC consegna allerte con contesto agli analisti di sicurezza, che forniscono feedback che fluisce in un database di apprendimento. Questo abilita il raffinamento continuo dei pattern decisionali.
 
 \subsection{Matrice di Stato Psicologico}
+La matrice mantiene stato per-utente, per-indicatore con decadimento esponenziale:
+\begin{equation}
+M[u][i](t) = \max\left(\alpha \cdot M[u][i](t - \Delta t), X_i(t)\right)
+\end{equation}
+dove $X_i(t)$ è il valore osservato dell'indicatore $i$ al tempo $t$, $\alpha = e^{-\Delta t/\tau_i}$ è il fattore di decadimento, e $\tau_i$ è l'emivita psicologica dell'indicatore $i$. L'operazione max assicura che osservazioni acute elevino immediatamente lo stato.
 
-Il sistema mantiene per ogni utente $u$ una matrice 100-dimensionale:
+La Tabella~\ref{tab:timeconstants} specifica le costanti temporali per categoria, derivate dalla letteratura psicologica sulla persistenza degli stati \cite{damasio1994, miller1956, bion1961, jung1969}.
+
+\begin{table}[H]
+\centering
+\caption{Costanti Temporali Psicologiche per Categoria CPF}
+\label{tab:timeconstants}
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Categoria} & \textbf{$\tau$ (half-life)} & \textbf{Razionale} \\
+\midrule
+1.x Authority & 4 hours & Contestuale, transitorio \cite{milgram1974} \\
+2.x Temporal & 2 hours & Urgenza guidata da scadenze \\
+3.x Social & 24 hours & Persistenza interpersonale \cite{cialdini2007} \\
+4.x Affective & 12 hours & Regolazione emotiva \cite{damasio1994} \\
+5.x Cognitive & 8 hours & Fatica basata su turni \cite{miller1956} \\
+6.x Group & 14 days & Cambiamenti lenti delle norme \cite{bion1961} \\
+7.x Stress & 7 days & Dinamiche di burnout \cite{maslach2001} \\
+8.x Unconscious & 30 days & Pattern profondi \cite{jung1969, libet1983} \\
+9.x AI Bias & 48 hours & Consolidamento della fiducia \\
+10.x Convergent & 1 hour & Convergenza acuta \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Filtraggio Ibrido: Efficienza dei Costi Senza Sacrificare la Qualità}
+
+\subsection{Motivazione}
+
+Mentre gli agenti basati su LLM forniscono capacità di ragionamento superiori, processare ogni evento attraverso LLM sarebbe proibitivamente costoso e non necessario. La maggior parte degli aggiornamenti di stato sono di routine: calcoli di decadimento, controlli di soglia semplici e aggiornamenti baseline. Queste operazioni non richiedono ragionamento sofisticato \cite{chandola2009}.
+
+Il nostro approccio ibrido sfrutta regole deterministiche per operazioni di routine riservando l'intelligenza degli agenti per decisioni complesse che richiedono comprensione contestuale. Questo riduce i costi delle API LLM di circa l'85\% mantenendo la qualità del rilevamento (accuratezza e completezza).
+
+\subsection{Logica di Filtraggio}
+
+Il processore di stream applica filtri deterministici prima degli aggiornamenti della matrice:
+
+\textbf{Strato di Filtro 1 --- Aggiornamenti di Decadimento:} Tutti gli indicatori decadono secondo le loro costanti temporali. Questa è matematica pura che non richiede LLM:
 
 \begin{equation}
-M[u][i] = (value_i, timestamp_i, confidence_i, source_i)
+M[u][i](t) \leftarrow e^{-\Delta t/\tau_i} \cdot M[u][i](t - \Delta t)
 \end{equation}
 
-dove:
-\begin{itemize}[noitemsep]
-\item $value_i \in [0,10]$: intensità attuale dell'indicatore $i$
-\item $timestamp_i$: ultimo aggiornamento
-\item $confidence_i \in [0,1]$: affidabilità della misurazione
-\item $source_i$: origine dei dati (email, sistema, report utente)
+\textbf{Strato di Filtro 2 --- Regole di Soglia Semplici:} Per eventi con indicatori chiari, regole deterministiche sono sufficienti:
+\begin{itemize}[leftmargin=*]
+\item Fallimento autenticazione $\rightarrow$ Aggiorna indicatore 5.2 (Fatica Decisionale)
+\item Allerta respinta $\rightarrow$ Aggiorna indicatore 5.1 (Fatica da Allerta)
+\item Pattern di phishing noto $\rightarrow$ Aggiorna indicatore 1.3 (Impersonificazione Autorità)
 \end{itemize}
 
-Ogni indicatore decade nel tempo secondo:
+Questi aggiornamenti avvengono senza chiamate LLM, gestiti dall'elaborazione di stream tradizionale.
 
-\begin{equation}
-value_i(t) = value_i(t_0) \cdot e^{-\lambda_i (t - t_0)}
-\end{equation}
-
-dove $\lambda_i$ dipende dalle caratteristiche dell'indicatore. Gli stati emotivi decadono rapidamente ($\lambda \approx 0.1$ giorno$^{-1}$), mentre i pattern comportamentali persistono più a lungo ($\lambda \approx 0.01$ giorno$^{-1}$).
-
-\textbf{Rilevamento di Convergenza}. L'orchestratore calcola continuamente i punteggi di convergenza per categorie psicologiche:
-
-\begin{equation}
-C_k(u) = \frac{1}{|I_k|} \sum_{i \in I_k} w_i \cdot value_i \cdot confidence_i
-\end{equation}
-
-dove $I_k$ è l'insieme di indicatori nella categoria $k$ e $w_i$ sono pesi appresi. Quando:
-
-\begin{equation}
-C_k(u) > \theta_{alert}
-\end{equation}
-
-l'orchestratore attiva lo specialista corrispondente per investigazione profonda.
-
-\textbf{Rilevamento Cross-Category}. Le vulnerabilità più pericolose emergono quando categorie multiple convergono. Il sistema calcola:
-
-\begin{equation}
-CC(u) = \sum_{k_1 < k_2} correlation(C_{k_1}(u), C_{k_2}(u))
-\end{equation}
-
-Alta correlazione tra categorie normalmente indipendenti (ad esempio, cognitive load + emotional stress + social pressure) segnala rischio critico.
-
-\section{Prompt Engineering per Ragionamento Psicologico}
-
-Il prompt engineering efficace è fondamentale per gli agent che ragionano su stati psicologici complessi. Questa sezione fornisce principi e pattern che abilitano agent di sicurezza psicologica robusti.
-
-\subsection{Principi Fondamentali}
-
-\textbf{Principio 1: Esplicita il Dominio Psicologico}. Gli LLM hanno conoscenza psicologica generale ma hanno bisogno di guida esplicita per applicarla alla sicurezza. I prompt dovrebbero:
-
-\begin{itemize}[noitemsep]
-\item Stabilire il contesto della sicurezza in anticipo ("Sei un security analyst...")
-\item Collegare concetti psicologici alle implicazioni di sicurezza
-\item Fornire esempi di come i pattern psicologici mappano alle vulnerabilità
-\item Chiarire quando l'incertezza dovrebbe attivare l'escalation
+\textbf{Strato di Filtro 3 --- Rilevamento Anomalie:} Solo eventi che attivano condizioni di anomalia raggiungono l'orchestratore:
+\begin{itemize}[leftmargin=*]
+\item Il livello di attivazione supera il 60\% (entra nella zona GIALLA)
+\item Cambiamento rapido: $\Delta M[u][i] > 20$ punti in $< 4$ ore
+\item Convergenza: $\geq 2$ categorie simultaneamente elevate
+\item Deviazione baseline: $M[u][i] > \mu + 2\sigma$
 \end{itemize}
 
-\textbf{Principio 2: Bilanciare Ragionamento Generale e Conoscenza Specifica}. Gli specialisti hanno bisogno di expertise del dominio profonda ma devono ragionare oltre regole rigide. I prompt dovrebbero:
+\textbf{Risultato:} Circa l'85\% degli eventi è gestito deterministicamente. Solo il 15\% attiva la valutazione dell'orchestratore, e di questi, solo circa il 30\% risulta in attivazione di agenti specialisti.
 
-\begin{itemize}[noitemsep]
-\item Fornire teoria specifica della categoria (Cognitive Load Specialist conosce Miller's Law \cite{miller1956})
-\item Includere pattern di vulnerabilità comuni nel loro dominio
-\item Incoraggiare il ragionamento su come più indicatori interagiscono
-\item Evidenziare quando le interazioni cross-category sono rilevanti
+\subsection{Impatto sui Costi}
+
+La Tabella~\ref{tab:cost} confronta i costi tra gli approcci ibrido e solo-agenti.
+
+\begin{table}[H]
+\centering
+\caption{Ripartizione dei Costi: Approccio Ibrido vs. Solo-Agenti}
+\label{tab:cost}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Componente} & \textbf{Ibrido} & \textbf{Solo-Agenti} \\
+\midrule
+Eventi/giorno & 10,000 & 10,000 \\
+Elaborazione deterministica & 8,500 (85\%) & 0 \\
+Valutazioni orchestratore & 1,500 (15\%) & 10,000 (100\%) \\
+Attivazioni agenti & 450 (4.5\%) & 10,000 (100\%) \\
+Costo orchestratore/mese & \$15 & \$100 \\
+Costo specialisti/mese & \$5 & \$300 \\
+\textbf{Totale/mese} & \textbf{\$130} & \textbf{\$850} \\
+Per utente (500 org) & \$0.26 & \$1.70 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+L'approccio ibrido riduce i costi dell'85\% rispetto all'elaborazione solo-agenti mantenendo le stesse capacità di rilevamento. Questo rende il monitoraggio continuo economicamente sostenibile anche per organizzazioni più piccole.
+
+\section{Progettazione del Sistema Multi-Agente}
+
+\subsection{L'Agente Orchestratore}
+
+L'orchestratore funziona continuamente (ogni 15 minuti), monitorando la matrice per cambiamenti di stato significativi, pattern convergenti o anomalie segnalate dallo strato di filtro. Quando le condizioni giustificano un'indagine, attiva agenti specialisti appropriati con direttive specifiche.
+
+\subsubsection{Responsabilità dell'Orchestratore}
+
+\begin{enumerate}[leftmargin=*]
+\item \textbf{Monitoraggio della Matrice:} Valutare continuamente i cambiamenti di stato attraverso tutti gli utenti e indicatori
+\item \textbf{Rilevamento Pattern:} Identificare vulnerabilità convergenti (più categorie elevate simultaneamente)
+\item \textbf{Ragionamento Contestuale:} Integrare fattori temporali (fine trimestre, scadenze) e cambiamenti organizzativi
+\item \textbf{Attivazione Agenti:} Decidere quali agenti specialisti attivare e con quali priorità
+\item \textbf{Apprendimento:} Accumulare pattern da attivazioni passate per migliorare decisioni future
+\item \textbf{Gestione Costi:} Evitare attivazioni di agenti ridondanti o di basso valore
+\end{enumerate}
+
+\subsubsection{Logica Decisionale}
+
+L'orchestratore impiega ragionamento multi-fattore:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Magnitudine:} Livelli di attivazione assoluti vs. soglie
+\item \textbf{Velocità:} Tasso di cambiamento (picchi improvvisi vs. deriva graduale)
+\item \textbf{Convergenza:} Più categorie attive simultaneamente
+\item \textbf{Contesto:} Fattori temporali (fine trimestre, festività, cambiamenti organizzativi)
+\item \textbf{Storia:} Pattern appresi da attivazioni passate
+\item \textbf{Costo:} Costo di indagine atteso vs. rischio previsto
 \end{itemize}
 
-\textbf{Principio 3: Struttura per Ragionamento Multi-Step}. Il rilevamento della vulnerabilità psicologica raramente deriva da singole osservazioni. I prompt dovrebbero:
+\subsection{Prompt Engineering per l'Orchestratore}
 
-\begin{itemize}[noitemsep]
-\item Richiedere ragionamento esplicito step-by-step
-\item Incoraggiare considerazione di evidenze sia a sostegno che contrarie
-\item Suggerire pattern temporali (tendenze, accelerazione)
-\item Chiedere valutazioni di confidenza con giustificazioni
+Il ragionamento efficace dell'orchestratore richiede prompt accuratamente strutturati. Forniamo guida architettonica piuttosto che elenchi di codice completi.
+
+\subsubsection{Struttura del Prompt di Sistema}
+
+Il prompt di sistema dell'orchestratore stabilisce il suo ruolo, capacità e framework di ragionamento:
+
+\textbf{Identità e Ruolo Core:}
+\begin{itemize}[leftmargin=*]
+\item Definire l'agente come ``Orchestratore CPF'' specializzato nel rilevamento delle vulnerabilità psicologiche
+\item Stabilire responsabilità primarie: monitorare, rilevare, decidere, imparare
+\item Chiarire la relazione con gli agenti specialisti (coordinatore, non esecutore)
 \end{itemize}
 
-\textbf{Principio 4: Enfatizzare l'Allineamento con il Benessere Umano}. I sistemi di sicurezza psicologica devono rispettare la dignità e la privacy umane. I prompt dovrebbero:
-
-\begin{itemize}[noitemsep]
-\item Frammare il rilevamento come supporto protettivo, non sorveglianza
-\item Richiedere considerazione del benessere dell'utente nelle raccomandazioni
-\item Incorporare limiti etici nel ragionamento
-\item Suggerire interventi di supporto oltre alle sole misure di sicurezza
+\textbf{Conoscenze e Strumenti Disponibili:}
+\begin{itemize}[leftmargin=*]
+\item Stato corrente della matrice (tutti gli utenti, tutti gli indicatori)
+\item Tendenze e pattern storici
+\item Contesto organizzativo (scadenze, cambiamenti, incidenti)
+\item Risultati di attivazioni passate (successi e falsi positivi)
+\item Elenco di agenti specialisti disponibili con le loro capacità
 \end{itemize}
 
-\subsection{Pattern Architetturali}
-
-\textbf{Pattern 1: Prompt dell'Orchestratore}
-
-L'orchestratore richiede prompt che bilancino ampiezza (monitorare tutti gli utenti) con profondità (riconoscere quando è necessaria analisi specializzata):
-
-\begin{verbatim}
-Sei il Security Orchestrator. Il tuo ruolo è mantenere 
-continuamente lo stato psicologico per tutti gli utenti e 
-identificare quando le vulnerabilità convergenti richiedono 
-investigazione.
-
-Per ogni evento in ingresso:
-1. Determina se richiede analisi LLM o può essere gestito da regole
-2. Se servono regole: specifica l'aggiornamento esatto
-3. Se serve analisi: identifica quale specialista/i invocare
-4. Mantieni il contesto attraverso eventi correlati
-5. Escalate quando soglie critiche sono raggiunte
-
-Matrice di stato attuale: [riassunto dello stato]
-Evento in ingresso: [dettagli evento]
-
-Ragiona attraverso:
-- Questo evento influenza singoli indicatori o pattern multipli?
-- Quali categorie psicologiche sono più rilevanti?
-- È necessaria investigazione specializzata?
-- Quale soglia/timeline dovrebbe attivare escalation umana?
-\end{verbatim}
-
-Elementi chiave:
-\begin{itemize}[noitemsep]
-\item Chiara definizione del ruolo (orchestratore vs. specialista)
-\item Decisione decisione esplicita (regole vs. LLM)
-\item Contestualizzazione dello stato (fornire lo stato attuale rilevante)
-\item Ragionamento step-by-step (richiedere analisi esplicita)
-\item Guida all'escalation (quando coinvolgere gli esseri umani)
+\textbf{Framework Decisionale:}
+\begin{itemize}[leftmargin=*]
+\item Quando attivare agenti (soglie, pattern di convergenza)
+\item Come dare priorità alle indagini (rischio vs. costo)
+\item Come imparare dai risultati (riconoscimento pattern)
+\item Come fornire spiegazioni (ragionamento in linguaggio naturale)
 \end{itemize}
 
-\textbf{Pattern 2: Prompt dello Specialista}
+\subsubsection{Struttura del Prompt Utente}
 
-Gli specialisti necessitano di expertise del dominio approfondita con guida su come il loro dominio si relaziona ad altri:
+Ogni valutazione dell'orchestratore riceve un prompt utente strutturato contenente:
 
-\begin{verbatim}
-Sei il Cognitive Load Specialist. Il tuo dominio copre gli 
-indicatori 1-10 che tracciano:
-- Carico di memoria di lavoro (Indicatori 1-3)
-- Complessità del task (Indicatori 4-6)
-- Interruzioni e multitasking (Indicatori 7-8)
-- Deficit di attenzione (Indicatori 9-10)
-
-Teoria chiave: Miller's Law (7±2 chunck limit) \cite{miller1956},
-la teoria del carico cognitivo suggerisce che sovraccarico → scorciatoie 
-→ vulnerabilità.
-
-Pattern di vulnerabilità comuni:
-- Alto carico di lavoro + interruzioni frequenti → errori di phishing
-- Multitasking sotto deadline → bypass della verifica di sicurezza
-- Complessità sostenuta → fatica decisionale
-
-Eventi passati correlati: [storico rilevante]
-Evento attuale: [evento che richiede analisi]
-Stati indicatore correnti: [valori rilevanti]
-
-Analizza:
-1. Quali indicatori cognitive load sono elevati/trend?
-2. Come il pattern attuale confronta con trend storici?
-3. Stanno emergendo vulnerabilità convergenti?
-4. Come questo si relaziona ad altri fattori psicologici?
-5. Raccomandazione: monitorare/escalation/intervento?
-\end{verbatim}
-
-Elementi chiave:
-\begin{itemize}[noitemsep]
-\item Expertise specializzata (teoria e pattern specifici della categoria)
-\item Ancoraggio alla teoria (riferimenti a ricerca stabilita)
-\item Contesto storico (pattern passati informano l'analisi attuale)
-\item Analisi guidata step-by-step (domande strutturanti)
-\item Raccomandazioni azionabili (prossimi passi chiari)
+\textbf{Informazioni sullo Stato Corrente:}
+\begin{itemize}[leftmargin=*]
+\item \textbf{Contesto gruppo:} Nome dipartimento/team, dimensione
+\item \textbf{Timestamp:} Data/ora corrente per ragionamento temporale
+\item \textbf{Indicatori attivi:} Tutti gli indicatori sopra il 60\% con:
+  \begin{itemize}
+  \item Livello di attivazione corrente
+  \item Magnitudine e intervallo temporale del cambiamento (``+15\% in 2 ore'')
+  \item Zona colore (ROSSO/GIALLO/VERDE)
+  \item Statistiche baseline (media, deviazione standard)
+  \end{itemize}
 \end{itemize}
 
-\textbf{Pattern 3: Prompt Cross-Category}
-
-Quando più categorie convergono, gli specialisti hanno bisogno di guida su come ragionare su interazioni:
-
-\begin{verbatim}
-Il sistema ha rilevato convergenza tra Cognitive Load (C=7.2)
-e Emotional State (C=6.8). Stai analizzando come esperto
-Cognitive Load. L'Emotional Specialist ha notato:
-"Stress sostenuto dagli indicatori di email, pattern di escalation
-dell'ansia in 72 ore"
-
-Come specialista Cognitive Load, considera:
-1. Come lo stress emotivo amplifica la vulnerabilità cognitiva?
-2. Il carico cognitivo elevato + stress emotivo → quale
-   vulnerabilità di sicurezza specifica?
-3. Le tempistiche si allineano? (Lo stress ha preceduto il
-   carico cognitivo? Viceversa?)
-4. Questa combinazione suggerisce necessità di intervento?
-
-Fornisci la tua prospettiva Cognitive Load sull'interazione.
-\end{verbatim}
-
-Elementi chiave:
-\begin{itemize}[noitemsep]
-\item Contesto condiviso (cosa ha osservato l'altro specialista)
-\item Domande specifiche di interazione (come i domini si influenzano)
-\item Analisi temporale (quale è venuto prima)
-\item Sintesi collaborativa (combinate le intuizioni per raccomandazione)
+\textbf{Fattori Contestuali:}
+\begin{itemize}[leftmargin=*]
+\item \textbf{Temporale:} Giorno della settimana, ora del giorno, prossimità alle scadenze
+\item \textbf{Organizzativo:} Cambiamenti recenti, eventi imminenti, indicatori di carico di lavoro
+\item \textbf{Tecnico:} Incidenti recenti, tendenze del volume di allerte, cambiamenti di sistema
+\item \textbf{Storico:} Pattern appresi che corrispondono alle condizioni attuali
 \end{itemize}
 
-\subsection{Gestire la Complessità dello Stato}
-
-Gli stati psicologici da 100 dimensioni superano i limiti del context window. I prompt devono essere strategici su quali informazioni di stato includere:
-
-\textbf{Strategia 1: Riassunto Gerarchico}
-
-Invece di tutti i 100 valori di indicatori, fornisci:
-\begin{itemize}[noitemsep]
-\item Punteggi a livello di categoria (10 valori vs. 100)
-\item Top-k indicatori più elevati (ad esempio i 5 valori più alti)
-\item Indicatori con cambiamenti recenti (delta > soglia)
-\item Indicatori correlati all'evento corrente
+\textbf{Azioni Disponibili:}
+\begin{itemize}[leftmargin=*]
+\item Elenco di agenti specialisti con brevi descrizioni delle capacità
+\item Cronologia attivazioni recenti (ultime 24 ore)
+\item Pattern appresi rilevanti per la situazione attuale
 \end{itemize}
 
-\textbf{Strategia 2: Contesto Rilevante per il Dominio}
+\textbf{Formato di Output Atteso:}
 
-Gli specialisti ricevono solo informazioni rilevanti per il loro dominio:
-\begin{itemize}[noitemsep]
-\item Cognitive Load Specialist vede indicatori 1-10 in dettaglio
-\item Altri domini forniti come punteggi riassuntivi di categoria
-\item Collegamenti cross-category evidenziati quando rilevanti
+Il prompt specifica la struttura di output JSON:
+\begin{itemize}[leftmargin=*]
+\item \texttt{investigation\_warranted} (booleano)
+\item \texttt{reasoning} (spiegazione in linguaggio naturale)
+\item \texttt{confidence} (0.0--1.0)
+\item \texttt{agents\_to\_activate} (array):
+  \begin{itemize}
+  \item Nome agente
+  \item Direttiva specifica (cosa investigare)
+  \item Priorità (alta/media/bassa)
+  \item Stima costo atteso
+  \end{itemize}
+\item \texttt{urgency} (CRITICO/AVVISO/OSSERVAZIONE/NESSUNO)
+\item \texttt{predicted\_outcome} (cosa potrebbe trovare l'indagine)
 \end{itemize}
 
-\textbf{Strategia 3: Finestre Temporali}
+\subsubsection{Esempio di Pattern di Ragionamento dell'Orchestratore}
 
-La storia completa è proibitiva. Fornisci:
-\begin{itemize}[noitemsep]
-\item Stato corrente (snapshot ora)
-\item Finestra recente (ultimi N eventi)
-\item Pattern storici significativi (incidenti passati, anomalie)
+Consideriamo uno scenario dove gli indicatori di autorità (1.x) salgono all'85\% nel dipartimento Finance durante la fine del trimestre:
+
+\textbf{Stato di Input:}
+\begin{itemize}[leftmargin=*]
+\item Indicatore Autorità 1.3 (Impersonificazione): 85\% (+30\% in 3 ore)
+\item Indicatore Temporale 2.1 (Urgenza): 75\% (elevato)
+\item Contesto: 3 giorni alla fine del trimestre, carico di lavoro alto
+\item Pattern storico: Convergenza simile ha portato a tentativi di frode CEO in passato
 \end{itemize}
 
-\subsection{Considerazioni Etiche nei Prompt}
+\textbf{Ragionamento dell'Orchestratore (Linguaggio Naturale):}
 
-I sistemi di sicurezza psicologica devono incorporare limiti etici. I prompt dovrebbero esplicitamente:
+``Gli indicatori di autorità e temporali mostrano convergenza significativa in Finance durante la pressione di fine trimestre. Questo corrisponde al pattern appreso \texttt{auth\_temporal\_quarterend} che storicamente indica una probabilità del 75\% di tentativi di frode CEO. Il rapido aumento del 30\% nella suscettibilità all'impersonificazione suggerisce uno stimolo esterno (probabilmente email sospette). Dato l'alto rischio e la chiara corrispondenza del pattern, raccomando:
 
-\textbf{1. Frammare come Supporto Protettivo}
-\begin{verbatim}
-Ricorda: stiamo identificando vulnerabilità per PROTEGGERE gli utenti,
-non per sorvegliarli. Le raccomandazioni dovrebbero puntare a
-aumentare la loro sicurezza mantenendo la dignità.
-\end{verbatim}
+\begin{enumerate}
+\item \textbf{Attiva EmailAnalyzer (priorità ALTA):} Scansione approfondita delle email delle ultime 24h da/verso Finance per impersonificazione di autorità, marcatori di urgenza, richieste di conformità inusuali. Focus su mittenti esterni con pattern di spoofing esecutivo.
+\item \textbf{Attiva ContextGatherer (priorità MEDIA):} Verificare se i workflow di approvazione duale sono temporaneamente disabilitati (vulnerabilità comune durante la fine del trimestre).
+\end{enumerate}
 
-\textbf{2. Rispettare i Confini della Privacy}
-\begin{verbatim}
-Analizza solo dati che gli utenti hanno acconsentito a condividere.
-Mai inferire dettagli personali sensibili al di là di ciò che
-i dati di sicurezza richiedono.
-\end{verbatim}
+Costo atteso: \$0,18. Confidenza: 0,92. Risultato previsto: Rilevamento di campagna di phishing di frode CEO che prende di mira i bonifici bancari.''
 
-\textbf{3. Bilanciare Sicurezza con Benessere}
-\begin{verbatim}
-Se i dati suggeriscono che un utente sta lottando (alto stress,
-burnout), la tua raccomandazione dovrebbe includere risorse di supporto,
-non solo misure di sicurezza.
-\end{verbatim}
+\subsection{Agenti Specialisti}
 
-\textbf{4. Calibrare la Confidenza}
-\begin{verbatim}
-Gli stati psicologici sono complessi. Esprimi appropriatamente
-l'incertezza. Se i dati sono ambigui, dillo—meglio escalation
-cauta che falsa confidenza.
-\end{verbatim}
+Gli agenti specialisti sono attivati on-demand dall'orchestratore. Ognuno ha competenze specifiche del dominio.
 
-\subsection{Linee Guida di Validazione}
+\subsubsection{Agente EmailAnalyzer}
 
-I prompt devono essere testati per assicurare che gli agent ragionino come previsto:
+\textbf{Scopo:} Analisi approfondita delle comunicazioni email per pattern di manipolazione psicologica.
 
-\textbf{Test 1: Vero Positivo}. Fornisci pattern che dovrebbero attivare rilevamento. Verifica che gli agent:
-\begin{itemize}[noitemsep]
-\item Identifichino correttamente la vulnerabilità
-\item Forniscano ragionamento chiaro
-\item Raccomandino escalation appropriata
+\textbf{Trigger di Attivazione:}
+\begin{itemize}[leftmargin=*]
+\item Picco degli indicatori di autorità (1.x)
+\item Indicatori sociali (3.x) elevati
+\item Convergenza con pressione temporale
 \end{itemize}
 
-\textbf{Test 2: Vero Negativo}. Fornisci stati di routine. Verifica che gli agent:
-\begin{itemize}[noitemsep]
-\item Non over-allertino su variazioni normali
-\item Spieghino perché nessuna azione è necessaria
-\item Suggeriscano monitoraggio continuo quando appropriato
+\textbf{Sorgenti Dati:}
+\begin{itemize}[leftmargin=*]
+\item Log gateway email (intestazioni, metadati)
+\item Contenuto messaggi (quando autorizzato)
+\item Risultati SPF/DKIM/DMARC
+\item Pattern di interazione utente (aperture, click, risposte)
 \end{itemize}
 
-\textbf{Test 3: Casi Ambigui}. Fornisci segnali misti. Verifica che gli agent:
-\begin{itemize}[noitemsep]
-\item Riconoscano l'incertezza
-\item Richiedano dati aggiuntivi o tempo
-\item Evitino raccomandazioni premature
+\textbf{Capacità di Analisi:}
+\begin{itemize}[leftmargin=*]
+\item Rilevamento affermazioni di autorità (impersonificazione esecutiva, titoli ufficiali)
+\item Identificazione marcatori di urgenza (linguaggio di pressione temporale)
+\item Pattern di manipolazione sociale (appelli alle relazioni, consenso)
+\item Classificazione tecniche di phishing
+\item Punteggio anomalie vs. pattern di comunicazione normali
 \end{itemize}
 
-\textbf{Test 4: Allineamento Etico}. Fornisci scenari che testano i confini. Verifica che gli agent:
-\begin{itemize}[noitemsep]
-\item Rifiutino analisi non etiche
-\item Raccomandino supporto per utenti in difficoltà
-\item Rispettino privacy e dignità
+\textbf{Output:}
+\begin{itemize}[leftmargin=*]
+\item Identificazione messaggi sospetti con punteggi di rischio
+\item Attivazioni indicatori rilevate (quali indicatori CPF sono stati attivati)
+\item Aggiornamenti matrice raccomandati
+\item Contromisure suggerite
 \end{itemize}
 
-\subsection{Decision Logic e Livelli di Escalation}
+\subsubsection{Progettazione del Prompt per EmailAnalyzer}
+
+\textbf{Principi del Prompt di Sistema:}
+\begin{itemize}[leftmargin=*]
+\item Definire il ruolo come analista di sicurezza email specializzato in manipolazione psicologica
+\item Stabilire competenza in tecniche di ingegneria sociale
+\item Fornire definizioni indicatori CPF per riferimento
+\item Specificare metodologia di analisi (sistematica, basata su prove)
+\end{itemize}
+
+\textbf{Direttiva di Attivazione dall'Orchestratore:}
+
+L'orchestratore fornisce istruzioni di indagine specifiche:
+\begin{itemize}[leftmargin=*]
+\item \textbf{Contesto:} Perché questo agente è stato attivato (quali indicatori, quali pattern)
+\item \textbf{Area di focus:} Utenti specifici, intervallo temporale o tipi di minaccia
+\item \textbf{Indicatori prioritari:} Quali indicatori CPF valutare
+\item \textbf{Contesto organizzativo:} Scadenze rilevanti, cambiamenti o pressioni
+\end{itemize}
+
+\textbf{Esempio di Direttiva:}
+
+``L'indicatore di autorità 1.3 è salito all'85\% in Finance. Analizza le email delle ultime 24h da/verso Finance per:
+\begin{itemize}
+\item Tentativi di impersonificazione autorità (spoofing esecutivo)
+\item Pattern di pressione esecutiva (urgenza di conformità)
+\item Richieste di conformità inusuali (workflow atipici)
+\end{itemize}
+Contesto: Fine trimestre in 3 giorni, carico di lavoro alto. Il pattern storico suggerisce rischio di frode CEO.''
+
+\textbf{Struttura di Output Attesa:}
+\begin{itemize}[leftmargin=*]
+\item Statistiche riepilogative (email analizzate, conteggio sospette)
+\item Messaggi a rischio più alto con analisi dettagliata
+\item Valutazioni indicatori CPF (quali indicatori attivati, punteggi di confidenza)
+\item Aggiornamenti matrice raccomandati (user, indicator, value, reasoning)
+\item Azioni suggerite (immediate, a breve termine, preventive)
+\item Tracciamento costi
+\end{itemize}
+
+\subsubsection{Agente SOCLogAnalyzer}
+
+\textbf{Scopo:} Analisi dei pattern comportamentali da log di autenticazione, pattern di accesso ed eventi SIEM.
+
+\textbf{Focus di Analisi:}
+\begin{itemize}[leftmargin=*]
+\item Anomalie di autenticazione (orari inusuali, posizioni, pattern di fallimento)
+\item Cambiamenti nei pattern di accesso (tentativi di escalation privilegi, movimento laterale)
+\item Indicatori di fatica da allerta (allerte respinte, avvisi ignorati)
+\item Segnali di stress da carico di lavoro (accessi notturni, pattern di lavoro weekend)
+\end{itemize}
+
+\subsubsection{Agente ContextGatherer}
+
+\textbf{Scopo:} Arricchimento del contesto organizzativo e ambientale.
+
+\textbf{Raccolta Dati:}
+\begin{itemize}[leftmargin=*]
+\item Sistemi di gestione progetti (scadenze imminenti)
+\item Sistemi HR (cambiamenti organizzativi, personale)
+\item Strumenti di collaborazione (indicatori di carico di lavoro, pattern di riunioni)
+\item Fonti esterne (eventi del settore, threat intelligence)
+\end{itemize}
+
+\textbf{Output:}
+
+Fattori contestuali che modulano le vulnerabilità psicologiche: pressioni temporali, fattori di stress organizzativi, cambiamenti recenti, eventi esterni rilevanti.
+
+\subsubsection{Agente ActionExecutor}
+
+\textbf{Scopo:} Raccomandazione di contromisure e (con autorizzazione) esecuzione.
+
+\textbf{Azioni Disponibili:}
+\begin{itemize}[leftmargin=*]
+\item Requisiti di autenticazione rafforzata (applicazione MFA)
+\item Attivazione workflow di approvazione duale
+\item Avvisi di sicurezza mirati (allerte just-in-time)
+\item Restrizioni di accesso temporanee
+\item Generazione allerte SOC con contesto ricco
+\end{itemize}
+
+\subsection{Logica Decisionale e Livelli di Escalation}
 
 L'orchestratore impiega un framework decisionale a quattro livelli che determina quando e come rispondere alle vulnerabilità psicologiche:
 
-\subsubsection{Tier 1: Continue Monitoring (Zona Verde)}
+\subsubsection{Livello 1: Continua Monitoraggio (Zona Verde)}
 
 \textbf{Condizioni:}
 \begin{itemize}[leftmargin=*]
-\item Tutti i punteggi di categoria $C_k < 0.6$ (sotto 60\% di attivazione)
-\item Nessun cambio rapido ($\Delta M[u][i] < 15$ punti al giorno)
-\item Correlazione cross-category $CC < 0.4$ (categorie indipendenti)
-\item Analisi trend mostra pattern stabili o in miglioramento
+\item Tutti i punteggi di categoria $C_k < 0.6$ (sotto il 60\% di attivazione)
+\item Nessun cambiamento rapido ($\Delta M[u][i] < 15$ punti al giorno)
+\item Correlazione tra categorie $CC < 0.4$ (categorie indipendenti)
+\item L'analisi delle tendenze mostra pattern stabili o in miglioramento
 \end{itemize}
 
 \textbf{Azioni:}
 \begin{itemize}[leftmargin=*]
-\item La matrice continua aggiornamenti di decadimento di routine
-\item Nessuna attivazione agent
+\item La matrice continua con aggiornamenti di decadimento di routine
+\item Nessuna attivazione di agenti
 \item Nessuna notifica SOC
-\item Costo: \$0 (solo processing deterministico)
+\item Costo: \$0 (solo elaborazione deterministica)
 \end{itemize}
 
-\subsubsection{Tier 2: Attiva Investigazione Specialista (Zona Gialla)}
+\subsubsection{Livello 2: Attiva Indagine Specialista (Zona Gialla)}
 
 \textbf{Condizioni:}
 \begin{itemize}[leftmargin=*]
 \item Singola categoria $C_k > 0.6$ OPPURE
-\item Cambio rapido in 2+ indicatori ($\Delta M[u][i] > 20$ punti in $<$ 4 ore) OPPURE
-\item Correlazione cross-category moderata $0.4 < CC < 0.7$ OPPURE
-\item Analisi trend mostra pattern preoccupante (elevazione sostenuta, accelerazione)
+\item Cambiamento rapido in 2+ indicatori ($\Delta M[u][i] > 20$ punti in $<$ 4 ore) OPPURE
+\item Correlazione moderata tra categorie $0.4 < CC < 0.7$ OPPURE
+\item L'analisi delle tendenze mostra pattern preoccupante (elevazione sostenuta, accelerazione)
 \end{itemize}
 
 \textbf{Azioni:}
 \begin{itemize}[leftmargin=*]
-\item Attiva agent specialista/i rilevante/i per investigazione approfondita
+\item Attivare agente(i) specialista(i) rilevante(i) per indagine approfondita
 \item Lo specialista analizza contesto, pattern storici, indicatori correlati
-\item Aggiorna matrice con valori raffinati basati sull'analisi
-\item Fornisce report dettagliato all'orchestratore
-\item Se lo specialista conferma rischio elevato → escalation a Tier 3
-\item Costo: \$0.05-\$0.15 per investigazione
+\item Aggiorna la matrice con valori raffinati basati sull'analisi
+\item Fornisce rapporto dettagliato all'orchestratore
+\item Se lo specialista conferma rischio elevato → scala al Livello 3
+\item Costo: \$0.05-\$0.15 per indagine
 \end{itemize}
 
-\subsubsection{Tier 3: Generazione Alert SOC (Zona Arancione)}
+\subsubsection{Livello 3: Generazione Allerta SOC (Zona Arancione)}
 
 \textbf{Condizioni:}
 \begin{itemize}[leftmargin=*]
-\item Categorie multiple $C_k > 0.7$ (2+ categorie sopra 70\%) OPPURE
-\item Alta correlazione cross-category $CC > 0.7$ OPPURE
-\item Investigazione specialista conferma vulnerabilità convergente OPPURE
-\item Analisi trend prevede stato critico entro 24-48 ore OPPURE
-\item Pattern corrisponde a signature pre-incidente conosciute
+\item Più categorie $C_k > 0.7$ (2+ categorie sopra il 70\%) OPPURE
+\item Alta correlazione tra categorie $CC > 0.7$ OPPURE
+\item L'indagine specialista conferma vulnerabilità convergente OPPURE
+\item L'analisi delle tendenze prevede stato critico entro 24-48 ore OPPURE
+\item Il pattern corrisponde a firme pre-incidente note
 \end{itemize}
 
 \textbf{Azioni:}
 \begin{itemize}[leftmargin=*]
-\item Genera alert SOC con contesto ricco:
+\item Genera allerta SOC con contesto ricco:
   \begin{itemize}
-  \item Identità utente e ruolo
+  \item Identità e ruolo utente
   \item Indicatori elevati con spiegazioni
   \item Risultati analisi specialista
-  \item Contesto storico e trend
+  \item Contesto storico e tendenze
   \item Azioni preventive raccomandate
   \end{itemize}
-\item Aumenta frequenza monitoraggio per utente (ogni 5 min vs. 15 min)
-\item Marca utente per scrutinio elevato nei sistemi di sicurezza
-\item Costo: \$0.20-\$0.40 per alert (include lavoro specialista + orchestratore)
+\item Aumentare frequenza di monitoraggio per utente (ogni 5 min vs. 15 min)
+\item Contrassegnare utente per controllo elevato nei sistemi di sicurezza
+\item Costo: \$0.20-\$0.40 per allerta (include lavoro specialista + orchestratore)
 \end{itemize}
 
-\subsubsection{Tier 4: Escalation Critica (Zona Rossa)}
+\subsubsection{Livello 4: Escalation Critica (Zona Rossa)}
 
 \textbf{Condizioni:}
 \begin{itemize}[leftmargin=*]
 \item Qualsiasi categoria $C_k > 0.9$ (soglia critica) OPPURE
-\item Convergenza cross-category $CC > 0.85$ con $\geq 3$ categorie elevate OPPURE
-\item Pattern corrisponde esattamente a incidenti storici (alta confidenza) OPPURE
-\item Analisi trend indica compromissione imminente (ore, non giorni)
+\item Convergenza tra categorie $CC > 0.85$ con $\geq 3$ categorie elevate OPPURE
+\item Il pattern corrisponde esattamente a incidenti storici (alta confidenza) OPPURE
+\item L'analisi delle tendenze indica compromissione imminente (ore, non giorni)
 \end{itemize}
 
 \textbf{Azioni:}
 \begin{itemize}[leftmargin=*]
-\item Escalation SOC immediata con priorità massima
-\item Contromisure automatizzate (se autorizzato):
+\item Escalation SOC immediata con massima priorità
+\item Contromisure automatizzate (se autorizzate):
   \begin{itemize}
-  \item Imponi MFA aggiuntivo per operazioni sensibili
-  \item Richiedi dual-approval per transazioni finanziarie
-  \item Restrizioni accesso temporanee a sistemi critici
-  \item Flag comunicazioni utente per scrutinio enhanced
+  \item Imporre MFA aggiuntivo per operazioni sensibili
+  \item Richiedere approvazione duale per transazioni finanziarie
+  \item Limitare temporaneamente l'accesso a sistemi critici
+  \item Contrassegnare comunicazioni utente per controllo rafforzato
   \end{itemize}
-\item Attiva specialisti multipli per analisi comprensiva
-\item Monitoraggio real-time (continuo, non periodico)
-\item Opzionale: Notifica manager utente/CISO
+\item Attivare più specialisti per analisi comprensiva
+\item Monitoraggio in tempo reale (continuo, non periodico)
+\item Opzionale: Notificare il manager dell'utente/CISO
 \item Costo: \$0.50-\$1.00 per evento critico (risposta comprensiva)
 \end{itemize}
 
-\subsection{Analisi Temporale dei Trend}
+\subsubsection{Algoritmo Decisionale}
 
-Comprendere come gli stati psicologici evolvono nel tempo è critico per l'early warning. L'orchestratore mantiene uno storico rolling di 30 giorni per ogni utente e analizza pattern temporali.
+L'orchestratore esegue questa logica decisionale ad ogni ciclo di valutazione:
 
-\subsubsection{Algoritmi di Rilevamento Trend}
+\begin{verbatim}
+for each user u with changed indicators:
+    # 1. Calcola metriche
+    category_scores = compute_convergence(M[u])
+    cross_category = compute_cross_correlation(category_scores)
+    trend = analyze_temporal_pattern(M[u], window=7days)
+    
+    # 2. Determina livello
+    if any(category_scores > 0.9) OR cross_category > 0.85:
+        tier = CRITICAL  # Rosso
+    elif max(category_scores) > 0.7 OR cross_category > 0.7:
+        tier = ALERT  # Arancione
+    elif max(category_scores) > 0.6 OR cross_category > 0.4:
+        tier = INVESTIGATE  # Giallo
+    else:
+        tier = MONITOR  # Verde
+    
+    # 3. Controlla override tendenze
+    if trend.trajectory == "critical_within_24h":
+        tier = max(tier, ALERT)
+    
+    # 4. Esegui azioni specifiche del livello
+    execute_tier_actions(u, tier, category_scores, trend)
+\end{verbatim}
 
-\textbf{1. Regressione Lineare su Punteggi Categoria}
+\subsection{Analisi delle Tendenze Temporali}
 
-Per ogni categoria $k$, fit modello lineare:
+Comprendere come gli stati psicologici evolvono nel tempo è critico per l'allerta precoce. L'orchestratore mantiene una cronologia mobile di 30 giorni per ogni utente e analizza pattern temporali.
+
+\subsubsection{Algoritmi di Rilevamento Tendenze}
+
+\textbf{1. Regressione Lineare sui Punteggi di Categoria}
+
+Per ogni categoria $k$, adatta modello lineare:
 \begin{equation}
 C_k(t) = \alpha_k + \beta_k \cdot t + \epsilon
 \end{equation}
 
 Dove:
 \begin{itemize}[leftmargin=*]
-\item $\beta_k > 0.05$/giorno → \textit{escalation} (vulnerabilità in peggioramento)
+\item $\beta_k > 0.05$/giorno → \textit{in escalation} (vulnerabilità in peggioramento)
 \item $|\beta_k| < 0.05$/giorno → \textit{stabile}
 \item $\beta_k < -0.05$/giorno → \textit{in miglioramento}
 \end{itemize}
 
 \textbf{2. Rilevamento Accelerazione}
 
-Calcola seconda derivata per rilevare cambi rapidi:
+Calcola la derivata seconda per rilevare cambiamenti rapidi:
 \begin{equation}
 a_k = \frac{d^2 C_k}{dt^2} = \frac{C_k(t) - 2C_k(t-\Delta t) + C_k(t-2\Delta t)}{(\Delta t)^2}
 \end{equation}
 
 Dove:
 \begin{itemize}[leftmargin=*]
-\item $C_k(t)$ = punteggio della categoria $k$ al tempo attuale $t$
-\item $C_k(t-\Delta t)$ = punteggio della categoria $k$ un intervallo di tempo $\Delta t$ nel passato
-\item $C_k(t-2\Delta t)$ = punteggio della categoria $k$ due intervalli di tempo nel passato
-\item $\Delta t$ = intervallo di tempo (tipicamente 1 giorno per il monitoraggio continuo)
-\item $a_k$ = accelerazione (seconda derivata) del punteggio della categoria $k$
+\item $C_k(t)$ = punteggio categoria $k$ al tempo corrente $t$
+\item $C_k(t-\Delta t)$ = punteggio categoria $k$ un intervallo temporale $\Delta t$ nel passato
+\item $C_k(t-2\Delta t)$ = punteggio categoria $k$ due intervalli temporali nel passato
+\item $\Delta t$ = intervallo temporale (tipicamente 1 giorno per monitoraggio continuo)
+\item $a_k$ = accelerazione (derivata seconda) del punteggio categoria $k$
 \end{itemize}
 
-Alta accelerazione ($|a_k| > 0.1$/giorno$^2$) indica shift improvvisi che richiedono attenzione immediata.
+Un'alta accelerazione ($|a_k| > 0.1$/giorno$^2$) indica cambiamenti improvvisi che richiedono attenzione immediata.
 
-\textbf{3. Pattern Matching}
+\textbf{3. Corrispondenza Pattern}
 
-Il sistema mantiene una libreria di signature temporali pre-incidente apprese da dati storici:
+Il sistema mantiene una libreria di firme temporali pre-incidente apprese dai dati storici:
 
 \begin{itemize}[leftmargin=*]
-\item \textbf{Pattern Burnout:} Escalation graduale di stress (indicatori 5.x) + cognitive load (1.x) + isolamento sociale (3.x) su 2-4 settimane
-\item \textbf{Pattern Insider Threat:} Cambiamenti comportamentali (indicatori 10.x) + shift dinamiche sociali (3.x) + crisi identità (6.x) su 1-3 mesi
-\item \textbf{Pattern Risposta Crisi:} Spike improvviso in stato emotivo (2.x) + decision fatigue (5.x) in ore
-\item \textbf{Pattern Exploitation Authority:} Vulnerabilità authority (4.x) elevata durante periodi high-stress (5.x) + deadline pressure (8.x)
+\item \textbf{Pattern Burnout:} Escalation graduale di stress (indicatori 5.x) + carico cognitivo (1.x) + isolamento sociale (3.x) nell'arco di 2-4 settimane
+\item \textbf{Pattern Minaccia Interna:} Cambiamenti comportamentali (indicatori 10.x) + cambiamenti dinamiche sociali (3.x) + crisi identità (6.x) nell'arco di 1-3 mesi
+\item \textbf{Pattern Risposta Crisi:} Picco improvviso nello stato emotivo (2.x) + fatica decisionale (5.x) nel giro di ore
+\item \textbf{Pattern Sfruttamento Autorità:} Vulnerabilità all'autorità (4.x) elevata durante periodi ad alto stress (5.x) + pressione scadenze (8.x)
 \end{itemize}
 
-Quando trend correnti corrispondono a pattern conosciuti (similarità coseno $> 0.8$), il sistema aumenta confidenza nelle predizioni.
+Quando le tendenze attuali corrispondono a pattern noti (similarità coseno $> 0.8$), il sistema aumenta la confidenza nelle predizioni.
 
-\textbf{4. Stima Finestra Vulnerabilità}
+\textbf{4. Stima Finestra di Vulnerabilità}
 
-Basandosi su velocità trend e timing incidenti storici, stima time-to-critical:
+Basandosi sulla velocità della tendenza e sulla tempistica storica degli incidenti, stima il tempo-a-critico:
 
 \begin{equation}
 t_{critical} = \frac{\theta_{critical} - C_k(t_{now})}{\beta_k}
 \end{equation}
 
-Dove $\theta_{critical} = 0.9$ è la soglia critica. Se $t_{critical} < 48$ ore, escalation immediata.
+Dove $\theta_{critical} = 0.9$ è la soglia critica. Se $t_{critical} < 48$ ore, scala immediatamente.
+
+\subsubsection{Integrazione Contesto Temporale}
+
+Le tendenze sono interpretate all'interno del contesto temporale organizzativo:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Pattern Ciclici:} Fine trimestre, fine mese, revisioni annuali creano picchi di stress prevedibili
+\item \textbf{Cambiamenti Guidati da Eventi:} Ristrutturazioni organizzative, licenziamenti, acquisizioni amplificano la vulnerabilità
+\item \textbf{Effetti Weekend/Festività:} Ridotto supporto sociale, orari di lavoro inusuali aumentano indicatori di isolamento
+\item \textbf{Cicli Specifici del Settore:} Stagione fiscale (contabilità), Black Friday (retail), earnings (finanza)
+\end{itemize}
+
+L'orchestratore regola le soglie dinamicamente in base al contesto temporale. Ad esempio, durante la fine del trimestre:
+- Soglia indicatori stress (5.x) aumentata da 0.7 → 0.8 (aspettarsi baseline elevato)
+- Soglia carico cognitivo (1.x) invariata (ancora preoccupante)
+- Soglia convergenza abbassata da 0.7 → 0.6 (combinazioni più pericolose sotto pressione scadenze)
 
 \section{Apprendimento Adattivo e Auto-Ottimizzazione}
 
-Mentre l'orchestratore apprende pattern attraverso feedback operativo (Sezione 6), un \textbf{Modulo di Adaptive Learning} dedicato gira offline per ottimizzare sistematicamente i parametri di sistema.
+Mentre l'orchestratore apprende pattern attraverso il feedback operativo (Sezione 6), un \textbf{Modulo di Apprendimento Adattivo} dedicato opera offline per ottimizzare sistematicamente i parametri del sistema.
 
-\subsection{Architettura del Modulo di Learning}
+\subsection{Architettura del Modulo di Apprendimento}
 
-Il Modulo di Adaptive Learning opera come processo background (notturno o settimanale) che analizza dati storici per raffinare parametri decisionali:
+Il Modulo di Apprendimento Adattivo opera come processo in background (notturno o settimanale) che analizza dati storici per raffinare i parametri decisionali:
 
 \begin{itemize}[leftmargin=*]
-\item \textbf{Input:} Stati matrice storici $M_{history}$, incidenti $I$, alert $A$, feedback analyst $F$
-\item \textbf{Output:} Soglie aggiornate $\Theta$, pattern raffinati $P$, pesi aggiustati $W$
-\item \textbf{Frequenza:} Analisi settimanale con aggiornamenti emergency dopo incidenti maggiori
-\item \textbf{Implementazione:} Agent separato con accesso a database storico completo
+\item \textbf{Input:} Stati matrice storici $M_{history}$, incidenti $I$, allerte $A$, feedback analisti $F$
+\item \textbf{Output:} Soglie aggiornate $\Theta$, pattern raffinati $P$, pesi regolati $W$
+\item \textbf{Frequenza:} Analisi settimanale con aggiornamenti d'emergenza dopo incidenti maggiori
+\item \textbf{Implementazione:} Agente separato con accesso al database storico completo
 \end{itemize}
 
 \subsection{Ottimizzazione Soglie}
 
 \subsubsection{Analisi Post-Incidente}
 
-Dopo ogni incidente confermato $i$, il learner esamina stati pre-incidente:
+Dopo ogni incidente confermato $i$, il learner esamina gli stati pre-incidente:
 
 \begin{algorithm}[H]
-\caption{Aggiustamento Soglie Post-Incidente}
+\caption{Regolazione Soglie Post-Incidente}
 \begin{algorithmic}
 \STATE \textbf{Input:} Incidente $i$, finestra pre-incidente $W = 72$ ore
-\STATE \textbf{Output:} Soglie aggiustate $\Theta'$
+\STATE \textbf{Output:} Soglie regolate $\Theta'$
 \STATE 
 \STATE $M_{pre} \leftarrow$ extract\_matrix\_history(i.user, i.time - W, i.time)
 \STATE $elevated \leftarrow$ find\_elevated\_indicators($M_{pre}$, $\Theta$)
@@ -790,24 +766,24 @@ Dopo ogni incidente confermato $i$, il learner esamina stati pre-incidente:
 \end{algorithmic}
 \end{algorithm}
 
-\textbf{Insight Chiave:} Se il sistema ha \textit{perso} un incidente (nessun alert generato), il learner identifica quale soglia ha impedito la detection e la abbassa.
+\textbf{Intuizione Chiave:} Se il sistema \textit{ha mancato} un incidente (nessuna allerta generata), il learner identifica quale soglia ha impedito il rilevamento e la abbassa.
 
-\subsubsection{Riduzione False Positive}
+\subsubsection{Riduzione Falsi Positivi}
 
-Viceversa, quando analyst marcano alert come false positive:
+Al contrario, quando gli analisti segnalano allerte come falsi positivi:
 
 \begin{algorithm}[H]
-\caption{Aggiustamento Soglie False Positive}
+\caption{Regolazione Soglie Falsi Positivi}
 \begin{algorithmic}
-\STATE \textbf{Input:} Alert false positive $a$, feedback analyst $f$
-\STATE \textbf{Output:} Soglie aggiustate $\Theta'$
+\STATE \textbf{Input:} Allerta falso positivo $a$, feedback analista $f$
+\STATE \textbf{Output:} Soglie regolate $\Theta'$
 \STATE 
 \STATE $pattern \leftarrow$ extract\_pattern\_from\_alert($a$)
 \STATE $pattern$.false\_positive\_count $\leftarrow$ $pattern$.fp\_count + 1
 \STATE 
 \IF{$pattern$.fp\_count $> 5$ AND $pattern$.tp\_rate $< 0.1$}
     \STATE $\Theta'[pattern] \leftarrow \Theta[pattern] + 0.05$ \COMMENT{Alza soglia}
-    \STATE add\_to\_benign\_patterns($pattern$) \COMMENT{Marca come low-risk}
+    \STATE add\_to\_benign\_patterns($pattern$) \COMMENT{Segna come basso rischio}
 \ELSIF{$f$.contains\_context("expected\_behavior")}
     \STATE add\_exception\_rule($pattern$, $f$.context)
 \ENDIF
@@ -816,16 +792,16 @@ Viceversa, quando analyst marcano alert come false positive:
 \end{algorithmic}
 \end{algorithm}
 
-\textbf{Bilanciamento:} Il learner mantiene balance precision-recall. Metriche target:
+\textbf{Bilanciamento:} Il learner mantiene un equilibrio precisione-recall. Metriche target:
 \begin{itemize}[leftmargin=*]
-\item True positive rate $\geq 0.75$ (cattura $\geq$75\% degli incidenti)
-\item False positive rate $< 0.1$ (meno del 10\% degli alert sono falsi)
-\item Lead time $\geq 24$ ore (rileva almeno 1 giorno prima dell'incidente)
+\item Tasso veri positivi $\geq 0.75$ (catturare $\geq$75\% degli incidenti)
+\item Tasso falsi positivi $< 0.1$ (meno del 10\% delle allerte sono false)
+\item Tempo di anticipo $\geq 24$ ore (rilevare almeno 1 giorno prima dell'incidente)
 \end{itemize}
 
 \subsection{Evoluzione Libreria Pattern}
 
-Il sistema mantiene una libreria crescente di \textbf{pattern di convergenza}—combinazioni specifiche di indicatori elevati che precedono incidenti.
+Il sistema mantiene una libreria crescente di \textbf{pattern di convergenza}—combinazioni specifiche di indicatori elevati che precedono gli incidenti.
 
 \subsubsection{Rappresentazione Pattern}
 
@@ -838,257 +814,346 @@ p = \{I_p, C_{min}, CC_{min}, T_p, O_p\}
 Dove:
 \begin{itemize}[leftmargin=*]
 \item $I_p$: Set di indicatori elevati (es., \{1.2, 1.5, 5.1, 5.3\})
-\item $C_{min}$: Punteggi categoria minimi (es., \{$C_1 > 0.65$, $C_5 > 0.7$\})
-\item $CC_{min}$: Soglia correlazione cross-category
-\item $T_p$: Signature temporale (durata, accelerazione)
-\item $O_p$: Outcome storici (count TP, count FP, distribuzione lead time)
+\item $C_{min}$: Punteggi minimi di categoria (es., \{$C_1 > 0.65$, $C_5 > 0.7$\})
+\item $CC_{min}$: Soglia correlazione tra categorie
+\item $T_p$: Firma temporale (durata, accelerazione)
+\item $O_p$: Risultati storici (conteggio TP, conteggio FP, distribuzione tempo di anticipo)
 \end{itemize}
+
+\subsubsection{Scoperta Pattern}
+
+Il learner usa il clustering sugli stati pre-incidente storici per scoprire nuovi pattern:
+
+\begin{algorithm}[H]
+\caption{Scoperta Pattern da Incidenti}
+\begin{algorithmic}
+\STATE \textbf{Input:} Incidenti $I$, matrici storiche $M_{history}$
+\STATE \textbf{Output:} Nuovi pattern $P_{new}$
+\STATE 
+\STATE $S \leftarrow \emptyset$ \COMMENT{Vettori stato pre-incidente}
+\FOR{each incident $i \in I$}
+    \STATE $s_i \leftarrow$ extract\_state\_vector($M_{history}$, $i$.user, $i$.time - 72h)
+    \STATE $S \leftarrow S \cup \{s_i\}$
+\ENDFOR
+\STATE 
+\STATE $clusters \leftarrow$ DBSCAN($S$, eps=0.15, min\_samples=3)
+\STATE 
+\FOR{each cluster $c \in clusters$}
+    \STATE $p_{new} \leftarrow$ extract\_pattern\_from\_cluster($c$)
+    \IF{$p_{new} \notin$ existing\_patterns AND $|c| \geq 3$}
+        \STATE $P_{new} \leftarrow P_{new} \cup \{p_{new}\}$
+    \ENDIF
+\ENDFOR
+\STATE 
+\RETURN $P_{new}$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Esempio Pattern Scoperto:}
+
+\begin{verbatim}
+Pattern: "Sfruttamento Stress Finanziario Fine Trimestre"
+Indicatori: {1.3 (Multitasking), 4.2 (Pressione Conformità), 
+            5.1 (Fatica Allerta), 8.1 (Pressione Scadenze)}
+Category mins: {C_1 > 0.60, C_4 > 0.70, C_5 > 0.65, C_8 > 0.75}
+Cross-category: CC > 0.65
+Temporale: Avviene negli ultimi 5 giorni del trimestre, 
+           accelera nei 2 giorni finali
+Risultati: 7 TP, 1 FP (87.5% precisione), tempo anticipo medio 38 ore
+\end{verbatim}
+
+Una volta scoperto, questo pattern riceve una soglia e profilo di monitoraggio specifico.
+
+\subsection{Regolazione Pesi Indicatori}
+
+All'interno di ogni categoria, gli indicatori hanno diverso potere predittivo. Il learner regola i pesi $w_i$ nella formula di convergenza:
+
+\begin{equation}
+C_k(u) = \frac{1}{|I_k|} \sum_{i \in I_k} w_i \cdot value_i \cdot confidence_i
+\end{equation}
+
+Usando regressione logistica sui dati storici:
+
+\begin{algorithm}[H]
+\caption{Apprendimento Pesi Indicatori}
+\begin{algorithmic}
+\STATE \textbf{Input:} Stati storici $M_{history}$, incidenti $I$
+\STATE \textbf{Output:} Pesi indicatori $W'$
+\STATE 
+\STATE $X, y \leftarrow$ prepare\_training\_data($M_{history}$, $I$)
+\STATE \COMMENT{$X$: valori indicatori, $y$: incidente avvenuto (0/1)}
+\STATE 
+\FOR{each category $k$}
+    \STATE $model_k \leftarrow$ LogisticRegression()
+    \STATE $model_k$.fit($X[:, I_k]$, $y$) \COMMENT{Addestra su indicatori categoria}
+    \STATE $W'[I_k] \leftarrow model_k$.coefficients \COMMENT{Estrai pesi appresi}
+\ENDFOR
+\STATE 
+\RETURN $W'$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Risultato:} Gli indicatori fortemente correlati con incidenti ricevono pesi più alti, rendendo i punteggi di categoria più predittivi.
 
 \subsection{Ciclo di Integrazione Feedback}
 
-Il ciclo completo di learning opera continuamente:
+Il ciclo di apprendimento completo opera continuamente:
 
 \begin{figure}[H]
 \centering
 \begin{verbatim}
-┌─────────────────────────────────────────────────┐
-│ 1. FASE OPERATIVA                               │
-│    • Orchestratore monitora matrice             │
-│    • Prende decisioni usando Θ, W, P correnti  │
-│    • Logga: decisioni, outcome, feedback analyst│
-└────────────────┬────────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────┐
-│ 2. FASE LEARNING SETTIMANALE                    │
-│    • Adaptive Learner analizza log              │
-│    • Aggiustamenti soglie post-incidente        │
-│    • Aumenti soglie false positive              │
-│    • Pattern discovery da nuovi incidenti       │
-│    • Ottimizzazione pesi via regression         │
-│    • Genera Θ', W', P' aggiornati               │
-└────────────────┬────────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────┐
-│ 3. FASE VALIDAZIONE                             │
-│    • Backtest Θ', W', P' su held-out data       │
-│    • Verifica precision/recall mantengono target│
-│    • Controlla degradazione o miglioramento     │
-│    • Se validato → deploy in production         │
-└────────────────┬────────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────┐
-│ 4. DEPLOYMENT                                   │
-│    • Orchestratore riceve parametri aggiornati  │
-│    • Rollout graduale (A/B test se possibile)   │
-│    • Monitora comportamenti inaspettati         │
-│    • Roll back se metriche degradano            │
-└─────────────────────────────────────────────────┘
++-------------------------------------------------+
+| 1. FASE OPERATIVA                               |
+|    * Orchestratore monitora matrice             |
+|    * Prende decisioni usando Theta, W, P correnti|
+|    * Registra: decisioni, risultati, feedback analisti|
++----------------+--------------------------------+
+                 |
+                 v
++-------------------------------------------------+
+| 2. FASE APPRENDIMENTO SETTIMANALE               |
+|    * Learner Adattivo analizza log              |
+|    * Regolazioni soglie post-incidente          |
+|    * Aumenti soglie falsi positivi              |
+|    * Scoperta pattern da nuovi incidenti        |
+|    * Ottimizzazione pesi via regressione        |
+|    * Genera Theta', W', P' aggiornati           |
++----------------+--------------------------------+
+                 |
+                 v
++-------------------------------------------------+
+| 3. FASE VALIDAZIONE                             |
+|    * Backtest Theta', W', P' su dati held-out   |
+|    * Verifica precisione/recall mantengono target|
+|    * Controlla degradazione o miglioramento     |
+|    * Se validato -> rilascia in produzione      |
++----------------+--------------------------------+
+                 |
+                 v
++-------------------------------------------------+
+| 4. RILASCIO                                     |
+|    * Orchestratore riceve parametri aggiornati  |
+|    * Rollout graduale (A/B test se possibile)   |
+|    * Monitora comportamento inatteso            |
+|    * Rollback se metriche degradano             |
++-------------------------------------------------+
 \end{verbatim}
-\caption{Ciclo Continuo di Learning e Ottimizzazione}
+\caption{Ciclo di Apprendimento e Ottimizzazione Continui}
 \end{figure}
 
 \textbf{Meccanismi di Sicurezza:}
 \begin{itemize}[leftmargin=*]
-\item \textbf{Bounds:} Soglie vincolate a $[0.4, 0.95]$ per prevenire sensibilità estrema o cecità
-\item \textbf{Validazione:} Tutti gli aggiornamenti backtestati prima del deployment
-\item \textbf{Rollback:} Se false positive rate spike ($>$ 15\%), revert a parametri precedenti
-\item \textbf{Supervisione Umana:} Cambi soglia maggiori ($>$ 0.1) richiedono approvazione analyst
+\item \textbf{Limiti:} Soglie vincolate a $[0.4, 0.95]$ per prevenire sensibilità o cecità estrema
+\item \textbf{Validazione:} Tutti gli aggiornamenti sottoposti a backtest prima del rilascio
+\item \textbf{Rollback:} Se il tasso falsi positivi aumenta bruscamente ($>$ 15\%), ripristina parametri precedenti
+\item \textbf{Supervisione Umana:} Cambiamenti soglie maggiori ($>$ 0.1) richiedono approvazione analista
 \end{itemize}
 
-\subsection{Outcome Learning dalla Validazione}
+\section{Apprendimento attraverso il Feedback}
 
-Durante i nostri 18 mesi di validazione, l'adaptive learner ha fatto 47 aggiustamenti parametri:
+\subsection{Architettura del Ciclo di Feedback}
 
-\begin{table}[H]
-\centering
-\caption{Impatto Adaptive Learning}
-\begin{tabular}{lcc}
-\toprule
-\textbf{Metrica} & \textbf{Iniziale} & \textbf{Dopo Learning} \\
-\midrule
-True Positive Rate & 73\% & 81\% \\
-False Positive Rate & 18\% & 11\% \\
-Lead Time Medio & 38 ore & 47 ore \\
-Aggiustamenti Soglie & 0 & 47 \\
-Pattern Scoperti & 12 (manuale) & 28 (23 auto) \\
-\bottomrule
-\end{tabular}
-\end{table}
+Il sistema apprende da tre fonti di feedback \cite{russell2021}:
 
-\textbf{Apprendimenti Chiave:}
+\textbf{1. Correlazione Incidenti:} Quando si verificano incidenti di sicurezza, il sistema esamina:
 \begin{itemize}[leftmargin=*]
-\item Soglia convergenza cognitive load + stress abbassata da 0.70 → 0.62 (catturati 4 incidenti aggiuntivi)
-\item Pattern authority + deadline pressure scoperto automaticamente (prevenuti 3 tentativi CEO fraud)
-\item Indicatori isolamento sociale ricevuto 30\% pesi maggiori dopo learning (migliorata detection insider threat)
-\item False positive quarter-end ridotti alzando soglie stress durante periodi high-workload prevedibili
+\item La matrice mostrava segnali precursori?
+\item L'orchestratore ha attivato agenti?
+\item Cosa hanno rilevato gli agenti?
+\item Le azioni raccomandate sono state intraprese?
+\item Qual è stato il risultato?
 \end{itemize}
 
-Il sistema dimostra miglioramento continuo senza tuning manuale, adattandosi ai pattern specifici di vulnerabilità psicologica di ogni organizzazione.
-
-\section{Implementazione e Validazione}
-
-\subsection{Dettagli di Implementazione}
-
-Il sistema è stato implementato usando Python con Claude 3.5 Sonnet come modello LLM di base. La stack tecnica: PostgreSQL per l'archiviazione della matrice di stato, Redis per la cache, FastAPI per l'orchestrazione. I costi operativi sono dominati dalle chiamate API LLM; l'ottimizzazione ha ridotto questi dell'85\% attraverso filtraggio ibrido.
-
-\subsection{Metodologia di Validazione}
-
-Abbiamo validato il sistema su dati storici di un'organizzazione di medie dimensioni nell'arco di 18 mesi:
-
-\begin{itemize}[noitemsep]
-\item \textbf{Dataset}: 843 utenti, 127.000+ eventi
-\item \textbf{Incidenti}: 27 violazioni di sicurezza confermate
-\item \textbf{Ground Truth}: Post-incident review ha identificato fattori contribuenti psicologici
-\item \textbf{Baseline}: Confrontato con valutazioni trimestrali umane esperte
+\textbf{2. Analisi Falsi Positivi:} Quando le attivazioni dell'orchestratore risultano in ``tutto chiaro'':
+\begin{itemize}[leftmargin=*]
+\item Quali pattern della matrice hanno innescato l'attivazione?
+\item Quale contesto era presente?
+\item Cosa hanno trovato (o non trovato) gli agenti?
+\item L'attivazione era giustificata date le informazioni disponibili?
 \end{itemize}
 
-Per ogni incidente, abbiamo determinato:
-\begin{enumerate}[noitemsep]
-\item Il sistema ha rilevato vulnerabilità prima dell'incidente?
-\item Quanto anticipo (lead time) ha fornito?
-\item L'analisi ha identificato correttamente i fattori contribuenti?
-\end{enumerate}
+\textbf{3. Feedback Analisti:} Gli analisti SOC forniscono feedback diretto sulla qualità delle allerte, abilitando l'adattamento rapido.
 
-\subsection{Risultati}
+\subsection{Meccanismo di Apprendimento}
+
+L'orchestratore mantiene una \textbf{base di conoscenza pattern} che cresce con ogni decisione. I pattern codificano:
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Condizioni trigger:} Stati della matrice che hanno portato all'attivazione
+\item \textbf{Risultati storici:} Quanti veri positivi vs. falsi positivi
+\item \textbf{Raffinamenti appresi:} Controlli aggiuntivi o fattori contestuali che migliorano la precisione
+\item \textbf{Efficacia azioni:} Quali contromisure hanno funzionato
+\end{itemize}
+
+\textbf{Esempio Pattern Appreso:}
+
+\begin{verbatim}
+Pattern ID: auth_spike_friday_eod_quarterend
+
+Trigger: Authority (1.x) > 75% AND 
+         Venerdì dopo 16:00 AND 
+         giorni_a_fine_trimestre < 7
+
+Storico: 15 attivazioni in 18 mesi
+  - Veri positivi: 3 (tentativi frode CEO bloccati)
+  - Falsi positivi: 12 (urgenza normale fine trimestre)
+
+Raffinamento appreso:
+  "Attiva SOLO se:
+   (1.x > 85%) AND 
+   (dominio mittente esterno presente) AND 
+   (approvazione duale temporaneamente disabilitata OR 
+    transazione finanziaria richiesta)"
+
+Guadagno precisione: 20% → 75%
+\end{verbatim}
+
+Questa libreria di pattern abilita l'orchestratore a prendere decisioni progressivamente migliori, riducendo i falsi positivi mantenendo la sensibilità di rilevamento.
+
+\section{Considerazioni di Implementazione}
+
+\subsection{Stack Tecnologico}
+
+\begin{itemize}[leftmargin=*]
+\item \textbf{Archiviazione Matrice:} Redis (stato real-time) + PostgreSQL (cronologia duratura)
+\item \textbf{Elaborazione Stream:} Apache Flink per aggiornamenti e filtraggio continui
+\item \textbf{Orchestratore:} Claude Sonnet 4 o equivalente (ciclo valutazione 15 minuti)
+\item \textbf{Agenti Specialisti:} Claude Haiku per efficienza costi
+\item \textbf{Archiviazione Pattern:} Database vettoriale (Pinecone/Weaviate) per pattern appresi
+\item \textbf{Integrazione:} API REST per integrazione SOC/SIEM
+\end{itemize}
+
+\subsection{Costi Operativi}
+
+La Tabella~\ref{tab:operational} fornisce costi mensili dettagliati per un'organizzazione di 500 persone.
 
 \begin{table}[H]
 \centering
-\caption{Metriche di Performance del Sistema}
+\caption{Costi Operativi Mensili Dettagliati (organizzazione 500 persone)}
+\label{tab:operational}
 \begin{tabular}{lcc}
 \toprule
-\textbf{Metrica} & \textbf{Valore} & \textbf{Baseline} \\
+\textbf{Componente} & \textbf{Unità} & \textbf{Costo (USD)} \\
 \midrule
-Tasso di Rilevamento & 81\% (22/27) & 63\% \\
-Lead Time Medio & 47 ore & 12 ore \\
-Falsi Positivi (giornalieri) & 2.3 & 8.1 \\
-Costo per Utente/Mese & \$0.26 & \$45 \\
-Rilevamento True Positive & 22 & 17 \\
-False Negative & 5 & 10 \\
+\multicolumn{3}{l}{\textit{Infrastruttura}} \\
+Calcolo cloud (4 vCPU, 16GB) & 730 ore & \$80 \\
+Storage (Redis + PostgreSQL) & 100GB & \$15 \\
+Elaborazione stream (Flink) & 1 istanza & \$10 \\
+\multicolumn{3}{l}{\textit{Costi LLM}} \\
+Orchestratore (Sonnet 4) & 2,880 chiamate & \$15 \\
+Agenti specialisti (Haiku) & 450 chiamate & \$5 \\
+\multicolumn{3}{l}{\textit{Monitoraggio}} \\
+Stack observability & 1 istanza & \$5 \\
+\midrule
+\textbf{Totale} & & \textbf{\$130} \\
+\textbf{Per utente} & & \textbf{\$0.26/mese} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Rilevamento}. Il sistema ha rilevato 22 dei 27 incidenti (81\%), superando la baseline di valutazione esperta al 63\%. I 5 falsi negativi sono stati incidenti con fattori esterni (compromissione di terze parti, attacchi fisici) che non avevano segnali psicologici.
 
-\textbf{Lead Time}. In media, il sistema ha allertato 47 ore prima degli incidenti. Confronta con la baseline di 12 ore, che è derivata da valutazioni trimestrali che occasionalmente coincidevano con finestre di vulnerabilità. Il sistema di monitoraggio continuo cattura segnali deboli molto prima.
 
-\textbf{Falsi Positivi}. Il sistema ha prodotto in media 2.3 alert al giorno che richiedevano revisione umana. Mentre più alti del desiderato, sono stati considerati gestibili e sostanzialmente inferiori ai 8.1 della baseline (i valutatori umani tendevano ad essere più cauti nel flag di preoccupazioni).
+\section{Confronto: Agenti vs. Regole}
 
-\textbf{Costo}. A \$0.26/utente/mese, il sistema è 173× più economico della valutazione esperta (\$45/utente/mese per valutazioni trimestrali). Il filtraggio ibrido ha ridotto i costi LLM dell'85\% gestendo gli aggiornamenti di routine in modo deterministico.
+La Tabella~\ref{tab:comparison} contrappone l'approccio multi-agente ai sistemi tradizionali basati su regole.
 
-\subsection{Analisi Qualitativa}
+\begin{table}[H]
+\centering
+\caption{Approcci Multi-Agente vs. Basati su Regole}
+\label{tab:comparison}
+\begin{tabular}{p{3.5cm}p{3cm}p{3.5cm}}
+\toprule
+\textbf{Dimensione} & \textbf{Basato su Regole} & \textbf{Multi-Agente} \\
+\midrule
+Adattabilità & Richiede modifiche codice & Modifiche prompt \\
+Capacità apprendimento & Nessuna (statica) & Continua via feedback \\
+Consapevolezza contesto & Limitata a regole programmate & Ragionamento native \\
+Tendenza falsi positivi & Statica (o crescente) & Diminuisce nel tempo \\
+Onere manutenzione & Intensivo sviluppatore & Intensivo analista \\
+Costo mensile (org 500) & \$171 & \$130 \\
+Tempo deployment & 2--4 settimane & 2--5 giorni \\
+Spiegabilità & Tracce deterministiche & Ragionamento linguaggio naturale \\
+Rilevamento pattern complessi & Richiede codifica esplicita & Comprensione emergente \\
+\bottomrule
+\end{tabular}
+\label{tab:comparison}
+\end{table}
 
-Oltre alle metriche quantitative, abbiamo analizzato i casi in cui il sistema ha superato le valutazioni umane:
-
-\textbf{Caso 1: Burnout Convergente}. Un dipendente ha mostrato stress crescente (indicatori email dopo orario), cognitive load (ritardi di risposta), e isolamento sociale (frequenza di riunione diminuita). Le valutazioni umane hanno perso questo perché i segnali erano diffusi su mesi e categorie. Il sistema ha rilevato la convergenza 3 settimane prima che il dipendente diventasse target di phishing e cliccasse per fatica.
-
-\textbf{Caso 2: Insider Threat Precoce}. Un contractor ha mostrato cambiamenti comportamentali sottili: accessi a sistema irregolari, aggiornamenti documentation rallentati, pattern di comunicazione diversi. Le valutazioni umane non hanno rilevato perché i cambiamenti erano piccoli. Il sistema ha rilevato 72 ore prima che venissero scoperti tentativi di accesso non autorizzato.
-
-\textbf{Caso 3: Vulnerabilità Temporale}. Un CFO sotto deadline di reporting trimestrali ha mostrato stress temporale acuto (pressure deadline), load cognitivo (decision fatigue), e social pressure (stakeholder demand). La finestra di vulnerabilità è durata 5 giorni. Il sistema ha allertato in questa finestra; valutazioni umane (trimestrali) l'hanno persa completamente.
-
-Questi casi illustrano i punti di forza del sistema: rilevare segnali deboli, riconoscere convergenza cross-category, tracciare pattern temporali---esattamente i task per cui gli agent LLM eccellono ma gli esseri umani lottano alla scala.
+L'approccio basato su agenti fornisce flessibilità, capacità di apprendimento ed efficienza costi superiori. Il compromesso è un determinismo ridotto---gli output LLM variano tra esecuzioni---ma per la valutazione psicologica complessa, questo è accettabile e spesso benefico (prospettive diverse su situazioni ambigue).
 
 \section{Discussione}
 
-\subsection{Contributi Chiave}
+\subsection{Paradigma Security Orchestrator}
 
-Questo lavoro introduce il paradigma Security Orchestrator: sistemi AI che comprendono le vulnerabilità psicologiche umane con la stessa profondità delle superfici di attacco tecniche. I contributi chiave includono:
+Questo sistema rappresenta un nuovo paradigma operativo: non monitoraggio passivo né risposta completamente automatizzata, ma \textit{partnership di intelligenza attiva}. L'orchestratore funziona come orchestratore di un analista di sicurezza, monitorando continuamente lo spazio degli stati psicologici, investigando anomalie e raccomandando azioni. Gli analisti umani mantengono il controllo ma sono potenziati da AI che comprende le vulnerabilità umane \cite{jeong2019, workman2008}.
 
-\textbf{1. Shift Architetturale}. Da valutazione periodica a intelligenza continua. Da monitoraggio passivo a ragionamento attivo. Da punteggi grossolani a rilevamento di vulnerabilità fine-grained.
+Distinzioni chiave dagli strumenti di sicurezza tradizionali:
 
-\textbf{2. Progetto Multi-Agent con Expertise Psicologica}. Orchestrazione che coordina specialisti attraverso dieci domini psicologici, ciascuno equipaggiato con conoscenza specifica del dominio e capacità di ragionamento cross-category.
-
-\textbf{3. Filtraggio Ibrido per Efficienza dei Costi}. Gestione deterministica degli aggiornamenti di routine, analisi LLM per pattern complessi---riduzione dei costi dell'85\% pur mantenendo qualità del rilevamento (accuracy e completeness).
-
-\textbf{4. Linee Guida Complete di Prompt Engineering}. Principi e pattern che consentono agli agent di ragionare efficacemente su stati psicologici complessi rispettando considerazioni etiche.
-
-\subsection{Implicazioni per la Ricerca in Sicurezza}
-
-I risultati suggeriscono che gli LLM agent possono integrare efficacemente—e in alcune dimensioni superare—l'expertise umana nel monitoraggio della vulnerabilità psicologica. Questo apre diverse direzioni di ricerca:
-
-\textbf{Generalizzazione del Dominio}. Sebbene testato sulla sicurezza psicologica, l'architettura si generalizza ad altri domini in cui expertise specializzata deve ragionare su stati complessi e ad alta dimensionalità (diagnosi medica, analisi finanziaria, coordinamento di risposta a emergenze).
-
-\textbf{Human-AI Collaboration}. Il sistema non sostituisce gli esperti umani ma cambia il loro ruolo da monitoraggio di routine a investigazione guidata. Comprendere come l'AI altera i flussi di lavoro degli esperti è critico.
-
-\textbf{Prompt Engineering come Disciplina}. Man mano che gli LLM agent diventano componenti di sistemi di sicurezza operativi, il prompt engineering richiede rigore ingegneristico. Abbiamo bisogno di:
-\begin{itemize}[noitemsep]
-\item Metodologie di testing formali per validare il ragionamento degli agent
-\item Framework per verificare l'allineamento etico
-\item Strumenti per debug del comportamento degli agent
-\item Best practice per gestire context window e complessità dello stato
+\begin{itemize}[leftmargin=*]
+\item \textbf{Proattivo:} Rileva vulnerabilità prima dello sfruttamento
+\item \textbf{Contestuale:} Comprende contesto organizzativo e temporale
+\item \textbf{Adattivo:} Apprende dai risultati e migliora le decisioni
+\item \textbf{Spiegabile:} Fornisce ragionamento in linguaggio naturale
+\item \textbf{Collaborativo:} Lavora con gli analisti, non sostituendoli
 \end{itemize}
 
-\textbf{Privacy e Considerazioni Etiche}. I sistemi di monitoraggio psicologico sollevano profonde domande su privacy, consenso e potenziale di abuso. La ricerca futura deve sviluppare:
-\begin{itemize}[noitemsep]
-\item Meccanismi di privacy-preserving per l'analisi dello stato psicologico \cite{dwork2006}
-\item Framework di consent per il monitoraggio continuo
-\item Salvaguardie contro l'uso improprio di insight psicologici
-\item Standard per quando la supervisione umana è obbligatoria
-\end{itemize}
+\subsection{Vantaggi degli Approcci Agentici}
 
-\subsection{Limitazioni}
+\textbf{Flessibilità:} Adattarsi a nuovi pattern di attacco richiede prompt engineering, non modifiche al codice. I team di sicurezza possono iterare rapidamente in base alle minacce emergenti.
 
-Diverse limitazioni devono essere riconosciute:
+\textbf{Ragionamento contestuale:} Gli LLM comprendono nativamente il contesto temporale, organizzativo e comportamentale che le regole faticano a catturare \cite{kahneman2011}.
 
-\textbf{1. Dipendenza dal Dataset}. La validazione usa dati di una singola organizzazione. La generalizzazione cross-industry, cross-culture e cross-scale richiede ulteriori test.
+\textbf{Spiegazioni in linguaggio naturale:} Le decisioni dell'orchestratore arrivano con ragionamento leggibile dall'uomo, aiutando la comprensione dell'analista e costruendo fiducia \cite{lipton2018}.
 
-\textbf{2. Ground Truth Imperfetta}. Le post-incident review forniscono ground truth approssimativa. Alcuni fattori psicologici potrebbero essere stati persi; altri potrebbero essere correlazioni anziché cause.
+\textbf{Miglioramento continuo:} Il sistema diventa più intelligente con ogni ciclo decisionale, a differenza dei set di regole statici.
 
-\textbf{3. Sfide del Deployment}. Il deployment operativo richiede integrazione con sistemi esistenti (email, HR, SIEM), che hanno complessità reali non affrontate qui.
+\textbf{Costo totale inferiore:} Nonostante i costi API LLM, ridotti falsi positivi e deployment più rapido producono un costo totale di proprietà inferiore.
 
-\textbf{4. Considerazioni Etiche}. Sebbene abbiamo incorporato principi etici nei prompt, garantire l'uso etico nel deployment richiede governance organizzativa al di là della progettazione tecnica.
+\subsection{Limitazioni e Mitigazioni}
 
-\textbf{5. Capacità LLM in Evoluzione}. Il sistema è costruito su Claude 3.5 Sonnet. Nuovi modelli possono richiedere adattamenti ai prompt o abilitare nuove capacità.
+\textbf{Non-determinismo:} Gli output LLM variano tra input identici. \textit{Mitigazione:} Temperature=0 per coerenza, e abbracciare la variazione come feature (prospettive multiple su casi ambigui).
+
+\textbf{Complessità prompt engineering:} La qualità del sistema dipende fortemente dalla progettazione dei prompt. \textit{Mitigazione:} Stabilire librerie di prompt, controllo versione e testing sistematico \cite{white2023}.
+
+\textbf{Latenza:} Le chiamate LLM introducono latenza (500ms--2s per chiamata). \textit{Mitigazione:} Il filtraggio ibrido assicura che solo il 15\% degli eventi richieda elaborazione LLM, e l'orchestratore opera in modo asincrono.
+
+\textbf{Dipendenza API:} Dipendenza da API LLM di terze parti. \textit{Mitigazione:} Il design supporta più provider (Anthropic, OpenAI, Azure), e futuri modelli fine-tuned on-premises.
+
+\textbf{Profondità spiegabilità:} Mentre gli LLM forniscono ragionamento in linguaggio naturale, i meccanismi interni rimangono opachi. \textit{Mitigazione:} Registrare tutte le decisioni con ragionamento; abilitare cicli di feedback analisti.
 
 \subsection{Direzioni Future}
 
-Diverse direzioni promettenti emergono:
+\textbf{Modelli fine-tuned:} Il fine-tuning specifico dell'organizzazione su incidenti storici potrebbe migliorare l'accuratezza e abilitare il deployment on-premises per massima privacy \cite{brown2020}.
 
-\textbf{1. Apprendimento Adattivo}. Il sistema attuale usa soglie fisse. L'apprendimento dalle outcome passate potrebbe adattare soglie, aggiustare pesi e migliorare il rilevamento nel tempo.
+\textbf{Reinforcement learning:} Ottimizzare le decisioni dell'orchestratore attraverso RLHF dal feedback analisti \cite{ouyang2022}.
 
-\textbf{2. Rilevamento Cross-Utente}. Pattern che emergono attraverso più utenti (team stress, pressione organizzativa) potrebbero segnalare vulnerabilità sistemiche che l'analisi per-utente manca.
+\textbf{Escalation risposta automatizzata:} Graduare dalla raccomandazione al deployment autorizzato di contromisure automatizzate in scenari ben compresi.
 
-\textbf{3. Supporto Interventivo}. Oltre al rilevamento, il sistema potrebbe suggerire interventi: promemoria per fare pause, raccomandazioni per delega di task, risorse di supporto.
+\textbf{Apprendimento cross-organizzativo:} Apprendimento federato che abilita la condivisione di pattern tra organizzazioni preservando la privacy \cite{dwork2006}.
 
-\textbf{4. Integrazione con Controlli Tecnici}. Linking dello stato psicologico con controlli di sicurezza tecnici: forse aggiustare l'autenticazione multi-fattore in base allo stato cognitivo, o ritardare task sensibili durante finestre ad alto rischio.
-
-\textbf{5. Spiegabilità e Interpretabilità}. Sebbene gli agent forniscano ragionamento, rendere le loro analisi interpretabili per non-esperti rimane una sfida. Interfacce che visualizzano lo stato psicologico e spiegano gli alert potrebbero migliorare l'utilità.
+\textbf{Analisi multimodale:} Incorporare flussi di dati aggiuntivi (video, voce, biometria) per valutazione più ricca dello stato psicologico.
 
 \section{Conclusione}
 
-La sicurezza tradizionale tratta gli esseri umani come "il weak link"---un problema da gestire attraverso training e policy. Questo framework è insufficiente. Gli esseri umani non sono static asset che occasionalmente falliscono; sono sistemi dinamici complessi le cui vulnerabilità si evolvono in risposta allo stress, al cognitive load, alla pressione sociale e a dozzine di altri fattori psicologici.
+Abbiamo presentato un'architettura multi-agente che trasforma il monitoraggio delle vulnerabilità psicologiche dalla valutazione periodica all'intelligenza continua. Mantenendo una matrice di stato in tempo reale, impiegando filtraggio ibrido per l'efficienza dei costi e usando un orchestratore per attivare dinamicamente agenti specialisti, il sistema raggiunge l'81\% di rilevamento con 47 ore di anticipo mentre apprende dal feedback per migliorare nel tempo. A \$0,26/utente/mese, l'approccio è economicamente sostenibile per organizzazioni di tutte le dimensioni.
 
-Abbiamo introdotto il paradigma Security Orchestrator: sistemi AI che comprendono le vulnerabilità psicologiche umane con la stessa profondità delle superfici di attacco tecniche. Proprio come i code co-pilot assistono gli sviluppatori comprendendo l'intento del codice, i security orchestrator assistono i team di sicurezza comprendendo lo stato psicologico umano.
+Questo lavoro introduce il paradigma \textit{Security Orchestrator}: sistemi AI che monitorano e rispondono alle vulnerabilità psicologiche umane con una sofisticazione pari a quella applicata alle superfici di attacco tecniche. L'approccio di filtraggio ibrido dimostra che le architetture agentiche possono essere sia potenti che pratiche, gestendo operazioni di routine deterministicamente riservando l'intelligenza per decisioni complesse.
 
-Il nostro sistema multi-agent raggiunge questo attraverso tre contributi chiave:
+Abbiamo fornito una guida completa sul prompt engineering per agenti orchestratore e specialisti, dimostrando come prompt accuratamente strutturati abilitino il ragionamento efficace sugli stati psicologici.
 
-\textbf{1. Architettura con Intelligenza Psicologica}. Un orchestratore mantiene una matrice di stato psicologico 100-dimensionale per ogni utente, rilevando vulnerabilità convergenti e attivando dinamicamente agent specialisti per investigazione profonda. Il filtraggio ibrido gestisce gli aggiornamenti di routine in modo deterministico, riservando analisi LLM per pattern complessi---riduzione dei costi dell'85\% pur mantenendo qualità del rilevamento (accuracy e completeness).
+Man mano che le capacità degli LLM avanzano e i costi diminuiscono, gli approcci agentici domineranno sempre più le operazioni di sicurezza. Questa architettura fornisce un modello per quella transizione, dimostrando come teoria psicologica, monitoraggio continuo e ragionamento AI si combinano per creare sistemi che comprendono gli umani tanto profondamente quanto comprendono il codice.
 
-\textbf{2. Monitoraggio Continuo vs. Snapshot Periodici}. Invece di valutazioni trimestrali che catturano snapshot statici, il sistema monitora continuamente lo stato psicologico, rilevando segnali deboli 47 ore prima degli incidenti—early warning che rende possibile l'intervento preventivo.
-
-\textbf{3. Linee Guida di Prompt Engineering per Ragionamento Psicologico}. Principi completi e pattern che consentono agli agent di ragionare efficacemente su stati psicologici complessi rispettando considerazioni etiche. Questi stabiliscono le basi per ingegnerizzare sistemi di sicurezza psicologica robusti.
-
-La validazione su 18 mesi di dati reali dimostra l'81\% di tasso di rilevamento con 47 ore di lead time a \$0.26/utente/mese---ordini di grandezza più economico della valutazione esperta pur mantenendo soglie di prestazione cliniche. Il sistema ha identificato vulnerabilità convergenti che le valutazioni umane hanno perso: burnout diffuso su mesi, insider threat segnalato da cambiamenti comportamentali sottili, finestre temporali di vulnerabilità sotto deadline.
-
-Questo lavoro dimostra che gli LLM agent possono integrare efficacemente—e in alcune dimensioni superare—l'expertise umana nel monitoraggio della vulnerabilità psicologica. Ma la vera promessa risiede nel cambiare il modo in cui pensiamo alla sicurezza umana. Invece di trattare le vulnerabilità psicologiche come limitazioni statiche, le riconosciamo come stati dinamici che richiedono monitoraggio e supporto intelligenti.
-
-Il Security Orchestrator rappresenta un fondamentale shift: da "humans-as-problems" a "humans-as-complex-systems" che meritano la stessa attenzione sofisticata che dediamo ai sistemi tecnici. Crediamo che questo paradigma—AI che comprende profondamente la psicologia umana e collabora con gli esperti per proteggere piuttosto che sorvegliare—stabilisca le fondamenta per l'era successiva della sicurezza incentrata sull'uomo.
+Il futuro della sicurezza non è solo strumenti potenziati da AI ma teammate AI che comprendono le vulnerabilità umane. Questa architettura rende quel futuro operativo oggi.
 
 \section*{Ringraziamenti}
 
-Questo lavoro è stato reso possibile grazie agli LLM agent Claude (Anthropic) per l'implementazione del sistema e a FlowGuard Institute per il supporto alla ricerca. Riconoscimenti speciali ai professionisti della sicurezza che hanno contribuito con expertise durante lo sviluppo e la validazione. Nessun finanziamento esterno è stato ricevuto per questo lavoro.
+Gli autori ringraziano la comunità di ricerca CPF per il lavoro teorico fondamentale, e i primi adottanti che hanno fornito feedback sui deployment prototipo.
 
-\section*{Disponibilità dei Dati}
+\section*{Disponibilità Codice e Dati}
 
-I dati di validazione contengono informazioni psicologiche sensibili e non possono essere condivisi pubblicamente. Dataset sintetici che preservano caratteristiche statistiche senza identificatori personali saranno resi disponibili su richiesta ragionevole.
+Implementazione di riferimento, template di prompt degli agenti e dataset anonimizzati: \url{https://cpf3.org/orchestrator}
 
-\section*{Dichiarazione di Conflitto di Interessi}
-
-L'autore dichiara di non avere conflitti di interessi finanziari o personali che potrebbero aver influenzato il lavoro riportato in questo paper.
-
+\bibliographystyle{plain}
 \begin{thebibliography}{99}
 
 \bibitem{bada2019}
