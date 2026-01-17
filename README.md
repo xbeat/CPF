@@ -5,8 +5,8 @@
 # Cybersecurity Psychology Framework (CPF)
 
 [![arXiv](https://img.shields.io/badge/arXiv-2510.09635-b31b1b.svg)](https://arxiv.org/abs/2510.09635)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16795774.svg)](https://doi.org/10.5281/zenodo.16795774)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16944972.svg)](https://doi.org/10.5281/zenodo.16944972)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.16795774-blue)](https://doi.org/10.5281/zenodo.16795774)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.16944972-blue)](https://doi.org/10.5281/zenodo.16944972)
 ![Blockchain Verified](https://img.shields.io/badge/Blockchain_Timestamp-2025--08--09-brightgreen)
 ![License](https://img.shields.io/badge/License-CC_BY--NC--ND_4.0-lightgrey.svg)
 [![SSRN Publication](https://img.shields.io/badge/SSRN-Publication-blue)](https://papers.ssrn.com/abstract=5387222)
