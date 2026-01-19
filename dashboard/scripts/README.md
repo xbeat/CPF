@@ -37,6 +37,50 @@ DATABASE_TYPE=sqlite node dashboard/server.js
 
 ---
 
+## 🔥 Script di Inizializzazione Database
+
+### `init_database.js` ⚠️ **DISTRUTTIVO**
+
+**Scopo:** Inizializza il database da zero eliminando tutti i dati esistenti.
+
+**⚠️ ATTENZIONE:** Questo script è **DISTRUTTIVO** e richiede **3 conferme manuali** per procedere.
+
+**Funzionamento:**
+1. Richiede 3 conferme progressive per prevenire eliminazioni accidentali
+2. Rileva automaticamente il tipo di database dalla configurazione (`.env` o `DATABASE_TYPE`)
+3. Elimina completamente tutti i dati esistenti:
+   - **SQLite:** Elimina il file `cpf_dashboard.sqlite`
+   - **PostgreSQL:** Droppa tutte le tabelle (CASCADE)
+   - **JSON:** Elimina tutti i file nella cartella `organizations/`
+4. Ricrea le tabelle da zero usando gli schemi SQL corretti
+5. Genera 5 organizzazioni demo con ~45 assessments ciascuna
+6. Verifica finale che tutto sia stato creato correttamente
+
+**Usage:**
+```bash
+# Per SQLite
+DATABASE_TYPE=sqlite node dashboard/scripts/init_database.js
+
+# Per PostgreSQL (richiede DATABASE_URL configurato)
+DATABASE_TYPE=postgres DATABASE_URL='postgresql://user:pass@host/db' node dashboard/scripts/init_database.js
+
+# Per JSON (default)
+node dashboard/scripts/init_database.js
+```
+
+**Output:**
+- Database completamente ricreato da zero
+- 5 organizzazioni demo con assessments
+- Report finale con statistiche
+
+**Quando usarlo:**
+- ✅ Prima volta che configuri il database
+- ✅ Quando vuoi resettare tutto e ripartire da zero
+- ✅ Durante lo sviluppo per testare con dati puliti
+- ❌ MAI in produzione con dati reali!
+
+---
+
 ## 🧪 Script di Testing e Generazione Dati
 
 ### `test_backend.js`
