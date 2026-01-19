@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS organizations (
     notes TEXT,
     sede_sociale TEXT,
     partita_iva VARCHAR(50),
+    aggregates TEXT, -- JSON stored as TEXT in SQLite
+    deleted_at DATETIME,
+    deleted_by VARCHAR(255),
     is_deleted BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -75,7 +78,7 @@ CREATE INDEX IF NOT EXISTS idx_assessments_indicator_id ON assessments(indicator
 CREATE INDEX IF NOT EXISTS idx_indicators_metadata_org_id ON indicators_metadata(org_id);
 
 -- ============================================================================
--- Trigger per aggiornare il campo `updated_at` in `organizations` (SOLO SQLite)
+-- Trigger per aggiornare il campo `updated_at` (SOLO SQLite)
 -- ============================================================================
 
 CREATE TRIGGER IF NOT EXISTS update_organizations_updated_at
@@ -83,4 +86,11 @@ CREATE TRIGGER IF NOT EXISTS update_organizations_updated_at
     FOR EACH ROW
 BEGIN
     UPDATE organizations SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS update_assessments_updated_at
+    AFTER UPDATE ON assessments
+    FOR EACH ROW
+BEGIN
+    UPDATE assessments SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
 END;

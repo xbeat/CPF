@@ -19,6 +19,10 @@ CREATE TABLE organizations (
     notes TEXT,
     sede_sociale TEXT,
     partita_iva VARCHAR(50),
+    aggregates JSONB,
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    deleted_by VARCHAR(255),
+    is_deleted BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -41,6 +45,7 @@ CREATE TABLE assessments (
     assessment_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     raw_data JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
     -- Ensure one assessment per org+indicator combination
     UNIQUE(org_id, indicator_id)
@@ -70,7 +75,7 @@ CREATE INDEX IF NOT EXISTS idx_assessments_org_id ON assessments(org_id);
 CREATE INDEX IF NOT EXISTS idx_assessments_indicator_id ON assessments(indicator_id);
 
 -- ============================================================================
--- Trigger per aggiornare il campo `updated_at` in `organizations`
+-- Trigger per aggiornare il campo `updated_at`
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -84,5 +89,11 @@ $$ language 'plpgsql';
 DROP TRIGGER IF EXISTS update_organizations_updated_at ON organizations;
 CREATE TRIGGER update_organizations_updated_at
 BEFORE UPDATE ON organizations
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_assessments_updated_at ON assessments;
+CREATE TRIGGER update_assessments_updated_at
+BEFORE UPDATE ON assessments
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
