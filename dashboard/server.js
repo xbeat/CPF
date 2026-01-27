@@ -1676,15 +1676,27 @@ app.get('/api/simulator/status', (req, res) => {
         });
       }
 
-      // Setup callback per salvare assessments generati nel file SOC
+      // Setup callback per aggiornare la matrice visivamente (DEMO MODE - no database save)
+      // NOTA: Il salvataggio nel database è stato disabilitato per ridurre il consumo di rete.
+      // Gli eventi vengono solo visualizzati nella matrice in tempo reale.
       const sim = getSimulator();
       sim.setAssessmentsCallback(async (orgId, assessments) => {
         for (const assessment of assessments) {
-          try {
-            await dataManager.saveSocIndicator(orgId, assessment);
-          } catch (error) {
-            console.error(`Failed to save SOC indicator for ${orgId}:`, error.message);
-          }
+          // Emit WebSocket event per aggiornare la matrice visivamente (senza salvare)
+          io.to(`org:${orgId}`).emit('indicator_update', {
+            indicatorId: assessment.indicator_id,
+            assessment: {
+              bayesian_score: assessment.bayesian_score,
+              confidence: assessment.confidence,
+              maturity_level: assessment.maturity_level
+            },
+            trend: assessment.bayesian_score > 0.5 ? 'up' : 'down',
+            demoMode: true // Flag per indicare che è solo demo
+          });
+        }
+        // Log ridotto per debug
+        if (assessments.length > 0) {
+          console.log(`[DEMO] Emitted ${assessments.length} visual updates for ${orgId} (no DB save)`);
         }
       });
 
@@ -1826,15 +1838,25 @@ app.get('/api/simulator/status', (req, res) => {
         });
       }
 
-      // Start simulator with scenario
+      // Start simulator with scenario (DEMO MODE - no database save)
+      // NOTA: Il salvataggio nel database è stato disabilitato per ridurre il consumo di rete.
       const sim = getSimulator();
       sim.setAssessmentsCallback(async (orgId, assessments) => {
         for (const assessment of assessments) {
-          try {
-            await dataManager.saveAssessment(orgId, assessment, 'SIEM-Simulator');
-          } catch (error) {
-            console.error(`Failed to save assessment for ${orgId}:`, error.message);
-          }
+          // Emit WebSocket event per aggiornare la matrice visivamente (senza salvare)
+          io.to(`org:${orgId}`).emit('indicator_update', {
+            indicatorId: assessment.indicator_id,
+            assessment: {
+              bayesian_score: assessment.bayesian_score,
+              confidence: assessment.confidence,
+              maturity_level: assessment.maturity_level
+            },
+            trend: assessment.bayesian_score > 0.5 ? 'up' : 'down',
+            demoMode: true
+          });
+        }
+        if (assessments.length > 0) {
+          console.log(`[DEMO] Scenario: Emitted ${assessments.length} visual updates for ${orgId} (no DB save)`);
         }
       });
 
