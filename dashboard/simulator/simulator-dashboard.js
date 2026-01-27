@@ -753,6 +753,60 @@ function updateCell(indicatorId, assessment, trend) {
 }
 
 /**
+ * Update cell directly from WebSocket event (DEMO MODE - no database)
+ * Aggiorna la cella della matrice direttamente senza passare per il database
+ */
+function updateCellDirect(indicatorId, score, trend) {
+    const cellId = `cell-${indicatorId.replace('.', '-')}`;
+    const cell = document.getElementById(cellId);
+    if (!cell) return;
+
+    // Remove all risk classes
+    cell.classList.remove('risk-low', 'risk-medium', 'risk-high', 'risk-missing');
+
+    const percentage = Math.round(score * 100);
+
+    // Determine risk level
+    let riskClass;
+    if (score < 0.33) {
+        riskClass = 'risk-low';
+    } else if (score < 0.66) {
+        riskClass = 'risk-medium';
+    } else {
+        riskClass = 'risk-high';
+    }
+
+    cell.classList.add(riskClass);
+
+    // Update percentage value display
+    const valueDiv = cell.querySelector('.cell-value');
+    if (valueDiv) {
+        valueDiv.textContent = `${percentage}%`;
+    }
+
+    // Update trend indicator
+    const trendIndicator = cell.querySelector('.trend-indicator');
+    if (trendIndicator) {
+        if (trend === 'up') {
+            trendIndicator.textContent = '↑';
+            trendIndicator.className = 'trend-indicator trend-up';
+        } else if (trend === 'down') {
+            trendIndicator.textContent = '↓';
+            trendIndicator.className = 'trend-indicator trend-down';
+        } else {
+            trendIndicator.textContent = '';
+        }
+    }
+
+    cell.title = `Indicator ${indicatorId} - Risk: ${percentage}% [DEMO] ${trend ? (trend === 'up' ? '(increasing)' : '(decreasing)') : ''}`;
+
+    // Add visual pulse effect to show update
+    cell.style.animation = 'none';
+    cell.offsetHeight; // Trigger reflow
+    cell.style.animation = 'pulse 0.5s ease-out';
+}
+
+/**
  * Set matrix zoom level
  */
 function setMatrixZoom(zoomLevel) {
@@ -981,11 +1035,18 @@ function setupWebSocket(orgId) {
     });
 
     socket.on('indicator_update', (data) => {
-        if (data.orgId === currentOrgId) {
-            // Reload SOC data to get latest values
-            loadSocData(currentOrgId);
-            logEvent(`${data.indicatorId}: ${Math.round(data.newScore * 100)}% ${data.trend === 'up' ? '↑' : data.trend === 'down' ? '↓' : ''}`);
-        }
+        // DEMO MODE: Aggiorna la matrice visivamente senza ricaricare dal database
+        const indicatorId = data.indicatorId;
+        const assessment = data.assessment;
+        const trend = data.trend;
+
+        // Aggiorna direttamente la cella della matrice
+        updateCellDirect(indicatorId, assessment.bayesian_score, trend);
+
+        // Log evento
+        const score = Math.round(assessment.bayesian_score * 100);
+        const trendSymbol = trend === 'up' ? '↑' : trend === 'down' ? '↓' : '';
+        logEvent(`${indicatorId}: ${score}% ${trendSymbol}${data.demoMode ? ' [DEMO]' : ''}`);
     });
 
     socket.on('error', (error) => {
