@@ -1,0 +1,701 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage[margin=1in, top=0.75in, bottom=0.75in]{geometry}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.4em}
+
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{0.8em}{0.4em}
+\titlespacing*{\subsection}{0pt}{0.6em}{0.3em}
+
+\lstset{
+    basicstyle=\footnotesize\ttfamily,
+    keywordstyle=\color{blue!70},
+    commentstyle=\color{gray},
+    stringstyle=\color{green!60!black},
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!8},
+    captionpos=b,
+    numbers=none,
+    xleftmargin=2pt,
+    xrightmargin=2pt,
+    framexleftmargin=2pt,
+    framexrightmargin=2pt
+}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+    pdftitle={CPF SOC Integration Guide},
+    pdfauthor={Giuseppe Canale},
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\thepage}
+
+\newcommand{\cpf}{\textsc{CPF}}
+\newcommand{\sysname}{\textsc{SiliconPsyche}}
+
+\begin{document}
+\sloppy
+
+\thispagestyle{empty}
+\begin{center}
+\vspace*{0.3cm}
+\rule{\textwidth}{1.5pt}
+\vspace{0.4cm}
+
+{\large \textbf{CPF SOC Integration Guide:}}\\[0.2cm]
+{\large \textbf{Mapping the 100 Indicators to}}\\[0.2cm]
+{\large \textbf{SIEM Platforms and Data Sources}}
+
+\vspace{0.4cm}
+\rule{\textwidth}{1.5pt}
+
+\vspace{0.2cm}
+{\normalsize \textsc{A Technical Reference}}
+\vspace{0.3cm}
+
+{\normalsize Giuseppe Canale, CISSP}\\[0.1cm]
+{\small Independent Researcher}\\[0.05cm]
+{\small \href{mailto:g.canale@cpf3.org}{g.canale@cpf3.org}}\\[0.05cm]
+{\small \href{https://cpf3.org}{cpf3.org}}\\[0.05cm]
+{\small ORCID: \href{https://orcid.org/0009-0007-3263-6897}{0009-0007-3263-6897}}
+
+\vspace{0.3cm}
+{\small February 2026}
+\vspace{0.5cm}
+\end{center}
+
+\begin{abstract}
+The \cpf{} defines 100 pre-cognitive vulnerability indicators across 10 categories. The Implementation Companion \cite{canale2025companion} provides the detection logic. This guide provides the plumbing: how to connect that logic to the tools a Security Operations Center already uses.
+
+The document operates at two levels. At the data source level, it maps CrowdStrike Falcon, Qualys VMDR, Tenable.io, and Rapid7 InsightVM to the specific \cpf{} indicator categories they feed. At the SIEM level, it provides query templates in SPL (Splunk), KQL (Elastic and Microsoft Sentinel), and AQL (QRadar) that extract the signals the \cpf{} engine requires. Each section is self-contained: an engineer working with Splunk needs only the Splunk section, regardless of which data sources are in use.
+
+No new tools are required. The \cpf{} engine runs as an additive layer \cite{canale2026loop}, consuming data that the SOC already collects.
+\end{abstract}
+
+%=============================================================
+% 1. INTRODUCTION
+%=============================================================
+\section{Introduction}
+
+This guide assumes the reader has access to the Implementation Companion \cite{canale2025companion}, which defines the 100 indicators, the OFTLISRV detection schema, and the Convergence Index calculation. This guide does not restate that logic. It answers a single question: given the indicators the Companion defines, where does the data come from, and how do you extract it from the tools you already have?
+
+The guide is organized around two distinct integration layers. The first layer connects vulnerability scanners and endpoint detection tools to the \cpf{} data pipeline. These tools produce raw signals---patch histories, alert volumes, endpoint behavioral data---that the \cpf{} engine transforms into indicator states. The second layer connects the \cpf{} engine to the SIEM platform where correlation happens. This is where queries live, where the Convergence Index is computed, and where alerts are generated.
+
+\subsection{What This Guide Does Not Cover}
+
+This guide does not cover the detection logic itself---that is the Companion's job. It does not cover validation methodology---that is the Validation Roadmap \cite{canale2026roadmap}. It does not cover the deployment strategy---that is the Deployment-Validation Loop \cite{canale2026loop}. It covers only the technical plumbing between \cpf{} and the SOC's existing infrastructure.
+
+%=============================================================
+% 2. ARCHITECTURE OVERVIEW
+%=============================================================
+\section{Architecture Overview}
+
+The integration architecture has three layers. Data sources produce raw telemetry. The SIEM ingests, normalizes, and correlates that telemetry. The \cpf{} engine, running as a query layer within the SIEM, reads the normalized data and computes indicator states.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Integration architecture layers}
+\label{tab:arch}
+\begin{tabular}{lp{1.6cm}p{2.5cm}}
+\toprule
+\textbf{Layer} & \textbf{Role} & \textbf{Tools} \\
+\midrule
+Data Sources & Raw telemetry & CrowdStrike, Qualys, Tenable, Rapid7 \\
+SIEM & Ingest \& correlate & Splunk, Elastic, Sentinel, QRadar \\
+CPF Engine & Indicator comp. & Queries within SIEM \\
+Output & Alerts \& dash. & Native SIEM alerting \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The \cpf{} engine does not run as a separate service. It runs as a set of scheduled queries and correlation rules within the SIEM. This is by design: it keeps the deployment additive and eliminates the need for a separate data pipeline.
+
+\subsection{Indicator-to-Data-Source Mapping}
+
+Not every data source feeds every indicator category. The mapping below shows which categories each source contributes to. An organization does not need all four data sources---even a single vulnerability scanner provides enough signal for categories [2.x], [5.x], and [10.x].
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Which data sources feed which indicator categories}
+\label{tab:mapping}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Category} & \textbf{CS} & \textbf{Qual} & \textbf{Ten} & \textbf{R7} & \textbf{SIEM} \\
+\midrule
+{[1.x]} Authority & \checkmark & & & & \\
+{[2.x]} Temporal & & \checkmark & \checkmark & \checkmark & \\
+{[3.x]} Social & \checkmark & & & & \\
+{[4.x]} Affective & & & & & \checkmark \\
+{[5.x]} Cognitive & \checkmark & \checkmark & \checkmark & \checkmark & \\
+{[6.x]} Group & & & & & \checkmark \\
+{[7.x]} Stress & \checkmark & \checkmark & \checkmark & \checkmark & \\
+{[8.x]} Unconscious & & & & & $\sim$ \\
+{[9.x]} AI-Specific & & & & & \checkmark \\
+{[10.x]} Convergent & \checkmark & \checkmark & \checkmark & \checkmark & \\
+\bottomrule
+\multicolumn{6}{l}{\tiny CS=CrowdStrike. Qual=Qualys. Ten=Tenable. R7=Rapid7. SIEM=native SIEM data.}\\
+\multicolumn{6}{l}{\tiny $\sim$ = retrospective only. See Section 9 for details.}
+\end{tabular}
+\end{table}
+
+%=============================================================
+% 3. DATA SOURCE INTEGRATION
+%=============================================================
+\section{Data Source Integration}
+
+This section covers how each data source connects to the SIEM and what fields the \cpf{} engine expects. All data sources connect via their native SIEM integration modules---no custom connectors are needed.
+
+\subsection{CrowdStrike Falcon}
+
+CrowdStrike is the primary source for endpoint behavioral data. The \cpf{} engine uses three data streams from Falcon.
+
+\textbf{Detections.} Each detection event carries a severity, a tactic classification, and a response action (blocked, allowed, or quarantined). The \cpf{} engine uses the ratio of blocked-to-allowed detections over time to compute alert fatigue signals for category [5.x]. The relevant fields after SIEM ingestion are: \texttt{detection.severity}, \texttt{detection.tactic}, \texttt{response.action}, and \texttt{event.timestamp}.
+
+\textbf{Process telemetry.} Process creation events with parent-child relationships feed category [1.x] (authority). A process launched by an administrative tool that in turn spawns a shell---without matching an approved workflow---is a signal that authority-based override patterns may be active. Fields: \texttt{process.name}, \texttt{process.parent.name}, \texttt{user.roles}.
+
+\textbf{Identity protection events.} When Falcon Identity Protection is enabled, lateral movement attempts and privilege escalation events feed categories [3.x] (social influence) and [7.x] (stress response). Fields: \texttt{identity.action}, \texttt{identity.source\_user}, \texttt{identity.target\_user}.
+
+\subsection{Qualys VMDR}
+
+Qualys feeds vulnerability lifecycle data: when a vulnerability was first detected, when it was last confirmed, and whether it has been patched. This is the primary signal for temporal indicators [2.x].
+
+The \cpf{} engine requires these fields after SIEM ingestion: \texttt{vuln.cve}, \texttt{vuln.first\_detected}, \texttt{vuln.last\_confirmed}, \texttt{vuln.status}, \texttt{host.name}, \texttt{vuln.severity}.
+
+Qualys also provides \texttt{vuln.patch\_status}, which distinguishes patched from unpatched hosts. This is the signal the Companion uses for repetition compulsion detection in [2.x].
+
+\subsection{Tenable.io}
+
+Tenable provides similar vulnerability lifecycle data to Qualys, with one addition relevant to \cpf{}: the \texttt{vuln.vpr} field incorporates exploitation likelihood. The \cpf{} engine uses VPR alongside CVSS to detect splitting: if an organization patches high-VPR vulnerabilities on some systems but not others, that disparity is a [2.x] signal.
+
+Required fields: \texttt{vuln.cve}, \texttt{vuln.vpr}, \texttt{vuln.cvss}, \texttt{vuln.first\_seen},
+\texttt{vuln.last\_seen}, \texttt{vuln.status}, \texttt{asset.id}.
+
+\subsection{Rapid7 InsightVM}
+
+Rapid7 provides vulnerability data with a strong asset-risk scoring model. The \cpf{} engine uses \texttt{asset.risk} to detect cognitive overload [5.x]: when aggregate risk is high but patch rate is low, the Companion's alert fatigue formula applies directly.
+
+Required fields: \texttt{vuln.cve}, \texttt{asset.id}, \texttt{asset.risk},
+\texttt{vuln.first\_found}, \texttt{vuln.status}, \texttt{vuln.severity}.
+
+%=============================================================
+% 4. SPLUNK INTEGRATION
+%=============================================================
+\section{SIEM Integration: Splunk}
+
+Splunk is the most common SIEM in enterprise SOCs. The \cpf{} engine runs as a set of SPL searches and correlation searches within Splunk.
+
+\subsection{Prerequisite: Data Normalization}
+
+All \cpf{} queries assume data has been normalized to Splunk's Common Information Model (CIM). If your data source integrations use CIM-compatible Splunk Add-Ons (which all four supported sources provide), no additional normalization is needed. The queries below use CIM field names.
+
+\subsection{Temporal Vulnerability Detection [2.x]}
+
+This search identifies vulnerabilities open longer than 90 days---the primary temporal vulnerability signal.
+
+\begin{lstlisting}[caption={SPL: Temporal vulnerability detection}]
+index=vulnerability_scan
+  status="Active"
+| eval days_open = 
+    (now() - strtotime(first_detected)) / 86400
+| where days_open > 90
+| stats count as open_count, 
+    avg(days_open) as avg_days 
+    by host, vulnerability.cve, severity
+| sort - avg_days
+| eval cpf_signal = 
+    if(avg_days > 180, "RED",
+    if(avg_days > 90, "YELLOW", "GREEN"))
+\end{lstlisting}
+
+\subsection{Alert Fatigue Detection [5.x]}
+
+This search computes the investigation rate decay over time---the core signal for cognitive overload indicators.
+
+\begin{lstlisting}[caption={SPL: Alert fatigue curve}]
+index=crowdstrike_detections
+| eval week = strftime(
+    _time, "%Y-%W")
+| stats count as total_alerts,
+    count(eval(response_action="investigated")) 
+      as investigated 
+    by week, analyst
+| eval invest_rate = 
+    investigated / total_alerts
+| join type=left analyst [
+    search index=crowdstrike_detections
+    | eval week = strftime(_time, "%Y-%W")
+    | stats count as t_total,
+        count(eval(response_action="investigated"))
+          as t_inv by week, analyst
+    | eval rate = t_inv / t_total
+    | stats max(rate) as baseline_rate 
+      by analyst
+  ]
+| eval fatigue_score = 
+    1 - (invest_rate / baseline_rate)
+| eval cpf_signal = 
+    if(fatigue_score > 0.7, "RED",
+    if(fatigue_score > 0.4, "YELLOW", "GREEN"))
+\end{lstlisting}
+
+\subsection{Authority Override Detection [1.x]}
+
+This search identifies processes launched by administrative accounts that deviate from approved baselines---the signal for authority-based vulnerability indicators.
+
+\begin{lstlisting}[caption={SPL: Authority override detection}]
+index=crowdstrike_process
+  user.roles="Administrator"
+| eval parent_admin = 
+    if(process.parent.name IN (
+      "svchost.exe","explorer.exe",
+      "cmd.exe","powershell.exe"), 1, 0)
+| eval shell_spawn = 
+    if(process.name IN (
+      "cmd.exe","powershell.exe",
+      "bash.exe","sh.exe"), 1, 0)
+| where parent_admin=1 AND shell_spawn=1
+| bin _time as hour
+| stats count as override_count 
+    by host, user.name, hour
+| eval cpf_signal = 
+    if(override_count > 5, "RED",
+    if(override_count > 2, "YELLOW", "GREEN"))
+\end{lstlisting}
+
+\subsection{Convergence Index Computation}
+
+The Convergence Index aggregates all active indicator states into a single organizational risk score. The query below uses equal weights for illustration. In production, replace the numerator with a weighted sum using the $w_i$ values from the Companion's Bayesian network (Section 8 defines the full weighted formula). In Splunk, this runs as a scheduled search that reads the outputs of the individual indicator searches.
+
+\begin{lstlisting}[caption={SPL: Convergence Index}]
+index=cpf_indicator_states
+| stats 
+    count(eval(cpf_signal="RED")) as red,
+    count(eval(cpf_signal="YELLOW")) as yellow,
+    count(eval(cpf_signal="GREEN")) as green
+| eval total = red + yellow + green
+| eval CI = 
+    (red * 1.0 + yellow * 0.5) / total
+| eval CI_state = 
+    if(CI > 0.6, "CRITICAL",
+    if(CI > 0.4, "HIGH",
+    if(CI > 0.2, "ELEVATED", "NORMAL")))
+| table CI, CI_state, red, yellow, green
+\end{lstlisting}
+
+%=============================================================
+% 5. ELASTIC INTEGRATION
+%=============================================================
+\section{SIEM Integration: Elastic}
+
+Elastic uses the Elastic Common Schema (ECS) for field normalization. The \cpf{} engine runs as a combination of saved searches and detection rules within Elastic Security.
+
+\subsection{Prerequisite: ECS Mapping}
+
+CrowdStrike, Qualys, Tenable, and Rapid7 all have official Elastic integrations that map to ECS. Verify that your integrations are using ECS-compatible mappings before deploying \cpf{} queries. Key ECS fields used throughout: \texttt{event.category}, \texttt{event.action}, \texttt{host.name}, \texttt{user.name}, \texttt{process.name}, \texttt{process.parent.name}.
+
+\subsection{Temporal Vulnerability Detection [2.x]}
+
+\begin{lstlisting}[caption={KQL: Temporal vulnerability filter}]
+event.category:"vulnerability" AND
+  vulnerability.status:"open" AND
+  NOT vulnerability.patched:true AND
+  vulnerability.first_detected:<now-90d
+\end{lstlisting}
+
+The KQL filter above selects the raw event set. Elastic does not support aggregation in KQL directly---use an \textbf{ML job} for the full detection. Train on 30 days of \texttt{days\_open} grouped by \texttt{host.name}. Anomalies exceeding the host's historical average by more than 2 standard deviations trigger a \cpf{} [2.x] signal.
+
+Alternatively, implement as a \textbf{Transform job} that reads the filtered events, computes \texttt{days\_open} per host, and writes results to a \texttt{cpf-temporal-states} index.
+
+\subsection{Alert Fatigue Detection [5.x]}
+
+\begin{lstlisting}[caption={KQL: Alert fatigue filter}]
+event.category:"alert" AND
+  data_source:"crowdstrike"
+\end{lstlisting}
+
+Use a \textbf{Transform job} to compute the investigation rate per analyst per week. The Transform reads events matching the filter above, groups by \texttt{user.name} and a weekly time bucket, and computes \texttt{invest\_rate = investigated / total}. It writes the result to a \texttt{cpf-fatigue-states} index. The \cpf{} engine reads this index to detect decay patterns over time.
+
+\subsection{Convergence Index}
+
+In Elastic, the Convergence Index is best computed via a \textbf{Transform job} that reads from a dedicated \texttt{cpf-indicator-states} index (written to by each indicator's detection rule) and produces a single document per evaluation period containing the CI value and state.
+
+%=============================================================
+% 6. MICROSOFT SENTINEL INTEGRATION
+%=============================================================
+\section{SIEM Integration: Microsoft Sentinel}
+
+Sentinel uses Kusto Query Language (KQL) and integrates natively with Microsoft's ecosystem. CrowdStrike, Qualys, Tenable, and Rapid7 all have Sentinel connectors available through the Azure Marketplace or the Sentinel connectors gallery.
+
+\subsection{Temporal Vulnerability Detection [2.x]}
+
+\begin{lstlisting}[caption={KQL (Sentinel): Temporal vulnerability}]
+CommonSecurityLog
+| where DeviceVendor == "Qualys" 
+    or DeviceVendor == "Tenable"
+| where DeviceEventClassID contains "vuln"
+| extend DaysOpen = 
+    datetime_diff("day", TimeGenerated, 
+      todatetime(DeviceCustomString1))
+| where DaysOpen > 90
+| summarize 
+    OpenCount = count(),
+    AvgDays = avg(DaysOpen) 
+    by DestinationHostName, 
+       DeviceCustomString2 // CVE
+| extend CPF_Signal = 
+    iff(AvgDays > 180, "RED",
+    iff(AvgDays > 90, "YELLOW", "GREEN"))
+\end{lstlisting}
+
+Note: \texttt{DeviceCustomString1--6} are mapped differently by each connector. Verify the exact mapping in your Sentinel workspace before deploying.
+
+\subsection{Alert Fatigue Detection [5.x]}
+
+\begin{lstlisting}[caption={KQL (Sentinel): Alert fatigue}]
+SecurityAlert
+| where ProductName == "CrowdStrike"
+| extend WeekNumber = 
+    week_of_year(TimeGenerated)
+| summarize 
+    TotalAlerts = count(),
+    Investigated = countif(
+      Status == "Investigated")
+    by WeekNumber, AssignedTo
+| extend InvestRate = 
+    Investigated * 1.0 / TotalAlerts
+| extend CPF_Signal = 
+    iff(InvestRate < 0.3, "RED",
+    iff(InvestRate < 0.6, "YELLOW", "GREEN"))
+\end{lstlisting}
+
+\subsection{Convergence Index}
+
+Sentinel supports \textbf{Scheduled Alert Rules} that run on a defined schedule and write results to a custom table. Create a table \texttt{CPF\_ConvergenceIndex} and a scheduled rule that reads from \texttt{CPF\_IndicatorStates} (populated by each indicator's alert rule) and computes the CI using the same weighted formula as the Splunk version above.
+
+%=============================================================
+% 7. QRADAR INTEGRATION
+%=============================================================
+\section{SIEM Integration: QRadar}
+
+QRadar uses Ariel Query Language (AQL) for data retrieval. The \cpf{} engine runs as a combination of saved searches and custom correlation rules within QRadar.
+
+\subsection{Temporal Vulnerability Detection [2.x]}
+
+\begin{lstlisting}[caption={AQL: Temporal vulnerability}]
+SELECT 
+  t.qradar_source_name as scanner,
+  t.source_ip,
+  t.vulnerability_name,
+  DATEDIFF('day',
+    t.first_detected,
+    NOW()
+  ) as days_open
+FROM events t
+WHERE t.event_category = 'Vulnerability'
+  AND t.vulnerability_status = 'Active'
+  AND DATEDIFF('day',
+    t.first_detected,
+    NOW()
+  ) > 90
+ORDER BY days_open DESC
+\end{lstlisting}
+
+In QRadar, wrap this in a \textbf{custom correlation rule} that fires when the count of vulnerabilities with \texttt{days\_open > 90} for a given host exceeds a threshold. The correlation rule outputs a \cpf{} offense with a custom category that maps to indicator [2.x].
+
+\subsection{Alert Fatigue Detection [5.x]}
+
+\begin{lstlisting}[caption={AQL: Alert investigation rate}]
+SELECT 
+  t.username as analyst,
+  COUNT(*) as total_alerts,
+  SUM(CASE 
+    WHEN t.alert_status = 'Investigated' 
+    THEN 1 ELSE 0 
+  END) as investigated,
+  CAST(
+    SUM(CASE 
+      WHEN t.alert_status = 'Investigated' 
+      THEN 1 ELSE 0 
+    END) AS FLOAT
+  ) / COUNT(*) as invest_rate
+FROM events t
+WHERE t.source_name = 'CrowdStrike'
+  AND t.event_category = 'Detection'
+GROUP BY t.username
+HAVING CAST(
+    SUM(CASE 
+      WHEN t.alert_status = 'Investigated' 
+      THEN 1 ELSE 0 
+    END) AS FLOAT
+  ) / COUNT(*) < 0.3
+\end{lstlisting}
+
+\subsection{Convergence Index}
+
+QRadar's correlation engine supports \textbf{grouped correlation rules} that aggregate across multiple offense types. Create a grouped rule that watches for offenses tagged with \cpf{} indicator categories. When three or more distinct categories are active simultaneously for the same organization, the rule fires with a \cpf{} Convergence Index offense.
+
+%=============================================================
+% 8. CONVERGENCE INDEX COMPUTATION
+%=============================================================
+\section{Convergence Index Computation}
+
+Regardless of SIEM platform, the Convergence Index follows the same logic. Each indicator has a state (Green, Yellow, Red) as defined by the Implementation Companion \cite{canale2025companion}. The CI aggregates these states into a single score.
+
+\subsection{Formula}
+
+$$CI = \frac{\sum_{i=1}^{n} w_i \cdot s_i}{\sum_{i=1}^{n} w_i}$$
+
+where $s_i$ is the numeric state of indicator $i$ (Green = 0, Yellow = 0.5, Red = 1.0), and $w_i$ is the weight defined in the Companion's Bayesian network for that indicator.
+
+\subsection{State Thresholds}
+
+\begin{table}[h!]
+\centering
+\small
+\caption{CI state thresholds}
+\label{tab:ci}
+\begin{tabular}{lll}
+\toprule
+\textbf{CI Range} & \textbf{State} & \textbf{Action} \\
+\midrule
+0.0--0.2 & Normal & Routine monitoring \\
+0.2--0.4 & Elevated & Increase alert attention \\
+0.4--0.6 & High & Analyst review required \\
+0.6--1.0 & Critical & Incident response posture \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Update Frequency}
+
+The CI should be recomputed every time any individual indicator changes state. In practice, this means the CI query runs on the same schedule as the slowest indicator query. For most deployments, a 1-hour cycle is sufficient for the first 30 days. Once the deployment stabilizes, this can be adjusted based on the organization's incident rate.
+
+%=============================================================
+% 9. OUTPUT
+%=============================================================
+\section{Output: Alerts and Dashboard Feed}
+
+The \cpf{} engine produces two outputs. The first is an alert when any indicator transitions to Yellow or Red, or when the Convergence Index crosses a threshold. The second is a continuous state feed that populates a dashboard.
+
+\subsection{Alert Structure}
+
+Every \cpf{} alert contains the following fields, regardless of SIEM platform:
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Standard CPF alert fields}
+\label{tab:alert}
+\begin{tabular}{lp{2.8cm}}
+\toprule
+\textbf{Field} & \textbf{Content} \\
+\midrule
+\texttt{cpf.indicator} & Indicator code (e.g., {[}5.1{]}) \\
+\texttt{cpf.category} & Category name \\
+\texttt{cpf.state} & GREEN / YELLOW / RED \\
+\texttt{cpf.previous\_state} & State before transition \\
+\texttt{cpf.ci\_value} & Current Convergence Index \\
+\texttt{cpf.ci\_state} & CI state (Normal/Elevated/High/Critical) \\
+\texttt{cpf.timestamp} & Evaluation timestamp \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Dashboard Feed}
+
+The dashboard reads from the same indicator state index that the CI query uses. It displays: current CI value and state, the count of indicators in each state (Red/Yellow/Green) per category, and the trend of the CI over the last 30 days. The Deployment-Validation Loop \cite{canale2026loop} defines the maturity levels that map to dashboard views---an organization at Level 2 (Monitoring) sees the raw state feed; an organization at Level 4 (Proactive) sees lead-time predictions alongside the current state.
+
+%=============================================================
+% 9. CATEGORIES REQUIRING SPECIAL TREATMENT
+%=============================================================
+\section{Categories Requiring Special Treatment}
+
+Four indicator categories do not map cleanly to the external data sources covered in Section 3. They require either native SIEM data, retrospective analysis, or both. This section covers each one.
+
+\subsection{[4.x] Affective States}
+
+Affective vulnerability indicators---shame, guilt, fear, anxiety in security decision-making---cannot be measured directly. No tool reports that an analyst felt ashamed. But the behavioral consequences of affective states are observable in the SIEM.
+
+The primary proxy is \textbf{post-incident access pattern deviation}. When a security event implicates a specific user (as operator, not as target), that user's access behavior in the hours that follow deviates from their baseline in predictable ways if an affective state is active. Guilt-driven behavior produces increased access to the relevant systems---checking, correcting, covering. Fear-driven behavior produces avoidance---delayed logins, reduced activity, or delegation of tasks.
+
+The following SPL query illustrates the detection pattern. Equivalent logic applies in other SIEMs using their native user activity data.
+
+\begin{lstlisting}[caption={SPL: Post-incident affective behavior proxy}]
+index=security_events
+  event_type="incident"
+| eval incident_user = involved_user
+| eval incident_time = _time
+| join type=inner incident_user [
+    search index=authentication
+    | stats count as login_count,
+        avg(session_duration) as avg_session
+      by user, bin(_time, "1h") as hour
+  ]
+| eval hours_since = 
+    (now() - incident_time) / 3600
+| where hours_since <= 12
+| eval baseline_logins = 
+    avg(login_count) over [
+      search index=authentication
+      | stats avg(login_count) as bl 
+        by user
+    ]
+| eval deviation = 
+    (login_count - baseline_logins) 
+    / baseline_logins
+| eval cpf_signal = 
+    if(abs(deviation) > 2.0, "RED",
+    if(abs(deviation) > 1.0, "YELLOW", "GREEN"))
+\end{lstlisting}
+
+\subsection{[6.x] Group Dynamics}
+
+Group dynamics indicators target collective vulnerability patterns: normalization of risk, shared blind spots, and what Bion termed basic assumptions operating at the team level. These are not individual behaviors---they are patterns visible only when multiple analysts' decisions are examined together.
+
+The detection proxy is \textbf{team-level alert disposition convergence}. When a team of analysts independently classifies similar alerts as low-priority within the same time window, and this convergence rate exceeds the team's historical baseline, the pattern is consistent with group normalization.
+
+\begin{lstlisting}[caption={SPL: Group normalization detection}]
+index=soc_analyst_actions
+  action_type="alert_disposition"
+| eval team = lookup(analyst_team, 
+    analyst_name)
+| eval week = strftime(_time, "%Y-%W")
+| stats count as dispositions,
+    count(eval(priority="low")) as low_count
+    by team, week, alert_category
+| eval low_rate = low_count / dispositions
+| join type=left team [
+    search index=soc_analyst_actions
+    | eval team = lookup(analyst_team, 
+        analyst_name)
+    | eval week = strftime(_time, "%Y-%W")
+    | stats count as d, 
+        count(eval(priority="low")) as l 
+      by team, week, alert_category
+    | eval rate = l / d
+    | stats avg(rate) as baseline_rate 
+      by team, alert_category
+  ]
+| eval norm_score = 
+    (low_rate - baseline_rate) / baseline_rate
+| eval cpf_signal = 
+    if(norm_score > 0.5, "RED",
+    if(norm_score > 0.3, "YELLOW", "GREEN"))
+\end{lstlisting}
+
+Note: this query requires that analyst actions (alert dispositions with priority assignments) are logged in the SIEM. Most SOC platforms log this data natively. If your SOC does not log individual analyst disposition decisions, this indicator cannot be computed.
+
+\subsection{[8.x] Unconscious Process}
+
+This is the only category with no real-time detection capability. The Validation Roadmap \cite{canale2026roadmap} identifies [8.x] as the hardest category: unconscious processes---shadow projection, rationalization, attribution distortion---are, by definition, not observable while they are active. They become visible only retrospectively, when the consequences of the distorted cognition can be compared against what the record shows actually happened.
+
+The \cpf{} engine does not produce real-time signals for [8.x]. Instead, [8.x] is evaluated through a \textbf{post-mortem analysis protocol}. After each security incident, the incident report is reviewed for patterns consistent with unconscious process indicators: attribution of the incident to external causes when internal factors were present, rationalization of decisions that were demonstrably risky at the time they were made, or projection of responsibility onto systems or other teams when the evidence points elsewhere.
+
+This analysis is manual. It requires access to the full incident timeline, the communications that preceded the incident, and the post-mortem documentation. It is performed by a reviewer who was not involved in the incident response.
+
+The output of this analysis feeds back into the Convergence Index retrospectively---it adjusts the CI for the period in question based on evidence that was not available in real time. This retrospective adjustment is logged in the \texttt{cpf-indicator-states} index with a flag indicating it was generated post-mortem rather than in real time.
+
+\subsection{[9.x] AI-Specific Bias}
+
+As organizations deploy AI-assisted tools within their SOCs---automated alert triage, incident summarization, risk scoring---these tools become both an asset and a new attack surface. Category [9.x] targets the vulnerability patterns specific to AI systems: susceptibility to prompt manipulation, training data exploitation, and systematic bias in AI-assisted decisions.
+
+The detection proxy is \textbf{AI-human decision divergence}. When an AI tool's classification systematically disagrees with the analyst's subsequent manual classification on the same alert, and the pattern of disagreement is non-random, the AI tool may be operating under a biased or manipulated input condition.
+
+\begin{lstlisting}[caption={SPL: AI-human decision divergence}]
+index=ai_triage_logs
+  ai_tool="*"
+| eval ai_priority = ai_classification
+| join type=inner alert_id [
+    search index=soc_analyst_actions
+    | rename priority as analyst_priority
+  ]
+| eval divergent = 
+    if(ai_priority != analyst_priority, 1, 0)
+| stats count as total,
+    sum(divergent) as divergences
+    by ai_tool, alert_category, 
+       bin(_time, "1d") as day
+| eval div_rate = divergences / total
+| eval baseline_div = 0.15
+| eval cpf_signal = 
+    if(div_rate > 0.4, "RED",
+    if(div_rate > 0.25, "YELLOW", "GREEN"))
+\end{lstlisting}
+
+Note: the baseline divergence rate (0.15) is illustrative. Each organization should establish its own baseline from the first 30 days of AI tool operation. A divergence rate that exceeds the baseline by more than 2 standard deviations triggers a [9.x] signal regardless of the absolute value.
+
+%=============================================================
+% 10. DEPLOYMENT CHECKLIST
+%=============================================================
+\section{Deployment Checklist}
+
+The following checklist covers the minimum steps to get the \cpf{} engine operational in a production SOC. Each step assumes the SIEM and data sources are already in place.
+
+\subsection{Phase 1: Data Verification (Day 1)}
+
+Verify that the required fields from Section 3 are present in your SIEM. Run a simple count query against each data source to confirm ingestion is active. If any data source is missing, the indicators that depend on it (Table 2) will not produce signals---this is expected and does not block deployment of the remaining indicators.
+
+\subsection{Phase 2: Indicator Deployment (Days 2--5)}
+
+Deploy the indicator queries from Sections 4--7 (whichever section matches your SIEM). Start with the three indicators that produce signal fastest: [2.x] Temporal (requires only vulnerability scan history), [5.x] Cognitive Overload (requires only alert data), and [1.x] Authority (requires only endpoint process data). These three categories cover the majority of observable pre-incident signals.
+
+\subsection{Phase 3: Convergence Index (Day 6)}
+
+Deploy the CI computation query. At this point, the system is in the state the Deployment-Validation Loop \cite{canale2026loop} defines as Level 2: Monitoring. Metrics are accumulating.
+
+\subsection{Phase 4: Alert Tuning (Days 7--30)}
+
+The first 30 days will produce false positives as the system calibrates to the organization's baseline. Do not adjust thresholds during this period---the noise is itself data. After 30 days, review the alert volume and precision. If precision is below 0.2, review the indicator queries against the Companion's detection logic to ensure the field mappings are correct.
+
+\subsection{Phase 5: Dashboard (Day 7 onward)}
+
+The dashboard can be deployed in parallel with Phase 4. It reads from the indicator state index and requires no additional configuration beyond the queries already deployed.
+
+%=============================================================
+% REFERENCES
+%=============================================================
+\begin{thebibliography}{99}
+
+\bibitem{canale2025cpf}
+Canale, G. (2025). The Cybersecurity Psychology Framework: A Pre-Cognitive Vulnerability Assessment Model. \textit{CPF Technical Report Series}.
+
+\bibitem{canale2025companion}
+Canale, G. (2025). Operationalizing the Cybersecurity Psychology Framework: A Systematic Implementation Methodology. \textit{CPF Technical Report Series}.
+
+\bibitem{canale2026roadmap}
+Canale, G. (2026). Toward Empirical Validation of the Cybersecurity Psychology Framework: A Tiered Methodological Roadmap. \textit{CPF Technical Report Series}.
+
+\bibitem{canale2026loop}
+Canale, G. (2026). From Framework to Operations: The CPF Deployment-Validation Loop. \textit{CPF Technical Report Series}.
+
+\end{thebibliography}
+
+
+
+\end{document}
