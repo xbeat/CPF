@@ -1337,6 +1337,26 @@ app.get('/api/indicators/:indicatorId/metadata/:lang', (req, res) => {
 });
 
 // ============================================
+// API ENDPOINTS - DB MONITORING
+// ============================================
+
+/**
+ * GET /api/db-stats
+ * Returns database query statistics to monitor traffic consumption
+ */
+app.get('/api/db-stats', (req, res) => {
+  try {
+    if (typeof db.getQueryStats === 'function') {
+      res.json(db.getQueryStats());
+    } else {
+      res.json({ message: 'Query stats not available for current DB driver' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
 // API ENDPOINTS - LEGACY (BACKWARD COMPATIBILITY)
 // ============================================
 
@@ -1963,16 +1983,30 @@ app.post('/api/simulator/emit', async (req, res) => {
     // Convert to assessments
     const assessments = await cpfAdapter.convertEventsToAssessments(events, orgId, 'manual');
 
-    // Save assessments
+    // Save to SOC indicators only (NOT to auditing assessments table)
+    // This avoids polluting the auditing data and reduces DB traffic
     for (const assessment of assessments) {
       try {
-        await dataManager.saveAssessment(orgId, assessment, 'Manual-Simulator');
+        await db.saveSocIndicator(orgId, assessment);
       } catch (error) {
-        console.error(`Failed to save assessment:`, error.message);
+        console.error(`Failed to save SOC indicator:`, error.message);
       }
     }
 
-    console.log(`\n⚡ [API] Emitted ${events.length} manual event(s) for ${orgId}\n`);
+    // Emit WebSocket events for visual updates
+    for (const assessment of assessments) {
+      io.to(`org:${orgId}`).emit('indicator_update', {
+        indicatorId: assessment.indicator_id,
+        assessment: {
+          bayesian_score: assessment.bayesian_score,
+          confidence: assessment.confidence,
+          maturity_level: assessment.maturity_level
+        },
+        trend: assessment.bayesian_score > 0.5 ? 'up' : 'down'
+      });
+    }
+
+    console.log(`\n⚡ [API] Emitted ${events.length} manual event(s) for ${orgId} (SOC only, no auditing save)\n`);
 
     res.json({
       success: true,
@@ -2029,6 +2063,8 @@ server.listen(PORT, () => {
   console.log(`        GET    /api/organizations/:orgId/aggregates`);
   console.log(`        GET    /api/organizations/:orgId/missing`);
   console.log(`        POST   /api/organizations/:orgId/recalculate`);
+  console.log(`      Monitoring:`);
+  console.log(`        GET    /api/db-stats`);
   console.log(`      Legacy (backward compatibility):`);
   console.log(`        GET    /api/auditing-results`);
   console.log(`        GET    /api/list-exports`);
