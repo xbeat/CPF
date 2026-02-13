@@ -14,67 +14,6 @@ const pool = new Pool(config.database.postgres);
 let isInitialized = false;
 
 // =============================================================================
-// DB Query Monitor - tracks all queries to identify excessive traffic
-// =============================================================================
-const queryStats = {
-  startTime: Date.now(),
-  totalQueries: 0,
-  totalBytesEstimated: 0,
-  queryCounts: {},  // { queryLabel: { count, bytes, lastCalled } }
-};
-
-function trackQuery(label, resultRows) {
-  queryStats.totalQueries++;
-  const estimatedBytes = resultRows ? JSON.stringify(resultRows).length : 0;
-  queryStats.totalBytesEstimated += estimatedBytes;
-
-  if (!queryStats.queryCounts[label]) {
-    queryStats.queryCounts[label] = { count: 0, bytes: 0, lastCalled: null };
-  }
-  queryStats.queryCounts[label].count++;
-  queryStats.queryCounts[label].bytes += estimatedBytes;
-  queryStats.queryCounts[label].lastCalled = new Date().toISOString();
-}
-
-function getQueryStats() {
-  const uptimeMs = Date.now() - queryStats.startTime;
-  const uptimeHours = uptimeMs / (1000 * 60 * 60);
-  const estimatedDaily = uptimeHours > 0
-    ? (queryStats.totalBytesEstimated / uptimeHours) * 24
-    : 0;
-
-  return {
-    uptime_hours: Math.round(uptimeHours * 100) / 100,
-    total_queries: queryStats.totalQueries,
-    total_bytes_estimated: queryStats.totalBytesEstimated,
-    total_mb_estimated: Math.round(queryStats.totalBytesEstimated / (1024 * 1024) * 100) / 100,
-    estimated_daily_mb: Math.round(estimatedDaily / (1024 * 1024) * 100) / 100,
-    queries_per_hour: uptimeHours > 0 ? Math.round(queryStats.totalQueries / uptimeHours) : 0,
-    breakdown: Object.entries(queryStats.queryCounts)
-      .sort((a, b) => b[1].bytes - a[1].bytes)
-      .map(([label, stats]) => ({
-        query: label,
-        count: stats.count,
-        bytes: stats.bytes,
-        mb: Math.round(stats.bytes / (1024 * 1024) * 100) / 100,
-        last_called: stats.lastCalled
-      }))
-  };
-}
-
-// Log stats every 10 minutes
-setInterval(() => {
-  const stats = getQueryStats();
-  if (stats.total_queries > 0) {
-    console.log(`[DB-MONITOR] Uptime: ${stats.uptime_hours}h | Queries: ${stats.total_queries} (${stats.queries_per_hour}/h) | Traffic: ${stats.total_mb_estimated}MB | Est. daily: ${stats.estimated_daily_mb}MB`);
-    const top3 = stats.breakdown.slice(0, 3);
-    for (const q of top3) {
-      console.log(`  [DB-MONITOR]  -> ${q.query}: ${q.count} calls, ${q.mb}MB`);
-    }
-  }
-}, 10 * 60 * 1000);
-
-// =============================================================================
 // In-memory cache for organizations index (invalidated on writes)
 // =============================================================================
 let orgIndexCache = null;
@@ -278,7 +217,6 @@ async function readOrganizationsIndex() {
 
   // Return cached result if still valid
   if (orgIndexCache && (Date.now() - orgIndexCacheTime) < ORG_INDEX_CACHE_TTL) {
-    trackQuery('readOrganizationsIndex (CACHED)', null);
     return orgIndexCache;
   }
 
@@ -296,8 +234,6 @@ async function readOrganizationsIndex() {
       LEFT JOIN assessments a ON a.org_id = o.id
       ORDER BY o.name ASC, a.indicator_id ASC
     `);
-
-    trackQuery('readOrganizationsIndex (JOIN)', rows);
 
     // Group rows by organization
     const orgMap = new Map();
@@ -398,16 +334,12 @@ async function readOrganization(orgId) {
       [orgId]
     );
     const orgRow = orgRes.rows[0];
-    trackQuery('readOrganization:org', orgRes.rows);
-
     if (!orgRow) return null;
 
     const assessRes = await pool.query(
       'SELECT indicator_id, title, category, maturity_level, bayesian_score, confidence, assessor, assessment_date, raw_data FROM assessments WHERE org_id = $1',
       [orgId]
     );
-    trackQuery('readOrganization:assessments', assessRes.rows);
-
     // Convert decimal fields from string to number for consistency
     const assessments = assessRes.rows.reduce((acc, a) => {
       if (a.bayesian_score) {
@@ -611,7 +543,6 @@ async function saveAssessment(orgId, indicatorId, data) {
   try {
     await pool.query(query, [orgId, indicatorId, title, category, maturity_level, bayesian_score, confidence, assessor, assessment_date, raw_data]);
     invalidateOrgIndexCache();
-    trackQuery('saveAssessment', null);
     return { success: true };
   } catch (error) {
     console.error(`[DB-PG] Error saving assessment for organization ${orgId}, indicator ${indicatorId}:`, error);
@@ -669,8 +600,6 @@ async function getSocData(orgId) {
 
         // Read from soc_indicators table (NOT assessments table)
         const socRes = await pool.query('SELECT indicator_id, value, previous_value, event_count, last_event_type, last_event_severity, updated_at FROM soc_indicators WHERE org_id = $1 ORDER BY indicator_id', [orgId]);
-        trackQuery('getSocData', socRes.rows);
-
         // Return empty indicators object if no data (not null - allows dashboard to render)
         const indicators = {};
         for (const row of socRes.rows) {
@@ -725,8 +654,6 @@ async function saveSocIndicator(orgId, assessmentData) {
     `;
 
     const result = await pool.query(query, [orgId, indicatorId, value, lastEventType, lastEventSeverity, source]);
-    trackQuery('saveSocIndicator', result.rows);
-
     const previousValue = result.rows[0]?.previous_value ? parseFloat(result.rows[0].previous_value) : null;
     const eventCount = result.rows[0]?.event_count || 1;
 
@@ -754,7 +681,6 @@ module.exports = {
   deleteAssessment,
   getSocData,
   saveSocIndicator,
-  getQueryStats,
   invalidateOrgIndexCache,
   // Funzioni alias o non più necessarie mantenute per retrocompatibilità
   saveIndicatorMetadata: async () => { console.warn('[DB-PG] saveIndicatorMetadata non è implementata in modo granulare, i dati vengono salvati con l\'intera organizzazione.'); },

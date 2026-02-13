@@ -60,6 +60,9 @@ initialize().catch(err => {
   process.exit(1);
 });
 
+// Request monitor (tracks who calls what and how much)
+const monitor = require('./lib/monitor');
+
 // SOC (lazy-loaded on first use)
 let simulator = null;
 
@@ -106,6 +109,9 @@ io.on('connection', (socket) => {
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Request monitoring (tracks IPs, endpoints, traffic - all in-memory, no DB writes)
+app.use(monitor.requestTracker);
 
 // Serve static files from dashboard folder
 app.use('/dashboard', express.static(__dirname));
@@ -1400,15 +1406,13 @@ app.get('/api/indicators/:indicatorId/metadata/:lang', (req, res) => {
 
 /**
  * GET /api/db-stats
- * Returns database query statistics to monitor traffic consumption
+ * Returns real monitoring data: who calls what, traffic breakdown, Postgres native stats.
+ * All data is in-memory (no extra DB writes). Postgres stats are read-only catalog queries.
  */
-app.get('/api/db-stats', (req, res) => {
+app.get('/api/db-stats', async (req, res) => {
   try {
-    if (typeof db.getQueryStats === 'function') {
-      res.json(db.getQueryStats());
-    } else {
-      res.json({ message: 'Query stats not available for current DB driver' });
-    }
+    const stats = await monitor.getStats();
+    res.json(stats);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
