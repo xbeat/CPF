@@ -13,6 +13,79 @@ const pool = new Pool(config.database.postgres);
 
 let isInitialized = false;
 
+// =============================================================================
+// DB Query Monitor - tracks all queries to identify excessive traffic
+// =============================================================================
+const queryStats = {
+  startTime: Date.now(),
+  totalQueries: 0,
+  totalBytesEstimated: 0,
+  queryCounts: {},  // { queryLabel: { count, bytes, lastCalled } }
+};
+
+function trackQuery(label, resultRows) {
+  queryStats.totalQueries++;
+  const estimatedBytes = resultRows ? JSON.stringify(resultRows).length : 0;
+  queryStats.totalBytesEstimated += estimatedBytes;
+
+  if (!queryStats.queryCounts[label]) {
+    queryStats.queryCounts[label] = { count: 0, bytes: 0, lastCalled: null };
+  }
+  queryStats.queryCounts[label].count++;
+  queryStats.queryCounts[label].bytes += estimatedBytes;
+  queryStats.queryCounts[label].lastCalled = new Date().toISOString();
+}
+
+function getQueryStats() {
+  const uptimeMs = Date.now() - queryStats.startTime;
+  const uptimeHours = uptimeMs / (1000 * 60 * 60);
+  const estimatedDaily = uptimeHours > 0
+    ? (queryStats.totalBytesEstimated / uptimeHours) * 24
+    : 0;
+
+  return {
+    uptime_hours: Math.round(uptimeHours * 100) / 100,
+    total_queries: queryStats.totalQueries,
+    total_bytes_estimated: queryStats.totalBytesEstimated,
+    total_mb_estimated: Math.round(queryStats.totalBytesEstimated / (1024 * 1024) * 100) / 100,
+    estimated_daily_mb: Math.round(estimatedDaily / (1024 * 1024) * 100) / 100,
+    queries_per_hour: uptimeHours > 0 ? Math.round(queryStats.totalQueries / uptimeHours) : 0,
+    breakdown: Object.entries(queryStats.queryCounts)
+      .sort((a, b) => b[1].bytes - a[1].bytes)
+      .map(([label, stats]) => ({
+        query: label,
+        count: stats.count,
+        bytes: stats.bytes,
+        mb: Math.round(stats.bytes / (1024 * 1024) * 100) / 100,
+        last_called: stats.lastCalled
+      }))
+  };
+}
+
+// Log stats every 10 minutes
+setInterval(() => {
+  const stats = getQueryStats();
+  if (stats.total_queries > 0) {
+    console.log(`[DB-MONITOR] Uptime: ${stats.uptime_hours}h | Queries: ${stats.total_queries} (${stats.queries_per_hour}/h) | Traffic: ${stats.total_mb_estimated}MB | Est. daily: ${stats.estimated_daily_mb}MB`);
+    const top3 = stats.breakdown.slice(0, 3);
+    for (const q of top3) {
+      console.log(`  [DB-MONITOR]  -> ${q.query}: ${q.count} calls, ${q.mb}MB`);
+    }
+  }
+}, 10 * 60 * 1000);
+
+// =============================================================================
+// In-memory cache for organizations index (invalidated on writes)
+// =============================================================================
+let orgIndexCache = null;
+let orgIndexCacheTime = 0;
+const ORG_INDEX_CACHE_TTL = 60 * 1000; // 60 seconds
+
+function invalidateOrgIndexCache() {
+  orgIndexCache = null;
+  orgIndexCacheTime = 0;
+}
+
 /**
  * Inizializza il database creando le tabelle se non esistono e aggiungendo le colonne necessarie.
  * Questa funzione viene eseguita una sola volta all'avvio dell'applicazione.
@@ -97,6 +170,12 @@ async function initialize() {
     await client.query(`ALTER TABLE assessments ADD COLUMN IF NOT EXISTS maturity_level VARCHAR(20);`);
     console.log('[DB-PG] Colonne della tabella `assessments` aggiornate.');
 
+    // Create indexes for frequently queried columns
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_assessments_org_id ON assessments(org_id);`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_soc_indicators_org_id ON soc_indicators(org_id);`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_organizations_is_deleted ON organizations(is_deleted);`);
+    console.log('[DB-PG] Indici creati/verificati.');
+
     isInitialized = true;
   } catch (error) {
     console.error('[DB-PG] Errore durante l\'inizializzazione del database:', error);
@@ -175,6 +254,7 @@ async function createOrganization(orgData) {
     }
 
     await client.query('COMMIT');
+    invalidateOrgIndexCache();
     console.log(`[DB-PG] Organization ${orgId} saved successfully.`);
     return orgData;
 
@@ -195,51 +275,94 @@ const { calculateAggregates } = require('./db_json');
 
 async function readOrganizationsIndex() {
   await initialize();
+
+  // Return cached result if still valid
+  if (orgIndexCache && (Date.now() - orgIndexCacheTime) < ORG_INDEX_CACHE_TTL) {
+    trackQuery('readOrganizationsIndex (CACHED)', null);
+    return orgIndexCache;
+  }
+
   try {
-    // Read ALL organizations including deleted ones (filtering happens at application layer)
-    const { rows } = await pool.query('SELECT * FROM organizations ORDER BY name ASC');
-    const organizations = [];
+    // Single query with JOIN instead of N+1 pattern
+    // Selects only needed columns (NO raw_data which is the heaviest column)
+    const { rows } = await pool.query(`
+      SELECT
+        o.id, o.name, o.industry, o.size, o.country, o.language,
+        o.sede_sociale, o.partita_iva, o.created_at, o.updated_at,
+        o.deleted_at, o.deleted_by,
+        a.indicator_id, a.bayesian_score, a.confidence, a.maturity_level,
+        a.category, a.assessment_date
+      FROM organizations o
+      LEFT JOIN assessments a ON a.org_id = o.id
+      ORDER BY o.name ASC, a.indicator_id ASC
+    `);
 
+    trackQuery('readOrganizationsIndex (JOIN)', rows);
+
+    // Group rows by organization
+    const orgMap = new Map();
     for (const row of rows) {
-      // Get assessments for this organization to calculate stats
-      const assessRes = await pool.query('SELECT * FROM assessments WHERE org_id = $1', [row.id]);
-      const assessmentRows = assessRes.rows;
+      if (!orgMap.has(row.id)) {
+        orgMap.set(row.id, {
+          id: row.id,
+          name: row.name,
+          industry: row.industry,
+          size: row.size,
+          country: row.country,
+          language: row.language,
+          sede_sociale: row.sede_sociale || '',
+          partita_iva: row.partita_iva || '',
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          deleted_at: row.deleted_at || undefined,
+          deleted_by: row.deleted_by || undefined,
+          assessmentRows: [],
+          assessments: {}
+        });
+      }
+      if (row.indicator_id) {
+        const org = orgMap.get(row.id);
+        org.assessmentRows.push(row);
+        org.assessments[row.indicator_id] = {
+          indicator_id: row.indicator_id,
+          bayesian_score: row.bayesian_score ? parseFloat(row.bayesian_score) : null,
+          confidence: row.confidence ? parseFloat(row.confidence) : null,
+          maturity_level: row.maturity_level,
+          category: row.category,
+          assessment_date: row.assessment_date
+        };
+      }
+    }
 
-      // Convert assessments to object format
-      const assessments = assessmentRows.reduce((acc, a) => {
-        acc[a.indicator_id] = a;
-        return acc;
-      }, {});
-
-      // Calculate aggregates
-      const aggregates = calculateAggregates(assessments, row.industry);
-
+    const organizations = [];
+    for (const [, org] of orgMap) {
+      const aggregates = calculateAggregates(org.assessments, org.industry);
       organizations.push({
-        id: row.id,
-        name: row.name,
-        industry: row.industry,
-        size: row.size,
-        country: row.country,
-        language: row.language,
-        sede_sociale: row.sede_sociale || '',
-        partita_iva: row.partita_iva || '',
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-        deleted_at: row.deleted_at || undefined,
-        deleted_by: row.deleted_by || undefined,
+        id: org.id,
+        name: org.name,
+        industry: org.industry,
+        size: org.size,
+        country: org.country,
+        language: org.language,
+        sede_sociale: org.sede_sociale,
+        partita_iva: org.partita_iva,
+        created_at: org.created_at,
+        updated_at: org.updated_at,
+        deleted_at: org.deleted_at,
+        deleted_by: org.deleted_by,
         stats: {
           total_assessments: aggregates.completion.assessed_indicators,
           completion_percentage: aggregates.completion.percentage,
           overall_risk: aggregates.overall_risk,
           avg_confidence: aggregates.overall_confidence,
-          last_assessment_date: assessmentRows.length > 0
-            ? assessmentRows.sort((a, b) => new Date(b.assessment_date) - new Date(a.assessment_date))[0]?.assessment_date
+          last_assessment_date: org.assessmentRows.length > 0
+            ? org.assessmentRows.sort((a, b) => new Date(b.assessment_date) - new Date(a.assessment_date))[0]?.assessment_date
             : null
         }
       });
     }
 
-    return {
+    const result = {
       metadata: {
         version: '2.0',
         last_updated: new Date().toISOString(),
@@ -247,6 +370,12 @@ async function readOrganizationsIndex() {
       },
       organizations
     };
+
+    // Cache the result
+    orgIndexCache = result;
+    orgIndexCacheTime = Date.now();
+
+    return result;
   } catch (error) {
     console.error('[DB-PG] Error reading organizations index:', error);
     return {
@@ -263,13 +392,21 @@ async function readOrganizationsIndex() {
 async function readOrganization(orgId) {
   await initialize();
   try {
-    // Read organization including deleted ones (dataManager will handle filtering)
-    const orgRes = await pool.query('SELECT * FROM organizations WHERE id = $1', [orgId]);
+    // Select specific columns (exclude heavy aggregates JSONB from org, keep raw_data for assessment detail)
+    const orgRes = await pool.query(
+      'SELECT id, name, industry, size, country, language, created_by, notes, sede_sociale, partita_iva, aggregates, created_at, updated_at, deleted_at, deleted_by FROM organizations WHERE id = $1',
+      [orgId]
+    );
     const orgRow = orgRes.rows[0];
+    trackQuery('readOrganization:org', orgRes.rows);
 
     if (!orgRow) return null;
 
-    const assessRes = await pool.query('SELECT * FROM assessments WHERE org_id = $1', [orgId]);
+    const assessRes = await pool.query(
+      'SELECT indicator_id, title, category, maturity_level, bayesian_score, confidence, assessor, assessment_date, raw_data FROM assessments WHERE org_id = $1',
+      [orgId]
+    );
+    trackQuery('readOrganization:assessments', assessRes.rows);
 
     // Convert decimal fields from string to number for consistency
     const assessments = assessRes.rows.reduce((acc, a) => {
@@ -380,6 +517,7 @@ async function writeOrganization(orgId, fullOrgData) {
     await pool.query(query, [orgId, data.name, data.industry, data.size, data.country, data.language,
                               data.notes, data.created_by, data.partita_iva, data.sede_sociale, aggregatesJson,
                               data.deleted_at, data.deleted_by, isDeleted, data.created_at]);
+    invalidateOrgIndexCache();
     console.log(`[DB-PG] Successfully written organization ${orgId} (UPSERT).`);
     return fullOrgData;
   } catch (error) {
@@ -437,6 +575,7 @@ async function updateOrganization(orgId, data) {
 
   try {
     await pool.query(query, values);
+    invalidateOrgIndexCache();
     console.log(`[DB-PG] Successfully updated organization ${orgId}.`);
     return await readOrganization(orgId);
   } catch (error) {
@@ -449,6 +588,7 @@ async function deleteOrganization(orgId) {
   await initialize();
   try {
     await pool.query('UPDATE organizations SET is_deleted = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1;', [orgId]);
+    invalidateOrgIndexCache();
     console.log(`[DB-PG] Successfully marked organization ${orgId} as deleted.`);
     return { success: true };
   } catch (error) {
@@ -470,7 +610,8 @@ async function saveAssessment(orgId, indicatorId, data) {
   `;
   try {
     await pool.query(query, [orgId, indicatorId, title, category, maturity_level, bayesian_score, confidence, assessor, assessment_date, raw_data]);
-    console.log(`[DB-PG] Successfully saved assessment for organization ${orgId}, indicator ${indicatorId}.`);
+    invalidateOrgIndexCache();
+    trackQuery('saveAssessment', null);
     return { success: true };
   } catch (error) {
     console.error(`[DB-PG] Error saving assessment for organization ${orgId}, indicator ${indicatorId}:`, error);
@@ -527,6 +668,7 @@ async function getSocData(orgId) {
 
         // Read from soc_indicators table (NOT assessments table)
         const socRes = await pool.query('SELECT indicator_id, value, previous_value, event_count, last_event_type, last_event_severity, updated_at FROM soc_indicators WHERE org_id = $1 ORDER BY indicator_id', [orgId]);
+        trackQuery('getSocData', socRes.rows);
 
         // If no SOC data exists, return null (to trigger "generate data" message in dashboard)
         if (socRes.rows.length === 0) {
@@ -565,40 +707,30 @@ async function saveSocIndicator(orgId, assessmentData) {
     const indicatorId = assessmentData.indicator_id;
     const value = assessmentData.bayesian_score;
 
-    // Get previous value if exists
-    let previousValue = null;
-    let eventCount = 1;
-    try {
-        const prevRes = await pool.query('SELECT value, event_count FROM soc_indicators WHERE org_id = $1 AND indicator_id = $2', [orgId, indicatorId]);
-        if (prevRes.rows.length > 0) {
-            previousValue = parseFloat(prevRes.rows[0].value);
-            eventCount = (prevRes.rows[0].event_count || 0) + 1;
-        }
-    } catch (error) {
-        console.warn(`[DB-PG] Could not fetch previous SOC value for ${orgId}/${indicatorId}:`, error.message);
-    }
-
-    // Save to soc_indicators table (NOT assessments!)
-    const query = `
-        INSERT INTO soc_indicators (org_id, indicator_id, value, previous_value, event_count, last_event_type, last_event_severity, source, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
-        ON CONFLICT (org_id, indicator_id) DO UPDATE SET
-            previous_value = soc_indicators.value,
-            value = EXCLUDED.value,
-            event_count = EXCLUDED.event_count,
-            last_event_type = EXCLUDED.last_event_type,
-            last_event_severity = EXCLUDED.last_event_severity,
-            source = EXCLUDED.source,
-            updated_at = CURRENT_TIMESTAMP;
-    `;
-
     const lastEventType = assessmentData.event_type || assessmentData.raw_data?.event_type || null;
     const lastEventSeverity = assessmentData.severity || assessmentData.raw_data?.severity || null;
     const source = assessmentData.source || 'simulator';
 
-    await pool.query(query, [orgId, indicatorId, value, previousValue, eventCount, lastEventType, lastEventSeverity, source]);
+    // Single UPSERT query with RETURNING to get previous value (avoids 2 round-trips)
+    const query = `
+        INSERT INTO soc_indicators (org_id, indicator_id, value, previous_value, event_count, last_event_type, last_event_severity, source, updated_at)
+        VALUES ($1, $2, $3, NULL, 1, $4, $5, $6, CURRENT_TIMESTAMP)
+        ON CONFLICT (org_id, indicator_id) DO UPDATE SET
+            previous_value = soc_indicators.value,
+            value = EXCLUDED.value,
+            event_count = soc_indicators.event_count + 1,
+            last_event_type = EXCLUDED.last_event_type,
+            last_event_severity = EXCLUDED.last_event_severity,
+            source = EXCLUDED.source,
+            updated_at = CURRENT_TIMESTAMP
+        RETURNING previous_value, event_count;
+    `;
 
-    console.log(`[DB-PG] Successfully saved SOC indicator ${indicatorId} for organization ${orgId} (value: ${value}, previous: ${previousValue}).`);
+    const result = await pool.query(query, [orgId, indicatorId, value, lastEventType, lastEventSeverity, source]);
+    trackQuery('saveSocIndicator', result.rows);
+
+    const previousValue = result.rows[0]?.previous_value ? parseFloat(result.rows[0].previous_value) : null;
+    const eventCount = result.rows[0]?.event_count || 1;
 
     return {
         orgId,
@@ -624,6 +756,8 @@ module.exports = {
   deleteAssessment,
   getSocData,
   saveSocIndicator,
+  getQueryStats,
+  invalidateOrgIndexCache,
   // Funzioni alias o non più necessarie mantenute per retrocompatibilità
   saveIndicatorMetadata: async () => { console.warn('[DB-PG] saveIndicatorMetadata non è implementata in modo granulare, i dati vengono salvati con l\'intera organizzazione.'); },
   writeOrganizationsIndex: async () => {},

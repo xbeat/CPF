@@ -267,6 +267,36 @@ async function generateDemoData() {
     log(`⚠️  Alcuni dati demo non sono stati creati (${successCount}/${demoOrgs.length})`, 'yellow');
   }
 
+  // Generate SOC demo data for each organization
+  log('\n🛡️  Generazione dati SOC demo...', 'cyan');
+  let socCount = 0;
+  for (const org of demoOrgs) {
+    try {
+      const assessments = org.assessments || {};
+      // Pick a random subset of indicators for SOC data (simulating real SOC events)
+      const indicatorIds = Object.keys(assessments);
+      const socSubset = indicatorIds
+        .sort(() => Math.random() - 0.5)
+        .slice(0, Math.min(indicatorIds.length, 30));
+
+      for (const indicatorId of socSubset) {
+        const assessment = assessments[indicatorId];
+        await db.saveSocIndicator(org.id, {
+          indicator_id: indicatorId,
+          bayesian_score: assessment.bayesian_score || Math.random() * 0.8 + 0.1,
+          event_type: ['malware', 'phishing', 'brute_force', 'data_exfil', 'insider_threat', 'lateral_movement'][Math.floor(Math.random() * 6)],
+          severity: ['low', 'medium', 'high', 'critical'][Math.floor(Math.random() * 4)],
+          source: 'demo-generator'
+        });
+      }
+      log(`  ✓ ${org.name}: ${socSubset.length} SOC indicators`, 'green');
+      socCount++;
+    } catch (error) {
+      log(`  ✗ SOC data error for ${org.name}: ${error.message}`, 'red');
+    }
+  }
+  log(`✅ Dati SOC demo creati per ${socCount}/${demoOrgs.length} organizzazioni`, 'green');
+
   return { total: demoOrgs.length, success: successCount };
 }
 
