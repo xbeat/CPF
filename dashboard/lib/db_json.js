@@ -602,11 +602,19 @@ async function getSocData(orgId) {
   // Read SOC file (separate from organization.json)
   let socData = readJsonFile(socFilePath);
 
-  // If no SOC file exists or no indicators, return null (to trigger "generate data" message in dashboard)
+  // If no SOC file exists or no indicators, return object with has_data: false
+  // (so the dashboard shows the "Generate Demo SOC Data" button instead of a 404 error)
   if (!socData || !socData.indicators || Object.keys(socData.indicators).length === 0) {
-    return null;
+    return {
+      org_id: orgId,
+      org_name: organization.name,
+      indicators: {},
+      has_data: false
+    };
   }
 
+  // Add has_data flag for consistency with other backends
+  socData.has_data = true;
   return socData;
 }
 
