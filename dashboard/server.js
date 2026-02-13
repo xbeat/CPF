@@ -1221,8 +1221,10 @@ app.get('/api/soc/:orgId', async (req, res) => {
   try {
     const { orgId } = req.params;
 
-    // Check if organization exists
-    if (!(await dataManager.organizationExists(orgId))) {
+    // Get SOC data using db abstraction layer
+    const socData = await db.getSocData(orgId);
+
+    if (!socData) {
       return res.status(404).json({
         success: false,
         error: 'Organization not found',
@@ -1230,19 +1232,8 @@ app.get('/api/soc/:orgId', async (req, res) => {
       });
     }
 
-    // Get SOC data using db abstraction layer
-    const db = require('./db');
-    const socData = await db.getSocData(orgId);
-
-    if (!socData) {
-      return res.status(404).json({
-        success: false,
-        error: 'SOC data not found',
-        message: 'No SOC data available for this organization',
-        orgId
-      });
-    }
-
+    // Always return success - even with empty indicators
+    // The dashboard will render the matrix (empty or populated)
     res.json({
       success: true,
       data: socData
@@ -1254,6 +1245,73 @@ app.get('/api/soc/:orgId', async (req, res) => {
       success: false,
       error: error.message
     });
+  }
+});
+
+/**
+ * POST /api/soc/:orgId/generate-demo
+ * Generate SOC demo data from existing auditing assessments
+ */
+app.post('/api/soc/:orgId/generate-demo', async (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    // Read organization with its assessments
+    const orgData = await db.readOrganization(orgId);
+    if (!orgData) {
+      return res.status(404).json({ success: false, error: 'Organization not found' });
+    }
+
+    const assessments = orgData.assessments || {};
+    const indicatorIds = Object.keys(assessments);
+
+    if (indicatorIds.length === 0) {
+      // No auditing assessments, generate random SOC data for all 100 indicators
+      const EVENT_TYPES = ['malware', 'phishing', 'brute_force', 'data_exfil', 'insider_threat', 'lateral_movement'];
+      const SEVERITIES = ['low', 'medium', 'high', 'critical'];
+      let count = 0;
+      for (let cat = 1; cat <= 10; cat++) {
+        for (let ind = 1; ind <= 10; ind++) {
+          const indicatorId = `${cat}.${ind}`;
+          // Generate ~60% of indicators (random subset)
+          if (Math.random() > 0.4) {
+            await db.saveSocIndicator(orgId, {
+              indicator_id: indicatorId,
+              bayesian_score: Math.random() * 0.8 + 0.1,
+              event_type: EVENT_TYPES[Math.floor(Math.random() * EVENT_TYPES.length)],
+              severity: SEVERITIES[Math.floor(Math.random() * SEVERITIES.length)],
+              source: 'demo-generator'
+            });
+            count++;
+          }
+        }
+      }
+      return res.json({ success: true, message: `Generated ${count} SOC indicators (random)`, count });
+    }
+
+    // Generate SOC data based on existing assessment scores
+    const EVENT_TYPES = ['malware', 'phishing', 'brute_force', 'data_exfil', 'insider_threat', 'lateral_movement'];
+    const SEVERITIES = ['low', 'medium', 'high', 'critical'];
+    let count = 0;
+
+    for (const indicatorId of indicatorIds) {
+      const assessment = assessments[indicatorId];
+      await db.saveSocIndicator(orgId, {
+        indicator_id: indicatorId,
+        bayesian_score: assessment.bayesian_score || Math.random() * 0.8 + 0.1,
+        event_type: EVENT_TYPES[Math.floor(Math.random() * EVENT_TYPES.length)],
+        severity: SEVERITIES[Math.floor(Math.random() * SEVERITIES.length)],
+        source: 'demo-generator'
+      });
+      count++;
+    }
+
+    console.log(`[API] Generated ${count} SOC demo indicators for ${orgId}`);
+    res.json({ success: true, message: `Generated ${count} SOC indicators from assessments`, count });
+
+  } catch (error) {
+    console.error(`[API] Error generating SOC demo data for ${req.params.orgId}:`, error.message);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

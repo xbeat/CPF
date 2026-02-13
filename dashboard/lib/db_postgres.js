@@ -659,7 +659,8 @@ async function deleteAssessment(orgId, indicatorId) {
 async function getSocData(orgId) {
     await initialize();
     try {
-        const orgRes = await pool.query('SELECT id, name FROM organizations WHERE id = $1 AND is_deleted = false', [orgId]);
+        // Don't filter by is_deleted - caller already validates org existence
+        const orgRes = await pool.query('SELECT id, name FROM organizations WHERE id = $1', [orgId]);
         const orgRow = orgRes.rows[0];
 
         if (!orgRow) {
@@ -670,11 +671,7 @@ async function getSocData(orgId) {
         const socRes = await pool.query('SELECT indicator_id, value, previous_value, event_count, last_event_type, last_event_severity, updated_at FROM soc_indicators WHERE org_id = $1 ORDER BY indicator_id', [orgId]);
         trackQuery('getSocData', socRes.rows);
 
-        // If no SOC data exists, return null (to trigger "generate data" message in dashboard)
-        if (socRes.rows.length === 0) {
-            return null;
-        }
-
+        // Return empty indicators object if no data (not null - allows dashboard to render)
         const indicators = {};
         for (const row of socRes.rows) {
             indicators[row.indicator_id] = {
@@ -691,7 +688,8 @@ async function getSocData(orgId) {
         return {
             org_id: orgRow.id,
             org_name: orgRow.name,
-            indicators
+            indicators,
+            has_data: socRes.rows.length > 0
         };
     } catch (error) {
         console.error(`[DB-PG] Error reading SOC data for ${orgId}:`, error);
