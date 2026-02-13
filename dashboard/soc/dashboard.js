@@ -423,17 +423,45 @@ async function loadAndRenderOrganization(orgId) {
             throw new Error(socResult.error || 'No SOC data available');
         }
 
+        // If organization exists but has no SOC data, offer to generate demo data
+        if (!socResult.data.has_data) {
+            orgDetailEl.innerHTML = `
+                <div class="error-message" style="padding: 40px; text-align: center;">
+                    <h3 style="color: #ff9800; margin-bottom: 16px;">No SOC Data Available</h3>
+                    <p style="margin-bottom: 16px; color: #666;">No SOC indicator data has been generated for this organization yet.</p>
+                    <button id="generate-soc-btn" style="margin-top: 10px; padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                        Generate Demo SOC Data
+                    </button>
+                    <p style="margin-top: 12px; color: #999; font-size: 12px;">This will create sample SOC indicators based on existing auditing assessments</p>
+                </div>
+            `;
+            document.getElementById('generate-soc-btn').addEventListener('click', async () => {
+                const btn = document.getElementById('generate-soc-btn');
+                btn.disabled = true;
+                btn.textContent = 'Generating...';
+                try {
+                    const genRes = await fetch(`/api/soc/${orgId}/generate-demo`, { method: 'POST' });
+                    const genResult = await genRes.json();
+                    if (genResult.success) {
+                        selectOrganization(orgId); // Reload
+                    } else {
+                        btn.textContent = 'Error: ' + (genResult.error || 'Failed');
+                    }
+                } catch (e) {
+                    btn.textContent = 'Error: ' + e.message;
+                }
+            });
+            return;
+        }
+
         renderOrganizationDetail(socResult.data);
     } catch (error) {
         console.error('Error loading organization:', error);
         orgDetailEl.innerHTML = `
             <div class="error-message" style="padding: 40px; text-align: center;">
-                <h3 style="color: #d32f2f; margin-bottom: 16px;">⚠️ Error Loading SOC Data</h3>
+                <h3 style="color: #d32f2f; margin-bottom: 16px;">Error Loading SOC Data</h3>
                 <p style="margin-bottom: 8px; color: #666;">${error.message}</p>
-                <p style="color: #999;">Make sure the simulator has generated data for this organization</p>
-                <button onclick="window.location.href='/dashboard/simulator/'" style="margin-top: 20px; padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">
-                    Go to Simulator
-                </button>
+                <p style="color: #999;">Make sure the server is running and the organization exists</p>
             </div>
         `;
     }
