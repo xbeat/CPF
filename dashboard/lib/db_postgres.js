@@ -682,6 +682,7 @@ module.exports = {
   getSocData,
   saveSocIndicator,
   invalidateOrgIndexCache,
+  getPool: () => pool,
   // Funzioni alias o non più necessarie mantenute per retrocompatibilità
   saveIndicatorMetadata: async () => { console.warn('[DB-PG] saveIndicatorMetadata non è implementata in modo granulare, i dati vengono salvati con l\'intera organizzazione.'); },
   writeOrganizationsIndex: async () => {},

@@ -1,8 +1,9 @@
 /**
  * CPF Request Monitor - Tracks WHO calls WHAT and HOW MUCH
  *
- * All data in-memory (ring buffers with limits). No DB writes.
- * Postgres native stats queried read-only from catalog tables.
+ * All data in-memory (ring buffers with limits). Zero DB writes, zero extra queries.
+ * Postgres native stats queried ONLY on-demand when /api/db-stats is called,
+ * reusing the existing connection pool.
  */
 
 const config = require('../config');
@@ -38,7 +39,7 @@ const hourlyBuckets = [];
 const ipRateWindow = new Map();
 
 // =============================================================================
-// Middleware
+// Middleware - pure in-memory, zero DB overhead
 // =============================================================================
 
 /**
@@ -89,7 +90,7 @@ function requestTracker(req, res, next) {
 }
 
 // =============================================================================
-// Recording
+// Recording - pure in-memory
 // =============================================================================
 
 function normalizePath(routePath, method) {
@@ -179,67 +180,59 @@ function recordRequest(entry) {
 }
 
 // =============================================================================
-// Postgres native stats (read-only, no overhead)
+// Postgres native stats - ONLY called on-demand via /api/db-stats
+// Uses the app's existing pool (passed via getStats), no new connections.
 // =============================================================================
 
-async function getPostgresNativeStats() {
-  if (config.database.type !== 'postgres') {
-    return null;
-  }
+async function getPostgresNativeStats(pool) {
+  if (!pool) return null;
 
   try {
-    const { Pool } = require('pg');
-    const pool = new Pool(config.database.postgres);
-
+    // Single query combining all stats to minimize round-trips
     const results = {};
 
-    // 1. Database size
-    const dbSize = await pool.query(`
-      SELECT pg_database_size(current_database()) as db_bytes,
-             pg_size_pretty(pg_database_size(current_database())) as db_size
-    `);
+    const [dbSize, tables, connections, ioStats] = await Promise.all([
+      pool.query(`
+        SELECT pg_database_size(current_database()) as db_bytes,
+               pg_size_pretty(pg_database_size(current_database())) as db_size
+      `),
+      pool.query(`
+        SELECT
+          schemaname || '.' || relname as table_name,
+          n_live_tup as row_count,
+          pg_total_relation_size(relid) as total_bytes,
+          pg_size_pretty(pg_total_relation_size(relid)) as total_size,
+          pg_relation_size(relid) as data_bytes,
+          pg_size_pretty(pg_relation_size(relid)) as data_size,
+          pg_indexes_size(relid) as index_bytes,
+          pg_size_pretty(pg_indexes_size(relid)) as index_size
+        FROM pg_stat_user_tables
+        ORDER BY pg_total_relation_size(relid) DESC
+      `),
+      pool.query(`
+        SELECT count(*) as total,
+               count(*) FILTER (WHERE state = 'active') as active,
+               count(*) FILTER (WHERE state = 'idle') as idle
+        FROM pg_stat_activity
+        WHERE datname = current_database()
+      `),
+      pool.query(`
+        SELECT
+          sum(heap_blks_read) as blocks_read,
+          sum(heap_blks_hit) as blocks_hit,
+          CASE WHEN sum(heap_blks_hit) + sum(heap_blks_read) > 0
+            THEN round(100.0 * sum(heap_blks_hit) / (sum(heap_blks_hit) + sum(heap_blks_read)), 2)
+            ELSE 0
+          END as cache_hit_ratio
+        FROM pg_statio_user_tables
+      `)
+    ]);
+
     results.database_size = dbSize.rows[0];
-
-    // 2. Table sizes and row counts
-    const tables = await pool.query(`
-      SELECT
-        schemaname || '.' || relname as table_name,
-        n_live_tup as row_count,
-        pg_total_relation_size(relid) as total_bytes,
-        pg_size_pretty(pg_total_relation_size(relid)) as total_size,
-        pg_relation_size(relid) as data_bytes,
-        pg_size_pretty(pg_relation_size(relid)) as data_size,
-        pg_indexes_size(relid) as index_bytes,
-        pg_size_pretty(pg_indexes_size(relid)) as index_size
-      FROM pg_stat_user_tables
-      ORDER BY pg_total_relation_size(relid) DESC
-    `);
     results.tables = tables.rows;
-
-    // 3. Active connections
-    const connections = await pool.query(`
-      SELECT count(*) as total,
-             count(*) FILTER (WHERE state = 'active') as active,
-             count(*) FILTER (WHERE state = 'idle') as idle
-      FROM pg_stat_activity
-      WHERE datname = current_database()
-    `);
     results.connections = connections.rows[0];
-
-    // 4. Table I/O stats (cache hit ratio)
-    const ioStats = await pool.query(`
-      SELECT
-        sum(heap_blks_read) as blocks_read,
-        sum(heap_blks_hit) as blocks_hit,
-        CASE WHEN sum(heap_blks_hit) + sum(heap_blks_read) > 0
-          THEN round(100.0 * sum(heap_blks_hit) / (sum(heap_blks_hit) + sum(heap_blks_read)), 2)
-          ELSE 0
-        END as cache_hit_ratio
-      FROM pg_statio_user_tables
-    `);
     results.cache = ioStats.rows[0];
 
-    await pool.end();
     return results;
   } catch (error) {
     return { error: error.message };
@@ -247,10 +240,10 @@ async function getPostgresNativeStats() {
 }
 
 // =============================================================================
-// Stats output
+// Stats output - pure in-memory aggregation, Postgres stats only if pool passed
 // =============================================================================
 
-async function getStats() {
+async function getStats(pgPool) {
   const uptimeMs = Date.now() - startTime;
   const uptimeHours = uptimeMs / (1000 * 60 * 60);
 
@@ -326,7 +319,7 @@ async function getStats() {
     totalBytes += stats.total_bytes;
   }
 
-  const result = {
+  return {
     overview: {
       uptime_hours: Math.round(uptimeHours * 100) / 100,
       total_requests: totalRequests,
@@ -342,33 +335,9 @@ async function getStats() {
     flagged_ips: flaggedIPs,
     hourly_trend: timeSeries,
     recent_requests: recentRequests.slice(-50).reverse(),
-    postgres: await getPostgresNativeStats()
+    postgres: pgPool ? await getPostgresNativeStats(pgPool) : null
   };
-
-  return result;
 }
-
-// =============================================================================
-// Console log summary (every 10 min, replaces old trackQuery log)
-// =============================================================================
-setInterval(async () => {
-  const stats = await getStats();
-  if (stats.overview.total_requests > 0) {
-    console.log(`[MONITOR] Uptime: ${stats.overview.uptime_hours}h | Requests: ${stats.overview.total_requests} (${stats.overview.requests_per_hour}/h) | Traffic: ${stats.overview.total_mb}MB | IPs: ${stats.overview.unique_ips} | Flagged: ${stats.overview.flagged_ips}`);
-    if (stats.top_endpoints_by_traffic.length > 0) {
-      const top3 = stats.top_endpoints_by_traffic.slice(0, 3);
-      for (const ep of top3) {
-        console.log(`  [MONITOR]  ${ep.endpoint}: ${ep.count} calls, ${ep.total_mb}MB, avg ${ep.avg_duration_ms}ms`);
-      }
-    }
-    if (stats.flagged_ips.length > 0) {
-      console.log(`  [MONITOR] ⚠️ FLAGGED IPs (>${SUSPICIOUS_RPM} req/min):`);
-      for (const f of stats.flagged_ips) {
-        console.log(`  [MONITOR]  ${f.ip} - ${f.requests} requests, ${f.mb}MB, UA: ${f.user_agent}`);
-      }
-    }
-  }
-}, 10 * 60 * 1000);
 
 module.exports = {
   requestTracker,

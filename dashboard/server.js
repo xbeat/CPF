@@ -1411,7 +1411,9 @@ app.get('/api/indicators/:indicatorId/metadata/:lang', (req, res) => {
  */
 app.get('/api/db-stats', async (req, res) => {
   try {
-    const stats = await monitor.getStats();
+    // Pass the existing Postgres pool if available (no new connections)
+    const pgPool = typeof db.getPool === 'function' ? db.getPool() : null;
+    const stats = await monitor.getStats(pgPool);
     res.json(stats);
   } catch (error) {
     res.status(500).json({ error: error.message });
