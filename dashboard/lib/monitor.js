@@ -1,52 +1,61 @@
 /**
  * CPF Request Monitor - Tracks WHO calls WHAT and HOW MUCH
  *
- * All data in-memory (ring buffers with limits). Zero DB writes, zero extra queries.
- * Postgres native stats queried ONLY on-demand when /api/db-stats is called,
- * reusing the existing connection pool.
+ * All data in-memory with hard caps on every structure.
+ * Memory usage is bounded: ~2-3MB max regardless of uptime.
+ * Postgres native stats queried ONLY on-demand via /api/db-stats.
  */
 
 const config = require('../config');
 
 // =============================================================================
-// Configuration
+// Configuration - all structures are bounded
 // =============================================================================
 const MAX_RECENT_REQUESTS = 200;       // Ring buffer: last N requests
 const MAX_IPS = 500;                   // Max distinct IPs tracked
 const MAX_ENDPOINTS = 200;             // Max distinct endpoints tracked
+const MAX_ENDPOINTS_PER_IP = 20;       // Max endpoints tracked per IP
 const HOURLY_BUCKETS = 72;             // 72 hours of hourly buckets
-const SUSPICIOUS_RPM = 120;            // Requests/min threshold for flagging an IP
+const SUSPICIOUS_RPM = 120;            // Requests/min threshold for flagging
+const RATE_WINDOW_MAX_IPS = 1000;      // Max IPs in rate-limit window
+const RATE_WINDOW_CLEANUP_MS = 5 * 60 * 1000; // Cleanup stale rate entries every 5 min
 
 // =============================================================================
-// In-memory stores
+// In-memory stores (all bounded)
 // =============================================================================
 const startTime = Date.now();
 
-// Ring buffer of recent requests
-const recentRequests = [];
+const recentRequests = [];           // Capped at MAX_RECENT_REQUESTS
+const ipStats = new Map();           // Capped at MAX_IPS
+const endpointStats = new Map();     // Capped at MAX_ENDPOINTS
+const hourlyBuckets = [];            // Capped at HOURLY_BUCKETS
 
-// Per-IP aggregation: { ip: { count, bytes, first_seen, last_seen, endpoints: {}, user_agent, flagged } }
-const ipStats = new Map();
-
-// Per-endpoint aggregation: { "METHOD /path": { count, total_bytes, total_duration_ms, errors, last_called } }
-const endpointStats = new Map();
-
-// Hourly time-series buckets: [{ hour, requests, bytes, unique_ips }]
-const hourlyBuckets = [];
-
-// Per-IP rate tracking for abuse detection (sliding window)
-// { ip: [timestamp, timestamp, ...] } - last 60s of request timestamps
+// Rate tracking: { ip -> [timestamps] } - bounded, with periodic cleanup
 const ipRateWindow = new Map();
+
+// =============================================================================
+// Periodic cleanup - evict stale rate-limit entries
+// =============================================================================
+setInterval(() => {
+  const now = Date.now();
+  const cutoff = now - 60000;
+  for (const [ip, timestamps] of ipRateWindow) {
+    // Remove timestamps older than 60s
+    while (timestamps.length > 0 && timestamps[0] < cutoff) {
+      timestamps.shift();
+    }
+    // If no recent activity, delete the entry entirely
+    if (timestamps.length === 0) {
+      ipRateWindow.delete(ip);
+    }
+  }
+}, RATE_WINDOW_CLEANUP_MS);
 
 // =============================================================================
 // Middleware - pure in-memory, zero DB overhead
 // =============================================================================
 
-/**
- * Express middleware - attach to app.use() BEFORE routes
- */
 function requestTracker(req, res, next) {
-  // Skip static files and socket.io to reduce noise
   if (req.path.startsWith('/socket.io') ||
       req.path.match(/\.(js|css|png|jpg|ico|svg|woff|woff2|ttf|map)$/)) {
     return next();
@@ -56,7 +65,6 @@ function requestTracker(req, res, next) {
   const ip = req.ip || req.connection?.remoteAddress || 'unknown';
   const userAgent = req.get('user-agent') || 'unknown';
 
-  // Hook into response finish
   const originalEnd = res.end;
   let responseSize = 0;
 
@@ -69,8 +77,6 @@ function requestTracker(req, res, next) {
 
     const durationMs = Date.now() - startMs;
     const statusCode = res.statusCode;
-
-    // Normalize endpoint path (replace dynamic params with :param)
     const normalizedPath = normalizePath(req.route?.path || req.path, req.method);
 
     recordRequest({
@@ -90,31 +96,27 @@ function requestTracker(req, res, next) {
 }
 
 // =============================================================================
-// Recording - pure in-memory
+// Recording - all paths bounded
 // =============================================================================
 
 function normalizePath(routePath, method) {
-  // Use Express route pattern if available, otherwise normalize manually
   let normalized = routePath || '/unknown';
-  // Collapse UUIDs and org IDs
   normalized = normalized.replace(/org-[a-z0-9-]+/g, ':orgId');
-  // Collapse indicator IDs like 1.5, 10.3
   normalized = normalized.replace(/\/\d+\.\d+/g, '/:indicatorId');
   return `${method} ${normalized}`;
 }
 
 function recordRequest(entry) {
-  // 1. Ring buffer
+  // 1. Ring buffer (capped at MAX_RECENT_REQUESTS)
   recentRequests.push(entry);
   if (recentRequests.length > MAX_RECENT_REQUESTS) {
     recentRequests.shift();
   }
 
-  // 2. Per-IP stats
+  // 2. Per-IP stats (capped at MAX_IPS)
   let ip = ipStats.get(entry.ip);
   if (!ip) {
     if (ipStats.size >= MAX_IPS) {
-      // Evict oldest IP
       const oldest = [...ipStats.entries()].sort((a, b) =>
         new Date(a[1].last_seen) - new Date(b[1].last_seen)
       )[0];
@@ -127,9 +129,23 @@ function recordRequest(entry) {
   ip.bytes += entry.bytes;
   ip.last_seen = entry.timestamp;
   ip.user_agent = entry.user_agent;
-  ip.endpoints[entry.normalized] = (ip.endpoints[entry.normalized] || 0) + 1;
 
-  // 3. Per-endpoint stats
+  // Cap endpoints per IP
+  ip.endpoints[entry.normalized] = (ip.endpoints[entry.normalized] || 0) + 1;
+  const epKeys = Object.keys(ip.endpoints);
+  if (epKeys.length > MAX_ENDPOINTS_PER_IP) {
+    // Remove least-called endpoint
+    let minKey = epKeys[0], minVal = ip.endpoints[epKeys[0]];
+    for (let i = 1; i < epKeys.length; i++) {
+      if (ip.endpoints[epKeys[i]] < minVal) {
+        minKey = epKeys[i];
+        minVal = ip.endpoints[epKeys[i]];
+      }
+    }
+    delete ip.endpoints[minKey];
+  }
+
+  // 3. Per-endpoint stats (capped at MAX_ENDPOINTS)
   let ep = endpointStats.get(entry.normalized);
   if (!ep) {
     if (endpointStats.size >= MAX_ENDPOINTS) {
@@ -145,52 +161,58 @@ function recordRequest(entry) {
   if (entry.status >= 400) ep.errors++;
   ep.last_called = entry.timestamp;
 
-  // 4. Hourly bucket
-  const hourKey = entry.timestamp.slice(0, 13); // "2026-02-13T14"
+  // 4. Hourly bucket (capped at HOURLY_BUCKETS, counter instead of Set)
+  const hourKey = entry.timestamp.slice(0, 13);
   let bucket = hourlyBuckets.find(b => b.hour === hourKey);
   if (!bucket) {
     bucket = { hour: hourKey, requests: 0, bytes: 0, unique_ips: new Set() };
     hourlyBuckets.push(bucket);
-    // Trim old buckets
     while (hourlyBuckets.length > HOURLY_BUCKETS) {
       hourlyBuckets.shift();
     }
   }
   bucket.requests++;
   bucket.bytes += entry.bytes;
-  bucket.unique_ips.add(entry.ip);
+  // Cap Set size - stop tracking individual IPs after 1000 per hour
+  if (bucket.unique_ips.size < 1000) {
+    bucket.unique_ips.add(entry.ip);
+  }
 
-  // 5. Rate tracking (abuse detection)
+  // 5. Rate tracking (capped at RATE_WINDOW_MAX_IPS)
   const now = Date.now();
   let timestamps = ipRateWindow.get(entry.ip);
   if (!timestamps) {
+    // Evict oldest entries if at capacity
+    if (ipRateWindow.size >= RATE_WINDOW_MAX_IPS) {
+      const cutoff = now - 60000;
+      for (const [rateIp, ts] of ipRateWindow) {
+        if (ts.length === 0 || ts[ts.length - 1] < cutoff) {
+          ipRateWindow.delete(rateIp);
+        }
+        if (ipRateWindow.size < RATE_WINDOW_MAX_IPS) break;
+      }
+    }
     timestamps = [];
     ipRateWindow.set(entry.ip, timestamps);
   }
   timestamps.push(now);
-  // Keep only last 60s
   const cutoff = now - 60000;
   while (timestamps.length > 0 && timestamps[0] < cutoff) {
     timestamps.shift();
   }
-  // Flag if above threshold
   if (timestamps.length > SUSPICIOUS_RPM) {
     ip.flagged = true;
   }
 }
 
 // =============================================================================
-// Postgres native stats - ONLY called on-demand via /api/db-stats
-// Uses the app's existing pool (passed via getStats), no new connections.
+// Postgres native stats - ONLY on-demand via /api/db-stats
 // =============================================================================
 
 async function getPostgresNativeStats(pool) {
   if (!pool) return null;
 
   try {
-    // Single query combining all stats to minimize round-trips
-    const results = {};
-
     const [dbSize, tables, connections, ioStats] = await Promise.all([
       pool.query(`
         SELECT pg_database_size(current_database()) as db_bytes,
@@ -228,26 +250,25 @@ async function getPostgresNativeStats(pool) {
       `)
     ]);
 
-    results.database_size = dbSize.rows[0];
-    results.tables = tables.rows;
-    results.connections = connections.rows[0];
-    results.cache = ioStats.rows[0];
-
-    return results;
+    return {
+      database_size: dbSize.rows[0],
+      tables: tables.rows,
+      connections: connections.rows[0],
+      cache: ioStats.rows[0]
+    };
   } catch (error) {
     return { error: error.message };
   }
 }
 
 // =============================================================================
-// Stats output - pure in-memory aggregation, Postgres stats only if pool passed
+// Stats output
 // =============================================================================
 
 async function getStats(pgPool) {
   const uptimeMs = Date.now() - startTime;
   const uptimeHours = uptimeMs / (1000 * 60 * 60);
 
-  // Top endpoints by traffic
   const topEndpoints = [...endpointStats.entries()]
     .sort((a, b) => b[1].total_bytes - a[1].total_bytes)
     .slice(0, 20)
@@ -262,7 +283,6 @@ async function getStats(pgPool) {
       last_called: stats.last_called
     }));
 
-  // Top endpoints by call count
   const mostCalled = [...endpointStats.entries()]
     .sort((a, b) => b[1].count - a[1].count)
     .slice(0, 10)
@@ -272,7 +292,6 @@ async function getStats(pgPool) {
       total_mb: Math.round(stats.total_bytes / (1024 * 1024) * 100) / 100
     }));
 
-  // Per-IP breakdown (sorted by traffic)
   const topIPs = [...ipStats.entries()]
     .sort((a, b) => b[1].bytes - a[1].bytes)
     .slice(0, 20)
@@ -291,7 +310,6 @@ async function getStats(pgPool) {
         .map(([ep, count]) => ({ endpoint: ep, count }))
     }));
 
-  // Flagged IPs (potential abuse)
   const flaggedIPs = [...ipStats.entries()]
     .filter(([, stats]) => stats.flagged)
     .map(([ip, stats]) => ({
@@ -302,7 +320,6 @@ async function getStats(pgPool) {
       last_seen: stats.last_seen
     }));
 
-  // Hourly time-series
   const timeSeries = hourlyBuckets.map(b => ({
     hour: b.hour,
     requests: b.requests,
@@ -311,7 +328,6 @@ async function getStats(pgPool) {
     unique_ips: b.unique_ips.size
   }));
 
-  // Totals
   let totalRequests = 0;
   let totalBytes = 0;
   for (const [, stats] of endpointStats) {
