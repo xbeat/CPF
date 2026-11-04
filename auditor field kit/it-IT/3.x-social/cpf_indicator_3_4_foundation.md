@@ -4,17 +4,15 @@
 
 ### Meccanismo Centrale
 
-L'override della fiducia basato sulla simpatia rappresenta una vulnerabilità fondamentale dove gli individui aggirano i protocolli di sicurezza stabiliti a causa di connessioni emotive positive con la parte richiedente. Questo meccanismo opera attraverso l'intersezione del "principio di simpatia" di Cialdini e dei sistemi di fiducia neurobiologici nel cervello umano.
+L'override della fiducia basato sulla simpatia rappresenta una vulnerabilità fondamentale dove gli individui aggirano i protocolli di sicurezza stabiliti a causa di connessioni emotive positive con la parte richiedente.
 
-A livello neurologico, la simpatia innesca il rilascio di ossitocina e attiva il sistema di ricompensa del cervello (vie dopaminergiche), che inibisce direttamente le regioni della corteccia prefrontale responsabili della valutazione critica e della valutazione del rischio. L'amigdala, che normalmente segnala potenziali minacce, diventa soppressa quando elabora informazioni da fonti simpatiche, creando un "punto cieco" neurochimico dove il normale rilevamento delle minacce fallisce.
 
 Questa vulnerabilità si manifesta come l'assunzione automatica che individui simpatici non possano rappresentare minacce alla sicurezza—una scorciatoia cognitiva che aggira la valutazione razionale della sicurezza in favore del comfort emotivo. L'override della fiducia si verifica pre-cognitivamente, spesso prima che la consapevolezza conscia della sicurezza possa attivarsi, rendendolo particolarmente insidioso nei contesti organizzativi.
 
 ### Base di Ricerca
 
-**Ricerca sull'Influenza di Cialdini (2007)**: Il principio di simpatia dimostra che le persone sono significativamente più propense a conformarsi alle richieste di individui che trovano attraenti, simili a loro stessi, o che hanno espresso genuino interesse in loro. Nei contesti di cybersecurity, questo si traduce in un aumento del 300-400% nel social engineering di successo quando gli attaccanti stabiliscono un rapporto prima di fare richieste che compromettono la sicurezza.
+**Ricerca sull'Influenza di Cialdini (2007)**: Il principio di simpatia dimostra che le persone sono significativamente più propense a conformarsi alle richieste di individui che trovano attraenti, simili a loro stessi, o che hanno espresso genuino interesse in loro.
 
-**Neuroscienza della Fiducia (Zak, 2017)**: Gli studi fMRI mostrano che quando gli individui percepiscono qualcuno come simpatico, il rilascio di ossitocina aumenta del 40-60%, riducendo simultaneamente l'attività nella corteccia cingolata anteriore—la regione cerebrale responsabile del rilevamento di incongruenze e potenziale inganno. Questo crea una base neurobiologica per il fenomeno dell'override della fiducia.
 
 **Applicazioni della Teoria dell'Attaccamento (Bowlby, 1969)**: Gli individui con stili di attaccamento ansioso mostrano una maggiore vulnerabilità alla manipolazione basata sulla simpatia, poiché cercano approvazione e connessione, rendendoli più suscettibili ad attacchi di costruzione di rapporto. Al contrario, quelli con attaccamento evitante possono essere più resistenti ma possono essere vulnerabili ad approcci che combinano autorità e simpatia.
 

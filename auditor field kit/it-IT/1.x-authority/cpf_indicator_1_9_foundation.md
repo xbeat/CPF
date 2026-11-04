@@ -15,7 +15,6 @@ Il potere psicologico emerge dall'interazione tra questi percorsi. Quando gli in
 
 **Studi Fondamentali sull'Autorità**:
 - Gli esperimenti di obbedienza di Milgram (1974) hanno dimostrato tassi di conformità del 65% con ordini distruttivi da figure di autorità
-- La ricerca successiva ha mostrato che la conformità aumenta al 92% quando i partecipanti osservano i confederati obbedire prima
 - La meta-analisi di Blass (1999) ha confermato che gli effetti di autorità persistono attraverso culture e decenni
 
 **Meccanismi Prova Sociale**:
@@ -23,10 +22,6 @@ Il potere psicologico emerge dall'interazione tra questi percorsi. Quando gli in
 - La teoria del confronto sociale di Festinger (1954) spiega perché guardiamo agli altri quando incerti del comportamento appropriato
 - Gli esperimenti di conformità di Asch (1951) hanno mostrato conformità del 37% anche quando gli altri sono ovviamente in errore
 
-**Evidenza Neurologica**:
-- Gli studi fMRI mostrano attivazione ridotta della corteccia prefrontale quando si seguono sia segnali di autorità che sociali (Berns et al., 2005)
-- La ricerca sui neuroni specchio suggerisce imitazione automatica dei comportamenti di conformità osservati
-- I percorsi di ricompensa dopaminergici si attivano quando il comportamento individuale si allinea con il comportamento di gruppo attorno all'autorità
 
 **Ricerca Effetti Convergenza**:
 - Gli studi di dual-processing dimostrano che le risposte del Sistema 1 (automatico) dominano quando sia i segnali di autorità che sociali si allineano
@@ -89,10 +84,6 @@ Il potere psicologico emerge dall'interazione tra questi percorsi. Quando gli in
 - I dipendenti hanno seguito pattern stabiliti di accesso contractor
 - La prova sociale delle "normali operazioni aziendali" ha mascherato attività malevole
 
-**Pattern Business Email Compromise**:
-- I report FBI mostrano tassi di successo superiori del 90% quando gli attaccanti fanno riferimento ad altri dipendenti
-- L'efficacia del social engineering aumenta del 300% quando si combinano rivendicazioni di autorità e consenso
-- Le perdite finanziarie sono in media superiori del 40% negli attacchi autorità+prova sociale vs. solo autorità
 
 **Attacchi Relativi a COVID-19**:
 - Gli attori malevoli hanno sfruttato nuove "procedure lavoro remoto che tutti stanno seguendo"

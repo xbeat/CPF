@@ -20,7 +20,6 @@ Diffusion of responsibility in hierarchical structures represents a fundamental 
 
 **Organizational Psychology Research**: Studies by Kelman & Hamilton (1989) on "crimes of obedience" show how hierarchical structures systematically erode individual moral agency. Employees compartmentalize their roles, focusing narrowly on assigned tasks while assuming broader security oversight exists elsewhere in the hierarchy.
 
-**Neuroscientific Evidence**: Recent fMRI studies (Beyer et al., 2015) demonstrate that hierarchical contexts literally alter brain activity in regions associated with personal responsibility and moral reasoning. The anterior cingulate cortex, responsible for conflict monitoring and personal agency, shows reduced activation when individuals operate within clear hierarchical structures.
 
 ### Cognitive/Emotional Triggers
 

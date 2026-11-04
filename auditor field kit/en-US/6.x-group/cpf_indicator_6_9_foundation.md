@@ -16,7 +16,6 @@ The splitting mechanism operates below conscious awareness, making it particular
 
 **Group Dynamics Research:** Bion (1961) demonstrated how groups under anxiety adopt basic assumptions that distort reality. The dependency assumption (baD) leads to idealization of protective figures, while the fight-flight assumption (baF) externalizes all threats, both contributing to organizational splitting patterns.
 
-**Neuroscience Validation:** Modern neuroscience supports Klein's observations, with amygdala activation creating rapid categorization of stimuli as threatening or safe (LeDoux, 2000). Under stress, the brain's tendency toward binary categorization increases, making splitting more likely during security incidents or high-pressure periods.
 
 **Organizational Defense Research:** Menzies Lyth (1960) documented how institutions develop "social defense systems" against anxiety that can interfere with primary tasks. In cybersecurity, splitting serves as a collective defense against the overwhelming anxiety of constant threat, but creates systematic vulnerabilities.
 

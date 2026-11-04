@@ -4,17 +4,15 @@
 
 ### Core Mechanism
 
-The liking-based trust override represents a fundamental vulnerability where individuals bypass established security protocols due to positive emotional connections with the requesting party. This mechanism operates through the intersection of Cialdini's "liking principle" and the neurobiological trust systems in the human brain.
+The liking-based trust override represents a fundamental vulnerability where individuals bypass established security protocols due to positive emotional connections with the requesting party.
 
-At the neurological level, liking triggers the release of oxytocin and activates the brain's reward system (dopamine pathways), which directly inhibits the prefrontal cortex regions responsible for critical evaluation and risk assessment. The amygdala, which normally signals potential threats, becomes suppressed when processing information from liked sources, creating a neurochemical "blind spot" where normal threat detection fails.
 
 This vulnerability manifests as the automatic assumption that likeable individuals cannot pose security threats—a cognitive shortcut that bypasses rational security evaluation in favor of emotional comfort. The trust override occurs pre-cognitively, often before conscious security awareness can engage, making it particularly insidious in organizational contexts.
 
 ### Research Basis
 
-**Cialdini's Influence Research (2007)**: The liking principle demonstrates that people are significantly more likely to comply with requests from individuals they find attractive, similar to themselves, or who have expressed genuine interest in them. In cybersecurity contexts, this translates to a 300-400% increase in successful social engineering when attackers establish rapport before making security-compromising requests.
+**Cialdini's Influence Research (2007)**: The liking principle demonstrates that people are significantly more likely to comply with requests from individuals they find attractive, similar to themselves, or who have expressed genuine interest in them.
 
-**Neuroscience of Trust (Zak, 2017)**: fMRI studies show that when individuals perceive someone as likeable, oxytocin release increases by 40-60%, simultaneously reducing activity in the anterior cingulate cortex—the brain region responsible for detecting incongruity and potential deception. This creates a neurobiological basis for the trust override phenomenon.
 
 **Attachment Theory Applications (Bowlby, 1969)**: Individuals with anxious attachment styles show increased vulnerability to liking-based manipulation, as they seek approval and connection, making them more susceptible to rapport-building attacks. Conversely, those with avoidant attachment may be more resistant but can be vulnerable to authority-combined-with-liking approaches.
 

@@ -21,10 +21,6 @@ In cybersecurity contexts, this manifests when security personnel rapidly switch
 - Leroy's (2009) seminal work on attention residue showed measurable performance degradation when tasks are switched without completion
 - Kahneman's (2011) System 1/System 2 framework explains how cognitive load from residual attention forces reliance on fast, error-prone heuristic processing
 
-**Neuroscience Evidence:**
-- fMRI studies demonstrate that incomplete tasks maintain activation in the prefrontal cortex even during subsequent activities (Monk et al., 2008)
-- EEG research shows persistent neural signatures from interrupted tasks that interfere with new task processing
-- Studies of the default mode network reveal how unresolved cognitive states continue to consume neural resources
 
 **Cybersecurity-Specific Research:**
 - Studies of SOC analyst performance show significant error rate increases during high-alert periods requiring rapid task switching

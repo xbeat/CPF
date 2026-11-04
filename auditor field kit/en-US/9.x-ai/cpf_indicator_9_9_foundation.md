@@ -15,8 +15,6 @@ AI emotional manipulation exploits the fundamental human tendency to anthropomor
 ### Research Basis
 
 **Neuroscience Evidence**:
-- Mirror neuron activation occurs during human-AI interaction, suggesting the brain processes AI communication through the same neural pathways used for human social interaction
-- fMRI studies demonstrate oxytocin release during positive AI interactions, creating neurochemical bonding similar to human relationships
 - The "media equation" research shows people unconsciously apply social rules to computer interactions, even in minimally social contexts
 
 **Psychological Studies**:

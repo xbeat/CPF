@@ -1,6 +1,6 @@
 # CPF Category 7: Stress Response Vulnerabilities
 
-This category examines how physiological and psychological stress responses create systematic security weaknesses, drawing from Hans Selye's General Adaptation Syndrome (1956) and contemporary research on stress physiology. These vulnerabilities emerge when acute or chronic stress impairs cognitive function, alters decision-making patterns, and disrupts normal security behaviors through well-documented neurobiological mechanisms.
+This category examines how physiological and psychological stress responses create systematic security weaknesses, drawing from Hans Selye's General Adaptation Syndrome (1956) and contemporary research on stress physiology.
 
 ## Subcategories
 
@@ -26,7 +26,7 @@ The counterproductive security behavior where stress triggers excessive complian
 The cognitive narrowing of attention that occurs under stress, causing focus on limited aspects of security situations while ignoring broader context. This vulnerability leads to missed attack patterns, failure to connect related security events, and inadequate situational awareness during complex security incidents.
 
 ### 7.8 Cortisol-Impaired Memory
-The disruption of memory formation and recall capabilities due to elevated cortisol levels during stress. This vulnerability affects security incident documentation, evidence collection, and post-incident analysis, potentially compromising legal proceedings and organizational learning from security events.
+This vulnerability affects security incident documentation, evidence collection, and post-incident analysis, potentially compromising legal proceedings and organizational learning from security events.
 
 ### 7.9 Stress Contagion Cascades
 The phenomenon where stress spreads through security teams and organizations, amplifying individual stress responses through social transmission. This vulnerability can trigger organization-wide security degradation during crises as stressed individuals influence colleagues' emotional states and performance capabilities.

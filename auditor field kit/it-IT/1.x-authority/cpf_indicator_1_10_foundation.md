@@ -10,9 +10,8 @@ Il meccanismo psicologico opera attraverso diversi processi interconnessi:
 
 **Trasferimento Autorità Sotto Stress**: Durante condizioni di crisi, le risorse cognitive diventano severamente limitate, forzando gli individui a affidarsi al Sistema 1 (veloce, automatico) piuttosto che ai processi di pensiero del Sistema 2 (lento, deliberato). Questo crea una regressione psicologica a stati di sviluppo precedenti dove le figure di autorità fornivano sicurezza e struttura. L'individuo stressato trasferisce inconsciamente la responsabilità per la sicurezza a chiunque presenti presenza autorevole.
 
-**Riduzione Carico Cognitivo**: Le situazioni di crisi creano sovraccarico informativo che supera la capacità della memoria di lavoro (il numero magico sette di Miller). Per gestire questa complessità opprimente, gli individui impiegano scorciatoie cognitive (euristiche), con la deferenza all'autorità che è una delle più potenti e primitive. Il cervello essenzialmente "esternalizza" il processo decisionale per ridurre il peso cognitivo.
+**Riduzione Carico Cognitivo**: Le situazioni di crisi creano sovraccarico informativo che supera la capacità della memoria di lavoro (il numero magico sette di Miller). Per gestire questa complessità opprimente, gli individui impiegano scorciatoie cognitive (euristiche), con la deferenza all'autorità che è una delle più potenti e primitive.
 
-**Conformità Guidata dall'Ansia**: Gli stati di crisi attivano il sistema di risposta alla minaccia dell'amigdala, inondando il cervello con ormoni dello stress che compromettono il funzionamento della corteccia prefrontale. Questa cascata neurochimica crea uno stato psicologico dove gli individui diventano ipervigilanti ai segnali di autorità perdendo simultaneamente la capacità di analisi critica di tali rivendicazioni.
 
 ### Base di Ricerca
 
@@ -20,9 +19,9 @@ Le fondamenta teoriche per questa vulnerabilità attingono da molteplici filoni 
 
 **Studi Obbedienza di Milgram (1974)**: Hanno dimostrato che individui ordinari conformeranno con figure di autorità anche quando le azioni sono in conflitto con standard morali personali. Sotto condizioni di crisi, questa conformità aumenta drammaticamente poiché gli individui cercano struttura esterna per gestire l'incertezza opprimente.
 
-**Ricerca Stress e Autorità**: Gli studi mostrano che lo stress acuto aumenta significativamente la suscettibilità all'influenza dell'autorità. L'elevazione del cortisolo compromette la memoria di lavoro e la funzione esecutiva amplificando la responsività emotiva ai segnali di gerarchia sociale.
+**Ricerca Stress e Autorità**: Gli studi mostrano che lo stress acuto aumenta significativamente la suscettibilità all'influenza dell'autorità.
 
-**Neuroscienza del Processo Decisionale**: Gli studi fMRI rivelano che la presenza di autorità attiva le reti di cognizione sociale del cervello sopprimendo le aree associate al ragionamento indipendente. Durante gli stati di crisi, questo pattern diventa ancora più pronunciato.
+**Neuroscienza del Processo Decisionale**: Durante gli stati di crisi, questo pattern diventa ancora più pronunciato.
 
 **Dinamiche di Gruppo Sotto Pressione**: Il lavoro di Bion sulle assunzioni di base mostra che i gruppi sotto stress cercano automaticamente relazioni di dipendenza con leader percepiti, anche quando tali leader mancano di autorità legittima o competenza.
 

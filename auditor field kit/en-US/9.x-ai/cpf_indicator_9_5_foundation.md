@@ -8,7 +8,7 @@ The uncanny valley effect represents a fundamental disturbance in human recognit
 
 The core mechanism operates through evolutionary-based threat detection systems. When humans encounter something that appears human but exhibits subtle "wrongness," it activates ancient survival mechanisms that originally helped distinguish healthy group members from those who might be diseased, possessed, or otherwise threatening. In digital environments, this translates to AI systems that communicate in near-human language patterns, exhibit personality traits, or claim human-like understanding while simultaneously revealing their artificial nature through subtle inconsistencies.
 
-This psychological dissonance creates a state of cognitive uncertainty where users simultaneously trust (due to human-like presentation) and distrust (due to uncanny elements) the AI system. This internal conflict compromises normal security decision-making processes, as the brain struggles to categorize the entity as either trustworthy human ally or potential threat.
+This psychological dissonance creates a state of cognitive uncertainty where users simultaneously trust (due to human-like presentation) and distrust (due to uncanny elements) the AI system.
 
 ### Research Basis
 
@@ -16,9 +16,8 @@ The uncanny valley effect draws from multiple psychological research streams:
 
 **Evolutionary Psychology**: The uncanny valley likely evolved as a pathogen avoidance mechanism. Research by MacDorman & Ishiguro (2006) demonstrates that uncanny stimuli activate the same disgust and avoidance responses as pathogen cues, suggesting deep evolutionary roots in disease avoidance.
 
-**Facial Recognition Neuroscience**: fMRI studies show that uncanny valley stimuli activate the fusiform face area (responsible for face processing) while simultaneously triggering amygdala activation (threat response). This dual activation creates the characteristic discomfort—the brain recognizes "face-like" features but also signals "threat" (Seyama & Nagayama, 2007).
 
-**Categorical Perception Research**: Humans naturally categorize entities into discrete groups (human/non-human, alive/dead, friend/foe). The uncanny valley occurs when an entity falls at category boundaries, creating classification uncertainty that the brain interprets as potential danger (Yamada et al., 2013).
+**Categorical Perception Research**: Humans naturally categorize entities into discrete groups (human/non-human, alive/dead, friend/foe).
 
 **Attachment Theory Applications**: Bowlby's attachment research suggests that humans form emotional bonds with entities that exhibit consistent, predictable, human-like responses. AI systems that alternate between human-like warmth and mechanical responses create "disorganized attachment" patterns, leading to approach-avoidance conflicts.
 

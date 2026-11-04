@@ -4,11 +4,8 @@
 
 ### Meccanismo Centrale
 
-La degradazione cognitiva da pressione temporale rappresenta un guasto fondamentale nella funzione cognitiva esecutiva sotto stress temporale, dove il sistema a doppio processo del cervello diventa disregolato. Sotto pressione temporale, l'elaborazione del Sistema 1 (veloce, automatica, basata su euristiche) domina sull'elaborazione del Sistema 2 (lenta, deliberata, analitica), portando a errori sistematici nel giudizio e nel processo decisionale che creano vulnerabilità di sicurezza sfruttabili.
+Sotto pressione temporale, l'elaborazione del Sistema 1 (veloce, automatica, basata su euristiche) domina sull'elaborazione del Sistema 2 (lenta, deliberata, analitica), portando a errori sistematici nel giudizio e nel processo decisionale che creano vulnerabilità di sicurezza sfruttabili.
 
-Il meccanismo neurobiologico coinvolge:
-- **Soppressione della corteccia prefrontale**: La pressione temporale riduce il flusso sanguigno alla corteccia prefrontale, compromettendo la memoria di lavoro, il controllo dell'attenzione e la flessibilità cognitiva
-- **Attivazione dell'amigdala**: Lo stress temporale attiva i sistemi di rilevamento delle minacce, inondando il cervello con ormoni dello stress (cortisolo, adrenalina) che compromettono ulteriormente l'analisi razionale
 - **Tunneling cognitivo (Cognitive tunneling)**: L'attenzione si restringe agli stimoli immediati mentre la consapevolezza periferica (incluse le considerazioni di sicurezza) diminuisce
 - **Overflow della memoria di lavoro**: La pressione temporale supera il limite di capacità del "numero magico sette" di Miller, causando l'elaborazione superficiale o il completo scarto delle informazioni
 
@@ -26,13 +23,10 @@ Il meccanismo neurobiologico coinvolge:
 
 **Ricerca sulla Risposta allo Stress (Selye, 1956)**:
 - Lo stress acuto compromette il consolidamento e il recupero della memoria
-- L'elevazione del cortisolo disturba la funzione ippocampale critica per la valutazione del contesto
 - Le risposte combatti-o-fuggi (fight-or-flight) danno priorità alla velocità rispetto all'accuratezza
 
 **Evidenze Neuroscientifiche (LeDoux, 2000)**:
-- L'attivazione dell'amigdala avviene 300-500ms prima del coinvolgimento della corteccia prefrontale
 - La pressione temporale amplifica questa disparità, creando processi decisionali prima dell'analisi cosciente
-- I cambiamenti neurali indotti dallo stress persistono oltre il fattore di stress immediato
 
 ### Trigger Cognitivi/Emotivi
 

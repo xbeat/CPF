@@ -14,10 +14,6 @@ L'accettazione delle allucinazioni AI rappresenta una nuova vulnerabilità cogni
 
 ### Base di Ricerca
 
-**Fondamenti Neuroscientifici**:
-- Gli studi fMRI dimostrano che i cervelli umani elaborano dichiarazioni autorevoli generate dall'AI in modo simile alla testimonianza di esperti umani, attivando circuiti neurali legati alla fiducia (corteccia cingolata anteriore)
-- La rete di modalità di default del cervello mostra ridotta attività di valutazione critica quando le informazioni sono presentate da autorità percepite
-- I sistemi di neuroni specchio, evoluti per l'interazione umana, si attivano inappropriatamente con interfacce AI progettate per simulare comunicazione umana
 
 **Ricerca di Psicologia Cognitiva**:
 - Il bias di conferma si amplifica quando i sistemi AI riflettono indietro preconcetti dell'utente con apparente validazione esterna

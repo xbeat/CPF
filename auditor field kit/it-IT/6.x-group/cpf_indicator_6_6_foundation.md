@@ -16,7 +16,6 @@ L'assunzione dipendenza si manifesta come regressione a stati psicologici infant
 
 **Teoria Attaccamento (Bowlby, 1969)**: La ricerca attaccamento di John Bowlby dimostra come relazioni caregiver precoci creano template per cercare protezione sotto stress. In contesti organizzativi, questi template sono attivati durante crisi sicurezza, portando a comportamenti dipendenza che rispecchiano dinamiche infant-caregiver.
 
-**Ricerca Neuroscienza**: Ricerca neuroscienza moderna supporta osservazioni di Bion, mostrando che ansia attiva amigdala e può sopprimere funzionamento corteccia prefrontale, portando a regressione a stati psicologici più primitivi e ricerca aumentata di protezione esterna.
 
 ### Trigger Cognitivi/Emotivi
 

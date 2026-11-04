@@ -23,7 +23,6 @@ This vulnerability is particularly insidious because it operates through **motiv
 
 **Neuroscience Evidence:**
 - **Social Pain Research** (Eisenberger, 2012): Social rejection activates the same brain regions as physical pain, making reputation threats neurologically equivalent to physical danger
-- **Status Processing** (Zink et al., 2008): fMRI studies show that status threats activate the anterior cingulate cortex and anterior insula, triggering immediate defensive responses
 
 **Organizational Behavior Research:**
 - **Impression Management** (Rosenfeld et al., 1995): Employees consistently modify behavior to create desired impressions, often at the expense of rule compliance

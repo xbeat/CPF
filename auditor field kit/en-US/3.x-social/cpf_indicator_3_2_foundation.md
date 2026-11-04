@@ -18,9 +18,6 @@ In cybersecurity contexts, this manifests as the continued use of ineffective se
 - **Klayman & Ha (1987)**: Confirmation bias research showing how initial commitments create selective attention to confirming evidence
 - **Staw (1976)**: Escalation of commitment in organizational settings, demonstrating how sunk costs and face-saving motivations drive continued investment in failing projects
 
-**Neuroscience Validation:**
-- **Sharot et al. (2010)**: fMRI studies reveal that commitment-consistent information activates reward pathways in the brain, while commitment-inconsistent information triggers threat responses
-- **Jarcho et al. (2011)**: Neuroimaging evidence that admitting mistakes activates the anterior cingulate cortex (pain response), making it psychologically painful to abandon commitments
 
 **Behavioral Economics Evidence:**
 - **Thaler (1980)**: Sunk cost fallacy demonstrates economic irrationality in maintaining failing investments

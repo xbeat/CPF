@@ -12,7 +12,6 @@ Il meccanismo psicologico opera attraverso diversi processi interconnessi:
 
 **Auto-monitoraggio Ipervigilante (Hypervigilant Self-Monitoring)**: Gli individui inclini alla vergogna sviluppano sensibilità elevata al giudizio potenziale, portando a costante auto-monitoraggio e anticipazione di critica. Questo carico cognitivo paradossalmente aumenta i tassi di errore mentre simultaneamente aumenta la motivazione a nascondere errori.
 
-**Elaborazione di Minaccia Sociale (Social Threat Processing)**: Il sistema di rilevamento minacce del cervello (amigdala) diventa iperattivato in risposta alla potenziale esposizione di errori di sicurezza, attivando risposte combatti-fuggi-congela (fight-flight-freeze) che prioritizzano auto-protezione emozionale rispetto a sicurezza organizzativa.
 
 **Meccanismi di Protezione dell'Identità (Identity Protection Mechanisms)**: Gli individui implementano varie difese psicologiche per proteggere la loro identità professionale, includendo razionalizzazione, minimizzazione, e più criticamente, occultamento di informazioni rilevanti per la sicurezza.
 
@@ -24,7 +23,6 @@ Il fondamento teorico trae da molteplici filoni di ricerca:
 
 **Teoria delle Relazioni Oggettuali di Klein (1946)**: Il meccanismo di scissione (splitting) crea oggetti interni "tutto buono" vs. "tutto cattivo." Quando si verificano incidenti di sicurezza, gli individui inclini alla vergogna non possono integrare la realtà che le persone competenti commettono errori, invece sperimentando se stessi come interamente inadeguati.
 
-**Ricerca Neuroscientifica**: Gli studi fMRI mostrano che la vergogna attiva la corteccia cingolata anteriore e il solco temporale superiore posteriore, regioni associate con dolore sociale e rifiuto. Questa risposta neurologica è equivalente al dolore fisico, spiegando la potente motivazione ad evitare situazioni che inducono vergogna.
 
 **Psicologia Organizzativa**: La ricerca di Edmondson (1999) sulla sicurezza psicologica dimostra che le organizzazioni con culture di colpa alta creano condizioni dove l'occultamento basato sulla vergogna diventa adattivo da prospettiva individuale, anche mentre è distruttivo organizzativamente.
 

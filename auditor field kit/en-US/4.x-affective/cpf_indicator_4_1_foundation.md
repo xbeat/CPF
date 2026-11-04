@@ -6,7 +6,7 @@
 
 Fear-based decision paralysis represents a fundamental breakdown in executive functioning when individuals encounter perceived threats in cybersecurity contexts. This vulnerability emerges from the intersection of three psychological processes:
 
-**Amygdala Hijack**: When fear is triggered, the amygdala activates the sympathetic nervous system before prefrontal cortex engagement, creating a neurological state where rational decision-making is compromised. In cybersecurity contexts, this manifests as complete cognitive shutdown when faced with security alerts, incident response requirements, or decisions involving potential security implications.
+**Amygdala Hijack**: In cybersecurity contexts, this manifests as complete cognitive shutdown when faced with security alerts, incident response requirements, or decisions involving potential security implications.
 
 **Learned Helplessness**: Repeated exposure to complex security incidents where individuals feel powerless to affect outcomes creates a conditioned response of inaction. This psychological state, first identified by Seligman, occurs when people believe their actions will not influence security outcomes, leading to passive acceptance of threats rather than active mitigation.
 
@@ -14,7 +14,6 @@ Fear-based decision paralysis represents a fundamental breakdown in executive fu
 
 ### Research Basis
 
-**Neuroscientific Foundation**: LeDoux's research demonstrates that fear responses activate within 12-15 milliseconds via the amygdala-thalamus pathway, while rational processing through the prefrontal cortex requires 300-500 milliseconds. This neurological reality means that in security contexts involving perceived threats, fear responses dominate before conscious analysis can occur.
 
 **Cognitive Psychology Evidence**: Kahneman and Tversky's prospect theory reveals that loss aversion intensifies under uncertainty, creating disproportionate fear of security failures relative to actual risk. Their research shows that people weigh potential losses 2.5 times more heavily than equivalent gains, explaining why security decisions often default to inaction when outcomes are uncertain.
 
@@ -24,7 +23,7 @@ Fear-based decision paralysis represents a fundamental breakdown in executive fu
 
 ### Cognitive/Emotional Triggers
 
-**Complexity Overwhelm**: When security decisions involve multiple variables, uncertain outcomes, or technical concepts beyond the individual's expertise, the cognitive load triggers fear-based paralysis. The brain interprets complexity as threat, activating freeze responses.
+**Complexity Overwhelm**: When security decisions involve multiple variables, uncertain outcomes, or technical concepts beyond the individual's expertise, the cognitive load triggers fear-based paralysis.
 
 **Authority Confusion**: Uncertainty about who has decision-making authority in security contexts creates paralysis. Individuals fear overstepping boundaries or making decisions outside their perceived competence, leading to inaction even when action is urgently needed.
 

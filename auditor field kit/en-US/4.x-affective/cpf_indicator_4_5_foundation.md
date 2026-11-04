@@ -12,7 +12,6 @@ The psychological mechanism operates through several interconnected processes:
 
 **Hypervigilant Self-Monitoring**: Shame-prone individuals develop heightened sensitivity to potential judgment, leading to constant self-monitoring and anticipation of criticism. This cognitive load paradoxically increases error rates while simultaneously increasing motivation to hide mistakes.
 
-**Social Threat Processing**: The brain's threat detection system (amygdala) becomes hyperactivated in response to potential exposure of security errors, triggering fight-flight-freeze responses that prioritize emotional self-protection over organizational security.
 
 **Identity Protection Mechanisms**: Individuals deploy various psychological defenses to protect their professional identity, including rationalization, minimization, and most critically, concealment of security-relevant information.
 
@@ -24,7 +23,6 @@ The theoretical foundation draws from multiple research streams:
 
 **Klein's Object Relations Theory (1946)**: The splitting mechanism creates "all good" vs. "all bad" internal objects. When security incidents occur, shame-prone individuals cannot integrate the reality that competent people make mistakes, instead experiencing themselves as wholly inadequate.
 
-**Neuroscience Research**: fMRI studies show that shame activates the anterior cingulate cortex and posterior superior temporal sulcus, regions associated with social pain and rejection. This neurological response is equivalent to physical pain, explaining the powerful motivation to avoid shame-inducing situations.
 
 **Organizational Psychology**: Research by Edmondson (1999) on psychological safety demonstrates that organizations with high blame cultures create conditions where shame-based hiding becomes adaptive from an individual perspective, even while being destructive organizationally.
 

@@ -19,8 +19,6 @@ The mechanism operates through symbolic equation—where the conscious mind trea
 - Compensation principle: repressed archetypes emerge with greater force
 
 **Neuroscience Validation:**
-- fMRI studies show limbic system activation (emotion/instinct) preceding prefrontal cortex engagement (rational analysis) by 300-500ms (LeDoux, 2000)
-- Mirror neuron activation in response to archetypal imagery (Libet, 1983)
 - Somatic marker hypothesis: bodily responses to archetypal symbols influence decision-making (Damasio, 1994)
 
 **Cognitive Psychology Integration:**

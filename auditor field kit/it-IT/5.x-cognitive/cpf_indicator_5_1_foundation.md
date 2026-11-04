@@ -8,7 +8,7 @@ La desensibilizzazione da affaticamento da allarmi (alert fatigue desensitizatio
 
 **Risposta di Assuefazione**: La tendenza fondamentale del sistema nervoso a ridurre la reattività a stimoli ripetuti che si dimostrano non minacciosi. Nei contesti di cybersecurity, i frequenti allarmi falsi positivi innescano questo meccanismo adattivo, causando il filtraggio inconscio dei segnali di avvertimento da parte del personale di sicurezza.
 
-**Esaurimento delle Risorse Attentive**: L'attenzione umana opera come una risorsa cognitiva finita. L'elaborazione continua degli allarmi esaurisce queste risorse, costringendo il cervello a implementare meccanismi di protezione che danno priorità ai segnali percepiti come "importanti" mentre sopprimono altri.
+**Esaurimento delle Risorse Attentive**: L'attenzione umana opera come una risorsa cognitiva finita.
 
 **Adattamento Sensoriale**: In modo simile a come il sistema visivo si adatta ai livelli costanti di luce, il sistema cognitivo si adatta ai livelli costanti di allarmi, aumentando di fatto la soglia per ciò che costituisce una minaccia "rilevabile".
 
@@ -18,7 +18,6 @@ La desensibilizzazione da affaticamento da allarmi (alert fatigue desensitizatio
 
 **Teoria dell'Attenzione di Kahneman**: L'elaborazione del Sistema 1 (automatica) domina in ambienti ad alto carico cognitivo. L'affaticamento da allarmi forza l'affidamento su euristiche del Sistema 1 piuttosto che sull'analisi deliberativa del Sistema 2, aumentando i tassi di errore e riducendo l'accuratezza del rilevamento delle minacce.
 
-**Ricerca Neurologica**: Gli studi fMRI mostrano che l'esposizione ripetuta a stimoli di avvertimento riduce progressivamente l'attivazione dell'amigdala (rilevamento delle minacce) mentre aumenta i meccanismi di soppressione della corteccia prefrontale. Questo adattamento neurologico si verifica al di sotto della consapevolezza cosciente.
 
 **Studi sul Decremento della Vigilanza**: La ricerca da contesti di aviazione e militari dimostra che i compiti di attenzione sostenuta mostrano degradazione delle prestazioni dopo 20-30 minuti, con tassi di errore in aumento esponenziale in ambienti ad alta frequenza di allarmi.
 
@@ -26,7 +25,6 @@ La desensibilizzazione da affaticamento da allarmi (alert fatigue desensitizatio
 
 **Soglie di Frequenza**: Tassi di allarme superiori a 10-15 all'ora iniziano a innescare risposte di assuefazione. Tassi superiori a 30 all'ora garantiscono virtualmente la desensibilizzazione entro 2-3 giorni.
 
-**Rapporti di Falsi Positivi**: Tassi di falsi positivi superiori al 30% erodono rapidamente la fiducia nei sistemi di allarme. Tassi superiori al 70% creano comportamenti di evitamento attivo.
 
 **Raggruppamento Temporale**: Allarmi multipli entro brevi finestre temporali (5-10 secondi) innescano risposte di sovraccarico cognitivo, forzando strategie di elaborazione semplificate.
 

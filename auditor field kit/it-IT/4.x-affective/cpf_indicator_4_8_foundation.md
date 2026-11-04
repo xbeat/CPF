@@ -6,7 +6,7 @@
 
 La negligenza correlata alla depressione in contesti di cybersecurity rappresenta una degradazione sistematica della vigilanza di sicurezza derivante dai pattern cognitivi, emozionali, e comportamentali caratteristici associati con stati depressivi. Questa vulnerabilità opera attraverso molteplici meccanismi psicologici interconnessi:
 
-**Disfunzione Cognitiva (Cognitive Dysfunction)**: La depressione compromette significativamente il funzionamento esecutivo, la memoria di lavoro, e il controllo dell'attenzione. La corteccia prefrontale dorsolaterale, responsabile del pensiero strategico e della valutazione del rischio, mostra attivazione ridotta in individui depressi. Questo crea un'incapacità fondamentale di mantenere la vigilanza cognitiva sostenuta richiesta per pratiche di cybersecurity efficaci.
+**Disfunzione Cognitiva (Cognitive Dysfunction)**: La depressione compromette significativamente il funzionamento esecutivo, la memoria di lavoro, e il controllo dell'attenzione. Questo crea un'incapacità fondamentale di mantenere la vigilanza cognitiva sostenuta richiesta per pratiche di cybersecurity efficaci.
 
 **Anedonia e Deficit Motivazionale (Anhedonia and Motivation Deficit)**: Il sintomo depressivo centrale dell'anedonia—perdita di interesse o piacere nelle attività—si estende alle responsabilità professionali, includendo protocolli di sicurezza. I compiti che richiedono attenzione sostenuta ed esecuzione attenta diventano cognitivamente tassanti ed emozionalmente non gratificanti, portando a evitamento sistematico o completamento superficiale.
 
@@ -16,7 +16,6 @@ La negligenza correlata alla depressione in contesti di cybersecurity rappresent
 
 ### Base di Ricerca
 
-**Studi Neurocognitivi (Neurocognitive Studies)**: La ricerca fMRI dimostra che la depressione disturba la rete di modalità predefinita (default mode network) e le reti di controllo esecutivo essenziali per attenzione sostenuta e valutazione del rischio (Menon, 2011). La corteccia cingolata anteriore, cruciale per monitoraggio degli errori e rilevamento dei conflitti, mostra attivazione ridotta in individui depressi, compromettendo direttamente i processi psicologici richiesti per rilevamento delle minacce.
 
 **Ricerca sulla Funzione Esecutiva (Executive Function Research)**: Le meta-analisi indicano dimensioni di effetto moderate-grandi per disfunzione esecutiva nella depressione, particolarmente influenzando memoria di lavoro, flessibilità cognitiva, e attenzione sostenuta (Snyder, 2013). Queste sono precisamente le funzioni cognitive richieste per vigilanza di cybersecurity efficace.
 

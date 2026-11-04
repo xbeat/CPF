@@ -21,9 +21,7 @@ The attachment process involves three key psychological components:
 
 **Object Relations Theory (Klein, 1946)**: The splitting mechanism causes organizations to idealize familiar legacy systems (all good) while demonizing new security requirements or system replacements (all bad). This prevents realistic assessment of legacy system vulnerabilities.
 
-**Neuroscientific Evidence**: fMRI studies show that familiar technologies activate reward pathways in the brain similar to social attachment bonds. The amygdala shows reduced threat response to familiar systems even when objective security risks are present (LeDoux, 2000).
 
-**Behavioral Economics (Kahneman & Tversky, 1979)**: Loss aversion means the psychological cost of abandoning legacy systems is perceived as 2-3 times greater than the potential benefits of new systems, creating strong resistance to security upgrades.
 
 ### Cognitive/Emotional Triggers
 

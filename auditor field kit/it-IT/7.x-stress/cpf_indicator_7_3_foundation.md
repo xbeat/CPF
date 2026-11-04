@@ -19,7 +19,6 @@ Questa risposta si è evoluta come meccanismo adattivo per minacce fisiche ma di
 
 **Risposta Lotta-o-Fuga di Cannon**: Descriveva originariamente l'attivazione del sistema nervoso simpatico che prioritizza la sopravvivenza immediata rispetto al ragionamento complesso. Nella cybersecurity, questo si manifesta come posture difensive "spara prima, fai domande dopo".
 
-**LeDoux (2000) - Ricerca sull'Amigdala**: Gli studi di neuroimaging mostrano che il rilevamento delle minacce bypassa l'elaborazione razionale di 300-500ms, il che significa che le risposte di sicurezza aggressive spesso si verificano prima della valutazione consapevole della minaccia.
 
 **Teoria Polivagale di Porges**: La risposta di lotta rappresenta una strategia difensiva filogeneticamente più antica che emerge quando i sistemi di coinvolgimento sociale più sofisticati falliscono, rilevante per le dinamiche di sicurezza organizzativa.
 
@@ -41,7 +40,6 @@ Questa risposta si è evoluta come meccanismo adattivo per minacce fisiche ma di
 - Trauma di tradimento organizzativo che crea risposte sospettose e aggressive
 
 **Marcatori Fisiologici:**
-- Elevazione di cortisolo e adrenalina durante incidenti di sicurezza
 - Aumento della frequenza cardiaca e pressione sanguigna durante valutazione delle minacce
 - Tensione muscolare e cambiamenti posturali che indicano prontezza difensiva
 - Disturbo del sonno che mantiene stati di ipervigilanza

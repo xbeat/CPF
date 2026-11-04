@@ -20,7 +20,6 @@ The core mechanism operates through **primary process thinking** (Freud, 1900), 
 **Jung's Active Imagination Research (1969)**: Digital interactions can trigger active imagination processes where unconscious content becomes projected onto digital stimuli. The archetypal layer of the psyche becomes activated, leading to responses based on symbolic rather than logical evaluation.
 
 **Neuroscience Evidence**: 
-- fMRI studies show that virtual environments activate similar brain regions to REM sleep, particularly reduced prefrontal cortex activity (reality testing) and increased limbic activity (emotional processing)
 - Default Mode Network activation in digital environments mirrors dream states, reducing critical evaluation
 
 **Cyberpsychology Research**:

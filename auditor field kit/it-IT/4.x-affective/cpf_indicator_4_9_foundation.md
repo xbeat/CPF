@@ -4,11 +4,11 @@
 
 ### Meccanismo Centrale
 
-La noncuranza indotta dall'euforia opera attraverso l'interruzione dei meccanismi normali di valutazione del rischio quando individui o gruppi sperimentano stati emozionali positivi elevati. Questa vulnerabilità deriva dai cambiamenti neurochimici che si verificano durante episodi euforici, dove dopamina aumentata e supervisione ridotta della corteccia prefrontale si combinano per creare punti ciechi sistematici nel giudizio di sicurezza.
+La noncuranza indotta dall'euforia opera attraverso l'interruzione dei meccanismi normali di valutazione del rischio quando individui o gruppi sperimentano stati emozionali positivi elevati.
 
 Il meccanismo psicologico coinvolge tre componenti primarie:
 
-1. **Disinibizione Neurochimica (Neurochemical Disinhibition)**: I livelli di dopamina elevati durante stati euforici riducono l'attività nella corteccia prefrontale—la regione cerebrale responsabile delle funzioni esecutive includendo valutazione del rischio, controllo degli impulsi, e pianificazione strategica. Questo crea un fondamento biologico per decisioni di sicurezza povere durante picchi emozionali positivi.
+1. **Disinibizione Neurochimica (Neurochemical Disinhibition)**: Questo crea un fondamento biologico per decisioni di sicurezza povere durante picchi emozionali positivi.
 
 2. **Bias di Ottimismo Cognitivo (Cognitive Optimism Bias)**: Gli stati euforici amplificano il bias di ottimismo, dove gli individui sovrastimano sistematicamente esiti positivi e sottostimano rischi. In contesti di cybersecurity, questo si manifesta come sovra-fiducia nelle posture di sicurezza, dismissione di indicatori di minaccia, e assunzione che "niente di brutto potrebbe accadere proprio ora."
 
@@ -20,8 +20,6 @@ Questa vulnerabilità è radicata in molteplici filoni di ricerca convergenti:
 
 **Fondamenti di Neuroscienza (Neuroscience Foundations)**:
 - La ricerca di LeDoux (2000) sulle interazioni emozione-cognizione dimostra che stati emozionali forti, includendo quelli positivi, aggirano centri di elaborazione razionale
-- Gli studi sui sistemi di ricompensa dopaminergici mostrano che la dopamina elevata riduce l'accuratezza della percezione del rischio
-- La ricerca fMRI rivela attività diminuita della corteccia prefrontale durante stati euforici, correlando con giudizio compromesso
 
 **Evidenza di Psicologia Comportamentale (Behavioral Psychology Evidence)**:
 - La teoria del prospetto (prospect theory) di Kahneman e Tversky dimostra che cornici emozionali positive portano a comportamento di assunzione di rischio aumentato

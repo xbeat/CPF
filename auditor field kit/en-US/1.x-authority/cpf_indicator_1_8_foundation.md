@@ -17,16 +17,13 @@ The mechanism operates below conscious awareness through what Klein (1946) ident
 ### Research Basis
 
 **Primary Research Foundation:**
-- **Milgram (1974)**: Authority-based compliance studies show 65% obedience rates even when compliance violates personal ethics. In organizational contexts, this percentage increases due to legitimate authority structures and economic dependencies.
+- **Milgram (1974)**: In organizational contexts, this percentage increases due to legitimate authority structures and economic dependencies.
 
 **Supplementary Validation:**
 - **Asch (1956)**: Conformity studies demonstrate that perceived unanimity among authority figures creates near-universal compliance, explaining why single executive exceptions quickly become normalized.
 - **Zimbardo (1971)**: Stanford Prison Experiment reveals how situational authority can override personal security consciousness within 48-72 hours.
 - **Kernberg (1998)**: Organizational psychology research demonstrates that leadership violations of stated values create "moral injury" in subordinates, leading to psychological defense mechanisms that enable further violations.
 
-**Neuroscience Evidence:**
-- **Berns et al. (2005)**: fMRI studies show that disagreeing with authority figures activates pain centers in the brain, creating biological motivation to avoid challenging executive exceptions.
-- **Singer et al. (2006)**: Neural empathy research demonstrates that individuals unconsciously mirror authority figure behaviors, leading to unconscious adoption of risk-taking patterns.
 
 ### Cognitive/Emotional Triggers
 
@@ -64,8 +61,6 @@ The mechanism operates below conscious awareness through what Klein (1946) ident
 - **Equifax Incident (2017)**: Patch management exceptions for executive-used systems created vulnerability windows that were exploited
 - **Target Breach (2013)**: Executive pressure to maintain system availability during holiday season led to security control bypasses
 
-**Attack Vector Confirmation:**
-Research demonstrates that organizations with documented executive exception patterns experience 340% higher rates of successful spear-phishing attacks targeting middle management, as attackers exploit learned compliance behaviors.
 
 ### Technical Failure Points
 

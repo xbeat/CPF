@@ -4,11 +4,10 @@
 
 ### Meccanismo Centrale
 
-Le vulnerabilità del periodo di recupero emergono dalle conseguenze psicofisiologiche complesse delle risposte acute allo stress, quando individui e organizzazioni transitano dalla modalità di crisi alle operazioni normali. Questa vulnerabilità sfrutta la realtà neurobiologica che il recupero non è semplicemente l'assenza di stress, ma un processo attivo che richiede risorse cognitive ed emotive.
+Le vulnerabilità del periodo di recupero emergono dalle conseguenze psicofisiologiche complesse delle risposte acute allo stress, quando individui e organizzazioni transitano dalla modalità di crisi alle operazioni normali. Questa vulnerabilità sfrutta il fatto che il recupero non è semplicemente l'assenza di stress, ma un processo attivo che richiede risorse cognitive ed emotive.
 
 Il meccanismo psicologico centrale opera attraverso tre processi interconnessi:
 
-1. **Ritardo nella Clearance del Cortisolo (Cortisol Clearance Delay)**: Dopo stress acuto, i livelli elevati di cortisolo possono persistere per 24-72 ore, compromettendo la funzione esecutiva, il consolidamento della memoria e la capacità decisionale anche dopo che la minaccia percepita è passata.
 
 2. **Esaurimento delle Risorse Cognitive (Cognitive Resource Depletion)**: Il focus intenso richiesto durante la risposta alla crisi esaurisce risorse cognitive finite (glucosio, neurotrasmettitori), creando uno stato temporaneo di capacità mentale ridotta che persiste nella fase di recupero.
 
@@ -18,7 +17,6 @@ Il meccanismo psicologico centrale opera attraverso tre processi interconnessi:
 
 **Fondamenti Neuroscientifici:**
 - **Sindrome Generale di Adattamento di Selye (1956)**: Identifica la fase di esaurimento dopo allarme e resistenza, dove la capacità adattiva dell'organismo è temporaneamente compromessa
-- **Ricerca sull'Asse HPA**: L'attivazione dell'asse Ipotalamo-Ipofisi-Surrene crea ritardi misurabili nella normalizzazione degli ormoni dello stress, con il cortisolo che rimane elevato 24-72 ore post-stressor
 - **Teoria del Carico Allostatico**: Le risposte ripetute allo stress creano usura cumulativa sui sistemi fisiologici, con i periodi di recupero che mostrano aumentata vulnerabilità a fattori di stress successivi
 
 **Evidenza di Psicologia Cognitiva:**
@@ -41,7 +39,6 @@ Il meccanismo psicologico centrale opera attraverso tre processi interconnessi:
 **Trigger Fisiologici:**
 - **Accumulo di Debito di Sonno (Sleep Debt Accumulation)**: I periodi di crisi spesso coinvolgono privazione del sonno, con effetti che persistono giorni dopo che il sonno normale riprende
 - **Esaurimento Nutrizionale (Nutritional Depletion)**: La risposta allo stress consuma vitamine, minerali e glucosio, creando compromissione cognitiva temporanea
-- **Squilibrio dei Neurotrasmettitori (Neurotransmitter Imbalance)**: La prestazione alta sostenuta esaurisce i sistemi di dopamina e serotonina critici per focus e processo decisionale
 
 ## IMPATTO SULLA CYBERSECURITY
 
@@ -65,7 +62,6 @@ Il meccanismo psicologico centrale opera attraverso tre processi interconnessi:
 ### Incidenti Storici
 
 **Riconoscimento dei Pattern:**
-- **Attacchi Secondari Post-Violazione**: L'analisi mostra tasso di successo 40% più alto per attacchi lanciati 24-72 ore dopo incidenti di sicurezza maggiori
 - **Esfiltrazione di Dati in Fase di Recupero**: Numerosi casi dove il rilevamento e la risposta iniziale alla violazione hanno creato opportunità per furto di dati su scala più larga durante il recupero
 - **Compromissione dell'Infrastruttura**: Gli attacchi alla rete elettrica e infrastruttura critica hanno spesso successo durante periodi di recupero dopo altre interruzioni
 

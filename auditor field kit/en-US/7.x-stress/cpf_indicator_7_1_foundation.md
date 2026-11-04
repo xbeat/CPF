@@ -6,16 +6,13 @@
 
 Acute stress impairment represents a critical vulnerability in the Stress Response Vulnerabilities category [7.x], grounded in Hans Selye's pioneering stress research (1956). The psychological mechanism operates through the rapid activation of the sympathetic nervous system's fight-flight-freeze response, which fundamentally alters cognitive processing capabilities during high-stress security incidents.
 
-When individuals encounter sudden, intense stressors—such as security breaches, system failures, or urgent threat notifications—the amygdala triggers immediate neurochemical responses before conscious processing occurs. This pre-cognitive activation floods the system with stress hormones (cortisol, adrenaline, norepinephrine), creating a cascade of cognitive impairments that directly compromise security decision-making.
 
 The acute stress response narrows attention through "cognitive tunneling," reduces working memory capacity, impairs complex reasoning, and increases reliance on automatic behaviors rather than deliberate security protocols. This physiological reality explains why even well-trained security professionals make critical errors during high-pressure incidents.
 
 ### Research Basis
 
 **Neuroscience Foundations:**
-- LeDoux (2000): Amygdala activation occurs before prefrontal cortex engagement, meaning threat responses precede rational analysis by 300-500ms
 - The framework notes that decision-making involves somatic markers that bypass conscious processing (Damasio, 1994)
-- fMRI studies demonstrate that acute stress specifically impairs prefrontal cortex function while amplifying limbic system responses
 
 **Stress Response Literature:**
 - Selye's General Adaptation Syndrome provides the foundational model for understanding acute stress as the initial "alarm reaction" phase
@@ -38,7 +35,6 @@ The acute stress response narrows attention through "cognitive tunneling," reduc
 
 **Physiological Activation Patterns:**
 - Elevated heart rate and blood pressure
-- Increased cortisol and adrenaline production
 - Reduced peripheral vision (tunnel vision)
 - Impaired fine motor control affecting typing/navigation
 - Disrupted sleep patterns affecting cognitive resilience

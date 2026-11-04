@@ -20,11 +20,9 @@ The psychological appeal of automation bias stems from its promise to resolve th
 - Goddard et al. (2012) documented "cry wolf" effects where false alarms lead to both automation bias and automation neglect
 
 **Neuroscientific Evidence:**
-- fMRI studies reveal reduced prefrontal cortex activation during automated decision support, indicating decreased analytical processing (Parasuraman & Manzey, 2010)
 - EEG research demonstrates that automation presence reduces the P300 component associated with conscious attention allocation
 
 **Cybersecurity-Specific Research:**
-- Rice (2009) found that security analysts using automated threat detection showed 40% reduced manual verification behaviors
 - Toreini et al. (2020) documented systematic over-trust in AI security recommendations, even when provided with accuracy statistics
 
 ### Cognitive/Emotional Triggers

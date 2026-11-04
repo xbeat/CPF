@@ -17,16 +17,13 @@ Il meccanismo opera al di sotto della consapevolezza cosciente attraverso ciò c
 ### Base di Ricerca
 
 **Fondamenti Ricerca Primaria:**
-- **Milgram (1974)**: Gli studi di conformità basata sull'autorità mostrano tassi di obbedienza del 65% anche quando la conformità viola l'etica personale. Nei contesti organizzativi, questa percentuale aumenta a causa delle strutture di autorità legittime e delle dipendenze economiche.
+- **Milgram (1974)**: Nei contesti organizzativi, questa percentuale aumenta a causa delle strutture di autorità legittime e delle dipendenze economiche.
 
 **Validazione Supplementare:**
 - **Asch (1956)**: Gli studi di conformità dimostrano che l'unanimità percepita tra le figure di autorità crea conformità quasi universale, spiegando perché le eccezioni dirigenziali singole diventano rapidamente normalizzate.
 - **Zimbardo (1971)**: L'Esperimento Carcere di Stanford rivela come l'autorità situazionale possa sovrascrivere la coscienza di sicurezza personale entro 48-72 ore.
 - **Kernberg (1998)**: La ricerca di psicologia organizzativa dimostra che le violazioni dei valori dichiarati da parte della leadership creano "lesione morale" nei subordinati, portando a meccanismi di difesa psicologici che abilitano ulteriori violazioni.
 
-**Evidenza Neuroscientifica:**
-- **Berns et al. (2005)**: Gli studi fMRI mostrano che il disaccordo con le figure di autorità attiva i centri del dolore nel cervello, creando motivazione biologica per evitare di sfidare le eccezioni dirigenziali.
-- **Singer et al. (2006)**: La ricerca sull'empatia neurale dimostra che gli individui imitano inconsciamente i comportamenti delle figure di autorità, portando all'adozione inconscia di pattern di assunzione del rischio.
 
 ### Trigger Cognitivi/Emotivi
 
@@ -64,8 +61,6 @@ Il meccanismo opera al di sotto della consapevolezza cosciente attraverso ciò c
 - **Incidente Equifax (2017)**: Le eccezioni alla gestione delle patch per i sistemi usati dai dirigenti hanno creato finestre di vulnerabilità che sono state sfruttate
 - **Violazione Target (2013)**: La pressione dirigenziale per mantenere la disponibilità dei sistemi durante la stagione festiva ha portato a bypass dei controlli di sicurezza
 
-**Conferma Vettore Attacco:**
-La ricerca dimostra che le organizzazioni con pattern di eccezione dirigenziale documentati sperimentano tassi del 340% più elevati di attacchi spear-phishing riusciti che mirano al middle management, poiché gli attaccanti sfruttano i comportamenti di conformità appresi.
 
 ### Punti di Fallimento Tecnici
 

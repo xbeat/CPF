@@ -8,7 +8,6 @@ Le vulnerabilità da cambio di contesto (context switching vulnerabilities) emer
 
 Quando gli individui cambiano rapidamente tra diversi contesti di sicurezza—come passare dalle decisioni di sicurezza email al monitoraggio di rete alla risposta agli incidenti—sperimentano "residuo attentivo" dove le risorse cognitive rimangono parzialmente allocate al compito precedente. Questa allocazione residuale riduce la capacità mentale disponibile per il compito di sicurezza corrente, creando vulnerabilità sistematiche nella qualità del processo decisionale.
 
-La base neurologica coinvolge i sistemi di controllo esecutivo della corteccia prefrontale, che devono riconfigurare costantemente le risorse cognitive quando si cambiano contesti. Studi fMRI dimostrano che questo processo di riconfigurazione crea ritardi misurabili (300-500ms) e riduce l'efficienza cognitiva complessiva del 25-40% durante i periodi di transizione.
 
 ### Base di Ricerca
 

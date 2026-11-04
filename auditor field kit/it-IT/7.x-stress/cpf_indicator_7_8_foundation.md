@@ -4,11 +4,11 @@
 
 ### Meccanismo Centrale
 
-La memoria compromessa da cortisolo rappresenta una vulnerabilità neurobiologica critica dove gli ormoni dello stress elevati degradano sistematicamente i processi di formazione, consolidamento e recupero della memoria. Questo meccanismo opera attraverso l'asse ipotalamo-ipofisi-surrene (HPA), dove lo stress organizzativo sostenuto innesca il rilascio di cortisolo che compromette direttamente il funzionamento ippocampale—la regione cerebrale essenziale per la formazione e il richiamo della memoria esplicita.
+Questo meccanismo opera attraverso l'asse ipotalamo-ipofisi-surrene (HPA), dove lo stress organizzativo sostenuto innesca il rilascio di cortisolo che compromette il funzionamento ippocampale (Lupien et al., 2009)—la regione cerebrale essenziale per la formazione e il richiamo della memoria esplicita.
 
 La vulnerabilità si manifesta in due fasi distinte:
-1. **Fase Acuta**: Gli alti livelli di cortisolo durante eventi di sicurezza stressanti compromettono la memoria di lavoro e l'attenzione, portando a lacune di sicurezza immediate
-2. **Fase Cronica**: L'esposizione prolungata allo stress causa cambiamenti strutturali ippocampali, creando deficit di memoria persistenti che compromettono il richiamo dei protocolli di sicurezza e il riconoscimento dei pattern di incidenti
+1. **Fase Acuta**: Gli alti livelli di cortisolo durante eventi di sicurezza stressanti compromettono la memoria di lavoro e l'attenzione (Lupien et al., 2009), portando a lacune di sicurezza immediate
+2. **Fase Cronica**: L'esposizione prolungata allo stress causa cambiamenti strutturali ippocampali (McEwen, 2007), creando deficit di memoria persistenti che compromettono il richiamo dei protocolli di sicurezza e il riconoscimento dei pattern di incidenti
 
 Questo rappresenta una vulnerabilità pre-cognitiva fondamentale dove gli individui diventano fisiologicamente incapaci di accedere alla conoscenza critica di sicurezza, indipendentemente dalle loro intenzioni consapevoli o livello di training.
 
@@ -33,12 +33,9 @@ Questo rappresenta una vulnerabilità pre-cognitiva fondamentale dove gli indivi
 **Condizioni di Attivazione Primarie:**
 - **Pressione di Risposta agli Incidenti (Incident Response Pressure)**: Gli incidenti di sicurezza ad alto rischio innescano risposte acute di stress che compromettono la memoria delle procedure di risposta stabilite
 - **Monitoraggio della Prestazione (Performance Monitoring)**: La sorveglianza e valutazione costanti creano stress cronico che degrada il consolidamento della memoria a lungo termine
-- **Ambiguità di Ruolo (Role Ambiguity)**: Responsabilità di sicurezza poco chiare creano ansia persistente che eleva i livelli di cortisolo baseline
 - **Decisioni Critiche Temporali (Time-Critical Decisions)**: Le pressioni di scadenza attivano l'asse HPA, compromettendo l'accesso alla conoscenza dettagliata di sicurezza
-- **Conflitti di Autorità (Authority Conflicts)**: Lo stress gerarchico e la paura della colpa innescano rilascio di cortisolo che compromette il richiamo delle policy di sicurezza
 
 **Fattori Amplificanti:**
-- **Privazione del Sonno (Sleep Deprivation)**: Compone gli effetti del cortisolo sul consolidamento della memoria durante operazioni critiche notturne
 - **Dipendenza da Caffeina (Caffeine Dependence)**: Gli stati di astinenza durante periodi ad alto stress esacerbano la compromissione della memoria
 - **Sovraccarico di Lavoro (Workload Overload)**: L'esaurimento cognitivo riduce la resilienza ai deficit di memoria indotti da stress
 
@@ -65,7 +62,6 @@ Questo rappresenta una vulnerabilità pre-cognitiva fondamentale dove gli indivi
 **Riconoscimento dei Pattern dal Framework CPF:**
 - Le organizzazioni riportano costantemente che incidenti di sicurezza maggiori si verificano durante periodi di alto stress organizzativo (fusioni, licenziamenti, migrazioni di sistema)
 - L'analisi post-incidente rivela frequentemente che procedure di sicurezza stabilite sono state "dimenticate" o "trascurate" durante la fase critica di risposta
-- I team di sicurezza riportano aumentati tassi di errore e tempi di risposta più lenti durante periodi ad alto stress, correlando con marcatori di cortisolo elevati
 
 **Manifestazioni del Mondo Reale:**
 - **Target (2013)**: L'analisi post-violazione suggerì che lo stress durante operazioni di punta delle festività contribuì al riconoscimento ritardato delle minacce e protocolli di risposta inadeguati

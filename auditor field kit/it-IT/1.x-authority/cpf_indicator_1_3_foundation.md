@@ -8,11 +8,11 @@ La suscettibilità all'impersonazione di figure di autorità rappresenta una con
 
 Il meccanismo coinvolge tre processi interconnessi: **riconoscimento automatico autorità** (rapido pattern matching Sistema 1 ai segnali di autorità), **spostamento responsabilità** (trasferimento responsabilità decisionale alla figura di autorità), e **automazione conformità** (esecuzione richieste senza verifica di sicurezza). Questo crea una finestra di vulnerabilità pre-cognitiva dove i protocolli di sicurezza vengono bypassati prima che avvenga la valutazione cosciente.
 
-Neurologicamente, la percezione di autorità attiva la corteccia cingolata anteriore e riduce l'attività della corteccia prefrontale (Berns et al., 2005), diminuendo letteralmente le regioni cerebrali responsabili del pensiero critico e della valutazione del rischio. Il vantaggio evolutivo della rapida conformità all'autorità—sopravvivenza in gruppi gerarchici—diventa una responsabilità di cybersecurity in ambienti digitali dove i segnali di autorità possono essere facilmente falsificati.
+Il vantaggio evolutivo della rapida conformità all'autorità—sopravvivenza in gruppi gerarchici—diventa una responsabilità di cybersecurity in ambienti digitali dove i segnali di autorità possono essere facilmente falsificati.
 
 ### Base di Ricerca
 
-**Studi sull'Obbedienza di Milgram (1974):** Hanno dimostrato che il 65% dei partecipanti avrebbe somministrato scosse elettriche potenzialmente letali quando diretti da figure di autorità percepite. Criticamente, la conformità si verificava anche quando la supervisione diretta veniva rimossa, suggerendo trigger di autorità internalizzati piuttosto che mera paura delle conseguenze.
+**Studi sull'Obbedienza di Milgram (1974):** Criticamente, la conformità si verificava anche quando la supervisione diretta veniva rimossa, suggerendo trigger di autorità internalizzati piuttosto che mera paura delle conseguenze.
 
 **Teoria Dinamiche di Gruppo di Bion (1961):** Lo stato "basic assumption dependency" (baD) descrive la fantasia inconscia dei gruppi che leader onnipotenti possano fornire protezione perfetta. In contesti di cybersecurity, questo si manifesta come fiducia acritica in chiunque presenti credenziali di autorità, creando punti ciechi sistematici agli attacchi di impersonazione.
 

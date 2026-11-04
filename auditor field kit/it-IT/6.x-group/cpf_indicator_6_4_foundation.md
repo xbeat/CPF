@@ -15,13 +15,10 @@ L'ozio sociale si riferisce alla tendenza degli individui ad esercitare meno sfo
 ### Base di Ricerca
 
 **Studi Fondamentali:**
-- Gli esperimenti di tiro alla fune di Ringelmann hanno dimostrato una diminuzione di prestazione del 18% nei gruppi
 - Latané et al. (1979) hanno mostrato che l'ozio sociale aumenta con la dimensione del gruppo logaritmicamente
 - La meta-analisi di Williams & Karau (1991) ha confermato l'effetto attraverso culture e compiti
 
 **Evidenza Neuropsicologica:**
-- Studi fMRI mostrano ridotta attivazione della corteccia cingolata anteriore (monitoraggio sforzo) in contesti di gruppo
-- Diminuita attività dopaminergica nelle vie di ricompensa quando contributi individuali sono meno identificabili
 - Interferenza rete cognitiva sociale durante decisioni complesse in gruppi
 
 **Ricerca Specifica per Cybersecurity:**
@@ -67,10 +64,8 @@ L'ozio sociale si riferisce alla tendenza degli individui ad esercitare meno sfo
 **Modelli Casi Studio dal Framework:**
 - **Violazione Servizi Finanziari (2019)**: Team SOC di 12 persone fallì nell'escalare indicatori ovvi, ogni analista presumendo che altri stessero investigando
 - **Perdita Dati Healthcare (2020)**: Team sicurezza IT collettivamente responsabile per gestione patch risultò in ritardo di 3 mesi su aggiornamenti critici
-- **Ransomware Manifatturiero (2021)**: Efficacia formazione consapevolezza sicurezza declinò del 40% quando consegnata a gruppi vs individui
 
 **Riconoscimento Modelli Attacco:**
-- Tassi successo ingegneria sociale aumentano del 300% quando prendono di mira team vs individui
 - Campagne phishing mostrano tassi click-through più alti in organizzazioni con responsabilità di sicurezza diffuse
 - Minacce Persistenti Avanzate sfruttano periodi di osservazione dove monitoraggio basato su team crea punti ciechi
 

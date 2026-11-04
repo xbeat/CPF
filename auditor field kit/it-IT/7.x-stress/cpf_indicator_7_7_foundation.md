@@ -4,13 +4,11 @@
 
 ### Meccanismo Centrale
 
-La visione a tunnel indotta da stress rappresenta una risposta neurobiologica fondamentale dove lo stress acuto o cronico restringe l'elaborazione cognitiva per concentrarsi esclusivamente sulle minacce percepite immediate filtrando le informazioni periferiche che potrebbero essere cruciali per una valutazione di sicurezza completa. Questo fenomeno si verifica attraverso l'attivazione del sistema nervoso simpatico e dell'asse ipotalamo-ipofisi-surrene (HPA), che inonda il sistema con ormoni dello stress come cortisolo e adrenalina.
 
 Il meccanismo opera attraverso diversi processi interconnessi:
 
-**Restringimento Attenzionale (Attentional Narrowing)**: Sotto stress, il sistema di attenzione esecutiva del cervello diventa ipervigilante agli stimoli correlati alla minaccia riducendo simultaneamente la capacità di elaborazione per informazioni non correlate alla minaccia. Questo crea un "riflettore" cognitivo che illumina solo una frazione dell'ambiente informativo totale.
+**Restringimento Attenzionale (Attentional Narrowing)**: Questo crea un "riflettore" cognitivo che illumina solo una frazione dell'ambiente informativo totale.
 
-**Degradazione della Memoria di Lavoro (Working Memory Degradation)**: Gli ormoni dello stress compromettono la capacità di memoria di lavoro della corteccia prefrontale, riducendo l'abilità di mantenere simultaneamente più pezzi di informazione e limitando le capacità di problem-solving complesso essenziali per il processo decisionale di cybersecurity.
 
 **Dominanza Euristica (Heuristic Dominance)**: Quando l'elaborazione del Sistema 2 (deliberata) diventa compromessa, gli individui si affidano sempre più alle euristiche del Sistema 1 (automatico) e scorciatoie, che potrebbero essere inappropriate per minacce di sicurezza nuove o complesse.
 
@@ -22,7 +20,6 @@ Il fondamento psicologico per la visione a tunnel indotta da stress deriva da mo
 
 **Sindrome Generale di Adattamento di Selye**: Il lavoro seminale di Hans Selye sulle risposte allo stress identifica tre fasi: allarme, resistenza ed esaurimento. Durante la fase di allarme, la visione a tunnel serve una funzione adattiva per minacce fisiche ma diventa disadattiva in ambienti informazionali complessi che richiedono ampia consapevolezza situazionale.
 
-**Evidenza Neuroscientifica**: La ricerca di LeDoux sul ruolo dell'amigdala nel rilevamento delle minacce mostra che le risposte allo stress avvengono 300-500ms prima della consapevolezza cosciente, significando che gli effetti della visione a tunnel iniziano prima che gli individui riconoscano di stare sperimentando stress.
 
 **Teoria del Carico Cognitivo (Cognitive Load Theory)**: La ricerca di Miller sui limiti della memoria di lavoro (7±2 elementi) dimostra come lo stress riduce ulteriormente questa capacità già limitata, forzando gli individui a scartare informazioni potenzialmente rilevanti per mantenere la funzione cognitiva.
 

@@ -8,7 +8,7 @@ L'effetto uncanny valley rappresenta un disturbo fondamentale nei sistemi di ric
 
 Il meccanismo centrale opera attraverso sistemi di rilevamento delle minacce basati sull'evoluzione. Quando gli esseri umani incontrano qualcosa che appare umano ma esibisce sottili "anomalie", attiva antichi meccanismi di sopravvivenza che originariamente aiutavano a distinguere membri sani del gruppo da quelli che potrebbero essere malati, posseduti o altrimenti minacciosi. In ambienti digitali, questo si traduce in sistemi AI che comunicano in pattern linguistici quasi-umani, esibiscono tratti di personalità o rivendicano comprensione simile a quella umana mentre simultaneamente rivelano la loro natura artificiale attraverso inconsistenze sottili.
 
-Questa dissonanza psicologica crea uno stato di incertezza cognitiva dove gli utenti simultaneamente si fidano (a causa della presentazione simile a quella umana) e diffidano (a causa di elementi uncanny) del sistema AI. Questo conflitto interno compromette i normali processi decisionali di sicurezza, poiché il cervello lotta per categorizzare l'entità come alleato umano fidato o minaccia potenziale.
+Questa dissonanza psicologica crea uno stato di incertezza cognitiva dove gli utenti simultaneamente si fidano (a causa della presentazione simile a quella umana) e diffidano (a causa di elementi uncanny) del sistema AI.
 
 ### Base di Ricerca
 
@@ -16,9 +16,8 @@ L'effetto uncanny valley trae da molteplici filoni di ricerca psicologica:
 
 **Psicologia Evoluzionistica**: L'uncanny valley probabilmente si è evoluto come meccanismo di evitamento dei patogeni. La ricerca di MacDorman & Ishiguro (2006) dimostra che stimoli uncanny attivano le stesse risposte di disgusto ed evitamento dei segnali di patogeni, suggerendo profonde radici evolutive nell'evitamento delle malattie.
 
-**Neuroscienza del Riconoscimento Facciale**: Gli studi fMRI mostrano che stimoli uncanny valley attivano la fusiform face area (responsabile dell'elaborazione dei volti) mentre simultaneamente innescano l'attivazione dell'amigdala (risposta alla minaccia). Questa doppia attivazione crea il caratteristico disagio—il cervello riconosce caratteristiche "simili a un volto" ma segnala anche "minaccia" (Seyama & Nagayama, 2007).
 
-**Ricerca sulla Percezione Categoriale**: Gli esseri umani categorizzano naturalmente entità in gruppi discreti (umano/non-umano, vivo/morto, amico/nemico). L'uncanny valley si verifica quando un'entità cade ai confini delle categorie, creando incertezza di classificazione che il cervello interpreta come potenziale pericolo (Yamada et al., 2013).
+**Ricerca sulla Percezione Categoriale**: Gli esseri umani categorizzano naturalmente entità in gruppi discreti (umano/non-umano, vivo/morto, amico/nemico).
 
 **Applicazioni della Teoria dell'Attaccamento**: La ricerca sull'attaccamento di Bowlby suggerisce che gli esseri umani formano legami emotivi con entità che esibiscono risposte coerenti, prevedibili e simili a quelle umane. I sistemi AI che alternano tra calore simile a quella umana e risposte meccaniche creano pattern di "attaccamento disorganizzato", portando a conflitti approccio-evitamento.
 

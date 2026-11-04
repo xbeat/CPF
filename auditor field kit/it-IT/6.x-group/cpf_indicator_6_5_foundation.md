@@ -12,7 +12,6 @@ Il meccanismo psicologico opera attraverso tre percorsi primari: **diffusione di
 
 La ricerca fondamentale deriva dagli esperimenti storici di Darley e Latané (1968) dimostranti che individui sono meno propensi ad aiutare in emergenze quando altri sono presenti. Studi successivi di Latané e Nida (1981) stabilirono che questo effetto si rafforza con dimensione gruppo seguendo relazione legge potenza. In contesti organizzativi, Karau e Williams (1993) documentarono come ozio sociale—strettamente relazionato all'effetto spettatore—aumenta quando contributi individuali sono meno identificabili e quando importanza compito è ambigua.
 
-Ricerca neuroscienza di Balconi e Vanutelli (2017) usando fEMG e EEG rivelò che situazioni spettatore attivano percorsi neurali diversi rispetto a contesti decisione individuale, con attivazione ridotta nella corteccia cingolata anteriore (associata con responsabilità personale) e attivazione aumentata nel solco temporale superiore (associato con cognizione sociale e teoria della mente).
 
 Da prospettiva psicanalitica, il lavoro di Bion (1961) su dinamiche gruppo identifica questo fenomeno come manifestazione dell'assunzione base dipendenza (baD), dove gruppi inconsciamente cercano leader o figura autorità onnipotente per assumere responsabilità, permettendo ai membri di rimanere passivi. La teoria relazioni oggetto di Klein (1946) spiega come scissione organizzativa crea categorie "buone" (responder esperti) e "cattive" (dipendenti ordinari), con individui proiettanti responsabilità su altri "esperti".
 

@@ -18,14 +18,8 @@ The hyperbolic nature of this discounting means that security investments with d
 - Shows that probability weighting changes with time horizons
 
 **Behavioral Economics Research:**
-- Studies consistently show discount rates of 30-40% annually for future security investments
-- Neuroimaging reveals distinct brain activation patterns for immediate vs. delayed security decisions
 - Cross-cultural research confirms universality of hyperbolic discounting across organizational contexts
 
-**Neuroscience Evidence:**
-- fMRI studies show limbic system activation (immediate reward processing) dominates prefrontal cortex engagement (long-term planning) in security decision contexts
-- Dopamine pathways respond more strongly to immediate security "wins" than future threat prevention
-- Stress hormones (cortisol) further impair temporal perspective in security planning
 
 **Organizational Psychology Research:**
 - Quarterly earnings pressure amplifies hyperbolic discounting in security investments

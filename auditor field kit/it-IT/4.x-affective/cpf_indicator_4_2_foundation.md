@@ -4,11 +4,10 @@
 
 ### Meccanismo Centrale
 
-L'assunzione di rischio indotta dalla rabbia rappresenta una vulnerabilità fondamentale nella cybersecurity dove l'attivazione emozionale compromette sistematicamente la valutazione cognitiva del rischio. Quando gli individui sperimentano rabbia, il sistema limbico—particolarmente l'amigdala—diventa iperattivato mentre le funzioni di controllo esecutivo della corteccia prefrontale sono soppresse. Questa risposta neurobiologica crea uno stato dove lo scarico emozionale immediato prende precedenza sulla valutazione attenta delle potenziali conseguenze.
+L'assunzione di rischio indotta dalla rabbia rappresenta una vulnerabilità fondamentale nella cybersecurity dove l'attivazione emozionale compromette sistematicamente la valutazione cognitiva del rischio. La rabbia crea uno stato dove lo scarico emozionale immediato prende precedenza sulla valutazione attenta delle potenziali conseguenze.
 
 Il meccanismo psicologico opera attraverso molteplici percorsi:
 
-**Percorso Neurobiologico (Neurobiological Pathway)**: La rabbia attiva il rilascio di norepinefrina e dopamina, creando uno stato di attivazione elevata che restringe l'attenzione e riduce la flessibilità cognitiva. La corteccia cingolata anteriore, responsabile del monitoraggio dei conflitti e della rilevazione degli errori, mostra attivazione diminuita durante stati di rabbia, compromettendo la capacità di riconoscere potenziali rischi di sicurezza.
 
 **Percorso Cognitivo (Cognitive Pathway)**: La rabbia attiva il pensiero Sistema 1 (veloce, automatico, emozionale) mentre sopprime il pensiero Sistema 2 (lento, deliberato, analitico). Questo risulta nel processo decisionale basato su euristiche (heuristic-based) che prioritizza il raggiungimento immediato degli obiettivi rispetto alle considerazioni di sicurezza. Il "divario di empatia caldo-freddo" (hot-cold empathy gap) diventa pronunciato, dove gli individui in stati di rabbia non possono predire accuratamente le loro preferenze future o le conseguenze delle azioni attuali.
 
@@ -17,9 +16,7 @@ Il meccanismo psicologico opera attraverso molteplici percorsi:
 ### Base di Ricerca
 
 **Fondamenti Neuroscientifici (Neuroscience Foundations)**:
-- LeDoux (2000) ha dimostrato che l'elaborazione emozionale nell'amigdala si verifica 300-500ms prima dell'elaborazione cognitiva conscia, stabilendo il primato delle risposte emozionali rispetto a quelle razionali
 - L'ipotesi del marcatore somatico (somatic marker hypothesis) di Damasio (1994) mostra che gli stati emozionali creano bias inconsci nel processo decisionale attraverso meccanismi di feedback corporeo
-- Gli studi fMRI rivelano che gli individui arrabbiati mostrano aumentata attivazione nello striato ventrale (elaborazione della ricompensa) e diminuita attivazione nella corteccia orbitofrontale (valutazione del rischio)
 
 **Evidenza di Economia Comportamentale (Behavioral Economics Evidence)**:
 - La teoria del processo duale (dual-process theory) di Kahneman (2011) spiega come l'attivazione emozionale sposti il processo decisionale dall'analisi attenta del Sistema 2 alle risposte impulsive del Sistema 1
@@ -68,8 +65,6 @@ Il meccanismo psicologico opera attraverso molteplici percorsi:
 ### Incidenti Storici
 
 **Pattern Notevoli dal Framework**:
-- Le organizzazioni con punteggi alti di rabbia dei dipendenti hanno mostrato tassi superiori del 340% di incidenti insider
-- I tassi di successo del phishing sono aumentati del 220% durante periodi di alto stress organizzativo e frustrazione
 - Le violazioni delle politiche di sicurezza si sono concentrate attorno a cambiamenti di sistema e nuove implementazioni di sicurezza
 
 **Pattern di Casi di Studio (Case Study Patterns)**:

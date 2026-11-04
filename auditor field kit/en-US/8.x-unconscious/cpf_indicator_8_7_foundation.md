@@ -14,7 +14,6 @@ The confusion operates at the boundary between conscious rational analysis and u
 
 **Kleinian Object Relations Theory**: Klein's work on symbolic equations demonstrates that under stress or anxiety, individuals regress to earlier developmental stages where symbols and reality become fused. In her 1930 paper "The Importance of Symbol Formation in the Development of the Ego," Klein showed how symbolic thinking develops from concrete identification to abstract representation, but can regress under pressure.
 
-**Neuroscience Research**: Libet's experiments (1983) and subsequent fMRI studies by Soon et al. (2008) demonstrate that decision-making occurs 300-500ms before conscious awareness, indicating that symbolic processing happens below the threshold of rational analysis. The brain's threat detection systems process symbolic information faster than cognitive systems can evaluate their actual meaning.
 
 **Cognitive Load Theory**: Miller's research (1956) on working memory limitations shows that when cognitive capacity is exceeded, individuals resort to heuristic processing that relies heavily on symbolic shortcuts. This creates conditions where symbolic equations become dominant processing modes.
 

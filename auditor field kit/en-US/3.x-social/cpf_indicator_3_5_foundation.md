@@ -8,25 +8,19 @@ Scarcity-driven decisions represent a fundamental cognitive vulnerability rooted
 
 The psychological mechanism operates through several interconnected pathways:
 
-**Loss Aversion Amplification**: Kahneman and Tversky's prospect theory demonstrates that losses are psychologically weighted approximately 2.5 times more heavily than equivalent gains. Under scarcity conditions, this ratio increases dramatically, causing individuals to perceive potential loss of the "scarce" resource as catastrophic, leading to impulsive decisions that bypass normal security protocols.
+**Loss Aversion**: In prospect theory, losses weigh more than equivalent gains; the estimated loss-aversion coefficient is about 2.25 (Tversky & Kahneman, 1992). Framing a scarce resource as something about to be lost recruits this asymmetry, which pushes toward quick action over verification.
 
-**Temporal Discounting Acceleration**: Scarcity triggers hyperbolic discounting, where the value of future benefits decreases exponentially relative to immediate rewards. In cybersecurity contexts, this manifests as prioritizing immediate access to scarce resources over long-term security considerations.
+**Temporal Discounting**: People discount future outcomes hyperbolically, overweighting the immediate (Frederick, Loewenstein & O'Donoghue, 2002). In cybersecurity contexts this appears as prioritizing immediate access to a scarce resource over long-term security considerations.
 
-**Cognitive Load Overload**: The stress of perceived scarcity consumes working memory capacity (Miller's "magical number seven" becomes even more constrained), reducing available cognitive resources for security evaluation and increasing reliance on System 1 (fast, automatic) thinking rather than System 2 (deliberate, analytical) processing.
+**Attentional Tunneling**: Scarcity concentrates attention on the scarce resource and draws it away from everything else (Shah, Mullainathan & Shafir, 2012; confirmed in their 2019 self-replication). Security checks sit outside the tunnel, so they are the first thing to be skipped when time, budget or access feels scarce.
 
 ### Research Basis
 
-**Cialdini's Scarcity Principle**: Robert Cialdini's seminal research on influence identifies scarcity as one of six fundamental compliance triggers. His studies demonstrate that perceived scarcity increases desirability and reduces critical evaluation. Items presented as "limited time" or "limited quantity" generate 3-4x higher conversion rates, even when the underlying value proposition remains constant.
+**Why it happens: the mechanisms that have held up.** Scarcity narrows attention onto the scarce resource ("tunneling") and pushes people to borrow against the future to relieve it (Shah, Mullainathan & Shafir, 2012, *Science*, "Some consequences of having too little"). The experiment of that paper selected by the Camerer et al. (2018, *Nature Human Behaviour*) project on 21 Science and Nature studies, the one on cognitive fatigue, did not replicate; the authors' own self-replication (Shah, Mullainathan & Shafir, 2019, *Journal of Economic Psychology*, "An exercise in self-replication") confirmed the greater attentional focus and the over-borrowing, found the cognitive-fatigue result reversed and weaker evidence for neglect. The indicator rests on these two mechanisms, which are also the most relevant to security: tunneling on the scarce resource is what makes people neglect controls that lie outside the tunnel.
 
-**Behavioral Economics Evidence**: 
-- Mani et al. (2013) demonstrated that financial scarcity reduces cognitive capacity equivalent to losing 13 IQ points
-- Shah, Mullainathan, and Shafir's research on "tunneling" shows that scarcity creates cognitive focus so narrow that peripheral considerations (including security) become invisible
-- Deadline effects studies show 40-60% increase in poor decision-making under time pressure
+**State of the debate.** An empirical audit of the scarcity-priming literature (O'Donnell et al., 2021, *PNAS*, 20 replicated studies) found a mix of clear successes and clear failures; it received a correction in 2022 and was contested by the original authors (Shah, Zhao, Mullainathan & Shafir, 2022, "A scarcity literature mischaracterized with an empirical audit"). The question is open in both directions.
 
-**Neuroscience Foundations**:
-- fMRI studies reveal that scarcity activates the anterior cingulate cortex (conflict monitoring) and reduces prefrontal cortex activity (executive control)
-- Amygdala activation increases under scarcity conditions, triggering fight-or-flight responses that bypass rational security evaluation
-- Dopamine system dysregulation under scarcity creates addiction-like seeking behaviors for the scarce resource
+**What is not used as evidence.** Mani, Mullainathan, Shafir & Zhao (2013, *Science*, "Poverty impedes cognitive function") is contested on statistical and psychometric grounds (Wicherts & Scholten, 2013, *Science* comment, with the authors' reply); its IQ-point figure was the authors' analogy, not an IQ measurement, and is not cited here. Cialdini's scarcity principle (*Influence*, 2007) describes how persuasion and attacks are built; it is a practitioner heuristic, not experimental evidence for this indicator.
 
 ### Cognitive/Emotional Triggers
 
@@ -86,8 +80,6 @@ The psychological mechanism operates through several interconnected pathways:
 - COVID-19 vaccine scarcity was exploited for credential harvesting and malware distribution
 
 **Pattern Recognition**:
-- 78% of successful social engineering attacks include time pressure elements
-- Phishing success rates increase 300-400% when scarcity elements are included
 - Attacks during organizational transitions (mergers, acquisitions, layoffs) show higher success rates
 
 ### Technical Security Failures

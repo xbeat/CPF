@@ -21,10 +21,6 @@ Risky shift phenomena refers to the well-documented tendency for groups to make 
 - Wallach, Kogan & Bem (1962): Demonstrated risky shift across diverse decision domains and demographic groups
 - Myers & Lamm (1976): Meta-analysis confirming effect across 316 studies with average effect size of d = 0.7
 
-**Neuroscience Validation**:
-- fMRI studies show reduced anterior cingulate cortex (risk monitoring) activation during group decisions
-- Increased ventral striatum (reward seeking) activation when group members express risk tolerance
-- Mirror neuron activation creates unconscious mimicry of risk-taking attitudes
 
 **Organizational Psychology Research**:
 - Janis (1972): Documented risky shift in high-stakes political and military decisions (Bay of Pigs, Vietnam escalation)

@@ -16,7 +16,6 @@ In contesti cybersecurity, fantasie speranza accoppiamento si manifestano come c
 
 **Sistemi Difesa Sociale di Menzies (1960)**: Il lavoro di Isabel Menzies Lyth su sistemi difesa sociale dimostra come istituzioni sviluppano strategie inconsce per gestire ansia. Fantasie speranza accoppiamento servono come difesa contro ansia di confrontare vulnerabilità sicurezza presenti spostando speranza su combinazioni miracolose future.
 
-**Supporto Neuroscientifico**: Ricerca su sistemi ricompensa anticipatoria mostra che percorsi dopamina cervello attivano più fortemente per ricompense anticipate che ricompense effettive, spiegando base neurobiologica per perché organizzazioni diventano fissate su soluzioni sicurezza future piuttosto che implementare quelle presenti.
 
 ### Trigger Cognitivi/Emotivi
 

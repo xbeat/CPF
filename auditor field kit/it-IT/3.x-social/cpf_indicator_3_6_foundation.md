@@ -14,7 +14,7 @@ Al suo nucleo, lo sfruttamento del principio di unità sfrutta ciò che gli psic
 
 **Teoria dell'Identità Sociale (Tajfel & Turner, 1979):** La ricerca fondamentale mostra che anche assegnazioni di gruppo arbitrarie creano immediato favoritismo per l'in-group e discriminazione dell'out-group. Gli studi del "paradigma dei gruppi minimi" hanno rivelato che gli individui sacrificheranno il guadagno personale per beneficiare membri sconosciuti del gruppo, dimostrando la natura automatica delle risposte di unità.
 
-**Neuroscienza dell'Identità di Gruppo (Molenberghs, 2013):** Gli studi fMRI rivelano che l'elaborazione dei membri dell'in-group attiva la corteccia prefrontale mediale associata al pensiero auto-referenziale, mentre i membri dell'out-group attivano regioni associate all'elaborazione degli oggetti. Questo suggerisce che i membri dell'in-group sono elaborati come estensioni del sé, spiegando la ridotta valutazione critica delle loro richieste.
+**Neuroscienza dell'Identità di Gruppo (Molenberghs, 2013):** Questo suggerisce che i membri dell'in-group sono elaborati come estensioni del sé, spiegando la ridotta valutazione critica delle loro richieste.
 
 **Teoria della Gestione del Terrore (Becker, 1973):** La ricerca dimostra che l'identità di gruppo serve come buffer psicologico contro l'ansia esistenziale. Quando le decisioni di sicurezza attivano paure legate alla morte (come fanno spesso le minacce cyber), gli individui mostrano una maggiore dipendenza dall'identità di gruppo per la protezione psicologica, rendendoli più suscettibili alla manipolazione basata sull'unità.
 

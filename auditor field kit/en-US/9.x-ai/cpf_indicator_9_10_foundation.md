@@ -23,9 +23,6 @@ Algorithmic fairness blindness represents a complex psychological vulnerability 
 - Anthropomorphization research shows humans attribute human-like qualities to AI systems, including moral agency and fairness capabilities
 - In-group/out-group dynamics: AI systems developed by trusted organizations receive greater fairness assumptions than those from external sources
 
-**Neuroscience Findings**:
-- fMRI studies demonstrate reduced prefrontal cortex activation (critical thinking) when interacting with perceived "intelligent" systems
-- Mirror neuron research suggests humans may unconsciously model AI decision-making processes, leading to adoption of biased patterns
 
 ### Cognitive/Emotional Triggers
 

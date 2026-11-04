@@ -6,7 +6,6 @@
 
 Cognitive tunneling represents a critical attention-narrowing phenomenon where individuals become so focused on a specific task, threat, or problem that they lose awareness of other important environmental cues and alternative solutions. This psychological state occurs when cognitive resources become over-allocated to a single focus area, creating dangerous blind spots in peripheral awareness.
 
-The mechanism operates through selective attention processes where the brain's limited processing capacity becomes monopolized by immediate concerns. Under cognitive load or stress conditions, the prefrontal cortex—responsible for executive attention and situational awareness—becomes compromised, leading to tunnel vision that persists even when broader awareness would be more appropriate for the situation.
 
 In cybersecurity contexts, cognitive tunneling manifests when security personnel become hyper-focused on specific threats, technical problems, or incident response activities while missing broader attack patterns, related vulnerabilities, or systemic security issues developing simultaneously.
 
@@ -20,7 +19,6 @@ In cybersecurity contexts, cognitive tunneling manifests when security personnel
 
 **Endsley's Situation Awareness Research (1995)**: Identifies cognitive tunneling as a primary factor in situation awareness failures, particularly under stress and time pressure. Her research shows that experts are not immune to tunneling effects when cognitive load exceeds capacity.
 
-**Neuroscience Evidence**: fMRI studies demonstrate that during cognitive tunneling, activity in the anterior cingulate cortex (attention control) and dorsolateral prefrontal cortex (executive function) becomes focused on specific neural pathways while broader monitoring networks show decreased activation.
 
 ### Cognitive/Emotional Triggers
 

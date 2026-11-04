@@ -16,7 +16,6 @@ The mechanism operates through several interconnected psychological processes:
 ### Research Basis
 The foundation for understanding this vulnerability stems from Stanley Milgram's groundbreaking obedience studies (1974), which demonstrated that ordinary individuals would inflict apparent harm when directed by authority figures. In Milgram's experiments, 65% of participants continued to the highest shock level when instructed by an experimenter, despite believing they were causing pain to another person.
 
-**Neuroscientific Evidence**: Contemporary neuroscience research reveals that authority-based compliance operates below conscious awareness. fMRI studies show that amygdala activation (threat response) occurs 300-500ms before prefrontal cortex engagement (rational analysis), as documented by Libet (1983) and confirmed by Soon et al. (2008). This neurological reality means that authority-based requests trigger automatic compliance responses before conscious security evaluation can occur.
 
 **Dual-Process Theory Application**: Kahneman's System 1/System 2 framework explains why authority compliance bypasses security protocols. System 1 (fast, automatic processing) recognizes authority cues and triggers immediate compliance, while System 2 (slow, deliberate processing) is bypassed entirely in high-pressure or time-sensitive situations.
 

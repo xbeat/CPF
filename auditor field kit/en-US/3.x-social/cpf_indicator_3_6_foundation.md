@@ -14,7 +14,7 @@ At its core, unity principle exploitation leverages what social psychologists te
 
 **Social Identity Theory (Tajfel & Turner, 1979):** Foundational research showing that even arbitrary group assignments create immediate in-group favoritism and out-group discrimination. The "minimal group paradigm" studies revealed that individuals will sacrifice personal gain to benefit unknown group members, demonstrating the automatic nature of unity responses.
 
-**Neuroscience of Group Identity (Molenberghs, 2013):** fMRI studies reveal that processing in-group members activates the medial prefrontal cortex associated with self-referential thinking, while out-group members activate regions associated with object processing. This suggests in-group members are processed as extensions of self, explaining the reduced critical evaluation of their requests.
+**Neuroscience of Group Identity (Molenberghs, 2013):** This suggests in-group members are processed as extensions of self, explaining the reduced critical evaluation of their requests.
 
 **Terror Management Theory (Becker, 1973):** Research demonstrating that group identity serves as a psychological buffer against existential anxiety. When security decisions activate death-related fears (as cyber threats often do), individuals show increased reliance on group identity for psychological protection, making them more susceptible to unity-based manipulation.
 

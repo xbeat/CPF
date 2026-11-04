@@ -7,7 +7,6 @@
 Complexity-induced errors emerge from the fundamental limitation of human cognitive architecture when confronted with systems that exceed our processing capacity. This vulnerability is rooted in Miller's (1956) "magical number seven" principle, which demonstrates that working memory can only effectively process 7±2 information chunks simultaneously. When cybersecurity systems present complexity beyond this threshold, cognitive overload occurs, leading to systematic errors in security decision-making.
 
 The psychological mechanism operates through several pathways:
-- **Cognitive Load Overflow**: When information complexity exceeds working memory capacity, the brain defaults to simplified heuristics that may compromise security
 - **Attention Residue Effects**: Complex systems create cognitive "switching costs" that leave mental residue, impairing subsequent security decisions
 - **Mental Model Breakdown**: Overly complex security architectures prevent users from forming coherent mental models, leading to unpredictable behavioral patterns
 
@@ -21,11 +20,8 @@ The psychological mechanism operates through several pathways:
 **Cybersecurity-Specific Studies:**
 - Beautement et al. (2008): "Compliance budget" research shows that excessive security complexity leads to systematic bypass behaviors
 - Security interface complexity studies demonstrate exponential error rates as system complexity increases
-- Incident analysis reveals that 60-70% of security failures occur during periods of high system complexity
 
 **Neuroscience Evidence:**
-- fMRI studies show prefrontal cortex overload when processing complex security interfaces
-- Cognitive fatigue from complex systems impairs threat detection accuracy by up to 40%
 - Working memory saturation correlates directly with increased security incident rates
 
 ### Cognitive/Emotional Triggers

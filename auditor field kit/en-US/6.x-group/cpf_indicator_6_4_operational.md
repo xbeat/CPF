@@ -2,7 +2,7 @@
 
 ## CONTEXT
 
-Social loafing occurs when individuals reduce their security effort when working in groups, assuming others will handle critical security functions. This creates dangerous accountability gaps where everyone thinks "someone else is watching" - leading to undetected threats, delayed incident response, and collective security negligence. Organizations with team-based security responsibilities without individual accountability show 23% longer breach durations and significantly higher regulatory compliance failures.
+Social loafing occurs when individuals reduce their security effort when working in groups, assuming others will handle critical security functions. This creates dangerous accountability gaps where everyone thinks "someone else is watching" - leading to undetected threats, delayed incident response, and collective security negligence. Organizations with team-based security responsibilities without individual accountability are expected to show longer breach durations and more regulatory compliance failures.
 
 ## ASSESSMENT
 

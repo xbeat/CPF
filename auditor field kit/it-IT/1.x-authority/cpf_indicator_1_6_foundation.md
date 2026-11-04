@@ -10,7 +10,7 @@ Il meccanismo centrale opera attraverso ciò che Milgram (1974) ha identificato 
 
 Questo processo psicologico si manifesta attraverso diversi percorsi interconnessi:
 
-**Ansia Basata su Autorità**: I dipendenti sperimentano risposte di paura inconsce quando considerano di riportare problemi di sicurezza che potrebbero implicare o contraddire figure di autorità. L'amigdala attiva risposte di minaccia prima che l'analisi razionale cosciente possa avvenire (LeDoux, 2000), creando barriere fisiologiche al reporting.
+**Ansia Basata su Autorità**: I dipendenti sperimentano risposte di paura inconsce quando considerano di riportare problemi di sicurezza che potrebbero implicare o contraddire figure di autorità.
 
 **Evitamento Dissonanza Cognitiva**: Quando le vulnerabilità di sicurezza entrano in conflitto con posizioni dichiarate o decisioni di figure di autorità, i dipendenti sperimentano tensione psicologica. Piuttosto che riportare la discrepanza, risolvono inconsciamente questa tensione minimizzando la severità percepita del problema di sicurezza.
 
@@ -26,7 +26,6 @@ Il fondamento psicologico per questa vulnerabilità deriva da molteplici flussi 
 
 **Teoria Distanza di Potere di Hofstede**: La ricerca dimostra che culture con norme alta distanza di potere creano ambienti organizzativi dove questionare l'autorità è fondamentalmente scoraggiato. Questa programmazione culturale opera a livelli inconsci, facendo sentire il reporting sicurezza psicologicamente pericoloso indipendentemente dalle policy di reporting formali.
 
-**Ricerca Neurologica su Risposta Autorità**: Studi fMRI mostrano che l'esposizione a figure di autorità attiva percorsi neurali specifici associati con risposta minaccia e comportamenti di conformità. Questi pattern neurologici avvengono prima dei processi decisionali coscienti, spiegando perché le policy di sicurezza logiche falliscono nel superare gli effetti gradiente di autorità.
 
 ### Trigger Cognitivi/Emotivi
 

@@ -6,7 +6,6 @@
 
 Anxiety-triggered mistakes represent a fundamental disruption in cognitive processing where emotional arousal interferes with executive functioning, leading to security-relevant errors. This phenomenon operates through multiple interconnected psychological pathways:
 
-**Neurobiological Disruption**: When anxiety activates the amygdala's threat-detection system, it triggers a cascade of stress hormones (cortisol, adrenaline) that impair prefrontal cortex functioning. This creates a neurobiological state where rational decision-making is compromised in favor of rapid, often error-prone responses. The 300-500ms delay between unconscious processing and conscious awareness means that anxiety responses are already influencing behavior before rational security protocols can be engaged.
 
 **Cognitive Resource Depletion**: Anxiety consumes working memory capacity (Miller's "magical number seven" limitation), leaving insufficient cognitive resources for complex security tasks. When individuals are anxious, their ability to maintain multiple security considerations simultaneously becomes severely compromised, leading to tunnel vision and systematic oversight of critical security protocols.
 
@@ -15,13 +14,11 @@ Anxiety-triggered mistakes represent a fundamental disruption in cognitive proce
 ### Research Basis
 
 **Neuroscience Foundations**:
-- LeDoux (2000): Amygdala activation occurs before prefrontal cortex engagement, creating pre-cognitive threat responses that bypass rational security protocols
 - Damasio (1994): Somatic markers influence decision-making below conscious awareness, meaning anxiety states predispose individuals to specific types of security errors
 - Kahneman (2011): System 1 (fast, automatic) processing dominates under anxiety, while System 2 (deliberate, security-conscious) processing is impaired
 
 **Stress Response Research**:
 - Selye (1956): General Adaptation Syndrome demonstrates how chronic anxiety depletes psychological resources, making individuals more vulnerable to security lapses
-- Cortisol research shows that even moderate anxiety levels impair memory formation and retrieval, affecting password management and security protocol retention
 
 **Attachment Theory Applications**:
 - Bowlby (1969): Anxious attachment styles correlate with heightened sensitivity to authority figures, making individuals more susceptible to social engineering attacks during anxious states

@@ -8,7 +8,6 @@ Context switching vulnerabilities emerge from the cognitive costs associated wit
 
 When individuals rapidly switch between different security contexts—such as moving from email security decisions to network monitoring to incident response—they experience "attention residue" where cognitive resources remain partially allocated to the previous task. This residual allocation reduces the mental capacity available for the current security task, creating systematic vulnerabilities in decision-making quality.
 
-The neurological basis involves the prefrontal cortex's executive control systems, which must constantly reconfigure cognitive resources when switching contexts. fMRI studies demonstrate that this reconfiguration process creates measurable delays (300-500ms) and reduces overall cognitive efficiency by 25-40% during transition periods.
 
 ### Research Basis
 

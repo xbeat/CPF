@@ -20,7 +20,6 @@ Il meccanismo centrale opera attraverso il **pensiero del processo primario** (F
 **Ricerca sull'Immaginazione Attiva di Jung (1969)**: Le interazioni digitali possono innescare processi di immaginazione attiva dove i contenuti inconsci vengono proiettati su stimoli digitali. Lo strato archetipico della psiche diventa attivato, portando a risposte basate sulla valutazione simbolica piuttosto che logica.
 
 **Evidenze Neuroscientifiche**:
-- Gli studi fMRI mostrano che gli ambienti virtuali attivano regioni cerebrali simili al sonno REM, particolarmente ridotta attività della corteccia prefrontale (test di realtà) e aumentata attività limbica (elaborazione emotiva)
 - L'attivazione della Default Mode Network negli ambienti digitali rispecchia gli stati onirici, riducendo la valutazione critica
 
 **Ricerca in Ciberpsicologia**:

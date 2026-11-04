@@ -11,14 +11,9 @@ Il meccanismo psicologico opera attraverso lo **sconto iperbolico**, dove il val
 ### Base di Ricerca
 
 **Fondamento dell'Economia Comportamentale:**
-- La Prospect Theory di Kahneman e Tversky (1979) dimostra che le perdite sono ponderate circa 2,5 volte più pesantemente dei guadagni equivalenti, rendendo i costi immediati particolarmente salienti
 - La ricerca di Thaler sulla contabilità mentale mostra come le organizzazioni separino i "costi di sicurezza" dai "benefici operativi", prevenendo il processo decisionale integrato
 - Il modello di sconto iperbolico di Laibson (1997) quantifica come i tassi di sconto si avvicinino all'infinito per decisioni immediate rispetto a risultati futuri
 
-**Evidenze Neuroscientifiche:**
-- Gli studi fMRI rivelano che le ricompense immediate attivano il sistema limbico (in particolare lo striato ventrale), mentre le ricompense ritardate coinvolgono principalmente la corteccia prefrontale
-- La corteccia cingolata anteriore mostra aumentata attivazione durante decisioni influenzate dal bias del presente, indicando conflitto tra gratificazione immediata e pianificazione a lungo termine
-- I pattern di rilascio di dopamina favoriscono le ricompense immediate rispetto a quelle ritardate, anche quando le ricompense ritardate sono sostanzialmente più grandi
 
 **Ricerca Specifica sulla Cybersicurezza:**
 - I Rapporti sulla Consapevolezza della Sicurezza SANS mostrano costantemente organizzazioni che differiscono investimenti in formazione di sicurezza nonostante il ROI noto

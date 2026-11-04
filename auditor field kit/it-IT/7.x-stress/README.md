@@ -1,6 +1,6 @@
 # CPF Categoria 7: Vulnerabilità delle Risposte allo Stress
 
-Questa categoria esamina come le risposte fisiologiche e psicologiche allo stress creino debolezze sistematiche nella sicurezza, basandosi sulla Sindrome Generale di Adattamento (General Adaptation Syndrome) di Hans Selye (1956) e sulla ricerca contemporanea sulla fisiologia dello stress. Queste vulnerabilità emergono quando lo stress acuto o cronico compromette la funzione cognitiva, altera i pattern decisionali e disturba i normali comportamenti di sicurezza attraverso meccanismi neurobiologici ben documentati.
+Questa categoria esamina come le risposte fisiologiche e psicologiche allo stress creino debolezze sistematiche nella sicurezza, basandosi sulla Sindrome Generale di Adattamento (General Adaptation Syndrome) di Hans Selye (1956) e sulla ricerca contemporanea sulla fisiologia dello stress.
 
 ## Sottocategorie
 
@@ -26,7 +26,7 @@ Il comportamento di sicurezza controproducente in cui lo stress innesca un'ecces
 Il restringimento cognitivo dell'attenzione che si verifica sotto stress, causando la focalizzazione su aspetti limitati delle situazioni di sicurezza mentre si ignora il contesto più ampio. Questa vulnerabilità porta a pattern di attacco mancati, incapacità di connettere eventi di sicurezza correlati e inadeguata consapevolezza situazionale durante incidenti di sicurezza complessi.
 
 ### 7.8 Memoria Compromessa dal Cortisolo
-La disruzione delle capacità di formazione e recupero della memoria dovuta a livelli elevati di cortisolo durante lo stress. Questa vulnerabilità influenza la documentazione degli incidenti di sicurezza, la raccolta di prove e l'analisi post-incidente, potenzialmente compromettendo procedimenti legali e l'apprendimento organizzativo dagli eventi di sicurezza.
+Questa vulnerabilità influenza la documentazione degli incidenti di sicurezza, la raccolta di prove e l'analisi post-incidente, potenzialmente compromettendo procedimenti legali e l'apprendimento organizzativo dagli eventi di sicurezza.
 
 ### 7.9 Cascate di Contagio dello Stress
 Il fenomeno per cui lo stress si diffonde attraverso i team e le organizzazioni di sicurezza, amplificando le risposte allo stress individuali attraverso la trasmissione sociale. Questa vulnerabilità può innescare un degrado della sicurezza a livello organizzativo durante le crisi, poiché gli individui stressati influenzano gli stati emotivi e le capacità di prestazione dei colleghi.

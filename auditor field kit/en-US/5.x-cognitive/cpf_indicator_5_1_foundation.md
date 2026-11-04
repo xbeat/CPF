@@ -8,7 +8,7 @@ Alert fatigue desensitization represents a critical cognitive overload vulnerabi
 
 **Habituation Response**: The nervous system's fundamental tendency to reduce responsiveness to repeated stimuli that prove non-threatening. In cybersecurity contexts, frequent false positive alerts trigger this adaptive mechanism, causing security personnel to unconsciously filter out warning signals.
 
-**Attention Resource Depletion**: Human attention operates as a finite cognitive resource. Continuous alert processing exhausts these resources, forcing the brain to implement protective mechanisms that prioritize perceived "important" signals while suppressing others.
+**Attention Resource Depletion**: Human attention operates as a finite cognitive resource.
 
 **Sensory Adaptation**: Similar to how the visual system adapts to constant light levels, the cognitive system adapts to constant alert levels, effectively raising the threshold for what constitutes a "noticeable" threat.
 
@@ -18,7 +18,6 @@ Alert fatigue desensitization represents a critical cognitive overload vulnerabi
 
 **Kahneman's Attention Theory**: System 1 (automatic) processing dominates in high-cognitive-load environments. Alert fatigue forces reliance on System 1 heuristics rather than System 2 deliberative analysis, increasing error rates and reducing threat detection accuracy.
 
-**Neurological Research**: fMRI studies show that repeated exposure to warning stimuli progressively reduces amygdala activation (threat detection) while increasing prefrontal cortex suppression mechanisms. This neurological adaptation occurs below conscious awareness.
 
 **Vigilance Decrement Studies**: Research from aviation and military contexts demonstrates that sustained attention tasks show performance degradation after 20-30 minutes, with error rates increasing exponentially in high-alert-frequency environments.
 
@@ -26,7 +25,6 @@ Alert fatigue desensitization represents a critical cognitive overload vulnerabi
 
 **Frequency Thresholds**: Alert rates above 10-15 per hour begin triggering habituation responses. Rates above 30 per hour virtually guarantee desensitization within 2-3 days.
 
-**False Positive Ratios**: False positive rates above 30% rapidly erode trust in alert systems. Rates above 70% create active avoidance behaviors.
 
 **Temporal Clustering**: Multiple alerts within short time windows (5-10 seconds) trigger cognitive overwhelm responses, forcing simplified processing strategies.
 

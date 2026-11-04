@@ -21,9 +21,6 @@ This paradox is particularly acute in cybersecurity contexts where algorithmic r
 - Burton et al. (2020) showed that algorithm aversion increases when people can modify algorithmic output, suggesting control needs drive the paradox
 - Logg et al. (2019) found "algorithm appreciation" in domains where human limitations are acknowledged, creating domain-specific trust patterns
 
-**Neuroscientific Evidence:**
-- fMRI studies reveal amygdala activation when humans observe algorithmic errors, suggesting threat response to AI mistakes exceeds response to human errors
-- The anterior cingulate cortex shows increased activity during human-AI conflicts, indicating cognitive conflict and the need for effortful resolution
 
 **Dual-Process Theory Application:**
 - System 1 (fast, intuitive) processes reject algorithmic recommendations that "feel wrong" regardless of accuracy

@@ -20,7 +20,6 @@ La diffusione della responsabilità nelle strutture gerarchiche rappresenta un f
 
 **Ricerca Psicologia Organizzativa**: Gli studi di Kelman & Hamilton (1989) sui "crimini di obbedienza" mostrano come le strutture gerarchiche erodano sistematicamente l'agency morale individuale. I dipendenti compartimentalizzano i loro ruoli, concentrandosi strettamente sui compiti assegnati mentre assumono che una supervisione di sicurezza più ampia esista altrove nella gerarchia.
 
-**Evidenza Neuroscientifica**: Studi fMRI recenti (Beyer et al., 2015) dimostrano che i contesti gerarchici alterano letteralmente l'attività cerebrale nelle regioni associate alla responsabilità personale e al ragionamento morale. La corteccia cingolata anteriore, responsabile del monitoraggio dei conflitti e dell'agency personale, mostra attivazione ridotta quando gli individui operano all'interno di chiare strutture gerarchiche.
 
 ### Trigger Cognitivi/Emotivi
 

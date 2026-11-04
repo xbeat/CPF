@@ -6,7 +6,7 @@
 
 Decision fatigue represents a state of mental exhaustion caused by making too many decisions, leading to deteriorating quality of choices over time. This phenomenon occurs when the cognitive resources required for decision-making become depleted through repeated use, resulting in one of three predictable outcomes: impulsive decisions (choosing the first available option), avoidance decisions (postponing or delegating), or default decisions (maintaining status quo regardless of optimality).
 
-The psychological mechanism operates through the depletion of glucose in the prefrontal cortex, the brain region responsible for executive control and complex decision-making. As mental energy diminishes, individuals increasingly rely on System 1 (automatic, heuristic-based) rather than System 2 (deliberate, analytical) processing, making them vulnerable to cognitive shortcuts that compromise security considerations.
+As mental energy diminishes, individuals increasingly rely on System 1 (automatic, heuristic-based) rather than System 2 (deliberate, analytical) processing, making them vulnerable to cognitive shortcuts that compromise security considerations.
 
 ### Research Basis
 
@@ -17,8 +17,6 @@ The psychological mechanism operates through the depletion of glucose in the pre
 - **Danziger et al. (2011)**: Judicial decision study showing systematic bias patterns throughout the day based on decision fatigue
 
 **Neuroscience Evidence:**
-- fMRI studies reveal decreased activity in the anterior cingulate cortex (conflict monitoring) under decision fatigue
-- Glucose depletion in prefrontal cortex correlates with reduced self-control and analytical thinking
 - Default mode network activation increases as executive control resources diminish
 
 **Cybersecurity-Specific Research:**
@@ -71,7 +69,6 @@ The psychological mechanism operates through the depletion of glucose in the pre
 
 **Anthem Healthcare Breach (2015)**: Investigation revealed that IT staff experiencing alert fatigue failed to properly investigate suspicious network activity, leading to prolonged undetected access.
 
-**Business Email Compromise Patterns**: FBI statistics show 60% higher success rates for BEC attacks sent after 3 PM, correlating with decision fatigue timing.
 
 **Insider Threat Cases**: Multiple documented incidents where employees made poor security decisions after extended periods of high-stakes decision-making.
 

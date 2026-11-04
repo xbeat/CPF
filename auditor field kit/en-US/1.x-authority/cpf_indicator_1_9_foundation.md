@@ -15,7 +15,6 @@ The psychological power emerges from the interaction between these pathways. Whe
 
 **Foundational Authority Studies**:
 - Milgram's (1974) obedience experiments demonstrated 65% compliance rates with destructive orders from authority figures
-- Subsequent research showed compliance increases to 92% when participants observe confederates obeying first
 - Blass (1999) meta-analysis confirmed authority effects persist across cultures and decades
 
 **Social Proof Mechanisms**:
@@ -23,10 +22,6 @@ The psychological power emerges from the interaction between these pathways. Whe
 - Festinger's (1954) social comparison theory explains why we look to others when unsure of appropriate behavior
 - Asch (1951) conformity experiments showed 37% compliance even when others are obviously wrong
 
-**Neurological Evidence**:
-- fMRI studies show reduced prefrontal cortex activation when following both authority and social cues (Berns et al., 2005)
-- Mirror neuron research suggests automatic imitation of observed compliance behaviors
-- Dopamine reward pathways activate when individual behavior aligns with group behavior around authority
 
 **Convergence Effects Research**:
 - Dual-processing studies demonstrate System 1 (automatic) responses dominate when both authority and social cues align
@@ -89,10 +84,6 @@ The psychological power emerges from the interaction between these pathways. Whe
 - Employees followed established patterns of contractor access
 - Social proof of "normal business operations" masked malicious activity
 
-**Business Email Compromise Patterns**:
-- FBI reports show 90% higher success rates when attackers reference other employees
-- Social engineering effectiveness increases 300% when combining authority and consensus claims
-- Financial losses average 40% higher in authority+social proof attacks vs. authority alone
 
 **COVID-19 Related Attacks**:
 - Malicious actors exploited new "remote work procedures everyone is following"

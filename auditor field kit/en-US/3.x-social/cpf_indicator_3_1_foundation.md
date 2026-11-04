@@ -6,7 +6,7 @@
 
 Reciprocity exploitation leverages one of the most fundamental psychological principles governing human social interaction: the reciprocal obligation to return favors, kindnesses, or concessions. This mechanism operates at a pre-cognitive level, triggering automatic compliance responses that bypass rational security evaluation. When someone provides a benefit—real or perceived—the recipient experiences psychological pressure to reciprocate, creating a vulnerability window that attackers systematically exploit.
 
-The reciprocity principle activates within 300-500ms of recognizing a "favor," occurring before conscious security assessment can engage. This creates a critical gap where security decisions are made based on social obligation rather than risk analysis. The psychological pressure to reciprocate can override established security protocols, particularly when the initial "favor" appears benign or helpful.
+This creates a critical gap where security decisions are made based on social obligation rather than risk analysis. The psychological pressure to reciprocate can override established security protocols, particularly when the initial "favor" appears benign or helpful.
 
 ### Research Basis
 
@@ -14,7 +14,6 @@ The reciprocity principle activates within 300-500ms of recognizing a "favor," o
 
 **Evolutionary Psychology Foundation:** Reciprocity represents an evolutionary adaptation essential for group survival and cooperation. This deep biological programming makes resistance to reciprocity pressures extremely difficult, as it conflicts with fundamental social instincts developed over millennia.
 
-**Neurological Evidence:** fMRI studies show reciprocity activates the brain's reward system (ventral striatum) and social cognition networks simultaneously, creating powerful motivation to reciprocate while reducing critical evaluation of the exchange context.
 
 **Social Exchange Theory (Blau, 1964):** Demonstrates that reciprocity operates as an unwritten social contract, where failure to reciprocate creates psychological discomfort (cognitive dissonance) and social anxiety, motivating compliance to restore psychological equilibrium.
 
@@ -44,7 +43,7 @@ The reciprocity principle activates within 300-500ms of recognizing a "favor," o
 
 **CEO Fraud Evolution:** Modern CEO fraud often begins with attackers providing "helpful" information about company vulnerabilities or industry threats, establishing reciprocity debt before requesting financial transfers or credential access.
 
-**USB Drop Attacks:** Security research consistently shows 45-60% USB device pickup rates when devices are "accidentally" dropped in parking lots, with many individuals attempting to return the devices—a reciprocity-driven behavior that enables malware execution.
+**USB Drop Attacks:** In a field study, 98% of USB drives dropped on a university campus were picked up and 45% were plugged in (Tischer et al., 2016), with many individuals attempting to return the devices—a reciprocity-driven behavior that enables malware execution.
 
 **Tech Support Scams:** Attackers offer to "help" with computer problems or security issues, creating reciprocity obligation that leads to system access, financial information disclosure, or malware installation.
 

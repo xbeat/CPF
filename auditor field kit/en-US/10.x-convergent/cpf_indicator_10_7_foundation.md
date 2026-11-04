@@ -28,7 +28,6 @@ Unlike simple cognitive overload (indicator 5.x), complexity catastrophe represe
 - Cognitive limitations amplify system instabilities
 
 **Neuroscience of Complexity (Cacioppo & Petty, 1982):**
-- Prefrontal cortex shows measurable stress responses to excessive complexity
 - Decision-making quality deteriorates before individuals recognize overload
 - Complex environments trigger fight-flight responses, further impairing cognition
 

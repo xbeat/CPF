@@ -24,7 +24,6 @@ La manipolazione della prova sociale sfrutta la tendenza umana fondamentale a de
 
 **Teoria delle Dinamiche di Gruppo**: Il lavoro di Bion sui presupposti di base mostra che i gruppi sotto ansia (come le minacce di cybersecurity) diventano più suscettibili a seguire comportamenti apparentemente di successo di altri gruppi, anche senza verifica.
 
-**Evidenze Neuroscientifiche**: Gli studi fMRI mostrano che la prova sociale attiva le vie di ricompensa nel cervello riducendo simultaneamente l'attivazione nelle aree associate al pensiero critico, spiegando perché questa vulnerabilità opera al di sotto della consapevolezza cosciente.
 
 ### Trigger Cognitivi/Emotivi
 

@@ -21,10 +21,6 @@ Nei contesti di cybersecurity, questo si manifesta quando il personale di sicure
 - Il lavoro seminale di Leroy (2009) sul residuo attentivo ha mostrato degradazione misurabile delle prestazioni quando i compiti sono cambiati senza completamento
 - Il framework Sistema 1/Sistema 2 di Kahneman (2011) spiega come il carico cognitivo da residuo attentivo forza affidamento sull'elaborazione euristica veloce e soggetta a errori
 
-**Evidenze Neuroscientifiche:**
-- Studi fMRI dimostrano che compiti incompleti mantengono attivazione nella corteccia prefrontale anche durante attività successive (Monk et al., 2008)
-- La ricerca EEG mostra firme neurali persistenti da compiti interrotti che interferiscono con l'elaborazione di nuovi compiti
-- Studi della default mode network rivelano come stati cognitivi irrisolti continuano a consumare risorse neurali
 
 **Ricerca Specifica sulla Cybersecurity:**
 - Studi sulle prestazioni degli analisti SOC mostrano aumenti significativi del tasso di errore durante periodi ad alta allerta che richiedono cambio rapido di compito

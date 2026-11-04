@@ -6,7 +6,6 @@
 
 Il tunneling cognitivo (cognitive tunneling) rappresenta un fenomeno critico di restringimento dell'attenzione dove gli individui diventano così focalizzati su un compito, minaccia o problema specifico da perdere consapevolezza di altri segnali ambientali importanti e soluzioni alternative. Questo stato psicologico si verifica quando le risorse cognitive diventano sovra-allocate a una singola area di focus, creando pericolosi punti ciechi nella consapevolezza periferica.
 
-Il meccanismo opera attraverso processi di attenzione selettiva dove la limitata capacità di elaborazione del cervello diventa monopolizzata da preoccupazioni immediate. Sotto condizioni di carico cognitivo o stress, la corteccia prefrontale—responsabile dell'attenzione esecutiva e della consapevolezza situazionale—diventa compromessa, portando a tunnel vision che persiste anche quando una consapevolezza più ampia sarebbe più appropriata per la situazione.
 
 Nei contesti di cybersecurity, il tunneling cognitivo si manifesta quando il personale di sicurezza diventa iper-focalizzato su minacce specifiche, problemi tecnici o attività di risposta agli incidenti mentre manca pattern di attacco più ampi, vulnerabilità correlate o problemi di sicurezza sistemici che si sviluppano simultaneamente.
 
@@ -20,7 +19,6 @@ Nei contesti di cybersecurity, il tunneling cognitivo si manifesta quando il per
 
 **Ricerca sulla Situation Awareness di Endsley (1995)**: Identifica il tunneling cognitivo come un fattore primario nei fallimenti della consapevolezza situazionale, particolarmente sotto stress e pressione temporale. La sua ricerca mostra che gli esperti non sono immuni agli effetti di tunneling quando il carico cognitivo eccede la capacità.
 
-**Evidenze Neuroscientifiche**: Studi fMRI dimostrano che durante il tunneling cognitivo, l'attività nella corteccia cingolata anteriore (controllo dell'attenzione) e nella corteccia prefrontale dorsolaterale (funzione esecutiva) diventa focalizzata su specifici percorsi neurali mentre le reti di monitoraggio più ampie mostrano attivazione diminuita.
 
 ### Trigger Cognitivi/Emotivi
 

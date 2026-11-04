@@ -2,7 +2,7 @@
 
 ## CONTESTO
 
-Quando i dipendenti affrontano scadenze ravvicinate o richieste urgenti, il loro cervello passa da un pensiero attento e analitico a risposte rapide e automatiche che escludono le considerazioni di sicurezza. Questo crea finestre prevedibili di vulnerabilità in cui il personale prende scorciatoie sulla sicurezza, salta passaggi di verifica o cade vittima di attacchi che sfruttano l'urgenza. Le organizzazioni con pressione temporale cronica o scarsa gestione delle crisi registrano tassi significativamente più elevati di attacchi di ingegneria sociale (social engineering) riusciti e incidenti di sicurezza interni.
+Questo crea finestre prevedibili di vulnerabilità in cui il personale prende scorciatoie sulla sicurezza, salta passaggi di verifica o cade vittima di attacchi che sfruttano l'urgenza. Le organizzazioni con pressione temporale cronica o scarsa gestione delle crisi registrano tassi significativamente più elevati di attacchi di ingegneria sociale (social engineering) riusciti e incidenti di sicurezza interni.
 
 ## VALUTAZIONE
 

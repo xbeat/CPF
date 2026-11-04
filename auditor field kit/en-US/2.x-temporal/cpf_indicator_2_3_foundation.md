@@ -8,7 +8,6 @@ Deadline-driven risk acceptance represents a systematic cognitive vulnerability 
 
 The core mechanism operates through what Kahneman and Tversky (1979) identified as "loss aversion under time pressure" - when facing deadlines, individuals shift from risk-averse to risk-seeking behavior to avoid the certain loss of missing the deadline. This creates a psychological inversion where the abstract future risk of a security incident becomes less psychologically real than the immediate, concrete consequence of deadline failure.
 
-Neurologically, deadline pressure activates the amygdala's threat response before prefrontal cortex engagement, causing primitive survival responses to dominate rational security considerations. The anterior cingulate cortex, responsible for conflict monitoring between competing demands (security vs. deadline), becomes overwhelmed, leading to a default toward the most immediate pressure.
 
 ### Research Basis
 
@@ -16,9 +15,8 @@ Neurologically, deadline pressure activates the amygdala's threat response befor
 
 **Cognitive Load Theory (Miller, 1956)**: The "magical number seven" limitation becomes critical under deadline pressure. Security decisions require working memory capacity for risk assessment, protocol recall, and consequence evaluation. Deadline stress fills this cognitive space, leaving insufficient capacity for security considerations.
 
-**Stress Response Research (Selye, 1956)**: Chronic deadline pressure creates sustained cortisol elevation, which impairs hippocampal function (memory consolidation) and prefrontal cortex operation (executive decision-making). This physiological response makes security protocols literally harder to remember and execute under deadline pressure.
+**Stress Response Research (Selye, 1956)**: This physiological response makes security protocols literally harder to remember and execute under deadline pressure.
 
-**Neuroscience Evidence (LeDoux, 2000)**: fMRI studies show that deadline stress activates the amygdala's threat response 300-500ms before conscious awareness, causing automatic risk-acceptance behaviors before rational security assessment can occur.
 
 **Time Perception Research**: Studies demonstrate that deadline pressure creates "temporal myopia" where immediate consequences are psychologically magnified while future risks are discounted beyond rational proportions.
 

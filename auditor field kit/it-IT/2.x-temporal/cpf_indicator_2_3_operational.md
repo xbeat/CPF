@@ -2,7 +2,7 @@
 
 ## CONTESTO
 
-Quando le organizzazioni affrontano scadenze ravvicinate, i dipendenti ignorano sistematicamente i controlli di sicurezza per rispettare le pressioni temporali. Questo crea finestre di vulnerabilità prevedibili dove i tassi di successo del phishing aumentano, la gestione delle patch fallisce e i controlli di accesso vengono aggirati. Sotto stress da scadenza, la risposta di minaccia del cervello dà priorità alle conseguenze immediate (mancare le scadenze) rispetto ai rischi futuri (violazioni di sicurezza), rendendo le organizzazioni più vulnerabili proprio quando stanno lavorando più intensamente.
+Quando le organizzazioni affrontano scadenze ravvicinate, i dipendenti ignorano sistematicamente i controlli di sicurezza per rispettare le pressioni temporali. Questo crea finestre di vulnerabilità prevedibili dove i tassi di successo del phishing aumentano, la gestione delle patch fallisce e i controlli di accesso vengono aggirati.
 
 ## VALUTAZIONE
 

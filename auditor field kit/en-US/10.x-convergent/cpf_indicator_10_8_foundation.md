@@ -22,7 +22,6 @@ The concept draws from multiple research domains:
 
 **Cognitive Psychology (Kahneman & Tversky, 1979)**: Prospect theory reveals how humans systematically misjudge probabilities, particularly for novel or complex scenarios.
 
-**Neuroscience (Bar, 2007)**: The brain's predictive coding mechanisms work well for familiar patterns but fail when encountering truly emergent phenomena, creating blind spots in threat perception.
 
 **Organizational Psychology (Weick & Sutcliffe, 2007)**: High-reliability organizations research shows how collective mindfulness can partially compensate for emergence unpredictability, but never eliminate it entirely.
 

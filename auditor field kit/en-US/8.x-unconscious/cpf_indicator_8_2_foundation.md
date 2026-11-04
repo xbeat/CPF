@@ -28,7 +28,7 @@ Melanie Klein's (1946) work on projective identification explains how individual
 Namnyak et al. (2008) documented how prolonged exposure to threats can lead to identification with and even sympathy for the threatening agent. In cybersecurity, prolonged exposure to advanced persistent threats (APTs) can create similar psychological dynamics.
 
 **Neuroscience Evidence:**
-Mirror neuron research (Rizzolatti & Craighero, 2004) demonstrates that humans automatically simulate observed behaviors at a neurological level. Security professionals studying attack methods may unconsciously internalize these patterns, creating potential for identification.
+Security professionals studying attack methods may unconsciously internalize these patterns, creating potential for identification.
 
 **Organizational Psychology:**
 Bion's (1961) work on group dynamics shows how teams under stress can adopt the characteristics of perceived external threats as a defensive measure, leading to "fight-flight" responses that mirror aggressive behaviors.

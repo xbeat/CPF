@@ -6,7 +6,7 @@
 
 Lo sfruttamento della reciprocità sfrutta uno dei principi psicologici più fondamentali che governano l'interazione sociale umana: l'obbligo reciproco di ricambiare favori, gentilezze o concessioni. Questo meccanismo opera a livello pre-cognitivo, innescando risposte automatiche di conformità che aggirano la valutazione razionale della sicurezza. Quando qualcuno fornisce un beneficio—reale o percepito—il destinatario sperimenta una pressione psicologica a ricambiare, creando una finestra di vulnerabilità che gli attaccanti sfruttano sistematicamente.
 
-Il principio di reciprocità si attiva entro 300-500ms dal riconoscimento di un "favore", verificandosi prima che la valutazione consapevole della sicurezza possa attivarsi. Questo crea un divario critico dove le decisioni di sicurezza vengono prese sulla base dell'obbligo sociale piuttosto che dell'analisi del rischio. La pressione psicologica a ricambiare può prevalere sui protocolli di sicurezza stabiliti, particolarmente quando il "favore" iniziale appare benigno o utile.
+Questo crea un divario critico dove le decisioni di sicurezza vengono prese sulla base dell'obbligo sociale piuttosto che dell'analisi del rischio. La pressione psicologica a ricambiare può prevalere sui protocolli di sicurezza stabiliti, particolarmente quando il "favore" iniziale appare benigno o utile.
 
 ### Base di Ricerca
 
@@ -14,7 +14,6 @@ Il principio di reciprocità si attiva entro 300-500ms dal riconoscimento di un 
 
 **Fondamenti di Psicologia Evoluzionistica:** La reciprocità rappresenta un adattamento evolutivo essenziale per la sopravvivenza e la cooperazione di gruppo. Questa programmazione biologica profonda rende la resistenza alle pressioni di reciprocità estremamente difficile, poiché è in conflitto con istinti sociali fondamentali sviluppati nel corso di millenni.
 
-**Evidenze Neurologiche:** Gli studi fMRI mostrano che la reciprocità attiva il sistema di ricompensa del cervello (striato ventrale) e le reti di cognizione sociale simultaneamente, creando una forte motivazione a ricambiare riducendo al contempo la valutazione critica del contesto di scambio.
 
 **Teoria dello Scambio Sociale (Blau, 1964):** Dimostra che la reciprocità opera come un contratto sociale non scritto, dove il mancato ricambio crea disagio psicologico (dissonanza cognitiva) e ansia sociale, motivando la conformità per ripristinare l'equilibrio psicologico.
 
@@ -44,7 +43,7 @@ Il principio di reciprocità si attiva entro 300-500ms dal riconoscimento di un 
 
 **Evoluzione della Frode CEO:** La frode CEO moderna spesso inizia con attaccanti che forniscono informazioni "utili" sulle vulnerabilità aziendali o minacce del settore, stabilendo un debito di reciprocità prima di richiedere trasferimenti finanziari o accesso alle credenziali.
 
-**Attacchi USB Drop:** La ricerca sulla sicurezza mostra costantemente tassi di raccolta di dispositivi USB del 45-60% quando i dispositivi vengono "accidentalmente" lasciati cadere nei parcheggi, con molti individui che tentano di restituire i dispositivi—un comportamento guidato dalla reciprocità che abilita l'esecuzione di malware.
+**Attacchi USB Drop:** In uno studio sul campo il 98% delle chiavette USB lasciate in un campus universitario è stato raccolto e il 45% è stato inserito (Tischer et al., 2016), con molti individui che tentano di restituire i dispositivi—un comportamento guidato dalla reciprocità che abilita l'esecuzione di malware.
 
 **Truffe di Supporto Tecnico:** Gli attaccanti offrono "aiuto" con problemi informatici o questioni di sicurezza, creando un obbligo di reciprocità che porta all'accesso al sistema, alla divulgazione di informazioni finanziarie o all'installazione di malware.
 

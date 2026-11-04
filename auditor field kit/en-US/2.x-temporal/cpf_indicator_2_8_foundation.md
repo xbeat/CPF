@@ -6,13 +6,12 @@
 
 Weekend and holiday security lapses emerge from the intersection of **circadian rhythm disruption**, **role boundary confusion**, and **temporal cognitive load reduction**. During non-standard work periods, individuals experience a fundamental shift from their professional security-conscious identity to their personal, relaxed identity state. This psychological transition creates what Winnicott (1971) would describe as a **transitional space** where normal security protocols become psychologically "suspended" as individuals navigate between work and personal contexts.
 
-The core psychological mechanism involves **cognitive schema switching** where the mental frameworks governing workplace behavior (including security vigilance) become temporarily inaccessible or deprioritized. During weekends and holidays, the brain's executive function systems naturally downregulate threat detection in favor of recovery and restoration processes, creating systematic vulnerability windows.
+The core psychological mechanism involves **cognitive schema switching** where the mental frameworks governing workplace behavior (including security vigilance) become temporarily inaccessible or deprioritized.
 
 ### Research Basis
 
 **Circadian Psychology Research:**
 - Monk & Folkard (1985) demonstrate that cognitive performance follows predictable weekly cycles, with significant degradation during traditional "off" periods
-- Studies show decision-making quality decreases by 23-40% during weekend hours compared to weekday performance (Schmidt et al., 2007)
 
 **Role Theory (Katz & Kahn, 1966):**
 - Role boundary theory explains how individuals compartmentalize professional behaviors, with security consciousness being strongly tied to workplace role identity
@@ -32,7 +31,6 @@ The core psychological mechanism involves **cognitive schema switching** where t
 - **Calendar transitions** that signal role boundary shifts (Friday evening to Monday morning)
 - **Environmental context changes** (leaving office, working from home during holidays)
 - **Social rhythm disruption** where collective organizational energy decreases
-- **Reward system activation** where brain prioritizes pleasure-seeking over vigilance
 - **Authority absence** when security-reinforcing supervisors and colleagues are also "off duty"
 
 **Emotional State Changes:**

@@ -10,7 +10,6 @@ La risposta di congelamento (freeze response) rappresenta una delle quattro risp
 La risposta di congelamento è mediata dal sistema nervoso parasimpatico, specificamente dal complesso vagale dorsale, che innesca l'immobilizzazione quando il sistema nervoso percepisce una minaccia come inevitabile. A differenza delle risposte di combattimento o fuga che mobilitano energia, la risposta di congelamento conserva energia attraverso un temporaneo spegnimento delle funzioni cognitive superiori, creando uno stato di immobilità tonica.
 
 **Meccanismi Cognitivi:**
-- **Sovraccarico Cognitivo (Cognitive Overload)**: Quando le informazioni di sicurezza superano la capacità di elaborazione (il "numero magico sette" di Miller), il cervello passa alla paralisi piuttosto che ad azioni errate
 - **Fatica Decisionale (Decision Fatigue)**: Il carico cognitivo accumulato da decisioni multiple di sicurezza porta a paralisi decisionale temporanea
 - **Overflow di Valutazione delle Minacce (Threat Assessment Overflow)**: Quando la complessità della minaccia supera la capacità analitica, la mente si congela piuttosto che rischiare una valutazione errata
 

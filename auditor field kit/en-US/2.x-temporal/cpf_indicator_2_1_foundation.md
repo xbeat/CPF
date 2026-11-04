@@ -6,17 +6,15 @@
 
 Urgency-induced security bypass represents a fundamental vulnerability in human decision-making systems where temporal pressure triggers a systematic degradation of security-conscious behavior. This phenomenon operates through the interaction of three core psychological mechanisms:
 
-**Cognitive Load Overwhelm**: When faced with urgent deadlines, the brain's executive function becomes overwhelmed, leading to a default mode where security protocols are perceived as obstacles rather than protections. The prefrontal cortex, responsible for deliberate decision-making, becomes compromised under time pressure, allowing System 1 (fast, automatic) processing to dominate over System 2 (slow, deliberate) analysis.
+**Cognitive Load Overwhelm**: When faced with urgent deadlines, executive function becomes overwhelmed, leading to a default mode where security protocols are perceived as obstacles rather than protections. Under time pressure, System 1 (fast, automatic) processing to dominate over System 2 (slow, deliberate) analysis.
 
 **Prospect Theory Activation**: Under urgency, individuals shift from prevention-focused to promotion-focused decision-making. The immediate gain from bypassing security (meeting the deadline) becomes psychologically larger than the abstract future risk of a security incident. This represents a classic example of hyperbolic discounting, where immediate rewards are disproportionately valued over future consequences.
 
-**Stress-Induced Tunnel Vision**: Acute stress triggers a neurobiological response that narrows attention to the immediate threat (missing the deadline) while peripheral concerns (security protocols) fade from conscious awareness. This tunnel vision effect is mediated by cortisol release, which impairs working memory and reduces cognitive flexibility.
+**Stress-Induced Tunnel Vision**: Acute stress narrows attention (Easterbrook, 1959) to the immediate threat (missing the deadline) while peripheral concerns (security protocols) fade from conscious awareness.
 
 ### Research Basis
 
 **Neuroscience Foundations**:
-- Libet's experiments (1983) demonstrate that decision-making occurs 300-500ms before conscious awareness, suggesting that under time pressure, pre-cognitive processes dominate
-- LeDoux's research (2000) shows amygdala activation (threat response to deadline pressure) occurs before prefrontal cortex engagement (rational security analysis)
 - Damasio's somatic marker hypothesis (1994) explains how embodied stress responses bypass rational security considerations
 
 **Behavioral Economics Evidence**:
@@ -76,7 +74,6 @@ Urgency-induced security bypass represents a fundamental vulnerability in human 
 
 **Anthem Healthcare Breach (2015)**: Attackers specifically targeted the organization during year-end reporting periods when employees were under deadline pressure to complete compliance reports
 
-**Pattern Recognition**: Analysis of breach timing data shows 40% higher success rates for social engineering attacks during quarter-end periods, fiscal year-end, and regulatory deadline periods
 
 ### Technical Failure Points
 

@@ -6,13 +6,12 @@
 
 Le lacune di sicurezza durante weekend e festività emergono dall'intersezione di **interruzione del ritmo circadiano**, **confusione dei confini del ruolo** e **riduzione del carico cognitivo temporale**. Durante i periodi di lavoro non standard, gli individui sperimentano un cambiamento fondamentale dalla loro identità professionale consapevole della sicurezza al loro stato di identità personale e rilassata. Questa transizione psicologica crea quello che Winnicott (1971) descriverebbe come uno **spazio transizionale** dove i normali protocolli di sicurezza diventano psicologicamente "sospesi" mentre gli individui navigano tra i contesti lavorativi e personali.
 
-Il meccanismo psicologico centrale coinvolge il **cambio di schema cognitivo** dove i framework mentali che governano il comportamento sul posto di lavoro (inclusa la vigilanza sulla sicurezza) diventano temporaneamente inaccessibili o deprioritizzati. Durante i weekend e le festività, i sistemi di funzione esecutiva del cervello naturalmente riducono il rilevamento delle minacce a favore dei processi di recupero e ripristino, creando finestre di vulnerabilità sistematica.
+Il meccanismo psicologico centrale coinvolge il **cambio di schema cognitivo** dove i framework mentali che governano il comportamento sul posto di lavoro (inclusa la vigilanza sulla sicurezza) diventano temporaneamente inaccessibili o deprioritizzati.
 
 ### Base di Ricerca
 
 **Ricerca sulla Psicologia Circadiana:**
 - Monk & Folkard (1985) dimostrano che le prestazioni cognitive seguono cicli settimanali prevedibili, con significativa degradazione durante i periodi "liberi" tradizionali
-- Gli studi mostrano che la qualità del processo decisionale diminuisce del 23-40% durante le ore del weekend rispetto alle prestazioni durante la settimana (Schmidt et al., 2007)
 
 **Teoria del Ruolo (Katz & Kahn, 1966):**
 - La teoria dei confini del ruolo spiega come gli individui compartimentano i comportamenti professionali, con la consapevolezza della sicurezza fortemente legata all'identità del ruolo lavorativo
@@ -32,7 +31,6 @@ Il meccanismo psicologico centrale coinvolge il **cambio di schema cognitivo** d
 - **Transizioni del calendario** che segnalano cambiamenti nei confini del ruolo (venerdì sera a lunedì mattina)
 - **Cambiamenti del contesto ambientale** (lasciare l'ufficio, lavorare da casa durante le festività)
 - **Interruzione del ritmo sociale** dove l'energia organizzativa collettiva diminuisce
-- **Attivazione del sistema di ricompensa** dove il cervello dà priorità alla ricerca del piacere rispetto alla vigilanza
 - **Assenza di autorità** quando i supervisori e i colleghi che rinforzano la sicurezza sono anche "fuori servizio"
 
 **Cambiamenti dello Stato Emotivo:**

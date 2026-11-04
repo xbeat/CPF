@@ -4,11 +4,11 @@
 
 ### Core Mechanism
 
-Euphoria-induced carelessness operates through the disruption of normal risk assessment mechanisms when individuals or groups experience elevated positive emotional states. This vulnerability stems from the neurochemical changes that occur during euphoric episodes, where increased dopamine and reduced prefrontal cortex oversight combine to create systematic blind spots in security judgment.
+Euphoria-induced carelessness operates through the disruption of normal risk assessment mechanisms when individuals or groups experience elevated positive emotional states.
 
 The psychological mechanism involves three primary components:
 
-1. **Neurochemical Disinhibition**: Elevated dopamine levels during euphoric states reduce activity in the prefrontal cortex—the brain region responsible for executive functions including risk assessment, impulse control, and strategic planning. This creates a biological foundation for poor security decisions during positive emotional peaks.
+1. **Neurochemical Disinhibition**: This creates a biological foundation for poor security decisions during positive emotional peaks.
 
 2. **Cognitive Optimism Bias**: Euphoric states amplify optimism bias, where individuals systematically overestimate positive outcomes and underestimate risks. In cybersecurity contexts, this manifests as overconfidence in security postures, dismissal of threat indicators, and assumption that "nothing bad could happen right now."
 
@@ -20,8 +20,6 @@ This vulnerability is grounded in multiple converging research streams:
 
 **Neuroscience Foundations**:
 - LeDoux's (2000) research on emotion-cognition interactions demonstrates that strong emotional states, including positive ones, bypass rational processing centers
-- Studies on dopaminergic reward systems show that elevated dopamine reduces risk perception accuracy
-- fMRI research reveals decreased prefrontal cortex activity during euphoric states, correlating with impaired judgment
 
 **Behavioral Psychology Evidence**:
 - Kahneman and Tversky's prospect theory demonstrates that positive emotional frames lead to increased risk-taking behavior

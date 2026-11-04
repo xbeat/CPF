@@ -6,7 +6,7 @@
 
 Stress contagion cascades represent a systemic organizational vulnerability where acute stress states spread rapidly through interconnected teams and departments, creating amplifying feedback loops that progressively degrade collective security decision-making capacity. This phenomenon operates through three interconnected psychological mechanisms:
 
-**Primary Contagion Pathway**: Emotional contagion occurs through mirror neuron activation and unconscious mimicry of stress behaviors, causing individuals to automatically absorb and replicate the physiological and psychological stress states of their colleagues. This process bypasses conscious awareness and operates at the level of autonomic nervous system synchronization.
+**Primary Contagion Pathway**: This process bypasses conscious awareness and operates at the level of autonomic nervous system synchronization.
 
 **Amplification Mechanism**: Unlike simple emotional contagion, stress cascades involve positive feedback loops where each individual's stress response intensifies the collective stress field, creating exponential rather than linear escalation. This occurs because stressed individuals exhibit heightened reactivity to environmental stressors, including the stress behaviors of others.
 
@@ -15,9 +15,7 @@ Stress contagion cascades represent a systemic organizational vulnerability wher
 ### Research Basis
 
 **Neuroscience Foundations**:
-- Mirror neuron research (Rizzolatti & Craighero, 2004) demonstrates automatic neurological mimicry of observed emotional states, providing the biological substrate for unconscious stress transmission
 - Polyvagal theory (Porges, 2011) explains how autonomic nervous system states synchronize between individuals through unconscious detection of safety/threat cues
-- Cortisol synchronization studies show that stress hormones align between individuals in shared environments within 15-30 minutes of exposure
 
 **Social Psychology Evidence**:
 - Hatfield et al.'s (1994) emotional contagion research demonstrates that stress states spread through organizations via automatic mimicry, convergence, and physiological synchronization

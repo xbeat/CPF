@@ -2,7 +2,7 @@
 
 ## CONTESTO
 
-La disattenzione indotta dall'euforia (euphoria-induced carelessness) si verifica quando gli individui e i team sperimentano ridotta vigilanza di sicurezza durante periodi di celebrazione, successo o traguardi organizzativi positivi. I cambiamenti neurochimici durante gli stati euforici (dopamina elevata, supervisione ridotta della corteccia prefrontale) creano punti ciechi sistematici nella valutazione del rischio e nel giudizio di sicurezza. Questa vulnerabilità (vulnerability) si manifesta quando le organizzazioni rilassano i protocolli di sicurezza durante le celebrazioni, affrettano decisioni per mantenere lo slancio o diventano troppo sicure dopo importanti successi, creando finestre prevedibili di opportunità per gli attaccanti.
+La disattenzione indotta dall'euforia (euphoria-induced carelessness) si verifica quando gli individui e i team sperimentano ridotta vigilanza di sicurezza durante periodi di celebrazione, successo o traguardi organizzativi positivi. Questa vulnerabilità (vulnerability) si manifesta quando le organizzazioni rilassano i protocolli di sicurezza durante le celebrazioni, affrettano decisioni per mantenere lo slancio o diventano troppo sicure dopo importanti successi, creando finestre prevedibili di opportunità per gli attaccanti.
 
 ## DOMANDE DI VALUTAZIONE
 

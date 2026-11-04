@@ -6,17 +6,13 @@
 
 Il bypass di sicurezza indotto dall'urgenza rappresenta una vulnerabilità fondamentale nei sistemi decisionali umani, dove la pressione temporale innesca un degrado sistematico del comportamento orientato alla sicurezza. Questo fenomeno opera attraverso l'interazione di tre meccanismi psicologici centrali:
 
-**Sovraccarico del Carico Cognitivo (Cognitive Load Overwhelm)**: Quando si affrontano scadenze urgenti, la funzione esecutiva del cervello viene sopraffatta, portando a una modalità predefinita dove i protocolli di sicurezza vengono percepiti come ostacoli piuttosto che protezioni. La corteccia prefrontale, responsabile del processo decisionale deliberato, viene compromessa sotto pressione temporale, permettendo l'elaborazione del Sistema 1 (veloce, automatica) di dominare sull'analisi del Sistema 2 (lenta, deliberata).
 
 **Attivazione della Teoria del Prospetto (Prospect Theory)**: Sotto urgenza, gli individui passano da un processo decisionale focalizzato sulla prevenzione a uno focalizzato sulla promozione. Il guadagno immediato derivante dal bypass di sicurezza (rispettare la scadenza) diventa psicologicamente più grande del rischio futuro astratto di un incidente di sicurezza. Questo rappresenta un esempio classico di sconto iperbolico (hyperbolic discounting), dove le ricompense immediate sono valutate in modo sproporzionato rispetto alle conseguenze future.
 
-**Visione a Tunnel Indotta dallo Stress (Stress-Induced Tunnel Vision)**: Lo stress acuto innesca una risposta neurobiologica che restringe l'attenzione alla minaccia immediata (perdere la scadenza) mentre le preoccupazioni periferiche (protocolli di sicurezza) svaniscono dalla consapevolezza cosciente. Questo effetto di visione a tunnel è mediato dal rilascio di cortisolo, che compromette la memoria di lavoro e riduce la flessibilità cognitiva.
 
 ### Base di Ricerca
 
 **Fondamenti Neuroscientifici**:
-- Gli esperimenti di Libet (1983) dimostrano che il processo decisionale avviene 300-500ms prima della consapevolezza cosciente, suggerendo che sotto pressione temporale, i processi pre-cognitivi dominano
-- La ricerca di LeDoux (2000) mostra che l'attivazione dell'amigdala (risposta alla minaccia della pressione della scadenza) avviene prima del coinvolgimento della corteccia prefrontale (analisi razionale della sicurezza)
 - L'ipotesi del marcatore somatico di Damasio (1994) spiega come le risposte di stress incarnate bypassino le considerazioni razionali di sicurezza
 
 **Evidenze di Economia Comportamentale**:
@@ -76,7 +72,6 @@ Il bypass di sicurezza indotto dall'urgenza rappresenta una vulnerabilità fonda
 
 **Violazione di Anthem Healthcare (2015)**: Gli attaccanti hanno specificamente preso di mira l'organizzazione durante i periodi di rendicontazione di fine anno quando i dipendenti erano sotto pressione per completare i rapporti di conformità
 
-**Riconoscimento di Pattern**: L'analisi dei dati temporali delle violazioni mostra tassi di successo superiori del 40% per gli attacchi di ingegneria sociale durante i periodi di fine trimestre, fine anno fiscale e periodi di scadenze normative
 
 ### Punti di Fallimento Tecnico
 

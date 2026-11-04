@@ -16,7 +16,6 @@ The psychological foundation draws from **chaos theory** applications to human b
 
 **Complexity Theory (Holland, 1995)**: Emergent behaviors in complex systems cannot be predicted from individual components. Perfect storms represent **phase transitions** where quantitative psychological stress becomes qualitative system breakdown.
 
-**Neuroscience Research (Bar-Yam, 2003)**: Brain network studies show how local neural failures can cascade into global cognitive dysfunction, mirroring organizational psychological cascades.
 
 **Bion's Group Dynamics (1961)**: Perfect storms often trigger simultaneous activation of all three basic assumptions (dependency, fight-flight, pairing), creating chaotic organizational behavior that attackers can exploit.
 

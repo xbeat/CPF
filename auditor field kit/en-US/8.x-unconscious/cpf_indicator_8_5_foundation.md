@@ -27,8 +27,6 @@ This vulnerability emerges through several interconnected psychological processe
 - Research on expert judgment reveals that domain expertise can increase susceptibility to certain cognitive biases when emotional investment is high
 
 **Neuroscience Evidence**:
-- fMRI studies demonstrate that emotional centers (limbic system) activate before rational analysis centers (prefrontal cortex) when experts encounter threats to their domain expertise
-- Mirror neuron research explains unconscious identification with observed behaviors, including sophisticated attack patterns
 - Studies of professional burnout show how chronic exposure to threats creates defensive psychological adaptations that impair judgment
 
 ### Cognitive/Emotional Triggers

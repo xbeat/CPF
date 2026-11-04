@@ -14,7 +14,6 @@ La confusione opera al confine tra l'analisi razionale cosciente e il pensiero d
 
 **Teoria delle Relazioni Oggettuali Kleiniana**: Il lavoro di Klein sulle equazioni simboliche dimostra che sotto stress o ansia, gli individui regrediscono a stadi di sviluppo precedenti dove simboli e realtà diventano fusi. Nel suo articolo del 1930 "L'Importanza della Formazione dei Simboli nello Sviluppo dell'Io", Klein mostrò come il pensiero simbolico si sviluppa dall'identificazione concreta alla rappresentazione astratta, ma può regredire sotto pressione.
 
-**Ricerca Neuroscientifica**: Gli esperimenti di Libet (1983) e gli studi fMRI successivi di Soon et al. (2008) dimostrano che il processo decisionale avviene 300-500ms prima della consapevolezza cosciente, indicando che l'elaborazione simbolica avviene al di sotto della soglia dell'analisi razionale. I sistemi di rilevamento delle minacce del cervello elaborano le informazioni simboliche più velocemente di quanto i sistemi cognitivi possano valutare il loro significato effettivo.
 
 **Teoria del Carico Cognitivo**: La ricerca di Miller (1956) sui limiti della memoria di lavoro mostra che quando la capacità cognitiva viene superata, gli individui ricorrono all'elaborazione euristica che si basa fortemente su scorciatoie simboliche. Questo crea condizioni in cui le equazioni simboliche diventano modalità di elaborazione dominanti.
 

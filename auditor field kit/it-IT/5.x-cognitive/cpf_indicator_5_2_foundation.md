@@ -6,7 +6,7 @@
 
 L'affaticamento decisionale (decision fatigue) rappresenta uno stato di esaurimento mentale causato dal prendere troppe decisioni, portando al deterioramento della qualità delle scelte nel tempo. Questo fenomeno si verifica quando le risorse cognitive richieste per il processo decisionale si esauriscono attraverso l'uso ripetuto, risultando in uno dei tre esiti prevedibili: decisioni impulsive (scegliere la prima opzione disponibile), decisioni evitanti (posticipare o delegare), o decisioni di default (mantenere lo status quo indipendentemente dall'ottimalità).
 
-Il meccanismo psicologico opera attraverso l'esaurimento del glucosio nella corteccia prefrontale, la regione cerebrale responsabile del controllo esecutivo e del processo decisionale complesso. Man mano che l'energia mentale diminuisce, gli individui si affidano sempre più all'elaborazione del Sistema 1 (automatica, basata su euristiche) piuttosto che del Sistema 2 (deliberata, analitica), rendendoli vulnerabili a scorciatoie cognitive che compromettono le considerazioni di sicurezza.
+Man mano che l'energia mentale diminuisce, gli individui si affidano sempre più all'elaborazione del Sistema 1 (automatica, basata su euristiche) piuttosto che del Sistema 2 (deliberata, analitica), rendendoli vulnerabili a scorciatoie cognitive che compromettono le considerazioni di sicurezza.
 
 ### Base di Ricerca
 
@@ -17,8 +17,6 @@ Il meccanismo psicologico opera attraverso l'esaurimento del glucosio nella cort
 - **Danziger et al. (2011)**: Studio su decisioni giudiziarie che mostra pattern di bias sistematici durante la giornata basati sull'affaticamento decisionale
 
 **Evidenze Neuroscientifiche:**
-- Studi fMRI rivelano attività diminuita nella corteccia cingolata anteriore (monitoraggio dei conflitti) sotto affaticamento decisionale
-- L'esaurimento del glucosio nella corteccia prefrontale correla con ridotto autocontrollo e pensiero analitico
 - L'attivazione della rete in modalità predefinita aumenta man mano che le risorse di controllo esecutivo diminuiscono
 
 **Ricerca Specifica sulla Cybersecurity:**
@@ -71,7 +69,6 @@ Il meccanismo psicologico opera attraverso l'esaurimento del glucosio nella cort
 
 **Violazione Anthem Healthcare (2015)**: L'indagine ha rivelato che il personale IT che sperimentava affaticamento da allarmi non ha investigato adeguatamente l'attività di rete sospetta, portando ad accesso prolungato non rilevato.
 
-**Pattern di Business Email Compromise**: Le statistiche dell'FBI mostrano tassi di successo superiori del 60% per attacchi BEC inviati dopo le 15:00, correlando con il timing dell'affaticamento decisionale.
 
 **Casi di Minaccia Interna**: Molteplici incidenti documentati in cui i dipendenti hanno preso decisioni di sicurezza scarse dopo periodi estesi di processo decisionale ad alta posta in gioco.
 
