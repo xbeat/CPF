@@ -4,13 +4,12 @@
 
 ### Core Mechanism
 
-Stress-induced tunnel vision represents a fundamental neurobiological response where acute or chronic stress narrows cognitive processing to focus exclusively on immediate perceived threats while filtering out peripheral information that may be crucial for comprehensive security assessment. This phenomenon occurs through the activation of the sympathetic nervous system and the hypothalamic-pituitary-adrenal (HPA) axis, which floods the system with stress hormones like cortisol and adrenaline.
+Stress-induced tunnel vision represents a fundamental stress response where acute or chronic stress narrows cognitive processing to focus exclusively on immediate perceived threats while filtering out peripheral information that may be crucial for comprehensive security assessment.
 
 The mechanism operates through several interconnected processes:
 
-**Attentional Narrowing**: Under stress, the brain's executive attention system becomes hypervigilant to threat-related stimuli while simultaneously reducing processing capacity for non-threat information. This creates a cognitive "spotlight" that illuminates only a fraction of the total information environment.
+**Attentional Narrowing**: This creates a cognitive "spotlight" that illuminates only a fraction of the total information environment.
 
-**Working Memory Degradation**: Stress hormones impair the prefrontal cortex's working memory capacity, reducing the ability to hold multiple pieces of information simultaneously and limiting complex problem-solving abilities essential for cybersecurity decision-making.
 
 **Heuristic Dominance**: As System 2 (deliberate) processing becomes impaired, individuals rely increasingly on System 1 (automatic) heuristics and shortcuts, which may be inappropriate for novel or complex security threats.
 
@@ -22,7 +21,6 @@ The psychological foundation for stress-induced tunnel vision draws from multipl
 
 **Selye's General Adaptation Syndrome**: Hans Selye's seminal work on stress responses identifies three phases: alarm, resistance, and exhaustion. During the alarm phase, tunnel vision serves an adaptive function for physical threats but becomes maladaptive in complex information environments requiring broad situational awareness.
 
-**Neuroscientific Evidence**: LeDoux's research on the amygdala's role in threat detection shows that stress responses occur 300-500ms before conscious awareness, meaning tunnel vision effects begin before individuals recognize they are experiencing stress.
 
 **Cognitive Load Theory**: Miller's research on working memory limitations (7±2 items) demonstrates how stress further reduces this already limited capacity, forcing individuals to discard potentially relevant information to maintain cognitive function.
 

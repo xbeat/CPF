@@ -6,7 +6,7 @@
 
 Depression-related negligence in cybersecurity contexts represents a systematic degradation of security vigilance stemming from the characteristic cognitive, emotional, and behavioral patterns associated with depressive states. This vulnerability operates through multiple interconnected psychological mechanisms:
 
-**Cognitive Dysfunction**: Depression significantly impairs executive functioning, working memory, and attention control. The dorsolateral prefrontal cortex, responsible for strategic thinking and risk assessment, shows reduced activation in depressed individuals. This creates a fundamental inability to maintain the sustained cognitive vigilance required for effective cybersecurity practices.
+**Cognitive Dysfunction**: Depression significantly impairs executive functioning, working memory, and attention control. This creates a fundamental inability to maintain the sustained cognitive vigilance required for effective cybersecurity practices.
 
 **Anhedonia and Motivation Deficit**: The core depressive symptom of anhedonia—loss of interest or pleasure in activities—extends to professional responsibilities, including security protocols. Tasks that require sustained attention and careful execution become cognitively taxing and emotionally unrewarding, leading to systematic avoidance or perfunctory completion.
 
@@ -16,7 +16,6 @@ Depression-related negligence in cybersecurity contexts represents a systematic 
 
 ### Research Basis
 
-**Neurocognitive Studies**: fMRI research demonstrates that depression disrupts the default mode network and executive control networks essential for sustained attention and risk assessment (Menon, 2011). The anterior cingulate cortex, crucial for error monitoring and conflict detection, shows reduced activation in depressed individuals, directly impairing the psychological processes required for threat detection.
 
 **Executive Function Research**: Meta-analyses indicate moderate to large effect sizes for executive dysfunction in depression, particularly affecting working memory, cognitive flexibility, and sustained attention (Snyder, 2013). These are precisely the cognitive functions required for effective cybersecurity vigilance.
 

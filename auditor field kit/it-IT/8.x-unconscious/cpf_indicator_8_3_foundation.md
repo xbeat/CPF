@@ -26,8 +26,6 @@ Il meccanismo opera attraverso diversi processi psicologici:
 - Il concetto di complessi di Jung (1969) spiega come le strutture psicologiche inconsce perpetuano modelli comportamentali ripetitivi
 
 **Validazione Neuroscientifica**:
-- Gli studi sul rafforzamento dei percorsi neurali mostrano che i modelli ripetuti creano connessioni sinaptiche più forti, rendendo i comportamenti familiari più facili da attivare
-- La ricerca sulla risposta allo stress dimostra come le esperienze traumatiche creano reti neurali sensibilizzate che predispongono a risposte future simili
 - Gli studi sul consolidamento della memoria rivelano come le esperienze negative possono essere codificate e recuperate in modo preferenziale
 
 **Evidenze dalla Psicologia Organizzativa**:

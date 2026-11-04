@@ -13,7 +13,6 @@ Questa vulnerabilità è particolarmente insidiosa perché opera al di sotto del
 ### Base di Ricerca
 
 **Studi Fondamentali di Psicologia Sociale:**
-- **Asch (1951)**: Ha dimostrato che il 75% dei partecipanti si è conformato a giudizi di gruppo ovviamente errati almeno una volta, mostrando il potere della pressione sociale anche contro evidenze chiare
 - **Sherif (1936)**: Gli studi sull'effetto autocinetico hanno rivelato come situazioni ambigue portino a rapida formazione e aderenza alle norme
 - **Deutsch & Gerard (1955)**: Hanno distinto tra conformità informativa (ricerca di accuratezza) e conformità normativa (ricerca di accettazione)
 

@@ -24,7 +24,6 @@ Social proof manipulation exploits the fundamental human tendency to determine a
 
 **Group Dynamics Theory**: Bion's work on basic assumptions shows that groups under anxiety (such as cybersecurity threats) become more susceptible to following apparently successful behaviors of other groups, even without verification.
 
-**Neuroscientific Evidence**: fMRI studies show that social proof activates reward pathways in the brain while simultaneously reducing activation in areas associated with critical thinking, explaining why this vulnerability operates below conscious awareness.
 
 ### Cognitive/Emotional Triggers
 

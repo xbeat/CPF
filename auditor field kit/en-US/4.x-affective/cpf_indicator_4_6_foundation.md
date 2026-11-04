@@ -25,7 +25,6 @@ Guilt-driven overcompliance represents a maladaptive response to internalized au
 - **Internal Working Models**: Negative self-models combined with positive other-models create chronic anxiety about disappointing authorities
 
 **Cognitive Psychology Research**:
-- **Error-Related Negativity (ERN)**: Neurological studies show heightened ERN responses in guilt-prone individuals, indicating excessive error monitoring
 - **Perfectionism Studies**: Clinical research demonstrates that guilt-prone perfectionism leads to decreased performance due to cognitive overload
 - **Moral Psychology**: Research on moral emotions shows that guilt can become maladaptive when it drives behavior beyond optimal functioning
 

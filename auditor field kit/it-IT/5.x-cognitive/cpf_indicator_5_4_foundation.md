@@ -8,7 +8,7 @@ La degradazione da multitasking (multitasking degradation) si riferisce alla rid
 
 Il meccanismo psicologico opera attraverso diversi processi interconnessi:
 
-**Costi di Cambio dell'Attenzione**: Ogni transizione tra compiti richiede risorse cognitive per disimpegnarsi dal focus corrente, riorientare l'attenzione e ri-impegnarsi con il nuovo compito. La ricerca mostra che queste transizioni creano ritardi misurabili (tipicamente 200-500ms) e decrementi temporanei delle prestazioni.
+**Costi di Cambio dell'Attenzione**: Ogni transizione tra compiti richiede risorse cognitive per disimpegnarsi dal focus corrente, riorientare l'attenzione e ri-impegnarsi con il nuovo compito.
 
 **Interferenza della Memoria di Lavoro**: Il principio del "numero magico sette" di Miller dimostra che la memoria di lavoro umana può mantenere efficacemente solo 5-9 blocchi di informazione simultaneamente. Nei contesti di cybersecurity, questa limitazione diventa critica quando il personale di sicurezza deve monitorare allarmi multipli, sistemi e indicatori di minaccia mantenendo consapevolezza situazionale.
 
@@ -20,13 +20,12 @@ Il meccanismo psicologico opera attraverso diversi processi interconnessi:
 
 **Teoria del Carico Cognitivo (Sweller, 1988)**: Dimostra che la capacità cognitiva è finita e che eccedere questi limiti porta a degradazione sistematica delle prestazioni. In cybersecurity, questo si manifesta come ridotta accuratezza del rilevamento delle minacce quando gli operatori gestiscono sistemi di sicurezza multipli simultaneamente.
 
-**Ricerca sul Cambio di Compito (Monsell, 2003)**: Studi di neuroimaging mostrano che le transizioni di compito attivano regioni della corteccia prefrontale associate al controllo cognitivo, dirottando risorse dai processi di riconoscimento di pattern rilevanti per la sicurezza. I costi di cambio aumentano con la complessità e somiglianza dei compiti.
+**Ricerca sul Cambio di Compito (Monsell, 2003)**: I costi di cambio aumentano con la complessità e somiglianza dei compiti.
 
 **Effetti del Residuo Attentivo (Leroy, 2009)**: Quando si transita tra compiti, parte dell'attenzione rimane bloccata sul compito precedente. Questo "residuo attentivo" riduce la capacità cognitiva disponibile per nuove minacce di sicurezza, creando finestre di vulnerabilità.
 
 **Interferenza Dual-Task (Pashler, 1994)**: Anche compiti altamente praticati mostrano interferenza quando eseguiti simultaneamente. Il monitoraggio della sicurezza combinato con compiti amministrativi crea riduzioni misurabili nella sensibilità al rilevamento delle minacce.
 
-**Evidenze Neuroscientifiche**: Studi fMRI dimostrano che il multitasking attiva reti neurali diverse rispetto all'attenzione focalizzata, con attività ridotta in aree associate all'elaborazione profonda e aumentata in regioni che gestiscono il conflitto cognitivo.
 
 ### Trigger Cognitivi/Emotivi
 

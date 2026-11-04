@@ -18,9 +18,6 @@ Nei contesti di cybersecurity, questo si manifesta come l'uso continuato di misu
 - **Klayman & Ha (1987)**: Ricerca sul bias di conferma che mostra come gli impegni iniziali creano attenzione selettiva alle prove di conferma
 - **Staw (1976)**: Escalation dell'impegno in contesti organizzativi, dimostrando come i costi irrecuperabili e le motivazioni per salvare la faccia guidano l'investimento continuato in progetti fallimentari
 
-**Validazione Neuroscientifica:**
-- **Sharot et al. (2010)**: Gli studi fMRI rivelano che le informazioni coerenti con l'impegno attivano le vie di ricompensa nel cervello, mentre le informazioni incoerenti con l'impegno innescano risposte di minaccia
-- **Jarcho et al. (2011)**: Evidenze di neuroimaging che ammettere errori attiva la corteccia cingolata anteriore (risposta al dolore), rendendo psicologicamente doloroso abbandonare gli impegni
 
 **Evidenze di Economia Comportamentale:**
 - **Thaler (1980)**: L'errore dei costi irrecuperabili dimostra l'irrazionalità economica nel mantenere investimenti fallimentari

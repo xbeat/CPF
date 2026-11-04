@@ -4,11 +4,11 @@
 
 ### Core Mechanism
 
-Cortisol-impaired memory represents a critical neurobiological vulnerability where elevated stress hormones systematically degrade memory formation, consolidation, and retrieval processes. This mechanism operates through the hypothalamic-pituitary-adrenal (HPA) axis, where sustained organizational stress triggers cortisol release that directly impairs hippocampal functioning—the brain region essential for explicit memory formation and recall.
+Cortisol-impaired memory represents a vulnerability where elevated stress hormones (Lupien et al., 2009) systematically degrade memory formation, consolidation, and retrieval processes. This mechanism operates through the hypothalamic-pituitary-adrenal (HPA) axis, where sustained organizational stress triggers cortisol release that impairs hippocampal functioning (Lupien et al., 2009)—the brain region essential for explicit memory formation and recall.
 
 The vulnerability manifests in two distinct phases:
-1. **Acute Phase**: High cortisol levels during stressful security events impair working memory and attention, leading to immediate security lapses
-2. **Chronic Phase**: Prolonged stress exposure causes structural hippocampal changes, creating persistent memory deficits that compromise security protocol recall and incident pattern recognition
+1. **Acute Phase**: High cortisol levels during stressful security events impair working memory and attention (Lupien et al., 2009), leading to immediate security lapses
+2. **Chronic Phase**: Prolonged stress exposure causes structural hippocampal changes (McEwen, 2007), creating persistent memory deficits that compromise security protocol recall and incident pattern recognition
 
 This represents a fundamental pre-cognitive vulnerability where individuals become physiologically incapable of accessing critical security knowledge, regardless of their conscious intentions or training level.
 
@@ -33,12 +33,9 @@ This represents a fundamental pre-cognitive vulnerability where individuals beco
 **Primary Activation Conditions:**
 - **Incident Response Pressure**: High-stakes security incidents trigger acute stress responses that impair memory of established response procedures
 - **Performance Monitoring**: Constant surveillance and evaluation create chronic stress that degrades long-term memory consolidation
-- **Role Ambiguity**: Unclear security responsibilities create persistent anxiety that elevates baseline cortisol levels
 - **Time-Critical Decisions**: Deadline pressures activate the HPA axis, impairing access to detailed security knowledge
-- **Authority Conflicts**: Hierarchical stress and fear of blame trigger cortisol release that impairs recall of security policies
 
 **Amplifying Factors:**
-- **Sleep Deprivation**: Compounds cortisol effects on memory consolidation during critical overnight operations
 - **Caffeine Dependence**: Withdrawal states during high-stress periods exacerbate memory impairment
 - **Workload Overload**: Cognitive exhaustion reduces resilience to stress-induced memory deficits
 
@@ -65,7 +62,6 @@ This represents a fundamental pre-cognitive vulnerability where individuals beco
 **Pattern Recognition from CPF Framework:**
 - Organizations consistently report that major security incidents occur during periods of high organizational stress (mergers, layoffs, system migrations)
 - Post-incident analysis frequently reveals that established security procedures were "forgotten" or "overlooked" during the critical response phase
-- Security teams report increased error rates and slower response times during high-stress periods, correlating with elevated cortisol markers
 
 **Real-World Manifestations:**
 - **Target (2013)**: Post-breach analysis suggested that stress during peak holiday operations contributed to delayed threat recognition and inadequate response protocols

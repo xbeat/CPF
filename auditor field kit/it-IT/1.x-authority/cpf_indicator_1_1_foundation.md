@@ -16,7 +16,6 @@ Il meccanismo opera attraverso diversi processi psicologici interconnessi:
 ### Base di Ricerca
 Il fondamento per comprendere questa vulnerabilità deriva dagli studi pioneristici sull'obbedienza di Stanley Milgram (1974), che hanno dimostrato che individui ordinari infliggerebbero danni apparenti quando diretti da figure di autorità. Negli esperimenti di Milgram, il 65% dei partecipanti ha continuato fino al livello di shock più alto quando istruiti da uno sperimentatore, nonostante credessero di causare dolore a un'altra persona.
 
-**Evidenza Neuroscientifica**: La ricerca neuroscientifica contemporanea rivela che la conformità basata sull'autorità opera al di sotto della consapevolezza cosciente. Gli studi fMRI mostrano che l'attivazione dell'amigdala (risposta alla minaccia) si verifica 300-500ms prima dell'impegno della corteccia prefrontale (analisi razionale), come documentato da Libet (1983) e confermato da Soon et al. (2008). Questa realtà neurologica significa che le richieste basate sull'autorità innescano risposte di conformità automatiche prima che possa verificarsi la valutazione di sicurezza cosciente.
 
 **Applicazione della Teoria del Doppio Processo**: Il framework Sistema 1/Sistema 2 di Kahneman spiega perché la conformità all'autorità bypassa i protocolli di sicurezza. Il Sistema 1 (elaborazione veloce, automatica) riconosce i segnali di autorità e innesca conformità immediata, mentre il Sistema 2 (elaborazione lenta, deliberata) viene completamente bypassato in situazioni ad alta pressione o sensibili al tempo.
 

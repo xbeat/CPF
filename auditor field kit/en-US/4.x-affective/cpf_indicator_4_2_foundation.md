@@ -4,11 +4,10 @@
 
 ### Core Mechanism
 
-Anger-induced risk taking represents a fundamental vulnerability in cybersecurity where emotional arousal systematically impairs cognitive risk assessment. When individuals experience anger, the limbic system—particularly the amygdala—becomes hyperactivated while the prefrontal cortex's executive control functions are suppressed. This neurobiological response creates a state where immediate emotional discharge takes precedence over careful evaluation of potential consequences.
+Anger-induced risk taking represents a fundamental vulnerability in cybersecurity where emotional arousal systematically impairs cognitive risk assessment. Anger creates a state where immediate emotional discharge takes precedence over careful evaluation of potential consequences.
 
 The psychological mechanism operates through multiple pathways:
 
-**Neurobiological Pathway**: Anger triggers the release of norepinephrine and dopamine, creating a state of heightened arousal that narrows attention and reduces cognitive flexibility. The anterior cingulate cortex, responsible for conflict monitoring and error detection, shows decreased activation during angry states, impairing the ability to recognize potential security risks.
 
 **Cognitive Pathway**: Anger activates System 1 thinking (fast, automatic, emotional) while suppressing System 2 thinking (slow, deliberate, analytical). This results in heuristic-based decision making that prioritizes immediate goal achievement over security considerations. The "hot-cold empathy gap" becomes pronounced, where individuals in angry states cannot accurately predict their future preferences or the consequences of current actions.
 
@@ -17,9 +16,7 @@ The psychological mechanism operates through multiple pathways:
 ### Research Basis
 
 **Neuroscience Foundations**: 
-- LeDoux (2000) demonstrated that emotional processing in the amygdala occurs 300-500ms before conscious cognitive processing, establishing the primacy of emotional over rational responses
 - Damasio's (1994) somatic marker hypothesis shows that emotional states create unconscious biases in decision-making through bodily feedback mechanisms
-- fMRI studies reveal that angry individuals show increased activation in the ventral striatum (reward processing) and decreased activation in the orbitofrontal cortex (risk assessment)
 
 **Behavioral Economics Evidence**:
 - Kahneman's (2011) dual-process theory explains how emotional arousal shifts decision-making from careful System 2 analysis to impulsive System 1 responses
@@ -68,8 +65,6 @@ The psychological mechanism operates through multiple pathways:
 ### Historical Incidents
 
 **Notable Patterns from Framework**:
-- Organizations with high employee anger scores showed 340% higher rates of insider incidents
-- Phishing success rates increased by 220% during periods of high organizational stress and frustration
 - Security policy violations clustered around systems changes and new security implementations
 
 **Case Study Patterns**:

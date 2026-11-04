@@ -14,10 +14,6 @@ AI hallucination acceptance represents a novel cognitive vulnerability where ind
 
 ### Research Basis
 
-**Neuroscience Foundations**:
-- fMRI studies demonstrate that human brains process AI-generated authoritative statements similarly to expert human testimony, activating trust-related neural circuits (anterior cingulate cortex)
-- The brain's default mode network shows reduced critical evaluation activity when information is presented by perceived authorities
-- Mirror neuron systems, evolved for human interaction, inappropriately activate with AI interfaces designed to simulate human communication
 
 **Cognitive Psychology Research**:
 - Confirmation bias amplifies when AI systems reflect back user preconceptions with apparent external validation

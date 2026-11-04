@@ -4,11 +4,10 @@
 
 ### Core Mechanism
 
-Recovery period vulnerabilities emerge from the complex psychophysiological aftermath of acute stress responses, when individuals and organizations transition from crisis mode back to normal operations. This vulnerability exploits the neurobiological reality that recovery is not simply the absence of stress, but an active process requiring cognitive and emotional resources.
+Recovery period vulnerabilities emerge from the complex psychophysiological aftermath of acute stress responses, when individuals and organizations transition from crisis mode back to normal operations. This vulnerability exploits the fact that recovery is not simply the absence of stress, but an active process requiring cognitive and emotional resources.
 
 The core psychological mechanism operates through three interconnected processes:
 
-1. **Cortisol Clearance Delay**: Following acute stress, elevated cortisol levels can persist for 24-72 hours, impairing executive function, memory consolidation, and decision-making capacity even after the perceived threat has passed.
 
 2. **Cognitive Resource Depletion**: The intense focus required during crisis response depletes finite cognitive resources (glucose, neurotransmitters), creating a temporary state of reduced mental capacity that persists into the recovery phase.
 
@@ -18,7 +17,6 @@ The core psychological mechanism operates through three interconnected processes
 
 **Neuroscience Foundations:**
 - **Selye's General Adaptation Syndrome (1956)**: Identifies the exhaustion phase following alarm and resistance, where the organism's adaptive capacity is temporarily compromised
-- **HPA Axis Research**: Hypothalamic-Pituitary-Adrenal axis activation creates measurable delays in stress hormone normalization, with cortisol remaining elevated 24-72 hours post-stressor
 - **Allostatic Load Theory**: Repeated stress responses create cumulative wear on physiological systems, with recovery periods showing increased vulnerability to subsequent stressors
 
 **Cognitive Psychology Evidence:**
@@ -41,7 +39,6 @@ The core psychological mechanism operates through three interconnected processes
 **Physiological Triggers:**
 - **Sleep Debt Accumulation**: Crisis periods often involve sleep deprivation, with effects persisting days after normal sleep resumes
 - **Nutritional Depletion**: Stress response consumes vitamins, minerals, and glucose, creating temporary cognitive impairment
-- **Neurotransmitter Imbalance**: Sustained high performance depletes dopamine and serotonin systems critical for focus and decision-making
 
 ## CYBERSECURITY IMPACT
 
@@ -65,7 +62,6 @@ The core psychological mechanism operates through three interconnected processes
 ### Historical Incidents
 
 **Pattern Recognition:**
-- **Post-Breach Secondary Attacks**: Analysis shows 40% higher success rate for attacks launched 24-72 hours after major security incidents
 - **Recovery Phase Data Exfiltration**: Numerous cases where initial breach detection and response created opportunity for larger-scale data theft during recovery
 - **Infrastructure Compromise**: Power grid and critical infrastructure attacks often succeed during recovery periods following other disruptions
 

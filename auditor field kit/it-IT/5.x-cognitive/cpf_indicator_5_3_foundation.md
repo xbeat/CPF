@@ -8,7 +8,6 @@ La paralisi da sovraccarico informativo (information overload paralysis) rappres
 
 Il meccanismo psicologico opera attraverso una cascata di fallimenti cognitivi:
 
-1. **Saturazione della Memoria di Lavoro**: Quando l'informazione eccede la capacità cognitiva (7±2 elementi), la funzione esecutiva del cervello diventa compromessa
 2. **Frammentazione dell'Attenzione**: Molteplici flussi informativi concorrenti creano costi di cambio cognitivo e residuo attentivo
 3. **Paralisi da Analisi**: Opzioni schiaccianti innescano uno spegnimento difensivo dei processi decisionali
 4. **Tunneling Cognitivo**: Sotto sovraccarico, l'attenzione si restringe alle preoccupazioni immediate, creando punti ciechi alle implicazioni di sicurezza
@@ -38,8 +37,6 @@ Nei contesti di cybersecurity, questo si manifesta come personale di sicurezza c
 - Il recupero dal cambio cognitivo richiede risorse mentali significative
 
 **Evidenze Neurobiologiche**:
-- Studi fMRI mostrano disattivazione della corteccia prefrontale sotto carico cognitivo estremo
-- Gli ormoni dello stress (cortisolo) compromettono ulteriormente la memoria di lavoro sotto sovraccarico informativo
 - L'attivazione della rete in modalità predefinita indica disimpegno cognitivo
 
 ### Trigger Cognitivi/Emotivi

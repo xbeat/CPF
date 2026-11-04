@@ -4,11 +4,8 @@
 
 ### Core Mechanism
 
-Time pressure cognitive degradation represents a fundamental breakdown in executive cognitive function under temporal stress, where the brain's dual-process system becomes dysregulated. Under time pressure, System 1 (fast, automatic, heuristic-based) processing dominates over System 2 (slow, deliberate, analytical) processing, leading to systematic errors in judgment and decision-making that create exploitable security vulnerabilities.
+Under time pressure, System 1 (fast, automatic, heuristic-based) processing dominates over System 2 (slow, deliberate, analytical) processing, leading to systematic errors in judgment and decision-making that create exploitable security vulnerabilities.
 
-The neurobiological mechanism involves:
-- **Prefrontal cortex suppression**: Time pressure reduces blood flow to the prefrontal cortex, impairing working memory, attention control, and cognitive flexibility
-- **Amygdala activation**: Temporal stress triggers threat-detection systems, flooding the brain with stress hormones (cortisol, adrenaline) that further impair rational analysis
 - **Cognitive tunneling**: Attention narrows to immediate stimuli while peripheral awareness (including security considerations) diminishes
 - **Working memory overflow**: Time pressure exceeds Miller's "magical number seven" capacity limit, causing information to be processed superficially or discarded entirely
 
@@ -26,13 +23,10 @@ The neurobiological mechanism involves:
 
 **Stress Response Research (Selye, 1956)**:
 - Acute stress impairs memory consolidation and retrieval
-- Cortisol elevation disrupts hippocampal function critical for context evaluation
 - Fight-or-flight responses prioritize speed over accuracy
 
 **Neuroscience Evidence (LeDoux, 2000)**:
-- Amygdala activation occurs 300-500ms before prefrontal cortex engagement
 - Time pressure amplifies this disparity, creating decision-making before conscious analysis
-- Stress-induced neural changes persist beyond the immediate stressor
 
 ### Cognitive/Emotional Triggers
 

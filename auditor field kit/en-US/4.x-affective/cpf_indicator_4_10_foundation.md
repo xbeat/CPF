@@ -16,9 +16,7 @@ Within the CPF's Affective Vulnerabilities category [4.x], emotional contagion s
 ### Research Basis
 
 **Foundational Neuroscience:**
-- Mirror neuron research (Rizzolatti & Craighero, 2004) demonstrates neurological basis for automatic emotional mimicry
 - Hatfield, Cacioppo, and Rapson's (1994) seminal work on emotional contagion established three-stage process: mimicry → convergence → contagion
-- Neuroimaging studies show limbic system activation spreads through visual and auditory emotional cues before conscious processing
 
 **Organizational Psychology Evidence:**
 - Barsade's (2002) experimental studies demonstrated measurable emotional contagion in business teams affecting cooperation and conflict
@@ -28,7 +26,6 @@ Within the CPF's Affective Vulnerabilities category [4.x], emotional contagion s
 **Stress Research Integration:**
 - Selye's (1956) General Adaptation Syndrome provides framework for understanding how shared stress responses create collective vulnerability
 - Attachment theory (Bowlby, 1969) explains how emotional contagion activates caregiving and care-seeking behaviors that can override security protocols
-- Social neuroscience research demonstrates stress hormone synchronization in co-located groups
 
 ### Cognitive/Emotional Triggers
 

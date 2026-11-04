@@ -10,9 +10,9 @@ The psychological mechanism operates through several interconnected processes:
 
 **Authority Transfer Under Stress**: During crisis conditions, cognitive resources become severely limited, forcing individuals to rely on System 1 (fast, automatic) rather than System 2 (slow, deliberate) thinking processes. This creates a psychological regression to earlier developmental states where authority figures provided safety and structure. The stressed individual unconsciously transfers responsibility for safety to anyone presenting authoritative presence.
 
-**Cognitive Load Reduction**: Crisis situations create information overload that exceeds working memory capacity (Miller's magical number seven). To manage this overwhelming complexity, individuals employ cognitive shortcuts (heuristics), with authority deference being one of the most powerful and primitive. The brain essentially "outsources" decision-making to reduce cognitive burden.
+**Cognitive Load Reduction**: Crisis situations create information overload that exceeds working memory capacity (Miller's magical number seven). To manage this overwhelming complexity, individuals employ cognitive shortcuts (heuristics), with authority deference being one of the most powerful and primitive.
 
-**Anxiety-Driven Compliance**: Crisis states activate the amygdala's threat response system, flooding the brain with stress hormones that impair prefrontal cortex functioning. This neurochemical cascade creates a psychological state where individuals become hypervigilant to authority cues while simultaneously losing capacity for critical analysis of those claims.
+**Anxiety-Driven Compliance**: Crisis states trigger the stress response, which impairs prefrontal functioning (Arnsten, 2009). This creates a psychological state where individuals become hypervigilant to authority cues while simultaneously losing capacity for critical analysis of those claims.
 
 ### Research Basis
 
@@ -20,9 +20,9 @@ The theoretical foundation for this vulnerability draws from multiple convergent
 
 **Milgram's Obedience Studies (1974)**: Demonstrated that ordinary individuals will comply with authority figures even when actions conflict with personal moral standards. Under crisis conditions, this compliance increases dramatically as individuals seek external structure to manage overwhelming uncertainty.
 
-**Stress and Authority Research**: Studies show that acute stress significantly increases susceptibility to authority influence. Cortisol elevation impairs working memory and executive function while amplifying emotional responsiveness to social hierarchy cues.
+**Stress and Authority Research**: Studies show that acute stress significantly increases susceptibility to authority influence.
 
-**Neuroscience of Decision-Making**: fMRI studies reveal that authority presence activates the brain's social cognition networks while suppressing areas associated with independent reasoning. During crisis states, this pattern becomes even more pronounced.
+**Neuroscience of Decision-Making**: During crisis states, this pattern becomes even more pronounced.
 
 **Group Dynamics Under Pressure**: Bion's work on basic assumptions shows that groups under stress automatically seek dependency relationships with perceived leaders, even when those leaders lack legitimate authority or competence.
 

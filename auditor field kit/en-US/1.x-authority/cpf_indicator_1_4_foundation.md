@@ -14,9 +14,9 @@ This vulnerability stems from the fundamental conflict between hierarchical obed
 
 ### Research Basis
 
-**Milgram's Obedience Studies (1974)**: Found 65% of participants would administer potentially lethal electric shocks when instructed by an authority figure. In organizational contexts, this translates to security protocol violations when directed by superiors.
+**Milgram's Obedience Studies (1974)**: In organizational contexts, this translates to security protocol violations when directed by superiors.
 
-**Hofstede's Power Distance Theory**: Organizations with high power distance show increased vulnerability, as questioning authority is culturally discouraged. Studies show 40% higher security violation rates in high power distance cultures.
+**Hofstede's Power Distance Theory**: Organizations with high power distance show increased vulnerability, as questioning authority is culturally discouraged.
 
 **Cognitive Load Theory (Miller, 1956)**: The "magical number seven" limitation means individuals can only process limited information simultaneously. Authority requests create additional cognitive load that impairs security decision-making.
 
@@ -24,13 +24,12 @@ This vulnerability stems from the fundamental conflict between hierarchical obed
 
 ### Cognitive/Emotional Triggers
 
-**Proximity Effects**: Physical or organizational proximity to authority figures amplifies compliance. Face-to-face requests show 73% higher bypass rates than electronic communications.
+**Proximity Effects**: Physical or organizational proximity to authority figures amplifies compliance.
 
-**Time Pressure Amplification**: Authority requests combined with urgency create a "perfect storm" where security reasoning becomes impossible. Emergency contexts increase bypass likelihood by 340%.
+**Time Pressure Amplification**: Authority requests combined with urgency create a "perfect storm" where security reasoning becomes impossible.
 
 **Relationship Preservation Anxiety**: Fear of damaging working relationships with superiors triggers fight-or-flight responses that bypass rational security evaluation.
 
-**Imposter Syndrome Activation**: Employees experiencing imposter syndrome are 67% more likely to comply with security-bypassing requests to prove their value and loyalty.
 
 ## CYBERSECURITY IMPACT
 

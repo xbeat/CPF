@@ -28,7 +28,6 @@ A differenza del semplice sovraccarico cognitivo (indicatore 5.x), la catastrofe
 - Le limitazioni cognitive amplificano le instabilità del sistema
 
 **Neuroscienza della Complessità (Cacioppo & Petty, 1982):**
-- La corteccia prefrontale mostra risposte di stress misurabili alla complessità eccessiva
 - La qualità decisionale si deteriora prima che gli individui riconoscano il sovraccarico
 - Gli ambienti complessi innescano risposte di lotta-fuga, compromettendo ulteriormente la cognizione
 

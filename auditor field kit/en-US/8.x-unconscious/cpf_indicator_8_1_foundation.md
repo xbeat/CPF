@@ -24,7 +24,6 @@ The mechanism works through several interconnected psychological processes:
 
 **Organizational Defense Systems**: Menzies Lyth's (1960) research on social defense systems reveals how organizations develop collective defenses against anxiety that can create systematic blind spots, including the projection of internal threats onto external enemies.
 
-**Neuroscientific Evidence**: Research on implicit bias and threat perception shows that projection operates below conscious awareness, with amygdala activation occurring before rational threat assessment (LeDoux, 2000).
 
 ### Cognitive/Emotional Triggers
 

@@ -6,17 +6,16 @@
 
 Fear-based compliance without verification represents a complex psychological mechanism where individuals bypass critical thinking and verification processes when confronted with authority-based threats or time pressure. This vulnerability emerges from the intersection of several psychological systems:
 
-**Neurobiological Basis**: When fear is activated, the amygdala triggers fight-flight responses before prefrontal cortex engagement occurs. This creates a 300-500ms window where automatic compliance mechanisms override rational verification processes. The stress response floods the system with cortisol and adrenaline, impairing working memory and executive function—precisely the cognitive resources needed for verification behaviors.
+**Neurobiological Basis**: Acute stress impairs working memory and executive function (Arnsten, 2009)—precisely the cognitive resources needed for verification behaviors.
 
-**Authority Processing Shortcuts**: Drawing from Milgram's obedience studies, humans possess deeply ingrained neural pathways that facilitate rapid compliance with perceived authority to maintain social cohesion and avoid punishment. When fear amplifies this response, the normal "verification checks" that healthy skepticism provides are systematically disabled.
+**Authority Processing Shortcuts**: When fear amplifies this response, the normal "verification checks" that healthy skepticism provides are systematically disabled.
 
 **Cognitive Load Dynamics**: Fear creates additional cognitive load that pushes individuals beyond Miller's "magical number seven" processing limit. When cognitive resources are overwhelmed, people default to simpler heuristics—in this case, immediate compliance rather than the more cognitively demanding verification process.
 
 ### Research Basis
 
-**Milgram's Obedience Studies (1974)**: Demonstrated that 65% of participants would administer potentially lethal electric shocks when commanded by authority figures. Critically, participants who expressed doubt but continued showed elevated stress markers, indicating internal conflict between compliance and verification impulses.
+**Milgram's Obedience Studies (1974)**: Critically, participants who expressed doubt but continued showed elevated stress markers, indicating internal conflict between compliance and verification impulses.
 
-**LeDoux's Fear Conditioning Research (2000)**: Established that fear responses bypass conscious processing centers, with amygdala activation occurring before prefrontal cortex engagement. This creates a neurobiological window where verification processes are offline while compliance mechanisms remain active.
 
 **Kahneman's System 1/System 2 Framework (2011)**: Fear triggers System 1 (fast, automatic) processing while verification requires System 2 (slow, deliberate) processing. Under threat conditions, System 1 dominates, creating systematic verification failures.
 
@@ -39,10 +38,7 @@ Fear-based compliance without verification represents a complex psychological me
 - Previous negative experiences with authority challenges
 
 **Neurochemical Cascade**:
-1. Threat perception → Amygdala activation
-2. HPA axis engagement → Cortisol release
 3. Working memory impairment
-4. Prefrontal cortex suppression
 5. Default to compliance heuristics
 
 ## CYBERSECURITY IMPACT

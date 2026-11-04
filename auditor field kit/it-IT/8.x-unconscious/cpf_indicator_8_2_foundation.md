@@ -28,7 +28,7 @@ Il lavoro di Melanie Klein (1946) sull'identificazione proiettiva spiega come gl
 Namnyak et al. (2008) hanno documentato come l'esposizione prolungata a minacce possa portare a identificazione e persino simpatia per l'agente minaccioso. Nella cybersecurity, l'esposizione prolungata ad advanced persistent threats (APT) può creare dinamiche psicologiche simili.
 
 **Evidenza Neuroscientifica:**
-La ricerca sui neuroni specchio (Rizzolatti & Craighero, 2004) dimostra che gli esseri umani simulano automaticamente i comportamenti osservati a livello neurologico. I professionisti della sicurezza che studiano metodi di attacco possono inconsciamente interiorizzare questi pattern, creando potenziale per l'identificazione.
+I professionisti della sicurezza che studiano metodi di attacco possono inconsciamente interiorizzare questi pattern, creando potenziale per l'identificazione.
 
 **Psicologia Organizzativa:**
 Il lavoro di Bion (1961) sulle dinamiche di gruppo mostra come i team sotto stress possano adottare le caratteristiche di minacce esterne percepite come misura difensiva, portando a risposte "lotta-fuga" che rispecchiano comportamenti aggressivi.

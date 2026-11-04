@@ -6,17 +6,15 @@
 
 La conformità basata sulla paura senza verifica rappresenta un meccanismo psicologico complesso dove gli individui bypassano il pensiero critico e i processi di verifica quando confrontati con minacce basate sull'autorità o pressione temporale. Questa vulnerabilità emerge dall'intersezione di diversi sistemi psicologici:
 
-**Base Neurobiologica**: Quando la paura viene attivata, l'amigdala innesca risposte lotta-fuga prima che l'engagement della corteccia prefrontale avvenga. Questo crea una finestra di 300-500ms dove i meccanismi di conformità automatica scavalcano i processi di verifica razionale. La risposta allo stress inonda il sistema con cortisolo e adrenalina, compromettendo la memoria di lavoro e la funzione esecutiva—precisamente le risorse cognitive necessarie per i comportamenti di verifica.
 
-**Scorciatoie Processamento Autorità**: Attingendo dagli studi sull'obbedienza di Milgram, gli umani possiedono percorsi neurali profondamente radicati che facilitano la rapida conformità all'autorità percepita per mantenere la coesione sociale ed evitare punizioni. Quando la paura amplifica questa risposta, i normali "controlli di verifica" che lo scetticismo sano fornisce vengono sistematicamente disabilitati.
+**Scorciatoie Processamento Autorità**: Quando la paura amplifica questa risposta, i normali "controlli di verifica" che lo scetticismo sano fornisce vengono sistematicamente disabilitati.
 
 **Dinamiche Carico Cognitivo**: La paura crea carico cognitivo aggiuntivo che spinge gli individui oltre il limite di processamento del "numero magico sette" di Miller. Quando le risorse cognitive sono sopraffatte, le persone fanno default a euristiche più semplici—in questo caso, conformità immediata piuttosto che il processo di verifica cognitivamente più impegnativo.
 
 ### Base di Ricerca
 
-**Studi sull'Obbedienza di Milgram (1974)**: Ha dimostrato che il 65% dei partecipanti avrebbe somministrato scosse elettriche potenzialmente letali quando comandati da figure di autorità. Criticamente, i partecipanti che esprimevano dubbio ma continuavano mostravano marcatori di stress elevati, indicando conflitto interno tra impulsi di conformità e verifica.
+**Studi sull'Obbedienza di Milgram (1974)**: Criticamente, i partecipanti che esprimevano dubbio ma continuavano mostravano marcatori di stress elevati, indicando conflitto interno tra impulsi di conformità e verifica.
 
-**Ricerca Condizionamento Paura di LeDoux (2000)**: Ha stabilito che le risposte di paura bypassano i centri di processamento cosciente, con l'attivazione dell'amigdala avvenente prima dell'engagement della corteccia prefrontale. Questo crea una finestra neurobiologica dove i processi di verifica sono offline mentre i meccanismi di conformità rimangono attivi.
 
 **Framework Sistema 1/Sistema 2 di Kahneman (2011)**: La paura innesca il processamento Sistema 1 (veloce, automatico) mentre la verifica richiede il processamento Sistema 2 (lento, deliberato). Sotto condizioni di minaccia, Sistema 1 domina, creando fallimenti di verifica sistematici.
 
@@ -39,10 +37,7 @@ La conformità basata sulla paura senza verifica rappresenta un meccanismo psico
 - Esperienze negative precedenti con sfide all'autorità
 
 **Cascata Neurochimica**:
-1. Percezione minaccia → Attivazione amigdala
-2. Engagement asse HPA → Rilascio cortisolo
 3. Compromissione memoria di lavoro
-4. Soppressione corteccia prefrontale
 5. Default a euristiche di conformità
 
 ## IMPATTO SULLA CYBERSECURITY

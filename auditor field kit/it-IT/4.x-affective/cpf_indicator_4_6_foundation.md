@@ -25,7 +25,6 @@ La sovraconformità guidata dal senso di colpa rappresenta una risposta maladatt
 - **Modelli Operativi Interni (Internal Working Models)**: Modelli di sé negativi combinati con modelli di altri positivi creano ansia cronica riguardo al deludere le autorità
 
 **Ricerca di Psicologia Cognitiva (Cognitive Psychology Research)**:
-- **Negatività Correlata all'Errore (Error-Related Negativity - ERN)**: Gli studi neurologici mostrano risposte ERN elevate in individui inclini al senso di colpa, indicando monitoraggio eccessivo degli errori
 - **Studi sul Perfezionismo (Perfectionism Studies)**: La ricerca clinica dimostra che il perfezionismo incline al senso di colpa porta a performance diminuita a causa del sovraccarico cognitivo
 - **Psicologia Morale (Moral Psychology)**: La ricerca sulle emozioni morali mostra che il senso di colpa può diventare maladattivo quando guida comportamento oltre il funzionamento ottimale
 

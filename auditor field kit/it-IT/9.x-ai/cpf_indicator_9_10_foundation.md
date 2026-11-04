@@ -23,9 +23,6 @@ La cecità alla fairness algoritmica rappresenta una vulnerabilità psicologica 
 - La ricerca sull'antropomorfizzazione mostra che gli esseri umani attribuiscono qualità simili a quelle umane ai sistemi AI, inclusa agency morale e capacità di fairness
 - Dinamiche in-group/out-group: I sistemi AI sviluppati da organizzazioni fidate ricevono maggiori assunzioni di fairness rispetto a quelli da fonti esterne
 
-**Scoperte Neuroscientifiche**:
-- Gli studi fMRI dimostrano ridotta attivazione della corteccia prefrontale (pensiero critico) quando si interagisce con sistemi percepiti come "intelligenti"
-- La ricerca sui neuroni specchio suggerisce che gli esseri umani possono inconsciamente modellare processi decisionali AI, portando all'adozione di pattern biased
 
 ### Trigger Cognitivi/Emotivi
 

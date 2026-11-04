@@ -6,7 +6,6 @@
 
 Gli errori attivati dall'ansia rappresentano un'interruzione fondamentale nell'elaborazione cognitiva dove l'attivazione emozionale interferisce con il funzionamento esecutivo, portando a errori rilevanti per la sicurezza. Questo fenomeno opera attraverso molteplici percorsi psicologici interconnessi:
 
-**Interruzione Neurobiologica (Neurobiological Disruption)**: Quando l'ansia attiva il sistema di rilevamento minacce dell'amigdala, attiva una cascata di ormoni dello stress (cortisolo, adrenalina) che compromettono il funzionamento della corteccia prefrontale. Questo crea uno stato neurobiologico dove il processo decisionale razionale è compromesso in favore di risposte rapide, spesso soggette a errori. Il ritardo di 300-500ms tra elaborazione inconscia e consapevolezza conscia significa che le risposte di ansia stanno già influenzando il comportamento prima che i protocolli di sicurezza razionali possano essere ingaggiati.
 
 **Deplezione delle Risorse Cognitive (Cognitive Resource Depletion)**: L'ansia consuma capacità di memoria di lavoro (la limitazione del "numero magico sette" di Miller), lasciando risorse cognitive insufficienti per compiti di sicurezza complessi. Quando gli individui sono ansiosi, la loro capacità di mantenere simultaneamente molteplici considerazioni di sicurezza diventa severamente compromessa, portando a visione a tunnel e supervisione sistematica di protocolli di sicurezza critici.
 
@@ -15,13 +14,11 @@ Gli errori attivati dall'ansia rappresentano un'interruzione fondamentale nell'e
 ### Base di Ricerca
 
 **Fondamenti di Neuroscienza (Neuroscience Foundations)**:
-- LeDoux (2000): L'attivazione dell'amigdala si verifica prima dell'ingaggio della corteccia prefrontale, creando risposte di minaccia pre-cognitive che aggirano protocolli di sicurezza razionali
 - Damasio (1994): L'ipotesi del marcatore somatico (somatic marker hypothesis) mostra che gli stati emozionali creano bias inconsci nel processo decisionale attraverso meccanismi di feedback corporeo
 - Kahneman (2011): L'elaborazione Sistema 1 (veloce, automatica) domina sotto ansia, mentre l'elaborazione Sistema 2 (deliberata, consapevole della sicurezza) è compromessa
 
 **Ricerca sulla Risposta allo Stress (Stress Response Research)**:
 - Selye (1956): La Sindrome di Adattamento Generale (General Adaptation Syndrome) dimostra come l'ansia cronica esaurisca le risorse psicologiche, rendendo gli individui più vulnerabili a lacune di sicurezza
-- La ricerca sul cortisolo mostra che anche livelli moderati di ansia compromettono formazione e recupero della memoria, influenzando gestione delle password e ritenzione dei protocolli di sicurezza
 
 **Applicazioni della Teoria dell'Attaccamento (Attachment Theory Applications)**:
 - Bowlby (1969): Gli stili di attaccamento ansioso correlano con sensibilità elevata a figure di autorità, rendendo gli individui più suscettibili ad attacchi di ingegneria sociale durante stati ansiosi

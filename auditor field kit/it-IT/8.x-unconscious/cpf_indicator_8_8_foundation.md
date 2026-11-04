@@ -19,8 +19,6 @@ Il meccanismo opera attraverso l'equazione simbolica—dove la mente cosciente t
 - Principio di compensazione: gli archetipi repressi emergono con maggiore forza
 
 **Validazione Neuroscientifica:**
-- Gli studi fMRI mostrano l'attivazione del sistema limbico (emozione/istinto) che precede il coinvolgimento della corteccia prefrontale (analisi razionale) di 300-500ms (LeDoux, 2000)
-- Attivazione dei neuroni specchio in risposta alle immagini archetipiche (Libet, 1983)
 - Ipotesi del marcatore somatico: le risposte corporee ai simboli archetipici influenzano il processo decisionale (Damasio, 1994)
 
 **Integrazione con la Psicologia Cognitiva:**

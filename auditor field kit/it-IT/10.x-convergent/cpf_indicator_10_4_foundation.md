@@ -16,7 +16,6 @@ Il meccanismo psicologico centrale comporta la **frammentazione del modello ment
 
 **Ricerca sul Pensiero Sistemico (Senge, 1990)**: Gli studi sull'apprendimento organizzativo rivelano che gli esseri umani pensano naturalmente in termini di causa-effetto lineare piuttosto che in modelli sistemici, rendendoli vulnerabili ai comportamenti emergenti del sistema.
 
-**Neuroscienza del Riconoscimento dei Modelli**: Gli studi fMRI mostrano che i sistemi cerebrali di riconoscimento dei modelli eccellono nei modelli locali ma faticano con i modelli distribuiti attraverso sistemi complessi, particolarmente sotto condizioni di carico cognitivo.
 
 **Teoria delle Dinamiche di Gruppo (Bion, 1961)**: Le organizzazioni adottano inconsciamente assunzioni di base che creano punti ciechi sistematici. L'assunzione di "dipendenza" porta i team a fare eccessivo affidamento su singoli strati senza considerare le vulnerabilità a livello di sistema.
 

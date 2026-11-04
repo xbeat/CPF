@@ -8,7 +8,7 @@ Multitasking degradation refers to the systematic reduction in cognitive perform
 
 The psychological mechanism operates through several interconnected processes:
 
-**Attention Switching Costs**: Each transition between tasks requires cognitive resources to disengage from the current focus, reorient attention, and re-engage with the new task. Research shows these transitions create measurable delays (typically 200-500ms) and temporary performance decrements.
+**Attention Switching Costs**: Each transition between tasks requires cognitive resources to disengage from the current focus, reorient attention, and re-engage with the new task.
 
 **Working Memory Interference**: Miller's "magical number seven" principle demonstrates that human working memory can effectively maintain only 5-9 information chunks simultaneously. In cybersecurity contexts, this limitation becomes critical when security personnel must monitor multiple alerts, systems, and threat indicators while maintaining situational awareness.
 
@@ -20,13 +20,12 @@ The psychological mechanism operates through several interconnected processes:
 
 **Cognitive Load Theory (Sweller, 1988)**: Demonstrates that cognitive capacity is finite and that exceeding these limits leads to systematic performance degradation. In cybersecurity, this manifests as reduced threat detection accuracy when operators manage multiple security systems simultaneously.
 
-**Task-Switching Research (Monsell, 2003)**: Neuroimaging studies show that task transitions activate prefrontal cortex regions associated with cognitive control, diverting resources from security-relevant pattern recognition processes. Switch costs increase with task complexity and similarity.
+**Task-Switching Research (Monsell, 2003)**: Switch costs increase with task complexity and similarity.
 
 **Attention Residue Effects (Leroy, 2009)**: When transitioning between tasks, part of attention remains stuck on the previous task. This "attention residue" reduces available cognitive capacity for new security threats, creating windows of vulnerability.
 
 **Dual-Task Interference (Pashler, 1994)**: Even highly practiced tasks show interference when performed simultaneously. Security monitoring combined with administrative duties creates measurable reductions in threat detection sensitivity.
 
-**Neuroscience Evidence**: fMRI studies demonstrate that multitasking activates different neural networks than focused attention, with reduced activity in areas associated with deep processing and increased activity in regions managing cognitive conflict.
 
 ### Cognitive/Emotional Triggers
 

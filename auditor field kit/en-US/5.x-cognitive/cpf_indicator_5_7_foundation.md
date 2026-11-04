@@ -32,8 +32,6 @@ In cybersecurity contexts, working memory overflow manifests when security profe
 - Klein (1998): Recognition-primed decision making failure under information overload
 
 **Neuroscience Evidence:**
-- Prefrontal cortex activation increases linearly with working memory load until capacity is exceeded
-- fMRI studies show network breakdown when cognitive demands exceed individual capacity
 - EEG research demonstrates alpha wave suppression indicating cognitive overload states
 
 ### Cognitive/Emotional Triggers

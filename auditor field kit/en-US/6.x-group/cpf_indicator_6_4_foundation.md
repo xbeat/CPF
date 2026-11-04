@@ -15,13 +15,10 @@ Social loafing refers to the tendency for individuals to exert less effort when 
 ### Research Basis
 
 **Foundational Studies:**
-- Ringelmann's rope-pulling experiments demonstrated 18% performance decrease in groups
 - Latané et al. (1979) showed social loafing increases with group size logarithmically
 - Williams & Karau (1991) meta-analysis confirmed effect across cultures and tasks
 
 **Neuropsychological Evidence:**
-- fMRI studies show reduced anterior cingulate cortex activation (effort monitoring) in group contexts
-- Decreased dopaminergic activity in reward pathways when individual contributions are less identifiable
 - Social cognitive network interference during complex decision-making in groups
 
 **Cybersecurity-Specific Research:**
@@ -67,10 +64,8 @@ Social loafing refers to the tendency for individuals to exert less effort when 
 **Case Study Patterns from Framework:**
 - **Financial Services Breach (2019)**: SOC team of 12 failed to escalate obvious indicators, each analyst assuming others were investigating
 - **Healthcare Data Loss (2020)**: IT security team collectively responsible for patch management resulted in 3-month delay on critical updates
-- **Manufacturing Ransomware (2021)**: Security awareness training effectiveness declined 40% when delivered to groups vs. individuals
 
 **Attack Pattern Recognition:**
-- Social engineering success rates increase 300% when targeting teams vs. individuals
 - Phishing campaigns show higher click-through rates in organizations with diffused security responsibilities
 - Advanced Persistent Threats exploit observation periods where team-based monitoring creates blind spots
 

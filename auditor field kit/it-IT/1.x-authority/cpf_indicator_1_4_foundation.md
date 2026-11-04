@@ -14,9 +14,9 @@ Questa vulnerabilità deriva dal conflitto fondamentale tra obbedienza gerarchic
 
 ### Base di Ricerca
 
-**Studi sull'Obbedienza di Milgram (1974)**: Ha scoperto che il 65% dei partecipanti avrebbe somministrato scosse elettriche potenzialmente letali quando istruiti da una figura di autorità. In contesti organizzativi, questo si traduce in violazioni dei protocolli di sicurezza quando diretti dai superiori.
+**Studi sull'Obbedienza di Milgram (1974)**: In contesti organizzativi, questo si traduce in violazioni dei protocolli di sicurezza quando diretti dai superiori.
 
-**Teoria della Distanza di Potere di Hofstede**: Organizzazioni con alta distanza di potere mostrano aumentata vulnerabilità, poiché questionare l'autorità è culturalmente scoraggiato. Gli studi mostrano tassi di violazione della sicurezza superiori del 40% in culture ad alta distanza di potere.
+**Teoria della Distanza di Potere di Hofstede**: Organizzazioni con alta distanza di potere mostrano aumentata vulnerabilità, poiché questionare l'autorità è culturalmente scoraggiato.
 
 **Teoria del Carico Cognitivo (Miller, 1956)**: La limitazione del "numero magico sette" significa che gli individui possono processare solo informazioni limitate simultaneamente. Le richieste di autorità creano carico cognitivo aggiuntivo che compromette il processo decisionale di sicurezza.
 
@@ -24,13 +24,12 @@ Questa vulnerabilità deriva dal conflitto fondamentale tra obbedienza gerarchic
 
 ### Trigger Cognitivi/Emotivi
 
-**Effetti di Prossimità**: La prossimità fisica o organizzativa alle figure di autorità amplifica la conformità. Le richieste faccia-a-faccia mostrano tassi di bypass superiori del 73% rispetto alle comunicazioni elettroniche.
+**Effetti di Prossimità**: La prossimità fisica o organizzativa alle figure di autorità amplifica la conformità.
 
-**Amplificazione Pressione Temporale**: Le richieste di autorità combinate con urgenza creano una "tempesta perfetta" dove il ragionamento di sicurezza diventa impossibile. I contesti di emergenza aumentano la probabilità di bypass del 340%.
+**Amplificazione Pressione Temporale**: Le richieste di autorità combinate con urgenza creano una "tempesta perfetta" dove il ragionamento di sicurezza diventa impossibile.
 
 **Ansia di Preservazione Relazione**: La paura di danneggiare le relazioni lavorative con i superiori innesca risposte di lotta-o-fuga che bypassano la valutazione razionale della sicurezza.
 
-**Attivazione Sindrome dell'Impostore**: I dipendenti che sperimentano sindrome dell'impostore sono più propensi del 67% a conformare a richieste che bypassano la sicurezza per provare il loro valore e lealtà.
 
 ## IMPATTO SULLA CYBERSECURITY
 

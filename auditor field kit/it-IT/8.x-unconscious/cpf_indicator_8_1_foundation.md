@@ -24,7 +24,6 @@ Il meccanismo funziona attraverso diversi processi psicologici interconnessi:
 
 **Sistemi di Difesa Organizzativi**: La ricerca di Menzies Lyth (1960) sui sistemi di difesa sociale rivela come le organizzazioni sviluppino difese collettive contro l'ansia che possono creare punti ciechi sistematici, inclusa la proiezione di minacce interne su nemici esterni.
 
-**Evidenza Neuroscientifica**: La ricerca sui bias impliciti e sulla percezione della minaccia mostra che la proiezione opera al di sotto della consapevolezza cosciente, con l'attivazione dell'amigdala che si verifica prima della valutazione razionale della minaccia (LeDoux, 2000).
 
 ### Trigger Cognitivi/Emotivi
 

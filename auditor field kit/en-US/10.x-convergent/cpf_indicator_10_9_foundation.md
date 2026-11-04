@@ -28,7 +28,6 @@ At the unconscious level, coupling failures reflect what systems theorists call 
 - Menzies Lyth's (1960) social defense systems research shows how organizations unconsciously avoid anxiety-provoking complexity
 
 **Neuroscience Support:**
-- Default Mode Network research (Buckner et al., 2008) shows the brain's tendency toward simplified, linear thinking
 - Executive function limitations under stress (Arnsten, 2009) impair complex system reasoning
 - Working memory constraints (Baddeley, 2000) prevent simultaneous tracking of multiple system interactions
 

@@ -6,7 +6,7 @@
 
 Le finestre di vulnerabilità temporale rappresentano variazioni sistematiche nelle prestazioni cognitive, nella regolazione emotiva e nella qualità del processo decisionale che seguono pattern circadiani prevedibili. Questa vulnerabilità emerge dall'intersezione di tre meccanismi psicologici primari:
 
-**Effetti del Ritmo Circadiano**: La vigilanza del cervello umano, la capacità di memoria di lavoro e la funzione esecutiva fluttuano drammaticamente attraverso cicli di 24 ore. La ricerca dimostra che le prestazioni cognitive raggiungono il picco durante finestre specifiche del cronotipo individuale (tipicamente metà mattina per i tipi mattutini, pomeriggio per i tipi serali) e raggiungono minimi pericolosi durante i crolli circadiani - più criticamente tra le 2-6 del mattino quando la temperatura corporea centrale è più bassa.
+**Effetti del Ritmo Circadiano**: La ricerca dimostra che le prestazioni cognitive raggiungono il picco durante finestre specifiche del cronotipo individuale (tipicamente metà mattina per i tipi mattutini, pomeriggio per i tipi serali) e raggiungono minimi pericolosi durante i crolli circadiani - più criticamente tra le 2-6 del mattino quando la temperatura corporea centrale è più bassa.
 
 **Accumulo di Deplezione dell'Ego**: Durante la giornata lavorativa, gli individui sperimentano un progressivo esaurimento delle risorse cognitive richieste per il processo decisionale che richiede sforzo. Questo crea un gradiente di vulnerabilità temporale dove le decisioni rilevanti per la sicurezza diventano progressivamente compromesse man mano che si accumula l'affaticamento mentale. Il fenomeno è particolarmente pronunciato nei ruoli di cybersecurity ad alto stress che richiedono vigilanza costante.
 
@@ -15,8 +15,6 @@ Le finestre di vulnerabilità temporale rappresentano variazioni sistematiche ne
 ### Base di Ricerca
 
 **Fondamenti Neuroscientifici**:
-- Libet (1983) e Soon et al. (2008) dimostrano che il processo decisionale avviene 300-500ms prima della consapevolezza cosciente, con questa finestra pre-cognitiva che si espande durante stati di affaticamento
-- LeDoux (2000) mostra che l'attivazione dell'amigdala (risposta alla minaccia) avviene prima dell'impegno della corteccia prefrontale, con questo divario che si allarga durante i punti bassi circadiani
 - Damasio (1994) identifica i marcatori somatici che bypassano l'elaborazione cosciente, diventando meno affidabili durante le finestre di vulnerabilità temporale
 
 **Evidenza dell'Economia Comportamentale**:
@@ -26,7 +24,6 @@ Le finestre di vulnerabilità temporale rappresentano variazioni sistematiche ne
 
 **Ricerca Cronobiologica**:
 - La temperatura corporea centrale è correlata inversamente ai tassi di errore nelle decisioni critiche per la sicurezza
-- Le fluttuazioni del cortisolo (Selye, 1956) creano finestre prevedibili di compromissione indotta dallo stress
 - Le interruzioni del ciclo sonno-veglia aumentano esponenzialmente la vulnerabilità all'ingegneria sociale (social engineering)
 
 ### Trigger Cognitivi/Emotivi

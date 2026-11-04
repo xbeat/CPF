@@ -13,9 +13,7 @@ La risposta da stress acuto restringe l'attenzione attraverso il "tunneling cogn
 ### Base di Ricerca
 
 **Fondamenti Neuroscientifici:**
-- LeDoux (2000): L'attivazione dell'amigdala avviene prima del coinvolgimento della corteccia prefrontale, il che significa che le risposte alle minacce precedono l'analisi razionale di 300-500ms
 - Il framework nota che il decision-making coinvolge marcatori somatici che bypassano l'elaborazione consapevole (Damasio, 1994)
-- Studi fMRI dimostrano che lo stress acuto compromette specificamente la funzione della corteccia prefrontale amplificando le risposte del sistema limbico
 
 **Letteratura sulla Risposta allo Stress:**
 - La Sindrome Generale di Adattamento di Selye fornisce il modello fondazionale per comprendere lo stress acuto come fase iniziale di "reazione di allarme"
@@ -38,7 +36,6 @@ La risposta da stress acuto restringe l'attenzione attraverso il "tunneling cogn
 
 **Pattern di Attivazione Fisiologica:**
 - Frequenza cardiaca e pressione sanguigna elevate
-- Aumentata produzione di cortisolo e adrenalina
 - Ridotta visione periferica (visione a tunnel)
 - Compromesso controllo motorio fine che influenza digitazione/navigazione
 - Pattern di sonno disturbati che influenzano la resilienza cognitiva

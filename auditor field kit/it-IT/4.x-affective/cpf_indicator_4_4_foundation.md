@@ -21,9 +21,7 @@ Il processo di attaccamento coinvolge tre componenti psicologiche chiave:
 
 **Teoria delle Relazioni Oggettuali (Klein, 1946)**: Il meccanismo di scissione (splitting) causa le organizzazioni ad idealizzare sistemi legacy familiari (tutto buono) mentre demonizzano nuovi requisiti di sicurezza o sostituzioni di sistema (tutto cattivo). Questo impedisce valutazione realistica delle vulnerabilità dei sistemi legacy.
 
-**Evidenza Neuroscientifica**: Gli studi fMRI mostrano che le tecnologie familiari attivano percorsi di ricompensa nel cervello simili ai legami di attaccamento sociale. L'amigdala mostra risposta di minaccia ridotta ai sistemi familiari anche quando i rischi di sicurezza oggettivi sono presenti (LeDoux, 2000).
 
-**Economia Comportamentale (Kahneman & Tversky, 1979)**: L'avversione alle perdite significa che il costo psicologico di abbandonare sistemi legacy è percepito come 2-3 volte maggiore dei benefici potenziali di nuovi sistemi, creando forte resistenza agli aggiornamenti di sicurezza.
 
 ### Attivatori Cognitivi/Emozionali
 

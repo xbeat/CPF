@@ -22,7 +22,6 @@ Il meccanismo opera attraverso diversi processi chiave:
 
 **Studi di Psicologia Organizzativa**: La ricerca sulla cultura organizzativa e sui modelli mentali condivisi dimostra come le credenze collettive creano punti ciechi sistematici. Gli studi mostrano che le organizzazioni con forti identità culturali mostrano modelli di vulnerabilità prevedibili che rispecchiano la loro composizione psicologica collettiva.
 
-**Neuroscienze del Comportamento di Gruppo**: Studi fMRI recenti rivelano che il processo decisionale di gruppo attiva reti neurali diverse rispetto alle decisioni individuali, supportando l'esistenza di processi psicologici collettivi. La ricerca sui neuroni specchio dimostra come stati emotivi e modelli comportamentali si diffondano inconsciamente attraverso i gruppi.
 
 **Applicazioni della Teoria della Complessità**: La ricerca sulle proprietà emergenti nei sistemi complessi convalida l'affermazione di Jung che i modelli collettivi emergono da ma trascendono la psicologia individuale. Le organizzazioni mostrano fenomeni di "intelligenza collettiva" e "ombra collettiva" che non possono essere spiegati solo dall'analisi psicologica individuale.
 

@@ -8,19 +8,17 @@ La conformità alla pressione dei pari rappresenta una vulnerabilità fondamenta
 
 I driver psicologici centrali includono:
 - **Bisogno di accettazione sociale**: Gli esseri umani hanno una spinta evolutiva per l'appartenenza e l'accettazione al gruppo
-- **Sensibilità al rifiuto**: La paura dell'esclusione sociale attiva sistemi di rilevamento delle minacce nel cervello
 - **Influenza normativa**: Convinzione che il comportamento di gruppo rappresenti azione corretta o appropriata
 - **Influenza informativa**: Assunzione che gli altri possiedano conoscenza o giudizio superiore
 
 ### Base di Ricerca
 
-**Studi sulla Conformità di Solomon Asch (1951)**: Ha dimostrato che il 75% dei partecipanti si è conformato a giudizi di gruppo ovviamente errati almeno una volta, con il 37% che si conformava costantemente. Nei contesti di cybersecurity, questo suggerisce che gli individui seguiranno pratiche insicure se le percepiscono come norme di gruppo.
+**Studi sulla Conformità di Solomon Asch (1951)**: Nei contesti di cybersecurity, questo suggerisce che gli individui seguiranno pratiche insicure se le percepiscono come norme di gruppo.
 
 **Teoria dell'Identità Sociale (Tajfel & Turner, 1979)**: Stabilisce che gli individui derivano il concetto di sé dall'appartenenza al gruppo, creando forte motivazione a mantenere la posizione di gruppo attraverso la conformità. Il comportamento conforme alla sicurezza può essere sacrificato per mantenere l'identità sociale all'interno dei gruppi di lavoro.
 
 **Principio di Prova Sociale di Cialdini**: All'interno della più ampia categoria CPF delle Vulnerabilità di Influenza Sociale [3.x], la conformità alla pressione dei pari sfrutta specificamente la tendenza a guardare al comportamento altrui come evidenza di azione corretta, particolarmente sotto incertezza.
 
-**Evidenze Neuroscientifiche**: Gli studi fMRI mostrano che il rifiuto sociale attiva la corteccia cingolata anteriore e la corteccia prefrontale ventrale destra—le stesse regioni coinvolte nell'elaborazione del dolore fisico. Questa risposta neurobiologica spiega perché la pressione dei pari può prevalere sul ragionamento logico sulla sicurezza.
 
 **Studi sull'Autorità di Milgram**: Sebbene focalizzati sulla conformità all'autorità [1.x], le variazioni di Milgram hanno mostrato che il supporto dei pari poteva sia aumentare che diminuire la conformità a ordini dannosi, dimostrando l'influenza dei pari come potente modificatore delle decisioni rilevanti per la sicurezza.
 

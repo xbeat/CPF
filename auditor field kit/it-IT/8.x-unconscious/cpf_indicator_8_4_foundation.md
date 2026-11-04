@@ -28,8 +28,6 @@ La teoria dell'attaccamento di Bowlby (1969) mostra come le relazioni precoci co
 **Studi sull'Autorità di Milgram:**
 Sebbene non esplicitamente psicoanalitico, gli esperimenti di obbedienza di Milgram (1974) hanno dimostrato il potere del transfert di autorità, mostrando come individui ordinari violino i propri principi morali quando istruiti da autorità percepite.
 
-**Validazione Neuroscientifica:**
-La recente ricerca neuroscientifica mostra che le risposte all'autorità attivano gli stessi percorsi limbici coinvolti nelle relazioni precoci con i caregiver, confermando che le risposte all'autorità sono neurologicamente collegate ai sistemi primitivi di attaccamento piuttosto che ai centri decisionali razionali.
 
 ### Trigger Cognitivi/Emotivi
 
@@ -70,7 +68,7 @@ Gli attaccanti avanzati stabiliscono relazioni di autorità apparentemente legit
 Il framework identifica diversi modelli di incidente coerenti con lo sfruttamento del transfert di autorità:
 
 **Caso di Studio del Settore Finanziario:**
-Una grande banca ha sperimentato 12 milioni di euro (€12M) in trasferimenti fraudolenti quando gli attaccanti hanno impersonato il CEO via email durante un periodo di crisi noto. Nonostante i protocolli di verifica esistenti, il 73% dei dipendenti presi di mira ha obbedito immediatamente, con interviste post-incidente che hanno rivelato fantasie di "protezione parentale" sulla leadership esecutiva.
+Una grande banca ha sperimentato 12 milioni di euro (€12M) in trasferimenti fraudolenti quando gli attaccanti hanno impersonato il CEO via email durante un periodo di crisi noto.
 
 **Violazione del Sistema Sanitario:**
 Gli attaccanti hanno ottenuto accesso alle cartelle cliniche dei pazienti impersonando ispettori regolamentari, sfruttando il rispetto profondamente radicato degli operatori sanitari per l'autorità medica. Il transfert verso gli organi regolatori come figure di "super-genitore" ha scavalcato le normali procedure di verifica.

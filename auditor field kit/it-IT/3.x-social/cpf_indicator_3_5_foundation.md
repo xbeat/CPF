@@ -80,8 +80,6 @@ Il meccanismo psicologico opera attraverso diversi percorsi interconnessi:
 - La scarsità di vaccini COVID-19 è stata sfruttata per il furto di credenziali e la distribuzione di malware
 
 **Riconoscimento dei Modelli:**
-- Il 78% degli attacchi di social engineering di successo include elementi di pressione temporale
-- I tassi di successo del phishing aumentano del 300-400% quando vengono inclusi elementi di scarsità
 - Gli attacchi durante le transizioni organizzative (fusioni, acquisizioni, licenziamenti) mostrano tassi di successo più alti
 
 ### Fallimenti della Sicurezza Tecnica

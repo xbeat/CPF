@@ -8,7 +8,7 @@ Information overload paralysis represents a critical cognitive vulnerability whe
 
 The psychological mechanism operates through a cascade of cognitive failures:
 
-1. **Working Memory Saturation**: When information exceeds cognitive capacity (7±2 items), the brain's executive function becomes compromised
+1. **Working Memory Saturation**: When information exceeds cognitive capacity (7±2 items), executive function becomes compromised
 2. **Attention Fragmentation**: Multiple competing information streams create cognitive switching costs and attention residue
 3. **Analysis Paralysis**: Overwhelming options trigger a defensive shutdown of decision-making processes
 4. **Cognitive Tunneling**: Under overload, attention narrows to immediate concerns, creating blind spots to security implications
@@ -38,8 +38,6 @@ In cybersecurity contexts, this manifests as security personnel becoming paralyz
 - Recovery from cognitive switching requires significant mental resources
 
 **Neurobiological Evidence**:
-- fMRI studies show prefrontal cortex deactivation under extreme cognitive load
-- Stress hormones (cortisol) further impair working memory under information overload
 - Default mode network activation indicates cognitive disengagement
 
 ### Cognitive/Emotional Triggers

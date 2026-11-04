@@ -22,7 +22,6 @@ Il concetto trae da molteplici domini di ricerca:
 
 **Psicologia Cognitiva (Kahneman & Tversky, 1979)**: La teoria del prospetto rivela come gli esseri umani giudichino sistematicamente in modo errato le probabilità, in particolare per scenari nuovi o complessi.
 
-**Neuroscienza (Bar, 2007)**: I meccanismi di codifica predittiva del cervello funzionano bene per modelli familiari ma falliscono quando incontrano fenomeni veramente emergenti, creando punti ciechi nella percezione delle minacce.
 
 **Psicologia Organizzativa (Weick & Sutcliffe, 2007)**: La ricerca sulle organizzazioni ad alta affidabilità mostra come la mindfulness collettiva possa compensare parzialmente l'imprevedibilità emergente, ma mai eliminarla completamente.
 

@@ -23,7 +23,6 @@ Questa vulnerabilità è particolarmente insidiosa perché opera attraverso il *
 
 **Evidenze Neuroscientifiche:**
 - **Ricerca sul Dolore Sociale** (Eisenberger, 2012): Il rifiuto sociale attiva le stesse regioni cerebrali del dolore fisico, rendendo le minacce alla reputazione neurologicamente equivalenti al pericolo fisico
-- **Elaborazione dello Status** (Zink et al., 2008): Gli studi fMRI mostrano che le minacce allo status attivano la corteccia cingolata anteriore e l'insula anteriore, innescando risposte difensive immediate
 
 **Ricerca sul Comportamento Organizzativo:**
 - **Gestione dell'Impressione** (Rosenfeld et al., 1995): I dipendenti modificano costantemente il comportamento per creare impressioni desiderate, spesso a spese della conformità alle regole

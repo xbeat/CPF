@@ -15,13 +15,11 @@ Temporal exhaustion patterns represent the systematic degradation of cognitive a
 ### Research Basis
 
 **Neuroscience Foundations**:
-- Prefrontal cortex glucose depletion leads to impaired executive function after 2-4 hours of intensive cognitive work (Gailliot & Baumeister, 2007)
 - Default mode network activation increases with fatigue, causing mind-wandering and reduced situational awareness (Buckner et al., 2008)
 - Cortisol dysregulation from chronic stress impairs memory consolidation and threat assessment accuracy (Lupien et al., 2009)
 
 **Behavioral Research**:
 - Kahneman's System 1/System 2 framework shows that cognitive fatigue forces reliance on automatic, heuristic-driven responses rather than deliberate analysis
-- Sleep deprivation studies reveal 40% increases in risky decision-making after 17-19 hours of wakefulness (Killgore et al., 2006)
 - Time-of-day effects show peak vulnerability windows during circadian low points (2-6 AM and 1-3 PM)
 
 **Cybersecurity-Specific Studies**:

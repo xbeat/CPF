@@ -32,8 +32,6 @@ Nei contesti di cybersecurity, l'overflow della memoria di lavoro si manifesta q
 - Klein (1998): Fallimento del processo decisionale recognition-primed sotto sovraccarico informativo
 
 **Evidenze Neuroscientifiche:**
-- L'attivazione della corteccia prefrontale aumenta linearmente con il carico della memoria di lavoro fino a quando la capacità viene ecceduta
-- Studi fMRI mostrano breakdown della rete quando le richieste cognitive eccedono la capacità individuale
 - La ricerca EEG dimostra soppressione delle onde alfa indicante stati di sovraccarico cognitivo
 
 ### Trigger Cognitivi/Emotivi

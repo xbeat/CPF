@@ -20,11 +20,9 @@ L'appeal psicologico del bias di automazione deriva dalla sua promessa di risolv
 - Goddard et al. (2012) hanno documentato effetti "al lupo, al lupo" dove falsi allarmi portano sia al bias di automazione che alla negligenza dell'automazione
 
 **Evidenze Neuroscientifiche:**
-- Studi fMRI rivelano ridotta attivazione della corteccia prefrontale durante il supporto decisionale automatizzato, indicando elaborazione analitica diminuita (Parasuraman & Manzey, 2010)
 - La ricerca EEG dimostra che la presenza di automazione riduce la componente P300 associata all'allocazione conscia dell'attenzione
 
 **Ricerca Specifica sulla Cybersecurity:**
-- Rice (2009) ha trovato che gli analisti di sicurezza che utilizzano rilevamento automatizzato delle minacce mostravano comportamenti di verifica manuale ridotti del 40%
 - Toreini et al. (2020) hanno documentato un sistematico eccesso di fiducia nelle raccomandazioni di sicurezza AI, anche quando forniti con statistiche di accuratezza
 
 ### Trigger Cognitivi/Emotivi

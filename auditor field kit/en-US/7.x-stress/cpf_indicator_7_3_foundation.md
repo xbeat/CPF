@@ -8,7 +8,6 @@ Fight response aggression represents one of four primary stress responses identi
 
 - **Hypervigilance and hostile attribution bias**: Interpreting ambiguous security events as deliberate attacks
 - **Cortisol and adrenaline flooding**: Impairing rational risk assessment and decision-making
-- **Amygdala hijack**: Bypassing prefrontal cortex executive functions for rapid defensive action
 - **Territorial defense activation**: Protecting organizational "territory" through aggressive countermeasures
 
 This response evolved as an adaptive mechanism for physical threats but becomes maladaptive in cybersecurity contexts where nuanced judgment and measured responses are required.
@@ -19,7 +18,6 @@ This response evolved as an adaptive mechanism for physical threats but becomes 
 
 **Cannon's Fight-or-Flight Response**: Originally described the sympathetic nervous system activation that prioritizes immediate survival over complex reasoning. In cybersecurity, this manifests as "shoot first, ask questions later" defensive postures.
 
-**LeDoux (2000) - Amygdala Research**: Neuroimaging studies show threat detection bypasses rational processing by 300-500ms, meaning aggressive security responses often occur before conscious threat assessment.
 
 **Porges' Polyvagal Theory**: The fight response represents a phylogenetically older defensive strategy that emerges when more sophisticated social engagement systems fail, relevant to organizational security dynamics.
 
@@ -41,7 +39,6 @@ This response evolved as an adaptive mechanism for physical threats but becomes 
 - Organizational betrayal trauma creating suspicious, aggressive responses
 
 **Physiological Markers:**
-- Elevated cortisol and adrenaline during security incidents
 - Increased heart rate and blood pressure during threat assessment
 - Muscle tension and postural changes indicating defensive readiness
 - Sleep disruption maintaining hypervigilant states

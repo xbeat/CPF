@@ -28,8 +28,6 @@ Bowlby's attachment theory (1969) shows how early caregiver relationships create
 **Milgram's Authority Studies:**
 While not explicitly psychoanalytic, Milgram's obedience experiments (1974) demonstrated the power of authority transference, showing how ordinary individuals will violate their own moral principles when instructed by perceived authorities.
 
-**Neuroscience Validation:**
-Recent neuroscience research shows that authority responses activate the same limbic pathways involved in early caregiver relationships, confirming that authority responses are neurologically linked to primitive attachment systems rather than rational decision-making centers.
 
 ### Cognitive/Emotional Triggers
 
@@ -70,7 +68,7 @@ Advanced attackers establish legitimate-seeming authority relationships over tim
 The framework identifies several incident patterns consistent with authority transference exploitation:
 
 **Financial Services Case Study:**
-A major bank experienced $12M in fraudulent transfers when attackers impersonated the CEO via email during a known crisis period. Despite existing verification protocols, 73% of targeted employees complied immediately, with post-incident interviews revealing "parental protection" fantasies about executive leadership.
+A major bank experienced $12M in fraudulent transfers when attackers impersonated the CEO via email during a known crisis period.
 
 **Healthcare System Breach:**
 Attackers gained access to patient records by impersonating regulatory inspectors, exploiting healthcare workers' deeply ingrained respect for medical authority. The transference to regulatory bodies as "super-parent" figures overrode normal verification procedures.

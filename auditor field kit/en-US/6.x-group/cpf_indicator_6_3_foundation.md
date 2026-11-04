@@ -8,7 +8,6 @@ Diffusion of responsibility is a fundamental social psychological phenomenon whe
 
 **Primary Process**: When individuals perceive themselves as part of a group, the psychological burden of responsibility becomes distributed across all group members, resulting in what Darley and Latané (1968) termed "social loafing" and reduced individual accountability. The core cognitive distortion involves the belief that "someone else will handle it" or "it's not specifically my job."
 
-**Neurological Basis**: Neuroimaging studies reveal that group decision-making activates different neural pathways than individual decision-making, specifically showing reduced activation in the anterior cingulate cortex (responsible for personal accountability) and increased activation in the temporoparietal junction (associated with theory of mind and social cognition).
 
 **Organizational Amplification**: In hierarchical structures, diffusion becomes particularly pronounced because responsibility naturally flows both upward ("management's decision") and downward ("subordinates should have noticed"), creating accountability vacuums where critical security decisions fall through organizational gaps.
 

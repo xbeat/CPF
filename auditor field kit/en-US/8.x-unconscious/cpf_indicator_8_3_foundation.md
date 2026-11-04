@@ -26,8 +26,6 @@ The mechanism operates through several psychological processes:
 - Jung's concept of complexes (1969) explains how unconscious psychological structures perpetuate repetitive behavior patterns
 
 **Neuroscience Validation**:
-- Neural pathway reinforcement studies show that repeated patterns create stronger synaptic connections, making familiar behaviors easier to activate
-- Stress response research demonstrates how traumatic experiences create sensitized neural networks that predispose toward similar future responses
 - Memory consolidation studies reveal how negative experiences can become preferentially encoded and retrieved
 
 **Organizational Psychology Evidence**:

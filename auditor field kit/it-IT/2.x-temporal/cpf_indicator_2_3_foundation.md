@@ -8,7 +8,6 @@ L'accettazione del rischio guidata dalle scadenze rappresenta una vulnerabilità
 
 Il meccanismo centrale opera attraverso ciò che Kahneman e Tversky (1979) hanno identificato come "avversione alla perdita sotto pressione temporale" - quando si affrontano scadenze, gli individui passano da un comportamento avverso al rischio a un comportamento orientato al rischio per evitare la perdita certa di mancare la scadenza. Questo crea un'inversione psicologica in cui il rischio futuro astratto di un incidente di sicurezza diventa meno psicologicamente reale della conseguenza immediata e concreta del fallimento della scadenza.
 
-Neurologicamente, la pressione della scadenza attiva la risposta di minaccia dell'amigdala prima dell'attivazione della corteccia prefrontale, causando risposte di sopravvivenza primitive che dominano le considerazioni razionali di sicurezza. La corteccia cingolata anteriore, responsabile del monitoraggio del conflitto tra richieste concorrenti (sicurezza vs. scadenza), diventa sopraffatta, portando a una preferenza predefinita per la pressione più immediata.
 
 ### Base di Ricerca
 
@@ -16,9 +15,8 @@ Neurologicamente, la pressione della scadenza attiva la risposta di minaccia del
 
 **Teoria del Carico Cognitivo (Miller, 1956)**: La limitazione del "numero magico sette" diventa critica sotto la pressione della scadenza. Le decisioni di sicurezza richiedono capacità di memoria di lavoro per la valutazione del rischio, il richiamo dei protocolli e la valutazione delle conseguenze. Lo stress della scadenza riempie questo spazio cognitivo, lasciando capacità insufficiente per le considerazioni di sicurezza.
 
-**Ricerca sulla Risposta allo Stress (Selye, 1956)**: La pressione cronica delle scadenze crea elevazione sostenuta del cortisolo, che compromette la funzione ippocampale (consolidamento della memoria) e il funzionamento della corteccia prefrontale (processo decisionale esecutivo). Questa risposta fisiologica rende i protocolli di sicurezza letteralmente più difficili da ricordare ed eseguire sotto pressione della scadenza.
+**Ricerca sulla Risposta allo Stress (Selye, 1956)**: Questa risposta fisiologica rende i protocolli di sicurezza letteralmente più difficili da ricordare ed eseguire sotto pressione della scadenza.
 
-**Evidenze Neuroscientifiche (LeDoux, 2000)**: Gli studi fMRI mostrano che lo stress della scadenza attiva la risposta di minaccia dell'amigdala 300-500ms prima della consapevolezza cosciente, causando comportamenti automatici di accettazione del rischio prima che possa verificarsi una valutazione razionale della sicurezza.
 
 **Ricerca sulla Percezione del Tempo**: Gli studi dimostrano che la pressione della scadenza crea "miopia temporale" dove le conseguenze immediate sono psicologicamente magnificate mentre i rischi futuri sono scontati oltre proporzioni razionali.
 

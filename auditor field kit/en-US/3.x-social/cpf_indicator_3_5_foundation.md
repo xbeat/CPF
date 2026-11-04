@@ -80,8 +80,6 @@ The psychological mechanism operates through several interconnected pathways:
 - COVID-19 vaccine scarcity was exploited for credential harvesting and malware distribution
 
 **Pattern Recognition**:
-- 78% of successful social engineering attacks include time pressure elements
-- Phishing success rates increase 300-400% when scarcity elements are included
 - Attacks during organizational transitions (mergers, acquisitions, layoffs) show higher success rates
 
 ### Technical Security Failures

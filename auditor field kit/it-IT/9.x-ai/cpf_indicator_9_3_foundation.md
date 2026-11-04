@@ -21,9 +21,6 @@ Questo paradosso è particolarmente acuto in contesti di cybersecurity dove le r
 - Burton et al. (2020) hanno mostrato che l'avversione agli algoritmi aumenta quando le persone possono modificare l'output algoritmico, suggerendo che i bisogni di controllo guidano il paradosso
 - Logg et al. (2019) hanno trovato "apprezzamento degli algoritmi" in domini dove le limitazioni umane sono riconosciute, creando pattern di fiducia specifici per dominio
 
-**Evidenze Neuroscientifiche:**
-- Gli studi fMRI rivelano attivazione dell'amigdala quando gli esseri umani osservano errori algoritmici, suggerendo che la risposta alla minaccia agli errori dell'AI supera la risposta agli errori umani
-- La corteccia cingolata anteriore mostra attività aumentata durante conflitti umano-AI, indicando conflitto cognitivo e la necessità di risoluzione faticosa
 
 **Applicazione della Teoria del Doppio Processo:**
 - Il Sistema 1 (veloce, intuitivo) rifiuta raccomandazioni algoritmiche che "sembrano sbagliate" indipendentemente dall'accuratezza

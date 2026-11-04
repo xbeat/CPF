@@ -1,6 +1,6 @@
 # CPF Categoria 8: Vulnerabilità dei Processi Inconsci
 
-Questa categoria esplora come i processi psicologici inconsci profondi e i pattern archetipici creano vulnerabilità di sicurezza, attingendo dalla psicologia analitica di Carl Jung (1969), dalla teoria psicoanalitica e dalla ricerca neuroscientifica contemporanea. Queste vulnerabilità emergono dai modi fondamentali in cui la mente inconscia elabora le informazioni, proietta contenuti interni sulla realtà esterna e opera attraverso meccanismi simbolici piuttosto che logici, creando punti ciechi sistematici nella percezione e risposta di sicurezza.
+Queste vulnerabilità emergono dai modi fondamentali in cui la mente inconscia elabora le informazioni, proietta contenuti interni sulla realtà esterna e opera attraverso meccanismi simbolici piuttosto che logici, creando punti ciechi sistematici nella percezione e risposta di sicurezza.
 
 ## Sottocategorie
 

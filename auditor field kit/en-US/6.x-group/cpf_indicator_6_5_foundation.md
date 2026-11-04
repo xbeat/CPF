@@ -12,7 +12,6 @@ The psychological mechanism operates through three primary pathways: **diffusion
 
 The foundational research stems from Darley and Latané's (1968) landmark experiments demonstrating that individuals are less likely to help in emergencies when others are present. Subsequent studies by Latané and Nida (1981) established that this effect strengthens with group size following a power law relationship. In organizational contexts, Karau and Williams (1993) documented how social loafing—closely related to the bystander effect—increases when individual contributions are less identifiable and when task importance is ambiguous.
 
-Neuroscience research by Balconi and Vanutelli (2017) using fEMG and EEG revealed that bystander situations activate different neural pathways than individual decision-making contexts, with reduced activation in the anterior cingulate cortex (associated with personal responsibility) and increased activation in the superior temporal sulcus (associated with social cognition and theory of mind).
 
 From a psychoanalytic perspective, Bion's (1961) work on group dynamics identifies this phenomenon as manifestation of the dependency basic assumption (baD), where groups unconsciously seek an omnipotent leader or authority figure to take responsibility, allowing members to remain passive. Klein's (1946) object relations theory explains how organizational splitting creates "good" (expert responders) and "bad" (ordinary employees) categories, with individuals projecting responsibility onto the "expert" others.
 

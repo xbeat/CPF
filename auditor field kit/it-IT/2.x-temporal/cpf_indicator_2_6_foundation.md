@@ -15,13 +15,11 @@ I pattern di esaurimento temporale rappresentano il degrado sistematico delle ri
 ### Base di Ricerca
 
 **Fondamenti Neuroscientifici**:
-- La deplezione del glucosio nella corteccia prefrontale porta a funzione esecutiva compromessa dopo 2-4 ore di lavoro cognitivo intensivo (Gailliot & Baumeister, 2007)
 - L'attivazione della default mode network aumenta con l'affaticamento, causando divagazione mentale e ridotta consapevolezza situazionale (Buckner et al., 2008)
 - La disregolazione del cortisolo da stress cronico compromette il consolidamento della memoria e l'accuratezza della valutazione delle minacce (Lupien et al., 2009)
 
 **Ricerca Comportamentale**:
 - Il framework Sistema 1/Sistema 2 di Kahneman mostra che l'affaticamento cognitivo forza la dipendenza da risposte automatiche guidate da euristiche piuttosto che analisi deliberata
-- Gli studi sulla privazione del sonno rivelano aumenti del 40% nel processo decisionale rischioso dopo 17-19 ore di veglia (Killgore et al., 2006)
 - Gli effetti del momento della giornata mostrano finestre di vulnerabilità di picco durante i punti bassi circadiani (02:00-06:00 e 13:00-15:00)
 
 **Studi Specifici sulla Cybersicurezza**:

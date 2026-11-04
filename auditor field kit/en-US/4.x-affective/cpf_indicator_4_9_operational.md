@@ -2,7 +2,7 @@
 
 ## CONTEXT
 
-Euphoria-induced carelessness occurs when individuals and teams experience reduced security vigilance during periods of celebration, success, or positive organizational milestones. The neurochemical changes during euphoric states (elevated dopamine, reduced prefrontal cortex oversight) create systematic blind spots in risk assessment and security judgment. This vulnerability manifests when organizations relax security protocols during celebrations, rush decisions to maintain momentum, or become overconfident following major achievements, creating predictable windows of opportunity for attackers.
+Euphoria-induced carelessness occurs when individuals and teams experience reduced security vigilance during periods of celebration, success, or positive organizational milestones. Euphoric states create systematic blind spots in risk assessment and security judgment. This vulnerability manifests when organizations relax security protocols during celebrations, rush decisions to maintain momentum, or become overconfident following major achievements, creating predictable windows of opportunity for attackers.
 
 ## ASSESSMENT QUESTIONS
 

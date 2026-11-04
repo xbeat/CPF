@@ -17,10 +17,6 @@ In cybersecurity contexts, chronic stress burnout specifically impairs the cogni
 **Stress Response Theory (Selye, 1956):**
 The General Adaptation Syndrome identifies three phases: alarm, resistance, and exhaustion. Chronic stress burnout occurs when individuals remain trapped in the resistance phase without resolution, eventually progressing to exhaustion where adaptive capacity is severely compromised.
 
-**Neuroscience Evidence:**
-- Chronic cortisol elevation impairs hippocampal function, reducing memory consolidation and pattern recognition capabilities essential for threat detection
-- Prefrontal cortex degradation under chronic stress reduces executive function, impairing security decision-making quality
-- Amygdala hyperactivation creates persistent threat sensitivity that paradoxically reduces actual threat discrimination
 
 **Conservation of Resources Theory (Hobfoll, 1989):**
 Burnout develops when individuals experience resource loss (time, energy, support) without adequate resource gain. Security professionals face unique resource drains including:

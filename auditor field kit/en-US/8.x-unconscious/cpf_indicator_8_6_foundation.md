@@ -23,7 +23,6 @@ The mechanism operates through unconscious filtering of information that would o
 - Kahneman & Tversky's (1974) work on cognitive biases shows systematic distortions in threat assessment that align with defensive psychological processes
 
 **Neuroscientific Evidence:**
-- LeDoux's (2000) research on amygdala functioning demonstrates how threat detection systems can be unconsciously modulated by defensive processes
 - Studies on motivated reasoning (Klayman & Ha, 1987) show how psychological defenses bias information processing in threat-relevant contexts
 
 ### Cognitive/Emotional Triggers

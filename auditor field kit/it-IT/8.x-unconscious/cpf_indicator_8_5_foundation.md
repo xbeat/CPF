@@ -27,8 +27,6 @@ Questa vulnerabilità emerge attraverso diversi processi psicologici interconnes
 - La ricerca sul giudizio degli esperti rivela che l'expertise di dominio può aumentare la suscettibilità a certi bias cognitivi quando l'investimento emotivo è alto
 
 **Evidenze Neuroscientifiche**:
-- Gli studi fMRI dimostrano che i centri emotivi (sistema limbico) si attivano prima dei centri di analisi razionale (corteccia prefrontale) quando gli esperti incontrano minacce alla loro expertise di dominio
-- La ricerca sui neuroni specchio spiega l'identificazione inconscia con i comportamenti osservati, inclusi i modelli di attacco sofisticati
 - Gli studi sul burnout professionale mostrano come l'esposizione cronica alle minacce crei adattamenti psicologici difensivi che compromettono il giudizio
 
 ### Trigger Cognitivi/Emotivi

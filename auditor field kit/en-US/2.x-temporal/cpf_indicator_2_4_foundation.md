@@ -15,10 +15,6 @@ The psychological mechanism operates through **hyperbolic discounting**, where t
 - Thaler's research on mental accounting shows how organizations separate "security costs" from "operational benefits," preventing integrated decision-making
 - Laibson's hyperbolic discounting model (1997) quantifies how discount rates approach infinity for immediate decisions versus future outcomes
 
-**Neuroscience Evidence:**
-- fMRI studies reveal that immediate rewards activate the limbic system (particularly the ventral striatum), while delayed rewards primarily engage the prefrontal cortex
-- The anterior cingulate cortex shows increased activation during present-biased decisions, indicating conflict between immediate gratification and long-term planning
-- Dopamine release patterns favor immediate over delayed rewards, even when delayed rewards are substantially larger
 
 **Cybersecurity-Specific Research:**
 - SANS Security Awareness Reports consistently show organizations deferring security training investments despite known ROI

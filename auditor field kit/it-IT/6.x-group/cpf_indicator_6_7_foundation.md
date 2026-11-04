@@ -4,7 +4,7 @@
 
 ### Meccanismo Centrale
 
-Le posture di sicurezza attacco-fuga emergono dall'Assunzione Base Attacco-Fuga di Bion (baF), una dinamica gruppo pre-conscia dove organizzazioni adottano inconsciamente o posture difensive aggressive o comportamenti evitamento quando affrontano minacce cybersecurity. Questo meccanismo psicologico opera sotto soglia processo decisionale razionale, tipicamente attivandosi entro 300-500ms di percezione minaccia, prima che protocolli sicurezza consci possano ingaggiarsi.
+Le posture di sicurezza attacco-fuga emergono dall'Assunzione Base Attacco-Fuga di Bion (baF), una dinamica gruppo pre-conscia dove organizzazioni adottano inconsciamente o posture difensive aggressive o comportamenti evitamento quando affrontano minacce cybersecurity.
 
 La risposta attacco-fuga si manifesta come difesa organizzativa binaria: o percependo tutte minacce come nemici esterni richiedenti difesa perimetrale aggressiva (attacco) o evitando considerazioni sicurezza complet amente attraverso negazione e delega (fuga). Questo crea punti ciechi sistematici dove minacce interne sono minimizzate mentre minacce esterne sono o sovra-militarizzate o completamente evitate.
 
@@ -12,7 +12,6 @@ La risposta attacco-fuga si manifesta come difesa organizzativa binaria: o perce
 
 **Teoria Dinamiche Gruppo di Bion (1961)**: La ricerca fondamentale identifica attacco-fuga come una di tre assunzioni base che gruppi adottano inconsciamente quando affrontati con ansia. In contesti cybersecurity, ansia organizzativa su violazioni innesca questo meccanismo difesa gruppo primitivo, bypassando valutazione rischio razionale.
 
-**Fondamenti Neuroscienza**: LeDoux (2000) dimostra che attivazione amigdala (risposta minaccia) si verifica prima di ingaggio corteccia prefrontale (analisi razionale). Questa sequenza neurologica spiega perché organizzazioni defaultano a posture attacco-fuga prima di implementare framework sicurezza strutturati.
 
 **Ricerca Risposta Stress Selye (1956)**: La Sindrome Adattamento Generale mostra come esposizione minaccia prolungata porta a fasi esaurimento dove risposte attacco-fuga diventano maladattive, creando finestre vulnerabilità durante transizioni postura sicurezza.
 

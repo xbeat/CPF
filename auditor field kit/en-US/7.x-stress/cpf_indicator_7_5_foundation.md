@@ -10,7 +10,6 @@ The freeze response represents one of four primary stress responses (fight, flig
 The freeze response is mediated by the parasympathetic nervous system, specifically the dorsal vagal complex, which triggers immobilization when the nervous system perceives a threat as inescapable. Unlike fight-or-flight responses that mobilize energy, the freeze response conserves energy through temporary shutdown of higher cognitive functions, creating a state of tonic immobility.
 
 **Cognitive Mechanisms:**
-- **Cognitive Overload**: When security information exceeds processing capacity (Miller's "magical number seven"), the brain defaults to paralysis rather than incorrect action
 - **Decision Fatigue**: Accumulated cognitive load from multiple security decisions leads to temporary decision-making paralysis
 - **Threat Assessment Overflow**: When threat complexity exceeds analytical capacity, the mind freezes rather than risk incorrect threat evaluation
 

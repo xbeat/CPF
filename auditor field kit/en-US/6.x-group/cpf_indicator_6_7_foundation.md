@@ -4,7 +4,7 @@
 
 ### Core Mechanism
 
-Fight-flight security postures emerge from Bion's Basic Assumption Fight-Flight (baF), a pre-conscious group dynamic where organizations unconsciously adopt either aggressive defensive stances or avoidance behaviors when facing cybersecurity threats. This psychological mechanism operates below the threshold of rational decision-making, typically activating within 300-500ms of threat perception, before conscious security protocols can engage.
+Fight-flight security postures emerge from Bion's Basic Assumption Fight-Flight (baF), a pre-conscious group dynamic where organizations unconsciously adopt either aggressive defensive stances or avoidance behaviors when facing cybersecurity threats.
 
 The fight-flight response manifests as a binary organizational defense: either perceiving all threats as external enemies requiring aggressive perimeter defense (fight) or avoiding security considerations altogether through denial and delegation (flight). This creates systematic blind spots where internal threats are minimized while external threats are either over-militarized or completely avoided.
 
@@ -12,7 +12,6 @@ The fight-flight response manifests as a binary organizational defense: either p
 
 **Bion's Group Dynamics Theory (1961)**: The foundational research identifies fight-flight as one of three basic assumptions that groups unconsciously adopt when faced with anxiety. In cybersecurity contexts, organizational anxiety about breaches triggers this primitive group defense mechanism, bypassing rational risk assessment.
 
-**Neuroscience Foundations**: LeDoux (2000) demonstrates that amygdala activation (threat response) occurs before prefrontal cortex engagement (rational analysis). This neurological sequence explains why organizations default to fight-flight postures before implementing structured security frameworks.
 
 **Selye's Stress Response Research (1956)**: The General Adaptation Syndrome shows how prolonged threat exposure leads to exhaustion phases where fight-flight responses become maladaptive, creating vulnerability windows during security posture transitions.
 

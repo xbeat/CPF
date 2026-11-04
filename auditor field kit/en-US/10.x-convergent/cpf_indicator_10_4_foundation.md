@@ -16,7 +16,6 @@ The core psychological mechanism involves **mental model fragmentation**, where 
 
 **Systems Thinking Research (Senge, 1990)**: Studies on organizational learning reveal that humans naturally think in linear cause-and-effect rather than systemic patterns, making them vulnerable to emergent system behaviors.
 
-**Neuroscience of Pattern Recognition**: fMRI studies show that the brain's pattern recognition systems excel at local patterns but struggle with distributed patterns across complex systems, particularly under cognitive load conditions.
 
 **Group Dynamics Theory (Bion, 1961)**: Organizations unconsciously adopt basic assumptions that create systematic blind spots. The "dependency" assumption leads teams to over-rely on individual layers without considering system-wide vulnerabilities.
 

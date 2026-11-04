@@ -23,7 +23,6 @@ Il meccanismo opera attraverso il filtraggio inconscio delle informazioni che al
 - Il lavoro di Kahneman e Tversky (1974) sui bias cognitivi mostra distorsioni sistematiche nella valutazione delle minacce che si allineano con i processi psicologici difensivi
 
 **Evidenze Neuroscientifiche:**
-- La ricerca di LeDoux (2000) sul funzionamento dell'amigdala dimostra come i sistemi di rilevamento delle minacce possano essere modulati inconsciamente da processi difensivi
 - Gli studi sul ragionamento motivato (Klayman & Ha, 1987) mostrano come le difese psicologiche distorcano l'elaborazione delle informazioni in contesti rilevanti per le minacce
 
 ### Trigger Cognitivi/Emotivi

@@ -8,19 +8,17 @@ Peer pressure compliance represents a fundamental vulnerability rooted in the hu
 
 The core psychological drivers include:
 - **Social acceptance need**: Humans have an evolutionary-based drive for group membership and acceptance
-- **Rejection sensitivity**: Fear of social exclusion activates threat-detection systems in the brain
 - **Normative influence**: Belief that group behavior represents correct or appropriate action
 - **Informational influence**: Assumption that others possess superior knowledge or judgment
 
 ### Research Basis
 
-**Solomon Asch's Conformity Studies (1951)**: Demonstrated that 75% of participants conformed to obviously incorrect group judgments at least once, with 37% conforming consistently. In cybersecurity contexts, this suggests individuals will follow insecure practices if they perceive them as group norms.
+**Solomon Asch's Conformity Studies (1951)**: In cybersecurity contexts, this suggests individuals will follow insecure practices if they perceive them as group norms.
 
 **Social Identity Theory (Tajfel & Turner, 1979)**: Establishes that individuals derive self-concept from group membership, creating powerful motivation to maintain group standing through conformity. Security-compliant behavior may be sacrificed to maintain social identity within work groups.
 
 **Cialdini's Social Proof Principle**: Within the broader CPF Social Influence Vulnerabilities category [3.x], peer pressure compliance specifically exploits the tendency to look to others' behavior as evidence of correct action, particularly under uncertainty.
 
-**Neuroscience Evidence**: fMRI studies show that social rejection activates the anterior cingulate cortex and right ventral prefrontal cortex—the same regions involved in physical pain processing. This neurobiological response explains why peer pressure can override logical security reasoning.
 
 **Milgram Authority Studies**: While focused on authority compliance [1.x], Milgram's variations showed that peer support could either increase or decrease compliance with harmful orders, demonstrating peer influence as a powerful modifier of security-relevant decisions.
 

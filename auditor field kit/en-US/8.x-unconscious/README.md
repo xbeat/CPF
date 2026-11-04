@@ -1,6 +1,6 @@
 # CPF Category 8: Unconscious Process Vulnerabilities
 
-This category explores how deep unconscious psychological processes and archetypal patterns create security vulnerabilities, drawing from Carl Jung's analytical psychology (1969), psychoanalytic theory, and contemporary neuroscience research. These vulnerabilities emerge from the fundamental ways the unconscious mind processes information, projects internal contents onto external reality, and operates through symbolic rather than logical mechanisms, creating systematic blind spots in security perception and response.
+These vulnerabilities emerge from the fundamental ways the unconscious mind processes information, projects internal contents onto external reality, and operates through symbolic rather than logical mechanisms, creating systematic blind spots in security perception and response.
 
 ## Subcategories
 

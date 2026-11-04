@@ -13,7 +13,6 @@ This vulnerability is particularly insidious because it operates below conscious
 ### Research Basis
 
 **Fundamental Social Psychology Studies:**
-- **Asch (1951)**: Demonstrated that 75% of participants conformed to obviously incorrect group judgments at least once, showing the power of social pressure even against clear evidence
 - **Sherif (1936)**: Autokinetic effect studies revealed how ambiguous situations lead to rapid norm formation and adherence
 - **Deutsch & Gerard (1955)**: Distinguished between informational conformity (seeking accuracy) and normative conformity (seeking acceptance)
 

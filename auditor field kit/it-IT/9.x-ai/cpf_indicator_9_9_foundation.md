@@ -15,8 +15,6 @@ La manipolazione emotiva AI sfrutta la tendenza umana fondamentale ad antropomor
 ### Base di Ricerca
 
 **Evidenze Neuroscientifiche**:
-- L'attivazione dei neuroni specchio si verifica durante l'interazione umano-AI, suggerendo che il cervello elabora la comunicazione AI attraverso gli stessi percorsi neurali usati per l'interazione sociale umana
-- Gli studi fMRI dimostrano rilascio di ossitocina durante interazioni AI positive, creando legame neurochimico simile alle relazioni umane
 - La ricerca sulla "media equation" mostra che le persone applicano inconsciamente regole sociali alle interazioni con i computer, anche in contesti minimamente sociali
 
 **Studi Psicologici**:

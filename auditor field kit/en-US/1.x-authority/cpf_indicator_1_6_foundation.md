@@ -10,7 +10,7 @@ The core mechanism operates through what Milgram (1974) identified as the fundam
 
 This psychological process manifests through several interconnected pathways:
 
-**Authority-Based Anxiety**: Employees experience unconscious fear responses when considering reporting security issues that might implicate or contradict authority figures. The amygdala activates threat responses before conscious rational analysis can occur (LeDoux, 2000), creating physiological barriers to reporting.
+**Authority-Based Anxiety**: Employees experience unconscious fear responses when considering reporting security issues that might implicate or contradict authority figures.
 
 **Cognitive Dissonance Avoidance**: When security vulnerabilities conflict with authority figures' stated positions or decisions, employees experience psychological tension. Rather than reporting the discrepancy, they unconsciously resolve this tension by minimizing the perceived severity of the security issue.
 
@@ -26,7 +26,6 @@ The psychological foundation for this vulnerability draws from multiple research
 
 **Hofstede's Power Distance Theory**: Research demonstrates that cultures with high power distance norms create organizational environments where questioning authority is fundamentally discouraged. This cultural programming operates at unconscious levels, making security reporting feel psychologically dangerous regardless of formal reporting policies.
 
-**Neurological Research on Authority Response**: fMRI studies show that exposure to authority figures activates specific neural pathways associated with threat response and compliance behaviors. These neurological patterns occur before conscious decision-making processes, explaining why logical security policies fail to overcome authority gradient effects.
 
 ### Cognitive/Emotional Triggers
 

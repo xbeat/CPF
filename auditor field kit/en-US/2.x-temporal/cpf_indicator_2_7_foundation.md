@@ -6,7 +6,7 @@
 
 Time-of-day vulnerability windows represent systematic variations in cognitive performance, emotional regulation, and decision-making quality that follow predictable circadian patterns. This vulnerability emerges from the intersection of three primary psychological mechanisms:
 
-**Circadian Rhythm Effects**: The human brain's alertness, working memory capacity, and executive function fluctuate dramatically across 24-hour cycles. Research demonstrates that cognitive performance peaks during individual chronotype-specific windows (typically mid-morning for morning types, afternoon for evening types) and reaches dangerous lows during circadian troughs—most critically between 2-6 AM when core body temperature is lowest.
+**Circadian Rhythm Effects**: Research demonstrates that cognitive performance peaks during individual chronotype-specific windows (typically mid-morning for morning types, afternoon for evening types) and reaches dangerous lows during circadian troughs—most critically between 2-6 AM when core body temperature is lowest.
 
 **Ego Depletion Accumulation**: Throughout the workday, individuals experience progressive depletion of cognitive resources required for effortful decision-making. This creates a temporal vulnerability gradient where security-relevant decisions become increasingly impaired as mental fatigue accumulates. The phenomenon is particularly pronounced in high-stress cybersecurity roles that demand constant vigilance.
 
@@ -15,8 +15,6 @@ Time-of-day vulnerability windows represent systematic variations in cognitive p
 ### Research Basis
 
 **Neuroscience Foundations**:
-- Libet (1983) and Soon et al. (2008) demonstrate that decision-making occurs 300-500ms before conscious awareness, with this pre-cognitive window expanding during fatigue states
-- LeDoux (2000) shows amygdala activation (threat response) occurs before prefrontal cortex engagement, with this gap widening during circadian low points
 - Damasio (1994) identifies somatic markers that bypass conscious processing, becoming less reliable during temporal vulnerability windows
 
 **Behavioral Economics Evidence**:
@@ -26,7 +24,6 @@ Time-of-day vulnerability windows represent systematic variations in cognitive p
 
 **Chronobiology Research**:
 - Core body temperature correlates inversely with error rates in security-critical decisions
-- Cortisol fluctuations (Selye, 1956) create predictable windows of stress-induced impairment
 - Sleep-wake cycle disruptions exponentially increase vulnerability to social engineering
 
 ### Cognitive/Emotional Triggers

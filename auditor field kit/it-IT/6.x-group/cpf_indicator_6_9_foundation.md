@@ -16,7 +16,6 @@ Il meccanismo scissione opera sotto consapevolezza conscia, rendendolo particola
 
 **Ricerca Dinamiche Gruppo:** Bion (1961) dimostrò come gruppi sotto ansia adottano assunzioni base che distorcono realtà. L'assunzione dipendenza (baD) porta a idealizzazione figure protettive, mentre assunzione attacco-fuga (baF) esternalizza tutte minacce, entrambe contribuendo a modelli scissione organizzativa.
 
-**Validazione Neuroscienza:** Neuroscienza moderna supporta osservazioni Klein, con attivazione amigdala creante categorizzazione rapida stimoli come minacciosi o sicuri (LeDoux, 2000). Sotto stress, tendenza cervello verso categorizzazione binaria aumenta, rendendo scissione più probabile durante incidenti sicurezza o periodi alta-pressione.
 
 **Ricerca Difesa Organizzativa:** Menzies Lyth (1960) documentò come istituzioni sviluppano "sistemi difesa sociale" contro ansia che possono interferire con compiti primari. In cybersecurity, scissione serve come difesa collettiva contro ansia schiacciante di minaccia costante, ma crea vulnerabilità sistematiche.
 

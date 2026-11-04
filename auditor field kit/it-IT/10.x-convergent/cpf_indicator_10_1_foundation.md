@@ -16,7 +16,6 @@ Il fondamento psicologico deriva dalle applicazioni della **teoria del caos** al
 
 **Teoria della Complessità (Holland, 1995)**: I comportamenti emergenti nei sistemi complessi non possono essere previsti dai singoli componenti. Le tempeste perfette rappresentano **transizioni di fase** in cui lo stress psicologico quantitativo diventa rottura qualitativa del sistema.
 
-**Ricerca Neuroscientifica (Bar-Yam, 2003)**: Gli studi sulle reti cerebrali mostrano come i fallimenti neurali locali possano degenerare in disfunzioni cognitive globali, rispecchiando le cascate psicologiche organizzative.
 
 **Dinamiche di Gruppo di Bion (1961)**: Le tempeste perfette spesso innescano l'attivazione simultanea di tutte e tre le assunzioni di base (dipendenza, lotta-fuga, accoppiamento), creando un comportamento organizzativo caotico che gli attaccanti possono sfruttare.
 

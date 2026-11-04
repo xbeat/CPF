@@ -16,7 +16,6 @@ The dependency assumption manifests as a regression to infantile psychological s
 
 **Attachment Theory (Bowlby, 1969)**: John Bowlby's attachment research demonstrates how early caregiver relationships create templates for seeking protection under stress. In organizational contexts, these templates are activated during security crises, leading to dependency behaviors that mirror infant-caregiver dynamics.
 
-**Neuroscience Research**: Modern neuroscience research supports Bion's observations, showing that anxiety activates the amygdala and can suppress prefrontal cortex functioning, leading to regression to more primitive psychological states and increased seeking of external protection.
 
 ### Cognitive/Emotional Triggers
 

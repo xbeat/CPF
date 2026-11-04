@@ -16,7 +16,6 @@ In cybersecurity contexts, pairing hope fantasies manifest as the organizational
 
 **Menzies' Social Defense Systems (1960)**: Isabel Menzies Lyth's work on social defense systems demonstrates how institutions develop unconscious strategies to manage anxiety. Pairing hope fantasies serve as a defense against the anxiety of confronting present security vulnerabilities by displacing hope onto future miraculous combinations.
 
-**Neuroscientific Support**: Research on anticipatory reward systems shows that the brain's dopamine pathways activate more strongly for anticipated rewards than actual rewards, explaining the neurobiological basis for why organizations become fixated on future security solutions rather than implementing present ones.
 
 ### Cognitive/Emotional Triggers
 

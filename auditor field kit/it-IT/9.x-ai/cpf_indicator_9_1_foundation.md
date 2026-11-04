@@ -26,7 +26,6 @@ Il fondamento teorico trae da molteplici filoni di ricerca:
 
 **Estensione della Teoria dell'Attaccamento (Bowlby, 1969)**: Applicazioni moderne mostrano che gli utenti formano legami simili all'attaccamento con assistenti AI, trasferendo pattern relazionali originariamente sviluppati per i caregiver umani a sistemi artificiali.
 
-**Evidenze Neuroscientifiche (Schurz et al., 2014)**: Studi fMRI rivelano che le interazioni con sistemi AI antropomorfici attivano le stesse reti della giunzione temporo-parietale utilizzate per la cognizione sociale umana, indicando una profonda confusione neurologica tra agenti umani e artificiali.
 
 ### Trigger Cognitivi/Emotivi
 

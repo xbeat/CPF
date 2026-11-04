@@ -26,7 +26,6 @@ The theoretical foundation draws from multiple research streams:
 
 **Attachment Theory Extension (Bowlby, 1969)**: Modern applications show users forming attachment-like bonds with AI assistants, transferring relational patterns originally developed for human caregivers to artificial systems.
 
-**Neuroscience Evidence (Schurz et al., 2014)**: fMRI studies reveal that interactions with anthropomorphic AI systems activate the same temporo-parietal junction networks used for human social cognition, indicating deep neurological confusion between human and artificial agents.
 
 ### Cognitive/Emotional Triggers
 

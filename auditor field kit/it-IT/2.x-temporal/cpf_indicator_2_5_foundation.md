@@ -18,14 +18,9 @@ La natura iperbolica di questo sconto significa che gli investimenti di sicurezz
 - Mostra che la ponderazione delle probabilità cambia con gli orizzonti temporali
 
 **Ricerca di Economia Comportamentale:**
-- Gli studi mostrano costantemente tassi di sconto del 30-40% annualmente per investimenti di sicurezza futuri
 - La neuroimaging rivela pattern distinti di attivazione cerebrale per decisioni di sicurezza immediate vs. ritardate
 - La ricerca cross-culturale conferma l'universalità dello sconto iperbolico attraverso contesti organizzativi
 
-**Evidenze Neuroscientifiche:**
-- Gli studi fMRI mostrano che l'attivazione del sistema limbico (elaborazione delle ricompense immediate) domina l'engagement della corteccia prefrontale (pianificazione a lungo termine) in contesti decisionali di sicurezza
-- Le vie della dopamina rispondono più fortemente alle "vittorie" di sicurezza immediate che alla prevenzione delle minacce future
-- Gli ormoni dello stress (cortisolo) compromettono ulteriormente la prospettiva temporale nella pianificazione di sicurezza
 
 **Ricerca di Psicologia Organizzativa:**
 - La pressione degli utili trimestrali amplifica lo sconto iperbolico negli investimenti di sicurezza

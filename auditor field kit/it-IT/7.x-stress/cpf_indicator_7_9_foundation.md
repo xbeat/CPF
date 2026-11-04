@@ -6,7 +6,7 @@
 
 Le cascate di contagio da stress rappresentano una vulnerabilità organizzativa sistemica dove stati di stress acuto si diffondono rapidamente attraverso team e dipartimenti interconnessi, creando cicli di feedback amplificanti che degradano progressivamente la capacità collettiva di processo decisionale di sicurezza. Questo fenomeno opera attraverso tre meccanismi psicologici interconnessi:
 
-**Percorso di Contagio Primario**: Il contagio emotivo si verifica attraverso l'attivazione dei neuroni specchio e la mimica inconscia dei comportamenti di stress, causando agli individui di assorbire e replicare automaticamente gli stati fisiologici e psicologici di stress dei loro colleghi. Questo processo bypassa la consapevolezza cosciente e opera al livello della sincronizzazione del sistema nervoso autonomo.
+**Percorso di Contagio Primario**: Questo processo bypassa la consapevolezza cosciente e opera al livello della sincronizzazione del sistema nervoso autonomo.
 
 **Meccanismo di Amplificazione**: A differenza del semplice contagio emotivo, le cascate di stress coinvolgono cicli di feedback positivo dove la risposta allo stress di ciascun individuo intensifica il campo di stress collettivo, creando escalation esponenziale piuttosto che lineare. Questo avviene perché gli individui stressati esibiscono aumentata reattività ai fattori di stress ambientali, inclusi i comportamenti di stress degli altri.
 
@@ -15,9 +15,7 @@ Le cascate di contagio da stress rappresentano una vulnerabilità organizzativa 
 ### Base di Ricerca
 
 **Fondamenti Neuroscientifici**:
-- La ricerca sui neuroni specchio (Rizzolatti & Craighero, 2004) dimostra mimica neurologica automatica di stati emotivi osservati, fornendo il substrato biologico per trasmissione inconscia dello stress
 - La teoria polivagale (Porges, 2011) spiega come gli stati del sistema nervoso autonomo si sincronizzano tra individui attraverso rilevamento inconscio di segnali di sicurezza/minaccia
-- Gli studi sulla sincronizzazione del cortisolo mostrano che gli ormoni dello stress si allineano tra individui in ambienti condivisi entro 15-30 minuti di esposizione
 
 **Evidenza di Psicologia Sociale**:
 - La ricerca sul contagio emotivo di Hatfield et al. (1994) dimostra che gli stati di stress si diffondono attraverso le organizzazioni via mimica automatica, convergenza e sincronizzazione fisiologica

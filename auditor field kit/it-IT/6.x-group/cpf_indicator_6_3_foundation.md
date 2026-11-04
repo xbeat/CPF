@@ -8,7 +8,6 @@ La diffusione della responsabilità è un fenomeno fondamentale della psicologia
 
 **Processo Primario**: Quando gli individui si percepiscono come parte di un gruppo, il peso psicologico della responsabilità si distribuisce tra tutti i membri del gruppo, risultando in ciò che Darley e Latané (1968) hanno definito "ozio sociale" (social loafing) e ridotta responsabilità individuale. La distorsione cognitiva principale coinvolge la convinzione che "qualcun altro se ne occuperà" o "non è specificamente il mio lavoro".
 
-**Base Neurolog**: Gli studi di neuroimaging rivelano che il processo decisionale di gruppo attiva percorsi neurali diversi rispetto al processo decisionale individuale, mostrando specificamente ridotta attivazione nella corteccia cingolata anteriore (responsabile della responsabilità personale) e maggiore attivazione nella giunzione temporoparietale (associata alla teoria della mente e cognizione sociale).
 
 **Amplificazione Organizzativa**: Nelle strutture gerarchiche, la diffusione diventa particolarmente pronunciata perché la responsabilità fluisce naturalmente sia verso l'alto ("decisione del management") che verso il basso ("i subordinati avrebbero dovuto notare"), creando vuoti di responsabilità dove decisioni critiche di sicurezza cadono attraverso lacune organizzative.
 

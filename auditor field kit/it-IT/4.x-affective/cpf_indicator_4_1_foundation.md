@@ -6,7 +6,7 @@
 
 La paralisi decisionale basata sulla paura rappresenta un crollo fondamentale nel funzionamento esecutivo quando gli individui incontrano minacce percepite in contesti di cybersecurity. Questa vulnerabilità emerge dall'intersezione di tre processi psicologici:
 
-**Sequestro dell'Amigdala (Amygdala Hijack)**: Quando la paura è attivata, l'amigdala attiva il sistema nervoso simpatico prima dell'coinvolgimento della corteccia prefrontale, creando uno stato neurological dove il processo decisionale razionale è compromesso. In contesti di cybersecurity, questo si manifesta come completo arresto cognitivo quando si è di fronte ad allerte di sicurezza, requisiti di risposta agli incidenti, o decisioni che coinvolgono potenziali implicazioni di sicurezza.
+**Sequestro dell'Amigdala (Amygdala Hijack)**: In contesti di cybersecurity, questo si manifesta come completo arresto cognitivo quando si è di fronte ad allerte di sicurezza, requisiti di risposta agli incidenti, o decisioni che coinvolgono potenziali implicazioni di sicurezza.
 
 **Impotenza Appresa (Learned Helplessness)**: L'esposizione ripetuta a incidenti di sicurezza complessi dove gli individui si sentono impotenti ad influenzare gli esiti crea una risposta condizionata di inazione. Questo stato psicologico, prima identificato da Seligman, si verifica quando le persone credono che le loro azioni non influenzeranno gli esiti di sicurezza, portando all'accettazione passiva delle minacce piuttosto che alla mitigazione attiva.
 
@@ -14,9 +14,8 @@ La paralisi decisionale basata sulla paura rappresenta un crollo fondamentale ne
 
 ### Base di Ricerca
 
-**Fondamento Neuroscientifico**: La ricerca di LeDoux dimostra che le risposte di paura si attivano entro 12-15 millisecondi tramite il percorso amigdala-talamo, mentre l'elaborazione razionale attraverso la corteccia prefrontale richiede 300-500 millisecondi. Questa realtà neurologica significa che in contesti di sicurezza che coinvolgono minacce percepite, le risposte di paura dominano prima che possa verificarsi l'analisi conscia.
 
-**Evidenza di Psicologia Cognitiva**: La teoria del prospetto (prospect theory) di Kahneman e Tversky rivela che l'avversione alle perdite (loss aversion) si intensifica sotto incertezza, creando paura sproporzionata di fallimenti di sicurezza relativamente al rischio effettivo. La loro ricerca mostra che le persone pesano le perdite potenziali 2,5 volte più pesantemente dei guadagni equivalenti, spiegando perché le decisioni di sicurezza spesso si orientano all'inazione quando gli esiti sono incerti.
+**Evidenza di Psicologia Cognitiva**: La teoria del prospetto (prospect theory) di Kahneman e Tversky rivela che l'avversione alle perdite (loss aversion) si intensifica sotto incertezza, creando paura sproporzionata di fallimenti di sicurezza relativamente al rischio effettivo.
 
 **Validazione di Psicologia Clinica**: La triade cognitiva (cognitive triad) di Beck dimostra come la paura crei pensieri automatici negativi su se stessi ("non capisco la sicurezza"), il mondo ("le minacce cyber sono ovunque"), e il futuro ("qualsiasi decisione io prenda sarà sbagliata"). Questo schema cognitivo è particolarmente pronunciato in contesti di cybersecurity dove la complessità tecnica amplifica il dubbio di sé.
 

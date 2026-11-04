@@ -7,7 +7,6 @@
 Gli errori indotti dalla complessità (complexity-induced errors) emergono dalla limitazione fondamentale dell'architettura cognitiva umana quando confrontata con sistemi che eccedono la nostra capacità di elaborazione. Questa vulnerabilità è radicata nel principio del "numero magico sette" di Miller (1956), che dimostra che la memoria di lavoro può elaborare efficacemente solo 7±2 blocchi di informazione simultaneamente. Quando i sistemi di cybersecurity presentano complessità oltre questa soglia, si verifica sovraccarico cognitivo, portando a errori sistematici nel processo decisionale di sicurezza.
 
 Il meccanismo psicologico opera attraverso diversi percorsi:
-- **Overflow del Carico Cognitivo**: Quando la complessità informativa eccede la capacità della memoria di lavoro, il cervello defaulta a euristiche semplificate che possono compromettere la sicurezza
 - **Effetti del Residuo Attentivo**: I sistemi complessi creano "costi di cambio" cognitivi che lasciano residuo mentale, compromettendo decisioni di sicurezza successive
 - **Breakdown del Modello Mentale**: Architetture di sicurezza eccessivamente complesse prevengono agli utenti di formare modelli mentali coerenti, portando a pattern comportamentali imprevedibili
 
@@ -21,11 +20,8 @@ Il meccanismo psicologico opera attraverso diversi percorsi:
 **Studi Specifici sulla Cybersecurity:**
 - Beautement et al. (2008): La ricerca sul "budget di conformità" mostra che complessità di sicurezza eccessiva porta a comportamenti di bypass sistematici
 - Studi sulla complessità dell'interfaccia di sicurezza dimostrano tassi di errore esponenziali man mano che la complessità del sistema aumenta
-- L'analisi degli incidenti rivela che il 60-70% dei fallimenti di sicurezza si verificano durante periodi di alta complessità del sistema
 
 **Evidenze Neuroscientifiche:**
-- Studi fMRI mostrano sovraccarico della corteccia prefrontale quando si elaborano interfacce di sicurezza complesse
-- L'affaticamento cognitivo da sistemi complessi compromette l'accuratezza del rilevamento delle minacce fino al 40%
 - La saturazione della memoria di lavoro correla direttamente con tassi aumentati di incidenti di sicurezza
 
 ### Trigger Cognitivi/Emotivi

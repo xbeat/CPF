@@ -2,7 +2,7 @@
 
 ## CONTEXT
 
-Cortisol-impaired memory occurs when workplace stress physiologically prevents personnel from accessing critical security knowledge they've already learned. During high-pressure situations, elevated stress hormones block memory recall of security procedures, passwords, and incident response steps. This creates dangerous gaps where trained professionals forget established protocols precisely when they need them most, leading to security incidents during organizational crises, system outages, or high-stakes events.
+During high-pressure situations, elevated stress hormones block memory recall of security procedures, passwords, and incident response steps. This creates dangerous gaps where trained professionals forget established protocols precisely when they need them most, leading to security incidents during organizational crises, system outages, or high-stakes events.
 
 ## ASSESSMENT
 
@@ -114,7 +114,6 @@ During audits, regulatory reviews, or budget pressures, staff forget established
 
 ### Stress Recovery Intervals
 **Implementation:** Build mandatory 15-minute breaks every 2 hours during high-stress security operations. Implement "cognitive reset" procedures including brief meditation, hydration, and memory review before continuing security tasks.
-**Benefit:** Allows cortisol levels to normalize and memory access to recover.
 
 ### Pre-Stress Knowledge Activation
 **Implementation:** Before anticipated high-stress periods, conduct rapid security knowledge reviews and have teams physically demonstrate key procedures. Create "muscle memory" backup for critical security actions through repeated physical practice.

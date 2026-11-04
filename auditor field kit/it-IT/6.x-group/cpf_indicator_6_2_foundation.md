@@ -21,10 +21,6 @@ I fenomeni di spostamento verso il rischio (risky shift) si riferiscono alla ten
 - Wallach, Kogan & Bem (1962): Dimostrato lo spostamento rischioso attraverso diversi domini decisionali e gruppi demografici
 - Myers & Lamm (1976): Meta-analisi che conferma l'effetto attraverso 316 studi con dimensione media dell'effetto di d = 0,7
 
-**Validazione Neuroscientifica**:
-- Studi fMRI mostrano ridotta attivazione della corteccia cingolata anteriore (monitoraggio del rischio) durante le decisioni di gruppo
-- Maggiore attivazione dello striato ventrale (ricerca di ricompense) quando i membri del gruppo esprimono tolleranza al rischio
-- L'attivazione dei neuroni specchio crea imitazione inconscia degli atteggiamenti di assunzione del rischio
 
 **Ricerca in Psicologia Organizzativa**:
 - Janis (1972): Documentato spostamento rischioso in decisioni politiche e militari ad alto rischio (Baia dei Porci, escalation del Vietnam)

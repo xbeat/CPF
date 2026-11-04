@@ -6,7 +6,7 @@
 
 La risposta di compiacenza (fawn response) rappresenta un sofisticato meccanismo di difesa psicologica che si manifesta come conformità eccessiva, acquiescenza e sottomissione quando si affrontano minacce percepite o autorità. A differenza delle risposte più riconosciute di combattimento-fuga-congelamento, la compiacenza è una strategia di sopravvivenza relazionale che tenta di neutralizzare la minaccia attraverso l'accomodamento ipervigilante dei bisogni e desideri altrui.
 
-Neurobiologicamente, la risposta di compiacenza attiva il percorso "tend-and-befriend" del sistema nervoso parasimpatico, mediato dal rilascio di ossitocina e vasopressina. Questo crea uno stato biochimico di iperempatia e sottomissione, dove gli individui danno priorità agli stati emotivi altrui rispetto alla propria sicurezza e benessere. Il complesso vagale dorsale diventa iperattivo, creando uno stato di impotenza appresa mascherata da apparente cooperazione.
+Questo crea uno stato biochimico di iperempatia e sottomissione, dove gli individui danno priorità agli stati emotivi altrui rispetto alla propria sicurezza e benessere. Il complesso vagale dorsale diventa iperattivo, creando uno stato di impotenza appresa mascherata da apparente cooperazione.
 
 Nei contesti organizzativi, la sovraconformità da risposta di compiacenza si manifesta come incapacità di far rispettare i confini di sicurezza quando farlo potrebbe creare conflitti interpersonali o dispiacere alle figure di autorità. Gli individui che esibiscono questa vulnerabilità bypasseranno sistematicamente i protocolli di sicurezza per evitare di deludere colleghi, supervisori o parti esterne, anche quando riconoscono consapevolmente i rischi di sicurezza coinvolti.
 
@@ -14,9 +14,8 @@ Nei contesti organizzativi, la sovraconformità da risposta di compiacenza si ma
 
 La risposta di compiacenza fu descritta sistematicamente per la prima volta da Pete Walker (2013) nel suo lavoro sulle risposte al trauma complesso, basandosi sulla ricerca fondamentale di Selye (1956) sulle risposte allo stress. Walker identificò la compiacenza come la quarta risposta al trauma, particolarmente prevalente in individui con storie di trauma relazionale o ambienti autoritari.
 
-La validazione neurobiologica proviene dalla ricerca sulla teoria polivagale di Stephen Porges (2011), dimostrando che l'attivazione del complesso vagale dorsale crea stati di sottomissione e risposte di congelamento-compiacenza. Gli studi fMRI mostrano aumentata attività nella corteccia cingolata anteriore (centro dell'empatia) e diminuita attività nella corteccia prefrontale (processo decisionale esecutivo) durante le risposte di compiacenza.
 
-La ricerca di Kristin Neff (2003) sull'auto-compassione rivela che gli individui inclini alla compiacenza dimostrano punteggi di auto-compassione significativamente più bassi e comportamenti di people-pleasing più elevati. Questi individui mostrano livelli di cortisolo elevati durante i conflitti interpersonali, anche quando appaiono comportamentalmente conformi.
+La ricerca di Kristin Neff (2003) sull'auto-compassione rivela che gli individui inclini alla compiacenza dimostrano punteggi di auto-compassione significativamente più bassi e comportamenti di people-pleasing più elevati.
 
 Gli studi in psicologia organizzativa di Karpman (1968) sul "triangolo drammatico" dimostrano come le dinamiche soccorritore-vittima-persecutore creino comportamenti di compiacenza sistematici nelle gerarchie lavorative. I dipendenti nella posizione di "soccorritore" esibiscono sovraconformità cronica per evitare di innescare il dispiacere delle figure di autorità.
 
@@ -31,7 +30,7 @@ Gli studi in psicologia organizzativa di Karpman (1968) sul "triangolo drammatic
 - Induzione di colpa ("Dopo tutto quello che ho fatto per te...")
 
 **Attivazione Neurologica:**
-La risposta di compiacenza si attiva quando il sistema nervoso percepisce la minaccia relazionale come più pericolosa della minaccia di sicurezza. L'attivazione dei neuroni specchio crea contagio emotivo, dove chi risponde con compiacenza assorbe inconsciamente gli stati emotivi altrui e dà priorità alla loro regolazione rispetto ai confini di sicurezza.
+La risposta di compiacenza si attiva quando il sistema nervoso percepisce la minaccia relazionale come più pericolosa della minaccia di sicurezza.
 
 **Stati Emotivi:**
 - Ipervigilanza agli stati emotivi altrui

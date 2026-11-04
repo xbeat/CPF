@@ -2,7 +2,7 @@
 
 ## CONTESTO
 
-La memoria compromessa da cortisolo si verifica quando lo stress lavorativo impedisce fisiologicamente al personale di accedere alla conoscenza critica di sicurezza che ha già appreso. Durante situazioni ad alta pressione, gli ormoni dello stress elevati bloccano il richiamo della memoria di procedure di sicurezza, password e passi di risposta agli incidenti. Questo crea gap pericolosi dove professionisti formati dimenticano protocolli stabiliti precisamente quando ne hanno più bisogno, portando a incidenti di sicurezza durante crisi organizzative, interruzioni di sistema o eventi ad alto rischio.
+Durante situazioni ad alta pressione, gli ormoni dello stress elevati bloccano il richiamo della memoria di procedure di sicurezza, password e passi di risposta agli incidenti. Questo crea gap pericolosi dove professionisti formati dimenticano protocolli stabiliti precisamente quando ne hanno più bisogno, portando a incidenti di sicurezza durante crisi organizzative, interruzioni di sistema o eventi ad alto rischio.
 
 ## VALUTAZIONE
 
@@ -114,7 +114,6 @@ Durante audit, revisioni regolamentari o pressioni di budget, il personale dimen
 
 ### Intervalli di Recupero dallo Stress
 **Implementazione:** Costruire pause obbligatorie di 15 minuti ogni 2 ore durante operazioni di sicurezza ad alto stress. Implementare procedure di "reset cognitivo" inclusa breve meditazione, idratazione e revisione della memoria prima di continuare i compiti di sicurezza.
-**Beneficio:** Permette ai livelli di cortisolo di normalizzarsi e all'accesso alla memoria di recuperare.
 
 ### Attivazione Pre-Stress della Conoscenza
 **Implementazione:** Prima di periodi ad alto stress anticipati, condurre rapide revisioni della conoscenza di sicurezza e far dimostrare fisicamente ai team le procedure chiave. Creare backup di "memoria muscolare" per azioni critiche di sicurezza attraverso pratica fisica ripetuta.

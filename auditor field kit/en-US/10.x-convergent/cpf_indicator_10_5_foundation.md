@@ -18,7 +18,6 @@ This vulnerability is amplified by **confirmation bias cascades** within organiz
 
 **System Theory Research**: Perrow's "Normal Accidents" (1984) shows how complex systems inevitably produce unexpected failures through interactive complexity and tight coupling - conditions that make black swan events not just possible but inevitable in organizational contexts.
 
-**Neuroscience of Prediction**: Brain imaging studies reveal that the human brain is fundamentally designed for pattern recognition and prediction based on past experience. The prefrontal cortex creates predictive models that become increasingly rigid with repetition, making novel extreme events literally "unthinkable" at a neurological level.
 
 ### Cognitive/Emotional Triggers
 

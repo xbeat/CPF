@@ -8,11 +8,11 @@ Authority figure impersonation susceptibility represents a convergence of evolut
 
 The mechanism involves three interconnected processes: **automatic authority recognition** (rapid, System 1 pattern matching to authority signals), **responsibility displacement** (transferring decision accountability to the authority figure), and **compliance automation** (executing requests without security verification). This creates a pre-cognitive vulnerability window where security protocols are bypassed before conscious evaluation occurs.
 
-Neurologically, authority perception activates the anterior cingulate cortex and reduces prefrontal cortex activity (Berns et al., 2005), literally diminishing the brain regions responsible for critical thinking and risk assessment. The evolutionary advantage of rapid authority compliance—survival in hierarchical groups—becomes a cybersecurity liability in digital environments where authority signals can be easily falsified.
+The evolutionary advantage of rapid authority compliance—survival in hierarchical groups—becomes a cybersecurity liability in digital environments where authority signals can be easily falsified.
 
 ### Research Basis
 
-**Milgram's Obedience Studies (1974):** Demonstrated that 65% of participants would deliver potentially lethal electric shocks when directed by perceived authority figures. Critically, compliance occurred even when direct supervision was removed, suggesting internalized authority triggers rather than mere fear of consequences.
+**Milgram's Obedience Studies (1974):** Critically, compliance occurred even when direct supervision was removed, suggesting internalized authority triggers rather than mere fear of consequences.
 
 **Bion's Group Dynamics Theory (1961):** The "basic assumption dependency" (baD) state describes groups' unconscious fantasy that omnipotent leaders can provide perfect protection. In cybersecurity contexts, this manifests as uncritical trust in anyone presenting authority credentials, creating systematic blind spots to impersonation attacks.
 

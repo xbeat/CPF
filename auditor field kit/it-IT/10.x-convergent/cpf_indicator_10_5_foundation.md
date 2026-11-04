@@ -18,7 +18,6 @@ Questa vulnerabilità è amplificata dalle **cascate di bias di conferma** nei s
 
 **Ricerca sulla Teoria dei Sistemi**: "Normal Accidents" di Perrow (1984) mostra come i sistemi complessi producono inevitabilmente fallimenti inaspettati attraverso complessità interattiva e accoppiamento stretto - condizioni che rendono gli eventi cigno nero non solo possibili ma inevitabili in contesti organizzativi.
 
-**Neuroscienza della Predizione**: Gli studi di brain imaging rivelano che il cervello umano è fondamentalmente progettato per il riconoscimento dei modelli e la predizione basata sull'esperienza passata. La corteccia prefrontale crea modelli predittivi che diventano sempre più rigidi con la ripetizione, rendendo eventi estremi nuovi letteralmente "impensabili" a livello neurologico.
 
 ### Trigger Cognitivi/Emotivi
 

@@ -6,7 +6,7 @@
 
 The fawn response represents a sophisticated psychological defense mechanism that manifests as excessive compliance, appeasement, and submission when faced with perceived threats or authority. Unlike the more recognized fight-flight-freeze responses, fawning is a relational survival strategy that attempts to neutralize threat through hypervigilant accommodation of others' needs and desires.
 
-Neurobiologically, the fawn response activates the parasympathetic nervous system's "tend-and-befriend" pathway, mediated by oxytocin and vasopressin release. This creates a biochemical state of hyperempathy and submission, where individuals prioritize others' emotional states over their own safety and well-being. The dorsal vagal complex becomes hyperactive, creating a state of learned helplessness masked by apparent cooperation.
+This creates a biochemical state of hyperempathy and submission, where individuals prioritize others' emotional states over their own safety and well-being. The dorsal vagal complex becomes hyperactive, creating a state of learned helplessness masked by apparent cooperation.
 
 In organizational contexts, fawn response overcompliance manifests as an inability to enforce security boundaries when doing so might create interpersonal conflict or displease authority figures. Individuals exhibiting this vulnerability will systematically bypass security protocols to avoid disappointing colleagues, supervisors, or external parties, even when they consciously recognize the security risks involved.
 
@@ -14,9 +14,8 @@ In organizational contexts, fawn response overcompliance manifests as an inabili
 
 The fawn response was first systematically described by Pete Walker (2013) in his work on complex trauma responses, building on Selye's (1956) foundational stress response research. Walker identified fawning as the fourth trauma response, particularly prevalent in individuals with histories of relational trauma or authoritarian environments.
 
-Neurobiological validation comes from polyvagal theory research by Stephen Porges (2011), demonstrating that the dorsal vagal complex activation creates states of submission and freeze-fawn responses. fMRI studies show increased activity in the anterior cingulate cortex (empathy center) and decreased activity in the prefrontal cortex (executive decision-making) during fawn responses.
 
-Research by Kristin Neff (2003) on self-compassion reveals that individuals prone to fawning demonstrate significantly lower self-compassion scores and higher people-pleasing behaviors. These individuals show elevated cortisol levels during interpersonal conflicts, even when they appear behaviorally compliant.
+Research by Kristin Neff (2003) on self-compassion reveals that individuals prone to fawning demonstrate significantly lower self-compassion scores and higher people-pleasing behaviors.
 
 Studies in organizational psychology by Karpman (1968) on the "drama triangle" demonstrate how rescuer-victim-persecutor dynamics create systematic fawning behaviors in workplace hierarchies. Employees in the "rescuer" position exhibit chronic overcompliance to avoid triggering authority figure displeasure.
 
@@ -31,7 +30,7 @@ Studies in organizational psychology by Karpman (1968) on the "drama triangle" d
 - Guilt induction ("After everything I've done for you...")
 
 **Neurological Activation:**
-The fawn response activates when the nervous system perceives relational threat as more dangerous than security threat. Mirror neuron activation creates emotional contagion, where the fawn-responder unconsciously absorbs others' emotional states and prioritizes their regulation over security boundaries.
+The fawn response activates when the nervous system perceives relational threat as more dangerous than security threat.
 
 **Emotional States:**
 - Hypervigilance to others' emotional states

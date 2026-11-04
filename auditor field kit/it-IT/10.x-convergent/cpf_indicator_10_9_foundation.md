@@ -28,7 +28,6 @@ A livello inconscio, i fallimenti dell'accoppiamento riflettono ciò che i teori
 - La ricerca sui sistemi di difesa sociale di Menzies Lyth (1960) mostra come le organizzazioni evitino inconsciamente la complessità che genera ansia
 
 **Supporto Neuroscientífico:**
-- La ricerca sulla Default Mode Network (Buckner et al., 2008) mostra la tendenza del cervello verso il pensiero semplificato e lineare
 - Le limitazioni della funzione esecutiva sotto stress (Arnsten, 2009) compromettono il ragionamento su sistemi complessi
 - I vincoli della memoria di lavoro (Baddeley, 2000) impediscono il tracciamento simultaneo di molteplici interazioni di sistema
 

@@ -22,7 +22,6 @@ The mechanism operates through several key processes:
 
 **Organizational Psychology Studies**: Research on organizational culture and shared mental models demonstrates how collective beliefs create systematic blind spots. Studies show that organizations with strong cultural identities exhibit predictable vulnerability patterns that mirror their collective psychological makeup.
 
-**Neuroscience of Group Behavior**: Recent fMRI studies reveal that group decision-making activates different neural networks than individual decisions, supporting the existence of collective psychological processes. Mirror neuron research demonstrates how emotional states and behavioral patterns spread unconsciously through groups.
 
 **Complexity Theory Applications**: Research on emergent properties in complex systems validates Jung's assertion that collective patterns arise from but transcend individual psychology. Organizations exhibit "collective intelligence" and "collective shadow" phenomena that cannot be explained by individual psychological analysis alone.
 

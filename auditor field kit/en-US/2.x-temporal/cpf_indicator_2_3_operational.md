@@ -2,7 +2,7 @@
 
 ## CONTEXT
 
-When organizations face tight deadlines, employees systematically bypass security controls to meet time pressures. This creates predictable vulnerability windows where phishing success rates increase, patch management fails, and access controls are circumvented. Under deadline stress, the brain's threat response prioritizes immediate consequences (missing deadlines) over future risks (security breaches), making organizations most vulnerable precisely when they're working hardest.
+When organizations face tight deadlines, employees systematically bypass security controls to meet time pressures. This creates predictable vulnerability windows where phishing success rates increase, patch management fails, and access controls are circumvented. Under deadline stress, the threat response prioritizes immediate consequences (missing deadlines) over future risks (security breaches), making organizations most vulnerable precisely when they're working hardest.
 
 ## ASSESSMENT
 

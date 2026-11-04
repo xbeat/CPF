@@ -24,7 +24,6 @@ This process is amplified by what Jung (1969) described as the **collective unco
 
 **Neuroscience Evidence:**
 - **Mirror Neuron Systems**: Automatic replication of observed stress behaviors
-- **Limbic Resonance** (Lewis et al., 2000): Emotional brain states synchronize between individuals
 - **Cortisol Contagion**: Stress hormones can be detected and triggered in observers
 
 **Group Dynamics Research:**

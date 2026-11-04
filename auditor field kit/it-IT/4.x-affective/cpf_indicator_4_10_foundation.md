@@ -16,9 +16,7 @@ Entro la categoria Vulnerabilità Affettive [4.x] del CPF, il contagio emozional
 ### Base di Ricerca
 
 **Neuroscienza Fondazionale (Foundational Neuroscience)**:
-- La ricerca sui neuroni specchio (mirror neuron) (Rizzolatti & Craighero, 2004) dimostra base neurologica per mimicry emozionale automatica
 - Il lavoro seminale di Hatfield, Cacioppo, e Rapson (1994) sul contagio emozionale ha stabilito processo a tre stadi: mimicry → convergenza → contagio
-- Gli studi di neuroimaging mostrano attivazione del sistema limbico che si diffonde attraverso cue emozionali visivi e uditivi prima dell'elaborazione conscia
 
 **Evidenza di Psicologia Organizzativa (Organizational Psychology Evidence)**:
 - Gli studi sperimentali di Barsade (2002) hanno dimostrato contagio emozionale misurabile in team di business che influenza cooperazione e conflitto
@@ -28,7 +26,6 @@ Entro la categoria Vulnerabilità Affettive [4.x] del CPF, il contagio emozional
 **Integrazione di Ricerca sullo Stress (Stress Research Integration)**:
 - La Sindrome di Adattamento Generale (General Adaptation Syndrome) di Selye (1956) fornisce framework per comprendere come risposte di stress condivise creino vulnerabilità collettiva
 - La teoria dell'attaccamento (Bowlby, 1969) spiega come il contagio emozionale attivi comportamenti di caregiving e care-seeking che possono prevalere su protocolli di sicurezza
-- La ricerca di neuroscienza sociale dimostra sincronizzazione di ormoni dello stress in gruppi co-localizzati
 
 ### Attivatori Cognitivi/Emozionali
 

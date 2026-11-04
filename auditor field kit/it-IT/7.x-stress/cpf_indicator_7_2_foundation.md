@@ -17,10 +17,6 @@ Nei contesti di cybersecurity, il burnout da stress cronico compromette specific
 **Teoria della Risposta allo Stress (Selye, 1956):**
 La Sindrome Generale di Adattamento identifica tre fasi: allarme, resistenza ed esaurimento. Il burnout da stress cronico si verifica quando gli individui rimangono intrappolati nella fase di resistenza senza risoluzione, progredendo eventualmente verso l'esaurimento dove la capacità adattiva viene gravemente compromessa.
 
-**Evidenze Neuroscientifiche:**
-- L'elevazione cronica del cortisolo compromette la funzione ippocampale, riducendo le capacità di consolidamento della memoria e riconoscimento dei pattern essenziali per il rilevamento delle minacce
-- La degradazione della corteccia prefrontale sotto stress cronico riduce la funzione esecutiva, compromettendo la qualità del decision-making di sicurezza
-- L'iperattivazione dell'amigdala crea una sensibilità persistente alla minaccia che paradossalmente riduce la discriminazione effettiva delle minacce
 
 **Teoria della Conservazione delle Risorse (Hobfoll, 1989):**
 Il burnout si sviluppa quando gli individui sperimentano perdita di risorse (tempo, energia, supporto) senza adeguato guadagno di risorse. I professionisti della sicurezza affrontano drenaggi di risorse unici tra cui:

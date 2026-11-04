@@ -26,10 +26,6 @@ This vulnerability emerges when individuals unconsciously relate to systems as i
 - **Parasocial relationship studies**: People form one-sided emotional connections with entities (originally media figures) that feel reciprocal but are not
 - **Technology acceptance models**: Trust in technology often mirrors interpersonal trust patterns rather than rational risk assessment
 
-**Neuroscience Support:**
-- **Mirror neuron activation**: Brain systems designed for human interaction activate when engaging with anthropomorphized technology
-- **Oxytocin release**: Social bonding neurochemicals can be triggered by technology interactions that feel interpersonal
-- **Default mode network**: Brain patterns associated with social cognition activate during technology interactions perceived as relational
 
 ### Cognitive/Emotional Triggers
 
