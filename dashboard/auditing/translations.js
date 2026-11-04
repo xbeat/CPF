@@ -6,7 +6,7 @@ const auditingTranslations = {
 	en: {
 		// Meta tags
 		'meta.title': 'CPF Auditing Dashboard - Organizations & Assessment Progress',
-		'meta.description': 'Comprehensive CPF assessment platform with maturity model, compliance tracking, and ROI analysis',
+		'meta.description': 'Comprehensive CPF assessment platform with maturity model',
 
 		// Header
 		'header.back': '← Back to Dashboard',
@@ -145,8 +145,8 @@ const auditingTranslations = {
 		'maturity.comparison.below': 'Below sector average',
 
 		// Compliance
-		'compliance.title': '📋 Regulatory Compliance Status',
-		'compliance.subtitle': 'Compliance status with major cybersecurity and privacy regulations',
+		'compliance.title': '📋 Regulatory Context',
+		'compliance.subtitle': 'CPF is not a compliance audit: it does not determine compliance status with these regulations',
 		'compliance.th.regulation': 'Regulation',
 		'compliance.th.status': 'Status',
 		'compliance.th.min-level': 'Min. Level Required',
@@ -155,7 +155,7 @@ const auditingTranslations = {
 
 		// Benchmark
 		'benchmark.title': '📊 Sector Benchmark Comparison',
-		'benchmark.subtitle': 'How your organization compares to industry peers',
+		'benchmark.subtitle': 'Shown once enough organisations in your sector have been assessed',
 		'benchmark.sector-mean': 'Sector Mean',
 		'benchmark.your-score': 'Your Score',
 
@@ -252,7 +252,7 @@ const auditingTranslations = {
 	it: {
 		// Meta tags
 		'meta.title': 'CPF Auditing Dashboard - Organizzazioni e Progressi Assessment',
-		'meta.description': 'Piattaforma completa di assessment CPF con maturity model, compliance tracking e ROI analysis',
+		'meta.description': 'Piattaforma completa di assessment CPF con maturity model',
 
 		// Header
 		'header.back': '← Torna alla Dashboard',
@@ -391,8 +391,8 @@ const auditingTranslations = {
 		'maturity.comparison.below': 'Sotto la media del settore',
 
 		// Compliance
-		'compliance.title': '📋 Stato Compliance Normativa',
-		'compliance.subtitle': 'Stato di compliance con le principali normative di cybersecurity e privacy',
+		'compliance.title': '📋 Contesto Normativo',
+		'compliance.subtitle': 'Il CPF non è un audit di conformità: non stabilisce lo stato di conformità a queste normative',
 		'compliance.th.regulation': 'Normativa',
 		'compliance.th.status': 'Stato',
 		'compliance.th.min-level': 'Livello Min. Richiesto',
@@ -401,7 +401,7 @@ const auditingTranslations = {
 
 		// Benchmark
 		'benchmark.title': '📊 Confronto Benchmark Settore',
-		'benchmark.subtitle': 'Come la tua organizzazione si confronta con i peer del settore',
+		'benchmark.subtitle': 'Disponibile quando saranno state valutate abbastanza organizzazioni del tuo settore',
 		'benchmark.sector-mean': 'Media Settore',
 		'benchmark.your-score': 'Tuo Punteggio',
 

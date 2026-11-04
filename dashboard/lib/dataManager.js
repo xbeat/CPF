@@ -48,26 +48,11 @@ const CPF_DOMAIN_WEIGHTS = {
   '10': 0.07  // Convergent States
 };
 
-const SECTOR_BENCHMARKS = {
-  'Technology': { mean: 71, std_dev: 11 },
-  'Finance': { mean: 68, std_dev: 12 },
-  'Healthcare': { mean: 52, std_dev: 15 },
-  'Government': { mean: 58, std_dev: 14 },
-  'Retail': { mean: 48, std_dev: 13 },
-  'Education': { mean: 55, std_dev: 14 },
-  'Manufacturing': { mean: 60, std_dev: 13 },
-  'Energy': { mean: 62, std_dev: 12 },
-  'Transportation': { mean: 57, std_dev: 13 },
-  'Other': { mean: 58, std_dev: 15 }
-};
+// Sector benchmarks: none yet. A sector mean needs assessments from enough organisations in that
+// sector; until those exist the dashboard shows no comparison rather than an invented one.
+const SECTOR_BENCHMARKS = {};
 
-const ROI_TRANSITIONS = {
-  '0_to_1': { investment: 50000, annual_benefit: 200000, payback_months: 3, npv_5yr: 850000 },
-  '1_to_2': { investment: 250000, annual_benefit: 600000, payback_months: 5, npv_5yr: 2500000 },
-  '2_to_3': { investment: 750000, annual_benefit: 1500000, payback_months: 6, npv_5yr: 5800000 },
-  '3_to_4': { investment: 1500000, annual_benefit: 3000000, payback_months: 6, npv_5yr: 12000000 },
-  '4_to_5': { investment: 2500000, annual_benefit: 5000000, payback_months: 6, npv_5yr: 20000000 }
-};
+// ROI: not measured. No investment, benefit or payback figure has a source, so none is shown.
 
 // ============================================================================
 // Maturity Model Calculation Functions
@@ -123,40 +108,22 @@ function countDomainsByMaturity(byCategory) {
 }
 
 function checkCompliance(maturityLevel) {
-  return {
-    gdpr: {
-      status: maturityLevel >= 1 ? 'compliant' : 'non_compliant',
-      min_level_required: 1,
-      recommended_level: 2
-    },
-    nis2: {
-      status: maturityLevel >= 2 ? 'compliant' : (maturityLevel >= 1 ? 'at_risk' : 'non_compliant'),
-      min_level_required: 2,
-      recommended_level: 3
-    },
-    dora: {
-      status: maturityLevel >= 2 ? 'compliant' : (maturityLevel >= 1 ? 'at_risk' : 'non_compliant'),
-      min_level_required: 2,
-      recommended_level: 3
-    },
-    iso27001: {
-      status: maturityLevel >= 1 ? 'compliant' : 'non_compliant',
-      min_level_required: 1,
-      recommended_level: 2
-    }
-  };
+  // CPF measures psychological vulnerability; it is not a compliance audit and cannot state whether an
+  // organisation complies with GDPR, NIS2, DORA or ISO 27001. No status is returned.
+  return null;
 }
 
 function getSectorBenchmark(industry, cpfScore) {
-  const benchmark = SECTOR_BENCHMARKS[industry] || SECTOR_BENCHMARKS['Other'];
+  const benchmark = SECTOR_BENCHMARKS[industry];
+  if (!benchmark) return null; // no real sector data yet
   const gap = cpfScore - benchmark.mean;
   const zScore = gap / benchmark.std_dev;
-  let percentile = 50 + (zScore * 19.1);
-  percentile = Math.max(0, Math.min(100, percentile));
+  const percentile = Math.max(0, Math.min(100, 50 + (zScore * 19.1)));
   return {
     industry: industry,
     sector_mean: benchmark.mean,
     sector_std_dev: benchmark.std_dev,
+    sample_size: benchmark.n,
     percentile: parseFloat(percentile.toFixed(1)),
     z_score: parseFloat(zScore.toFixed(2)),
     gap: parseFloat(gap.toFixed(2))
@@ -187,20 +154,7 @@ function determineCertificationPath(maturityLevel) {
 }
 
 function calculateROI(currentLevel) {
-  if (currentLevel >= 5) return null;
-  const transitionKey = `${currentLevel}_to_${currentLevel + 1}`;
-  const roiData = ROI_TRANSITIONS[transitionKey];
-  if (!roiData) return null;
-  const estimatedRoi = ((roiData.annual_benefit * 5 - roiData.investment) / roiData.investment * 100).toFixed(0);
-  return {
-    current_level: currentLevel,
-    next_level: currentLevel + 1,
-    estimated_investment: roiData.investment,
-    annual_benefit: roiData.annual_benefit,
-    payback_months: roiData.payback_months,
-    npv_5yr: roiData.npv_5yr,
-    estimated_roi: `${estimatedRoi}%`
-  };
+  return null; // not measured
 }
 
 function calculateMaturityModel(assessments, byCategory, industry) {
@@ -236,10 +190,10 @@ function calculateMaturityModel(assessments, byCategory, industry) {
       red_domains_count: 0,
       yellow_domains_count: 0,
       green_domains_count: 0,
-      compliance: { gdpr: {}, nis2: {}, dora: {}, iso27001: {} },
-      sector_benchmark: { industry: industry || 'Other', percentile: 0, z_score: 0 },
+      compliance: null,
+      sector_benchmark: null,
       certification_path: { eligible: [], required_improvements: [] },
-      roi_analysis: { current_level: 0, next_level: 1, estimated_roi: '0%' }
+      roi_analysis: null
     };
   }
 }

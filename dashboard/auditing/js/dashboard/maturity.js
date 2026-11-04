@@ -151,6 +151,13 @@ export function renderMaturityTab() {
             `;
         });
         complianceTableBody.innerHTML = complianceHTML;
+    } else if (complianceTableBody) {
+        complianceTableBody.innerHTML = `
+            <tr><td colspan="5" style="padding: 12px; color: var(--text-light);">
+                Not assessed. CPF measures psychological vulnerability; it is not a compliance audit and does not
+                state whether your organisation complies with GDPR, NIS2, DORA or ISO 27001. Use the CPF results as
+                one input to those assessments. Your CPF maturity level: <strong>Level ${mm.maturity_level}</strong>.
+            </td></tr>`;
     }
 
     // 7. Sector Benchmark Visual
@@ -189,6 +196,16 @@ export function renderMaturityTab() {
                     <div style="font-size: 16px; font-weight: 600;">${selectedOrgData.industry || 'N/A'}</div>
                 </div>
             `;
+        }
+    } else {
+        ['yourScoreMarker', 'sectorMeanMarker', 'yourScoreLabel', 'sectorMeanLabel'].forEach(id => setStyle(id, 'display', 'none'));
+        const statsEl = document.getElementById('benchmarkStats');
+        if (statsEl) {
+            statsEl.innerHTML = `
+                <div style="padding: 10px; background: var(--bg-gray); border-radius: 6px; color: var(--text-light);">
+                    No sector data yet. A sector comparison needs assessments from enough organisations in the
+                    same sector; it will appear when that data exists. Your CPF score: <strong>${Math.round(mm.cpf_score || 0)}</strong>.
+                </div>`;
         }
     }
 
@@ -283,22 +300,11 @@ function computeBasicMaturityModel(org) {
         convergenceIndex = Math.max(0, 1 - stdDev);
     }
 
-    // Compliance (mock data)
-    const compliance = {
-        'gdpr': { status: maturityLevel >= 2 ? 'compliant' : 'not_compliant', min_level_required: 1, recommended_level: 2 },
-        'nis2': { status: maturityLevel >= 2 ? 'compliant' : 'not_compliant', min_level_required: 2, recommended_level: 3 },
-        'dora': { status: maturityLevel >= 2 ? 'compliant' : 'at_risk', min_level_required: 2, recommended_level: 3 },
-        'iso27001': { status: maturityLevel >= 1 ? 'compliant' : 'not_compliant', min_level_required: 1, recommended_level: 2 }
-    };
+    // Compliance: CPF is not a compliance audit, so no status is computed
+    const compliance = null;
 
-    // Sector Benchmark (mock data)
-    const sectorMean = 50;
-    const sectorBenchmark = {
-        percentile: Math.min(99, Math.max(1, cpfScore * 0.7 + Math.random() * 10)), // Mock percentile
-        sector_mean: sectorMean,
-        gap: cpfScore - sectorMean,
-        sample_size: 'N/A'
-    };
+    // Sector Benchmark: no real sector data yet, so no comparison is shown
+    const sectorBenchmark = null;
 
     // Certification Path
     const eligibleCerts = [];
@@ -312,13 +318,8 @@ function computeBasicMaturityModel(org) {
         current_certification: eligibleCerts.length > 0 ? eligibleCerts[eligibleCerts.length - 1] : null
     };
 
-    // ROI Analysis (mock data)
-    const roiAnalysis = maturityLevel < 5 ? {
-        estimated_investment: 50000,
-        annual_benefit: 150000,
-        payback_months: 4,
-        npv_5yr: 500000
-    } : null;
+    // ROI Analysis: not measured, nothing is shown
+    const roiAnalysis = null;
 
     return {
         cpf_score: cpfScore,
