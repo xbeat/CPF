@@ -8,25 +8,19 @@ Le decisioni guidate dalla scarsità rappresentano una vulnerabilità cognitiva 
 
 Il meccanismo psicologico opera attraverso diversi percorsi interconnessi:
 
-**Amplificazione dell'Avversione alle Perdite**: La teoria del prospetto di Kahneman e Tversky dimostra che le perdite sono psicologicamente ponderate circa 2,5 volte più pesantemente dei guadagni equivalenti. In condizioni di scarsità, questo rapporto aumenta drammaticamente, facendo sì che gli individui percepiscano la potenziale perdita della risorsa "scarsa" come catastrofica, portando a decisioni impulsive che aggirano i normali protocolli di sicurezza.
+**Avversione alle Perdite**: Nella teoria del prospetto le perdite pesano più dei guadagni equivalenti; il coefficiente stimato di avversione alle perdite è circa 2,25 (Tversky e Kahneman, 1992). Presentare una risorsa scarsa come qualcosa che sta per essere perso attiva questa asimmetria, che spinge all'azione rapida invece che alla verifica.
 
-**Accelerazione dello Sconto Temporale**: La scarsità innesca lo sconto iperbolico, dove il valore dei benefici futuri diminuisce esponenzialmente rispetto alle ricompense immediate. Nei contesti di cybersecurity, questo si manifesta come priorità dell'accesso immediato a risorse scarse rispetto alle considerazioni di sicurezza a lungo termine.
+**Sconto Temporale**: Le persone scontano i risultati futuri in modo iperbolico, sopravvalutando l'immediato (Frederick, Loewenstein e O'Donoghue, 2002). Nei contesti di cybersecurity questo si manifesta come priorità all'accesso immediato a una risorsa scarsa rispetto alle considerazioni di sicurezza a lungo termine.
 
-**Sovraccarico del Carico Cognitivo**: Lo stress della scarsità percepita consuma la capacità della memoria di lavoro (il "numero magico sette" di Miller diventa ancora più limitato), riducendo le risorse cognitive disponibili per la valutazione della sicurezza e aumentando la dipendenza dal pensiero del Sistema 1 (veloce, automatico) piuttosto che dall'elaborazione del Sistema 2 (deliberata, analitica).
+**Tunnel Attentivo**: La scarsità concentra l'attenzione sulla risorsa scarsa e la sottrae a tutto il resto (Shah, Mullainathan e Shafir, 2012; confermato nella loro auto-replica del 2019). I controlli di sicurezza stanno fuori dal tunnel, quindi sono la prima cosa che si salta quando tempo, budget o accesso sembrano scarsi.
 
 ### Base di Ricerca
 
-**Principio di Scarsità di Cialdini**: La ricerca seminale di Robert Cialdini sull'influenza identifica la scarsità come uno dei sei trigger fondamentali di conformità. I suoi studi dimostrano che la scarsità percepita aumenta la desiderabilità e riduce la valutazione critica. Gli articoli presentati come "tempo limitato" o "quantità limitata" generano tassi di conversione 3-4 volte superiori, anche quando la proposta di valore sottostante rimane costante.
+**Perché succede: i meccanismi che hanno retto.** La scarsità restringe l'attenzione sulla risorsa scarsa ("tunneling") e spinge a indebitarsi con il futuro per alleviarla (Shah, Mullainathan e Shafir, 2012, *Science*, "Some consequences of having too little"). L'esperimento di quel lavoro selezionato dal progetto di Camerer et al. (2018, *Nature Human Behaviour*) su 21 studi di Science e Nature, quello sulla fatica cognitiva, non ha replicato; l'auto-replica degli autori (Shah, Mullainathan e Shafir, 2019, *Journal of Economic Psychology*, "An exercise in self-replication") ha confermato la maggiore focalizzazione attentiva e il sovra-indebitamento, ha trovato rovesciato il risultato sulla fatica cognitiva e prove più deboli per la trascuratezza. L'indicatore poggia su questi due meccanismi, che sono anche i più rilevanti per la sicurezza: il tunnel sulla risorsa scarsa è ciò che fa trascurare i controlli che restano fuori.
 
-**Evidenze di Economia Comportamentale:**
-- Mani et al. (2013) hanno dimostrato che la scarsità finanziaria riduce la capacità cognitiva equivalente alla perdita di 13 punti di QI
-- La ricerca di Shah, Mullainathan e Shafir sul "tunneling" mostra che la scarsità crea un focus cognitivo così ristretto che le considerazioni periferiche (inclusa la sicurezza) diventano invisibili
-- Gli studi sugli effetti delle scadenze mostrano un aumento del 40-60% nelle decisioni scadenti sotto pressione temporale
+**Stato del dibattito.** Un audit empirico della letteratura sul priming di scarsità (O'Donnell et al., 2021, *PNAS*, 20 studi replicati) ha trovato un misto di successi netti e fallimenti netti; ha ricevuto una correzione nel 2022 ed è stato contestato dagli autori originali (Shah, Zhao, Mullainathan e Shafir, 2022, "A scarcity literature mischaracterized with an empirical audit"). La questione è aperta in entrambe le direzioni.
 
-**Fondamenti Neuroscientifici:**
-- Gli studi fMRI rivelano che la scarsità attiva la corteccia cingolata anteriore (monitoraggio dei conflitti) e riduce l'attività della corteccia prefrontale (controllo esecutivo)
-- L'attivazione dell'amigdala aumenta in condizioni di scarsità, innescando risposte di lotta o fuga che aggirano la valutazione razionale della sicurezza
-- La disregolazione del sistema dopaminergico sotto scarsità crea comportamenti di ricerca simili a dipendenza per la risorsa scarsa
+**Cosa non è usato come prova.** Mani, Mullainathan, Shafir e Zhao (2013, *Science*, "Poverty impedes cognitive function") è contestato su basi statistiche e psicometriche (Wicherts e Scholten, 2013, commento su *Science*, con replica degli autori); la sua cifra in punti di QI era un'analogia degli autori, non una misura di QI, e qui non è citata. Il principio della scarsità di Cialdini (*Influence*, 2007) descrive come si costruiscono persuasione e attacchi; è un'euristica operativa, non una prova sperimentale per questo indicatore.
 
 ### Trigger Cognitivi/Emotivi
 
